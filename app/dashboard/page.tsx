@@ -1,16 +1,11 @@
-// @ts-nocheck
 'use client'
-
-// --- CORREÇÃO CRÍTICA PARA VERCEL ---
-export const dynamic = 'force-dynamic'
-// ------------------------------------
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { formatPrice } from '@/lib/format'
-import NoOrganizationState from '@/components/NoOrganizationState' 
+import NoOrganizationState from './components/NoOrganizationState' // <--- 1. IMPORT NOVO
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell 
@@ -264,10 +259,11 @@ const GoalsModal = ({ isOpen, onClose, currentGoals, onSave, loading, t, currenc
 // --- DASHBOARD PRINCIPAL ---
 
 export default function DashboardPage() {
-  const { org, user } = useAuth()
+  const { org, user } = useAuth() // Pegamos o USER também
   const router = useRouter()
   
   // --- 2. VERIFICAÇÃO DE ORGANIZAÇÃO ---
+  // Se o usuário existe, mas não tem org_id, mostramos a tela de bloqueio
   if (user && !user.org_id) {
     return <NoOrganizationState />
   }
@@ -276,14 +272,17 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [range, setRange] = useState(30)
   
+  // Definições de Idioma e Moeda
   const userLang = (user?.language as keyof typeof TRANSLATIONS) || 'pt'
   const t = TRANSLATIONS[userLang]
   const dateLocale = DATE_LOCALES[userLang]
   const userCurrency = user?.currency || 'BRL'
 
+  // Controle do Modal
   const [isGoalsModalOpen, setIsGoalsModalOpen] = useState(false)
   const [savingGoals, setSavingGoals] = useState(false)
 
+  // Estados dos Dados
   const [goals, setGoals] = useState({ revenue: 0, ads: 0 })
   const [stalledLeads, setStalledLeads] = useState<any[]>([])
   const [hourlyData, setHourlyData] = useState<any[]>([])
@@ -317,8 +316,10 @@ export default function DashboardPage() {
     if (org?.id) {
       loadAdvancedData()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [org?.id, range])
 
+  // --- SALVAR METAS ---
   const handleSaveGoals = async (newRevenue: number, newAds: number) => {
     if (!org) return
     setSavingGoals(true)
@@ -492,6 +493,8 @@ export default function DashboardPage() {
     document.body.removeChild(link)
   }
 
+  // --- RENDER ---
+
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
@@ -504,6 +507,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 p-2 relative">
       
+      {/* MODAL DE METAS */}
       <GoalsModal 
         isOpen={isGoalsModalOpen} 
         onClose={() => setIsGoalsModalOpen(false)} 
@@ -514,6 +518,7 @@ export default function DashboardPage() {
         currencyCode={userCurrency}
       />
 
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-white/5 pb-6">
         <div>
           <h1 className="text-4xl font-bold text-white tracking-tight">{t.overview}</h1>
@@ -552,8 +557,10 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* GRID PRINCIPAL */}
       <div className="grid grid-cols-12 gap-6">
         
+        {/* KPI: RECEITA & META (DINÂMICO AGORA) */}
         <Card className="col-span-12 md:col-span-4 lg:col-span-3 p-6 relative group cursor-pointer" >
           <div onClick={() => setIsGoalsModalOpen(true)} className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center justify-between mb-4">
@@ -580,6 +587,7 @@ export default function DashboardPage() {
           </p>
         </Card>
 
+        {/* KPI: METRICAS RAPIDAS */}
         <div className="col-span-12 md:col-span-8 lg:col-span-9 grid grid-cols-1 sm:grid-cols-3 gap-6">
           <Card className="p-6 flex flex-col justify-between hover:border-white/10 transition-colors">
             <div className="flex justify-between items-start">
@@ -615,6 +623,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
+        {/* CHART: AREA CHART */}
         <Card className="col-span-12 lg:col-span-8 p-6 min-h-[400px]">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-white">{t.flowTitle}</h3>
@@ -651,6 +660,7 @@ export default function DashboardPage() {
           </div>
         </Card>
 
+        {/* SENTIMENT & FUNNEL */}
         <div className="col-span-12 lg:col-span-4 flex flex-col gap-6">
           <Card className="p-6 flex-1">
             <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-4">{t.sentimentTitle}</h3>
@@ -718,6 +728,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
+        {/* --- BLOCO DE INTELIGÊNCIA TÁTICA --- */}
         <div className="col-span-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card className="p-6 border-l-4 border-l-amber-500">
             <div className="flex justify-between items-start mb-4">
@@ -792,6 +803,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
+        {/* LISTA DE LEADS RECENTES */}
         <div className="col-span-12">
           <Card className="p-0">
              <div className="p-6 border-b border-white/5 flex justify-between items-center">
@@ -820,6 +832,7 @@ export default function DashboardPage() {
                               <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase border ${lead.stage === 'venda' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : lead.stage === 'qualificado' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-gray-800 text-gray-400 border-gray-700'}`}>{lead.stage}</span>
                            </td>
                            <td className="px-6 py-4 text-gray-400">
+                             {/* Usamos o dateLocale para traduzir a data (Ex: 01 Jan) */}
                              {format(parseISO(lead.created_at), "dd MMM, HH:mm", { locale: dateLocale })}
                            </td>
                            <td className="px-6 py-4">{lead.agendou_reuniao ? <span className="flex items-center gap-1 text-emerald-400"><Calendar size={12}/> Sim</span> : <span className="text-gray-600">-</span>}</td>
