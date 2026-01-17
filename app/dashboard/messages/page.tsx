@@ -1,10 +1,14 @@
 'use client'
 
-import { useEffect, useState, useRef, Suspense } from 'react' // Adicionado Suspense
+// --- A CORREÇÃO MÁGICA ESTÁ AQUI EMBAIXO ---
+export const dynamic = 'force-dynamic'
+// -------------------------------------------
+
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/AuthContext'
 import { useSearchParams } from 'next/navigation'
-import { Search, MessageCircle, CheckCheck, X, ExternalLink, Loader2 } from 'lucide-react' // Adicionado Loader2
+import { Search, MessageCircle, CheckCheck, X, ExternalLink, Loader2 } from 'lucide-react'
 
 // --- 1. DICIONÁRIO DE TRADUÇÃO ---
 const TRANSLATIONS = {
@@ -212,7 +216,6 @@ function MessagesContent() {
               filterStage === stage ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-gray-400 hover:bg-white/5'
             }`}
           >
-            {/* TRADUÇÃO DO LABEL DO BOTÃO */}
             {/* @ts-ignore */}
             {t.stages[stage] || stage}
           </button>
@@ -270,7 +273,6 @@ function MessagesContent() {
       <div className="flex-1 flex flex-col bg-[#0b0b0b] relative">
         {activeLead ? (
           <>
-            {/* Header do Chat */}
             <div className="p-3 bg-[#111111] border-b border-white/5 flex items-center gap-4 shadow-sm z-20">
               <div className="w-10 h-10 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold">
                 {activeLead.name?.[0]}
@@ -287,8 +289,6 @@ function MessagesContent() {
                   <div className="hidden md:block text-[10px] text-gray-500 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 uppercase tracking-widest font-bold">
                     {t.readOnly}
                   </div>
-
-                  {/* --- BOTÃO WHATSAPP --- */}
                   {activeLead.phone && (
                     <a 
                      href={getWhatsappLink(activeLead.phone)}
@@ -300,8 +300,6 @@ function MessagesContent() {
                       <ExternalLink size={20} />
                     </a>
                   )}
-
-                  {/* BOTÃO FECHAR */}
                   <button 
                    onClick={() => setActiveLead(null)}
                    className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-full transition-colors"
@@ -312,7 +310,6 @@ function MessagesContent() {
               </div>
             </div>
 
-            {/* Área de Mensagens */}
             <div 
               ref={scrollRef}
               className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-2 custom-scrollbar bg-[#050505] bg-[url('https://w0.peakpx.com/wallpaper/580/650/牽引-whatsapp-chat-dark-background-light-pattern.jpg')] bg-repeat bg-[length:400px]"
@@ -322,10 +319,7 @@ function MessagesContent() {
               <div className="relative z-10 flex flex-col gap-1"> 
                 {messages.map((msg, index) => {
                   const isOutbound = msg.direction === 'outbound' || msg.direction === 'out';
-                  
-                  // DATA FORMATADA COM O LOCALE DO USUÁRIO
                   const msgDate = new Date(msg.created_at).toLocaleDateString(userLang);
-                  
                   const prevMsgDate = index > 0 ? new Date(messages[index - 1].created_at).toLocaleDateString(userLang) : null;
                   const showDateHeader = msgDate !== prevMsgDate;
                   const prevMsgDirection = index > 0 ? messages[index - 1].direction : null;
@@ -351,7 +345,6 @@ function MessagesContent() {
                           <p className="leading-relaxed whitespace-pre-wrap break-words">{msg.body}</p>
                           <div className={`flex items-center justify-end gap-1 mt-1 ${isOutbound ? 'text-blue-200/70' : 'text-gray-500'}`}>
                             <span className="text-[10px] min-w-[35px] text-right">
-                              {/* HORA FORMATADA COM O LOCALE DO USUÁRIO */}
                               {new Date(msg.created_at).toLocaleTimeString(userLang, { hour: '2-digit', minute: '2-digit' })}
                             </span>
                             {isOutbound && <CheckCheck size={14} className="text-blue-300" />}
@@ -377,7 +370,7 @@ function MessagesContent() {
   )
 }
 
-// --- 3. EXPORT DEFAULT COM SUSPENSE BOUNDARY (CRÍTICO PARA VERCEL) ---
+// Mantemos o Suspense para garantir, mas o dynamic = force-dynamic é o que realmente resolve o erro
 export default function MessagesPage() {
   return (
     <Suspense fallback={
