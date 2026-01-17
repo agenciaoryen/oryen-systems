@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { formatPrice } from '@/lib/format' // <--- Importamos o formatador global
+import { formatPrice } from '@/lib/format'
+import NoOrganizationState from '@/components/NoOrganizationState' // <--- 1. IMPORT NOVO
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell 
@@ -14,7 +15,6 @@ import {
   Activity, ArrowUpRight, ArrowDownRight, Download, Settings, X 
 } from 'lucide-react'
 import { format, subDays, parseISO, startOfMonth } from 'date-fns'
-// Importamos os locais para as datas
 import { ptBR, enUS, es } from 'date-fns/locale'
 
 // --- DICIONÁRIO DE TRADUÇÃO (LOCAL) ---
@@ -261,6 +261,14 @@ const GoalsModal = ({ isOpen, onClose, currentGoals, onSave, loading, t, currenc
 export default function DashboardPage() {
   const { org, user } = useAuth() // Pegamos o USER também
   const router = useRouter()
+  
+  // --- 2. VERIFICAÇÃO DE ORGANIZAÇÃO ---
+  // Se o usuário existe, mas não tem org_id, mostramos a tela de bloqueio
+  if (user && !user.org_id) {
+    return <NoOrganizationState />
+  }
+  // --------------------------------------
+
   const [loading, setLoading] = useState(true)
   const [range, setRange] = useState(30)
   
