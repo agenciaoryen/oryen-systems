@@ -7,7 +7,7 @@ export default function NoOrganizationState() {
   const { user } = useAuth()
 
   // Link do seu WhatsApp de suporte
-  const supportLink = "https://wa.me/5500000000000?text=Olá, criei minha conta na Oryen e preciso configurar minha organização."
+  const supportLink = "https://wa.me/5551998388409?text=Olá, criei minha conta na Oryen e preciso configurar minha organização."
 
   return (
     <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] text-center px-4 animate-in fade-in zoom-in duration-500">
