@@ -11,7 +11,6 @@ import {
   Search,
   MessageCircle,
   CheckCheck,
-  Check,
   X,
   ExternalLink,
   Loader2,
@@ -23,7 +22,9 @@ import {
   Mic,
   Video,
   ArrowDown,
-  Circle
+  Circle,
+  Send,
+  AlertCircle
 } from 'lucide-react'
 
 // =============================================
@@ -34,7 +35,6 @@ const TRANSLATIONS = {
     activePipeline: 'Pipeline Ativo',
     searchPlaceholder: 'Buscar conversa...',
     startConversation: 'Iniciar conversa...',
-    readOnly: 'Somente Leitura',
     openWhatsapp: 'Abrir no WhatsApp',
     closeChat: 'Fechar conversa',
     emptyState: 'Selecione uma conversa ao lado para ver o histórico de mensagens',
@@ -50,6 +50,10 @@ const TRANSLATIONS = {
     video: 'Vídeo',
     document: 'Documento',
     unreadMessages: 'mensagens não lidas',
+    inputPlaceholder: 'Digite uma mensagem...',
+    sendButton: 'Enviar',
+    sending: 'Enviando...',
+    sendError: 'Erro ao enviar. Tente novamente.',
     stages: {
       'todos': 'Todas',
       'contatado': 'Contatado',
@@ -63,7 +67,6 @@ const TRANSLATIONS = {
     activePipeline: 'Active Pipeline',
     searchPlaceholder: 'Search conversation...',
     startConversation: 'Start conversation...',
-    readOnly: 'Read Only',
     openWhatsapp: 'Open in WhatsApp',
     closeChat: 'Close chat',
     emptyState: 'Select a conversation to view message history',
@@ -79,6 +82,10 @@ const TRANSLATIONS = {
     video: 'Video',
     document: 'Document',
     unreadMessages: 'unread messages',
+    inputPlaceholder: 'Type a message...',
+    sendButton: 'Send',
+    sending: 'Sending...',
+    sendError: 'Failed to send. Try again.',
     stages: {
       'todos': 'All',
       'contatado': 'Contacted',
@@ -92,7 +99,6 @@ const TRANSLATIONS = {
     activePipeline: 'Pipeline Activo',
     searchPlaceholder: 'Buscar conversación...',
     startConversation: 'Iniciar conversación...',
-    readOnly: 'Solo Lectura',
     openWhatsapp: 'Abrir en WhatsApp',
     closeChat: 'Cerrar chat',
     emptyState: 'Seleccione una conversación para ver el historial',
@@ -108,6 +114,10 @@ const TRANSLATIONS = {
     video: 'Video',
     document: 'Documento',
     unreadMessages: 'mensajes no leídos',
+    inputPlaceholder: 'Escribe un mensaje...',
+    sendButton: 'Enviar',
+    sending: 'Enviando...',
+    sendError: 'Error al enviar. Inténtalo de nuevo.',
     stages: {
       'todos': 'Todas',
       'contatado': 'Contactado',
@@ -120,7 +130,12 @@ const TRANSLATIONS = {
 }
 
 // =============================================
-// 2. TYPES
+// 2. CONSTANTS
+// =============================================
+const WEBHOOK_SEND_MESSAGE = 'https://webhook2.letierren8n.com/webhook/message_agent_human'
+
+// =============================================
+// 3. TYPES
 // =============================================
 type Message = {
   id: string
@@ -150,7 +165,6 @@ type Conversation = {
   last_message_at: string | null
   unread_count: number
   created_at: string
-  // Joined from leads table
   lead_name?: string
   lead_phone?: string
   lead_stage?: string
@@ -158,7 +172,7 @@ type Conversation = {
 }
 
 // =============================================
-// 3. HELPERS
+// 4. HELPERS
 // =============================================
 function getEmotionEmoji(emotion: string | null): string {
   switch (emotion?.toLowerCase()) {
@@ -180,6 +194,41 @@ function getWhatsappLink(phone: string | null): string {
   if (!phone) return '#'
   const cleanNumber = phone.replace(/\D/g, '')
   return `https://wa.me/${cleanNumber}`
+}
+
+function formatPhone(phone: string | null): string {
+  if (!phone) return 'Sem identificação'
+  const clean = phone.replace(/\D/g, '')
+  // Formato brasileiro: +55 (XX) XXXXX-XXXX
+  if (clean.startsWith('55') && clean.length >= 12) {
+    const ddd = clean.substring(2, 4)
+    const part1 = clean.substring(4, 9)
+    const part2 = clean.substring(9)
+    return `+55 (${ddd}) ${part1}-${part2}`
+  }
+  // Formato chileno: +56 X XXXX XXXX
+  if (clean.startsWith('56') && clean.length >= 11) {
+    const prefix = clean.substring(2, 3)
+    const part1 = clean.substring(3, 7)
+    const part2 = clean.substring(7)
+    return `+56 ${prefix} ${part1} ${part2}`
+  }
+  // Genérico
+  return `+${clean}`
+}
+
+function getDisplayName(conversation: Conversation): string {
+  if (conversation.lead_name && conversation.lead_name !== '' && conversation.lead_name !== 'null') {
+    return conversation.lead_name
+  }
+  return formatPhone(conversation.lead_phone || null)
+}
+
+function getInitial(conversation: Conversation): string {
+  if (conversation.lead_name && conversation.lead_name !== '' && conversation.lead_name !== 'null') {
+    return conversation.lead_name[0].toUpperCase()
+  }
+  return '#'
 }
 
 function getSenderIcon(senderType: string) {
@@ -223,7 +272,7 @@ function formatTime(dateStr: string, lang: string): string {
   return new Date(dateStr).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })
 }
 
-function formatLastMessageTime(dateStr: string | null): string {
+function formatLastMessageTime(dateStr: string | null, lang: string): string {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   const now = new Date()
@@ -231,32 +280,17 @@ function formatLastMessageTime(dateStr: string | null): string {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
   if (diffDays === 0) {
-    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    return date.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })
   }
-  if (diffDays === 1) return 'Ontem'
+  if (diffDays === 1) return lang === 'en' ? 'Yesterday' : lang === 'es' ? 'Ayer' : 'Ontem'
   if (diffDays < 7) {
-    return date.toLocaleDateString('pt-BR', { weekday: 'short' })
+    return date.toLocaleDateString(lang, { weekday: 'short' })
   }
-  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-}
-
-function getMediaPreview(msg: { message_type: string; body: string | null }, t: typeof TRANSLATIONS.pt): string {
-  switch (msg.message_type) {
-    case 'audio':
-      return `🎵 ${t.audio}`
-    case 'image':
-      return `📷 ${t.image}`
-    case 'video':
-      return `🎥 ${t.video}`
-    case 'document':
-      return `📄 ${t.document}`
-    default:
-      return msg.body || ''
-  }
+  return date.toLocaleDateString(lang, { day: '2-digit', month: '2-digit' })
 }
 
 // =============================================
-// 4. MEDIA RENDERER COMPONENT
+// 5. MEDIA RENDERER COMPONENT
 // =============================================
 function MediaContent({ msg, t }: { msg: Message; t: typeof TRANSLATIONS.pt }) {
   if (msg.message_type === 'text' || !msg.message_type) return null
@@ -341,7 +375,7 @@ function MediaContent({ msg, t }: { msg: Message; t: typeof TRANSLATIONS.pt }) {
 }
 
 // =============================================
-// 5. MESSAGE BUBBLE COMPONENT
+// 6. MESSAGE BUBBLE COMPONENT
 // =============================================
 function MessageBubble({
   msg,
@@ -365,7 +399,6 @@ function MessageBubble({
   const isSameSender = prevMsg?.sender_type === msg.sender_type && !showDateHeader
   const isSequence = prevMsg?.direction === msg.direction && !showDateHeader
 
-  // Determine bubble color based on sender_type
   const getBubbleStyle = () => {
     if (msg.sender_type === 'agent_bot') return 'bg-[#1a1a2e] border border-violet-500/10'
     if (msg.sender_type === 'agent_human') return 'bg-[#1a2e1a] border border-amber-500/10'
@@ -374,7 +407,6 @@ function MessageBubble({
 
   return (
     <div className={`flex flex-col ${showDateHeader ? 'mt-4' : ''}`}>
-      {/* Date separator */}
       {showDateHeader && (
         <div className="flex justify-center mb-4 sticky top-2 z-20">
           <span className="bg-[#1c1c1c]/90 backdrop-blur-sm text-gray-400 text-[10px] font-medium px-4 py-1.5 rounded-lg border border-white/5 shadow-lg">
@@ -391,7 +423,6 @@ function MessageBubble({
               : `bg-[#202c33] text-gray-100 ${!isSequence ? 'rounded-tl-none' : ''}`
             }`}
         >
-          {/* Sender label — show when sender changes */}
           {!isSameSender && (
             <div className={`flex items-center gap-1.5 mb-1 ${getSenderColor(msg.sender_type)}`}>
               {getSenderIcon(msg.sender_type)}
@@ -406,20 +437,16 @@ function MessageBubble({
             </div>
           )}
 
-          {/* Media content */}
           <MediaContent msg={msg} t={t} />
 
-          {/* Text body */}
           {msg.body && msg.message_type === 'text' && (
             <p className="leading-relaxed whitespace-pre-wrap break-words">{msg.body}</p>
           )}
 
-          {/* Caption for media with text */}
           {msg.body && msg.message_type !== 'text' && (
             <p className="leading-relaxed whitespace-pre-wrap break-words text-xs mt-1 text-gray-300">{msg.body}</p>
           )}
 
-          {/* Timestamp + status */}
           <div className={`flex items-center justify-end gap-1.5 mt-1 ${isOutbound ? 'text-gray-400/70' : 'text-gray-500/70'}`}>
             {msg.emotion && (
               <span className="text-[10px] mr-1">{getEmotionEmoji(msg.emotion)}</span>
@@ -436,19 +463,24 @@ function MessageBubble({
 }
 
 // =============================================
-// 6. CONVERSATION LIST ITEM
+// 7. CONVERSATION LIST ITEM
 // =============================================
 function ConversationItem({
   conversation,
   isActive,
   onClick,
+  userLang,
   t
 }: {
   conversation: Conversation
   isActive: boolean
   onClick: () => void
+  userLang: string
   t: typeof TRANSLATIONS.pt
 }) {
+  const displayName = getDisplayName(conversation)
+  const initial = getInitial(conversation)
+
   return (
     <div
       onClick={onClick}
@@ -457,12 +489,10 @@ function ConversationItem({
     >
       {isActive && <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-blue-500 rounded-r" />}
 
-      {/* Avatar */}
       <div className="relative shrink-0">
         <div className="w-11 h-11 rounded-full bg-gradient-to-br from-gray-700/50 to-gray-900 flex items-center justify-center text-base font-bold text-white border border-white/10">
-          {conversation.lead_name?.[0]?.toUpperCase() || '?'}
+          {initial}
         </div>
-        {/* Channel indicator */}
         <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-[#0F0F0F]">
           <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 text-white fill-current">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
@@ -470,14 +500,13 @@ function ConversationItem({
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
           <h4 className="text-[13px] font-semibold text-white truncate pr-2">
-            {conversation.lead_name || 'Sem nome'}
+            {displayName}
           </h4>
           <span className="text-[10px] text-gray-500 shrink-0">
-            {formatLastMessageTime(conversation.last_message_at)}
+            {formatLastMessageTime(conversation.last_message_at, userLang)}
           </span>
         </div>
         <div className="flex justify-between items-center">
@@ -501,7 +530,90 @@ function ConversationItem({
 }
 
 // =============================================
-// 7. MAIN CONTENT COMPONENT
+// 8. MESSAGE INPUT COMPONENT
+// =============================================
+function MessageInput({
+  onSend,
+  isSending,
+  sendError,
+  t
+}: {
+  onSend: (text: string) => void
+  isSending: boolean
+  sendError: string | null
+  t: typeof TRANSLATIONS.pt
+}) {
+  const [text, setText] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const handleSend = () => {
+    const trimmed = text.trim()
+    if (!trimmed || isSending) return
+    onSend(trimmed)
+    setText('')
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
+  // Auto-resize textarea
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setText(e.target.value)
+    const el = e.target
+    el.style.height = 'auto'
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+  }
+
+  return (
+    <div className="border-t border-white/5 bg-[#111111]">
+      {sendError && (
+        <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 flex items-center gap-2">
+          <AlertCircle size={14} className="text-red-400 shrink-0" />
+          <span className="text-xs text-red-400">{sendError}</span>
+        </div>
+      )}
+      <div className="flex items-end gap-2 p-3">
+        <textarea
+          ref={textareaRef}
+          value={text}
+          onChange={handleInput}
+          onKeyDown={handleKeyDown}
+          placeholder={t.inputPlaceholder}
+          disabled={isSending}
+          rows={1}
+          className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-all resize-none disabled:opacity-50"
+          style={{ maxHeight: '120px' }}
+        />
+        <button
+          onClick={handleSend}
+          disabled={!text.trim() || isSending}
+          className={`p-2.5 rounded-xl transition-all shrink-0 ${
+            text.trim() && !isSending
+              ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20'
+              : 'bg-white/5 text-gray-600 cursor-not-allowed'
+          }`}
+        >
+          {isSending ? (
+            <Loader2 size={20} className="animate-spin" />
+          ) : (
+            <Send size={20} />
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// =============================================
+// 9. MAIN CONTENT COMPONENT
 // =============================================
 function MessagesContent() {
   const { user } = useAuth()
@@ -516,6 +628,8 @@ function MessagesContent() {
   const [loadingConversations, setLoadingConversations] = useState(true)
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [showScrollDown, setShowScrollDown] = useState(false)
+  const [isSending, setIsSending] = useState(false)
+  const [sendError, setSendError] = useState<string | null>(null)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -535,31 +649,22 @@ function MessagesContent() {
     setShowScrollDown(distanceFromBottom > 200)
   }, [])
 
-  // Auto-scroll when new messages arrive
   useEffect(() => {
     if (messages.length > 0) {
       scrollToBottom(false)
     }
   }, [messages, scrollToBottom])
 
-  // ---- Fetch conversations from new table ----
+  // ---- Fetch conversations ----
   const fetchConversations = useCallback(async () => {
     if (!user?.org_id) return
 
     const { data, error } = await supabase
       .from('conversations')
       .select(`
-        id,
-        org_id,
-        lead_id,
-        channel,
-        status,
-        assigned_to,
-        is_bot_active,
-        last_message_body,
-        last_message_at,
-        unread_count,
-        created_at
+        id, org_id, lead_id, channel, status, assigned_to,
+        is_bot_active, last_message_body, last_message_at,
+        unread_count, created_at
       `)
       .eq('org_id', user.org_id)
       .eq('status', 'active')
@@ -572,7 +677,6 @@ function MessagesContent() {
     }
 
     if (data && data.length > 0) {
-      // Get lead info for all conversations
       const leadIds = [...new Set(data.map(c => c.lead_id).filter(Boolean))]
 
       const { data: leads } = await supabase
@@ -586,7 +690,7 @@ function MessagesContent() {
         const lead = leadMap.get(c.lead_id)
         return {
           ...c,
-          lead_name: lead?.name || 'Sem nome',
+          lead_name: lead?.name && lead.name !== '' && lead.name !== 'null' ? lead.name : '',
           lead_phone: lead?.phone || null,
           lead_stage: lead?.stage || '',
           lead_emotion: lead?.last_message_emotion || null
@@ -603,7 +707,7 @@ function MessagesContent() {
     fetchConversations()
   }, [fetchConversations])
 
-  // ---- Deep link: open specific lead conversation ----
+  // ---- Deep link ----
   useEffect(() => {
     if (!targetLeadId || !user?.org_id || conversations.length === 0) return
 
@@ -614,7 +718,7 @@ function MessagesContent() {
     }
   }, [targetLeadId, user?.org_id, conversations])
 
-  // ---- Fetch messages for active conversation ----
+  // ---- Fetch messages ----
   useEffect(() => {
     async function fetchMessages() {
       if (!activeConversation) {
@@ -623,23 +727,14 @@ function MessagesContent() {
       }
 
       setLoadingMessages(true)
+      setSendError(null)
 
       const { data, error } = await supabase
         .from('messages')
         .select(`
-          id,
-          lead_id,
-          conversation_id,
-          body,
-          direction,
-          sender_type,
-          sender_name,
-          message_type,
-          media_url,
-          media_mime_type,
-          emotion,
-          external_message_id,
-          created_at
+          id, lead_id, conversation_id, body, direction,
+          sender_type, sender_name, message_type, media_url,
+          media_mime_type, emotion, external_message_id, created_at
         `)
         .eq('conversation_id', activeConversation.id)
         .order('created_at', { ascending: true })
@@ -650,14 +745,13 @@ function MessagesContent() {
 
       setLoadingMessages(false)
 
-      // Mark as read: reset unread_count
+      // Mark as read
       if (activeConversation.unread_count > 0) {
         await supabase
           .from('conversations')
           .update({ unread_count: 0 })
           .eq('id', activeConversation.id)
 
-        // Update local state
         setConversations(prev =>
           prev.map(c =>
             c.id === activeConversation.id ? { ...c, unread_count: 0 } : c
@@ -672,7 +766,92 @@ function MessagesContent() {
     fetchMessages()
   }, [activeConversation?.id])
 
-  // ---- Realtime subscription for new messages ----
+  // ---- Send message (agent_human) ----
+  const handleSendMessage = useCallback(async (text: string) => {
+    if (!activeConversation || !user) return
+
+    setIsSending(true)
+    setSendError(null)
+
+    try {
+      // 1. Call webhook to send via WhatsApp (n8n handles routing)
+      const webhookResponse = await fetch(WEBHOOK_SEND_MESSAGE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          org_id: activeConversation.org_id,
+          lead_id: activeConversation.lead_id,
+          conversation_id: activeConversation.id,
+          user_id: user.id,
+          message: text
+        })
+      })
+
+      if (!webhookResponse.ok) {
+        throw new Error('Webhook failed')
+      }
+
+      // 2. Save message to Supabase via fn_insert_message
+      const { data: result, error } = await supabase.rpc('fn_insert_message', {
+        p_org_id: activeConversation.org_id,
+        p_lead_id: activeConversation.lead_id,
+        p_channel: activeConversation.channel || 'whatsapp',
+        p_direction: 'outbound',
+        p_body: text,
+        p_sender_type: 'agent_human',
+        p_sender_name: user.name || user.email || 'Atendente',
+        p_message_type: 'text',
+        p_timestamp: new Date().toISOString()
+      })
+
+      if (error) {
+        console.error('Error saving message:', error)
+        // Even if save fails, webhook already sent — don't show error to user
+      }
+
+      // 3. Optimistic: add message to UI immediately
+      const newMsg: Message = {
+        id: result?.message_id || crypto.randomUUID(),
+        lead_id: activeConversation.lead_id,
+        conversation_id: activeConversation.id,
+        body: text,
+        direction: 'outbound',
+        sender_type: 'agent_human',
+        sender_name: user.name || user.email || 'Atendente',
+        message_type: 'text',
+        media_url: null,
+        media_mime_type: null,
+        emotion: null,
+        external_message_id: null,
+        created_at: new Date().toISOString()
+      }
+
+      setMessages(prev => [...prev, newMsg])
+
+      // 4. Update conversation in sidebar
+      setConversations(prev => {
+        const updated = prev.map(c => {
+          if (c.id === activeConversation.id) {
+            return { ...c, last_message_body: text, last_message_at: newMsg.created_at }
+          }
+          return c
+        })
+        return updated.sort((a, b) => {
+          const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
+          const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
+          return bTime - aTime
+        })
+      })
+
+    } catch (err) {
+      console.error('Send error:', err)
+      setSendError(t.sendError)
+    } finally {
+      setIsSending(false)
+    }
+  }, [activeConversation, user, t])
+
+  // ---- Realtime: new messages ----
   useEffect(() => {
     if (!user?.org_id) return
 
@@ -689,16 +868,13 @@ function MessagesContent() {
         (payload) => {
           const newMsg = payload.new as Message
 
-          // If it belongs to the active conversation, add to messages
           if (activeConversation && newMsg.conversation_id === activeConversation.id) {
             setMessages(prev => {
-              // Avoid duplicates
               if (prev.some(m => m.id === newMsg.id)) return prev
               return [...prev, newMsg]
             })
           }
 
-          // Update conversation list
           setConversations(prev => {
             const updated = prev.map(c => {
               if (c.id === newMsg.conversation_id) {
@@ -715,7 +891,6 @@ function MessagesContent() {
               return c
             })
 
-            // Sort by last_message_at descending
             return updated.sort((a, b) => {
               const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
               const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
@@ -731,7 +906,7 @@ function MessagesContent() {
     }
   }, [user?.org_id, activeConversation?.id])
 
-  // ---- Realtime subscription for new conversations ----
+  // ---- Realtime: new conversations ----
   useEffect(() => {
     if (!user?.org_id) return
 
@@ -748,7 +923,6 @@ function MessagesContent() {
         async (payload) => {
           const newConv = payload.new as Conversation
 
-          // Fetch lead info
           const { data: lead } = await supabase
             .from('leads')
             .select('id, name, phone, stage, last_message_emotion')
@@ -757,7 +931,7 @@ function MessagesContent() {
 
           const enriched: Conversation = {
             ...newConv,
-            lead_name: lead?.name || 'Sem nome',
+            lead_name: lead?.name && lead.name !== '' && lead.name !== 'null' ? lead.name : '',
             lead_phone: lead?.phone || null,
             lead_stage: lead?.stage || '',
             lead_emotion: lead?.last_message_emotion || null
@@ -781,7 +955,10 @@ function MessagesContent() {
 
   const filteredConversations = conversations
     .filter(c => filterStage === 'todos' || c.lead_stage === filterStage)
-    .filter(c => c.lead_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(c => {
+      const name = getDisplayName(c).toLowerCase()
+      return name.includes(searchTerm.toLowerCase())
+    })
 
   // =============================================
   // RENDER
@@ -815,7 +992,6 @@ function MessagesContent() {
       <div className={`w-80 border-r border-white/5 flex flex-col bg-[#0F0F0F] transition-opacity duration-300
         ${activeConversation ? 'opacity-40 hover:opacity-100' : 'opacity-100'}`}
       >
-        {/* Search */}
         <div className="p-3 border-b border-white/5 bg-[#0A0A0A]/50">
           <div className="relative">
             <Search className="absolute left-3 top-2.5 text-gray-500" size={16} />
@@ -829,7 +1005,6 @@ function MessagesContent() {
           </div>
         </div>
 
-        {/* Conversation list */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           {loadingConversations ? (
             <div className="flex items-center justify-center py-12">
@@ -846,6 +1021,7 @@ function MessagesContent() {
                 conversation={conv}
                 isActive={activeConversation?.id === conv.id}
                 onClick={() => setActiveConversation(conv)}
+                userLang={userLang}
                 t={t}
               />
             ))
@@ -860,10 +1036,12 @@ function MessagesContent() {
             {/* Chat header */}
             <div className="p-3 bg-[#111111] border-b border-white/5 flex items-center gap-3 shadow-sm z-20">
               <div className="w-10 h-10 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-sm">
-                {activeConversation.lead_name?.[0]?.toUpperCase() || '?'}
+                {getInitial(activeConversation)}
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="text-white font-bold text-sm truncate">{activeConversation.lead_name}</h3>
+                <h3 className="text-white font-bold text-sm truncate">
+                  {getDisplayName(activeConversation)}
+                </h3>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-gray-400 uppercase tracking-wide flex items-center gap-1">
                     <Circle size={6} className="fill-emerald-500 text-emerald-500" />
@@ -875,13 +1053,15 @@ function MessagesContent() {
                       IA
                     </span>
                   )}
+                  {activeConversation.lead_phone && (
+                    <span className="text-[10px] text-gray-500">
+                      {formatPhone(activeConversation.lead_phone)}
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <div className="hidden md:block text-[10px] text-gray-500 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 uppercase tracking-widest font-bold">
-                  {t.readOnly}
-                </div>
                 {activeConversation.lead_phone && (
                   <a
                     href={getWhatsappLink(activeConversation.lead_phone)}
@@ -894,7 +1074,7 @@ function MessagesContent() {
                   </a>
                 )}
                 <button
-                  onClick={() => setActiveConversation(null)}
+                  onClick={() => { setActiveConversation(null); setSendError(null) }}
                   className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-full transition-colors"
                   title={t.closeChat}
                 >
@@ -903,7 +1083,7 @@ function MessagesContent() {
               </div>
             </div>
 
-            {/* Chat messages area */}
+            {/* Chat messages */}
             <div
               ref={scrollRef}
               onScroll={handleScroll}
@@ -933,18 +1113,25 @@ function MessagesContent() {
               )}
             </div>
 
-            {/* Scroll to bottom button */}
+            {/* Scroll to bottom */}
             {showScrollDown && (
               <button
                 onClick={() => scrollToBottom(true)}
-                className="absolute bottom-6 right-6 z-30 w-10 h-10 bg-[#1c1c1c] border border-white/10 rounded-full flex items-center justify-center shadow-lg hover:bg-[#252525] transition-colors"
+                className="absolute bottom-20 right-6 z-30 w-10 h-10 bg-[#1c1c1c] border border-white/10 rounded-full flex items-center justify-center shadow-lg hover:bg-[#252525] transition-colors"
               >
                 <ArrowDown size={18} className="text-gray-400" />
               </button>
             )}
+
+            {/* Message input */}
+            <MessageInput
+              onSend={handleSendMessage}
+              isSending={isSending}
+              sendError={sendError}
+              t={t}
+            />
           </>
         ) : (
-          /* Empty state */
           <div className="flex-1 flex flex-col items-center justify-center text-gray-600 space-y-4 bg-[#0a0a0a]">
             <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center">
               <MessageCircle size={40} className="opacity-20 text-white" />
@@ -958,7 +1145,7 @@ function MessagesContent() {
 }
 
 // =============================================
-// 8. PAGE EXPORT
+// 10. PAGE EXPORT
 // =============================================
 export default function MessagesPage() {
   return (
