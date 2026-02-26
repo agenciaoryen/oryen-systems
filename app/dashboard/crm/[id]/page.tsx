@@ -750,21 +750,33 @@ export default function LeadProfilePage() {
                     {t.addTag}
                   </button>
 
-                  {isTagDropdownOpen && availableTags.length > 0 && (
+                  {isTagDropdownOpen && (
                     <div className="absolute top-full left-0 mt-2 w-48 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl z-50 overflow-hidden max-h-[200px] overflow-y-auto">
-                      {availableTags.map(tag => {
-                        const tagColor = getTagColor(tag.color)
-                        return (
-                          <button
-                            key={tag.id}
-                            onClick={() => handleAddTag(tag)}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5 transition-all"
+                      {availableTags.length > 0 ? (
+                        availableTags.map(tag => {
+                          const tagColor = getTagColor(tag.color)
+                          return (
+                            <button
+                              key={tag.id}
+                              onClick={() => handleAddTag(tag)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5 transition-all"
+                            >
+                              <span className={`w-2 h-2 rounded-full ${tagColor.bg.replace('/20', '')}`} />
+                              <span className={tagColor.text}>{tag.name}</span>
+                            </button>
+                          )
+                        })
+                      ) : (
+                        <div className="px-3 py-4 text-center">
+                          <p className="text-xs text-gray-500 mb-2">Nenhuma tag disponível</p>
+                          <a 
+                            href="/dashboard/settings" 
+                            className="text-xs text-blue-400 hover:text-blue-300 underline"
                           >
-                            <span className={`w-2 h-2 rounded-full ${tagColor.bg.replace('/20', '')}`} />
-                            <span className={tagColor.text}>{tag.name}</span>
-                          </button>
-                        )
-                      })}
+                            Criar tags em Configurações
+                          </a>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
