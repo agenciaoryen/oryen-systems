@@ -2,7 +2,13 @@
 
 import React from 'react'
 import Sidebar from './Sidebar'
-import { Toaster } from 'sonner' // <--- Importação da Sonner
+import { Toaster } from 'sonner'
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DASHBOARD LAYOUT
+// ═══════════════════════════════════════════════════════════════════════════════
+// Este layout envolve todas as páginas dentro de /dashboard/*
+// Inclui a Sidebar (responsiva) e o container principal de conteúdo
 
 export default function DashboardLayout({
   children,
@@ -10,34 +16,31 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    /* Mantemos h-screen e overflow-hidden no container pai para 
-       que a Sidebar fique sempre "presa" na lateral esquerda.
-    */
     <div className="flex h-screen w-full bg-[#0A0A0A] overflow-hidden">
       
-      {/* Sidebar - Fixa na lateral (agora responsiva internamente) */}
+      {/* Sidebar - Fixa no desktop, gaveta no mobile */}
       <Sidebar />
 
-      {/* Conteúdo Principal (Main) 
-          Mudança 1: md:ml-64 (Aplica a margem lateral só no PC)
-          Mudança 2: pt-16 md:pt-0 (Empurra o conteúdo para baixo no celular por causa da barra superior)
-      */}
-      <main className="flex-1 md:ml-64 pt-16 md:pt-0 h-full flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar">
-        {/* Adicionamos um container interno com padding para que 
-            o conteúdo não cole nas bordas e tenha espaço para respirar.
-        */}
-        <div className="p-4 md:p-8 w-full">
+      {/* Conteúdo Principal */}
+      <main className="flex-1 md:ml-64 pt-16 md:pt-0 h-full flex flex-col overflow-y-auto overflow-x-hidden">
+        {/* Container interno com padding */}
+        <div className="p-4 md:p-8 w-full min-h-full">
           {children}
         </div>
       </main>
 
-      {/* Componente Toaster:
-         Fica aqui "escondido", esperando ser chamado pelo Sidebar.
-         - position: onde o balão aparece.
-         - theme: dark (para combinar com o Oryen).
-         - richColors: para usar verde (sucesso) e vermelho (erro) bonitos.
-      */}
-      <Toaster position="bottom-right" theme="dark" richColors />
+      {/* Toast notifications */}
+      <Toaster 
+        position="bottom-right" 
+        theme="dark" 
+        richColors 
+        toastOptions={{
+          style: {
+            background: '#111',
+            border: '1px solid rgba(255,255,255,0.1)',
+          },
+        }}
+      />
       
     </div>
   )

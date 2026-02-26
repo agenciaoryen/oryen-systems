@@ -3,7 +3,10 @@
 import { Building2, MessageSquare, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/lib/AuthContext'
 
-// --- DICIONÁRIO DE TRADUÇÃO ---
+// ═══════════════════════════════════════════════════════════════════════════════
+// TRADUÇÕES
+// ═══════════════════════════════════════════════════════════════════════════════
+
 const TRANSLATIONS = {
   pt: {
     greeting: 'Bem-vindo, {name}!',
@@ -43,38 +46,59 @@ const TRANSLATIONS = {
   }
 }
 
+type Language = keyof typeof TRANSLATIONS
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENTE
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export default function NoOrganizationState() {
   const { user } = useAuth()
 
-  // Detecta o idioma do usuário (padrão pt)
-  const userLang = ((user as any)?.language as keyof typeof TRANSLATIONS) || 'pt'
+  // Detecta o idioma do usuário
+  const userLang = (user?.language as Language) || 'pt'
   const t = TRANSLATIONS[userLang]
 
-  // CORREÇÃO: Usando (user as any) para burlar o erro de tipagem restrita do TypeScript
-  const firstName = (user as any)?.user_metadata?.full_name?.split(' ')[0] || (user as any)?.full_name?.split(' ')[0] || t.visitor
+  // Obtém primeiro nome do usuário
+  const getFirstName = (): string => {
+    // Tenta pegar do user_metadata (Supabase Auth)
+    const rawUser = user as { user_metadata?: { full_name?: string } } | null
+    if (rawUser?.user_metadata?.full_name) {
+      return rawUser.user_metadata.full_name.split(' ')[0]
+    }
+    // Tenta pegar do email
+    if (user?.email) {
+      return user.email.split('@')[0]
+    }
+    return t.visitor
+  }
 
-  // Link do seu WhatsApp de suporte com mensagem traduzida
+  const firstName = getFirstName()
+
+  // Link do WhatsApp de suporte
   const supportLink = `https://wa.me/5551998388409?text=${encodeURIComponent(t.supportMsg)}`
 
   return (
-    <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] text-center px-4 animate-in fade-in zoom-in duration-500">
+    <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] text-center px-4">
       
       {/* Ícone de destaque */}
       <div className="w-24 h-24 bg-blue-600/10 rounded-full flex items-center justify-center mb-6 border border-blue-500/20 shadow-[0_0_30px_rgba(37,99,235,0.15)]">
         <Building2 className="w-10 h-10 text-blue-500" />
       </div>
 
-      <h1 className="text-3xl font-bold text-white mb-3">
+      <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">
         {t.greeting.replace('{name}', firstName)}
       </h1>
       
-      <p className="text-gray-400 max-w-md text-lg mb-8 leading-relaxed">
-        {t.subtitlePart1} <span className="text-blue-400 font-bold">{t.orgHighlight}</span>{t.subtitlePart2}
+      <p className="text-gray-400 max-w-md text-base md:text-lg mb-8 leading-relaxed">
+        {t.subtitlePart1}
+        <span className="text-blue-400 font-bold">{t.orgHighlight}</span>
+        {t.subtitlePart2}
       </p>
 
-      <div className="bg-[#111] border border-white/10 p-6 rounded-2xl max-w-lg w-full mb-8">
+      <div className="bg-[#111] border border-white/10 p-5 md:p-6 rounded-2xl max-w-lg w-full mb-8">
         <h3 className="text-sm font-bold text-gray-300 uppercase mb-4 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+          <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
           {t.nextSteps}
         </h3>
         <p className="text-sm text-gray-500 mb-6">

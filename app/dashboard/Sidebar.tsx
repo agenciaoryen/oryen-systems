@@ -17,10 +17,15 @@ import {
   Menu,
   X,
   ShieldCheck,
+  Building2,
+  ChevronDown,
   type LucideIcon 
 } from 'lucide-react'
 
-// --- 1. DICIONÁRIO DE TRADUÇÃO ---
+// ═══════════════════════════════════════════════════════════════════════════════
+// TRADUÇÕES
+// ═══════════════════════════════════════════════════════════════════════════════
+
 const TRANSLATIONS = {
   pt: {
     sectionTitle: 'Plataforma',
@@ -34,7 +39,11 @@ const TRANSLATIONS = {
     },
     comingSoon: '(Em Breve)',
     logout: 'Sair da Conta',
-    toastAction: 'Ver'
+    toastAction: 'Ver',
+    staffMode: 'Modo Staff',
+    globalAccess: 'Acesso Global',
+    selectOrg: 'Selecione um cliente',
+    viewingAs: 'Visualizando como'
   },
   en: {
     sectionTitle: 'Platform',
@@ -48,7 +57,11 @@ const TRANSLATIONS = {
     },
     comingSoon: '(Coming Soon)',
     logout: 'Logout',
-    toastAction: 'View'
+    toastAction: 'View',
+    staffMode: 'Staff Mode',
+    globalAccess: 'Global Access',
+    selectOrg: 'Select a client',
+    viewingAs: 'Viewing as'
   },
   es: {
     sectionTitle: 'Plataforma',
@@ -62,14 +75,27 @@ const TRANSLATIONS = {
     },
     comingSoon: '(Próximamente)',
     logout: 'Cerrar Sesión',
-    toastAction: 'Ver'
+    toastAction: 'Ver',
+    staffMode: 'Modo Staff',
+    globalAccess: 'Acceso Global',
+    selectOrg: 'Seleccione un cliente',
+    viewingAs: 'Viendo como'
   }
 }
 
-// Função auxiliar para classes
-function cn(...classes: string[]) {
+type Language = keyof typeof TRANSLATIONS
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function cn(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(' ')
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TIPOS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface SidebarItem {
   href: string
@@ -79,37 +105,50 @@ interface SidebarItem {
   isComingSoon?: boolean
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENTE
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { user } = useAuth()
+  
+  // Auth Context com suporte a Staff
+  const { 
+    user, 
+    isStaff, 
+    availableOrgs, 
+    selectedOrgId, 
+    setSelectedOrgId,
+    activeOrgName 
+  } = useAuth()
 
   // Configurações de Localização
-  const userLang = (user?.language as keyof typeof TRANSLATIONS) || 'pt'
+  const userLang = (user?.language as Language) || 'pt'
   const t = TRANSLATIONS[userLang]
 
   // Estados
   const [hasUnreadAlerts, setHasUnreadAlerts] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [userRole, setUserRole] = useState<string | null>(null)
+  const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false)
 
-  // Verifica o nível de acesso do usuário (Staff)
-  useEffect(() => {
-    if (!user?.id) return
-    const fetchRole = async () => {
-      const { data } = await supabase.from('users').select('role').eq('id', user.id).single()
-      if (data) setUserRole(data.role)
-    }
-    fetchRole()
-  }, [user])
-
-  // Função Real de Logout
+  // Função de Logout
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.replace('/login')
   }
 
-  // --- LÓGICA DO BADGE DINÂMICO, TOASTS E SOM ---
+  // Handler para trocar de organização
+  const handleOrgChange = (orgId: string) => {
+    setSelectedOrgId(orgId)
+    setIsOrgDropdownOpen(false)
+    const orgName = availableOrgs.find(o => o.id === orgId)?.name
+    if (orgName) {
+      toast.success(`Visualizando: ${orgName}`)
+    }
+  }
+
+  // ─── BADGE DE ALERTAS + REALTIME + SOM ───
   useEffect(() => {
     if (!user) return
 
@@ -132,15 +171,17 @@ export default function Sidebar() {
         { event: '*', schema: 'public', table: 'alerts', filter: `user_id=eq.${user.id}` },
         (payload) => {
           if (payload.eventType === 'INSERT') {
+            // Som de notificação
             const audio = new Audio('/notification.mp3')
             audio.volume = 0.5 
             audio.play().catch((err) => {
               console.log("Reprodução de áudio bloqueada: ", err)
             })
 
-            const newAlert = payload.new as any 
+            // Toast notification
+            const newAlert = payload.new as { title?: string; description?: string }
             
-            toast.info(newAlert.title, {
+            toast.info(newAlert.title || 'Novo alerta', {
               description: newAlert.description,
               action: {
                 label: t.toastAction,
@@ -162,19 +203,36 @@ export default function Sidebar() {
     }
   }, [user, router, t.toastAction])
 
-  // Definição dos links
+  // ─── FECHAR DROPDOWN AO CLICAR FORA ───
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest('[data-org-dropdown]')) {
+        setIsOrgDropdownOpen(false)
+      }
+    }
+    
+    if (isOrgDropdownOpen) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [isOrgDropdownOpen])
+
+  // ─── LINKS DO MENU ───
   const links: SidebarItem[] = [
     { href: '/dashboard', label: t.menu.overview, icon: LayoutDashboard },
     { href: '/dashboard/alerts', label: t.menu.alerts, icon: Bell, badge: hasUnreadAlerts },
     { href: '/dashboard/crm', label: t.menu.crm, icon: Users },
-    { href: '/dashboard/messages', label: t.menu.conversations, icon: MessageSquare, isComingSoon: true },
+    { href: '/dashboard/messages', label: t.menu.conversations, icon: MessageSquare },
     { href: '/dashboard/agents', label: t.menu.agents, icon: Bot, isComingSoon: true },
     { href: '/dashboard/settings', label: t.menu.settings, icon: Settings },
   ]
 
   return (
     <>
-      {/* ─── BARRA SUPERIOR MOBILE ─── */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          BARRA SUPERIOR MOBILE
+          ═══════════════════════════════════════════════════════════════════════ */}
       <div className="md:hidden fixed top-0 left-0 w-full h-16 bg-[#0A0A0A] border-b border-white/10 flex items-center justify-between px-4 z-40">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)]">
@@ -198,7 +256,9 @@ export default function Sidebar() {
         />
       )}
 
-      {/* ─── SIDEBAR (DESKTOP + GAVETA MOBILE) ─── */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SIDEBAR PRINCIPAL
+          ═══════════════════════════════════════════════════════════════════════ */}
       <aside className={cn(
         "fixed left-0 top-0 h-full w-64 flex-col bg-[#0A0A0A] border-r border-white/10 z-50 transition-transform duration-300 ease-in-out md:translate-x-0 flex",
         isMobileOpen ? "translate-x-0" : "-translate-x-full"
@@ -215,7 +275,7 @@ export default function Sidebar() {
             </span>
           </div>
           
-          {/* Botão de fechar apenas no mobile */}
+          {/* Botão de fechar no mobile */}
           <button 
             onClick={() => setIsMobileOpen(false)}
             className="md:hidden text-gray-500 hover:text-white transition-colors"
@@ -224,9 +284,68 @@ export default function Sidebar() {
           </button>
         </div>
 
-        {/* MENU */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-6 hide-scrollbar">
-          
+        {/* ═══════════════════════════════════════════════════════════════════════
+            SELETOR DE ORGANIZAÇÃO (STAFF ONLY)
+            ═══════════════════════════════════════════════════════════════════════ */}
+        {isStaff && availableOrgs.length > 0 && (
+          <div className="px-4 pt-4 pb-2" data-org-dropdown>
+            <div className="relative">
+              <button
+                onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
+                className="w-full bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-xl p-3 flex items-center justify-between transition-all group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-1.5 bg-indigo-500/20 rounded-lg shrink-0">
+                    <Building2 size={14} className="text-indigo-400" />
+                  </div>
+                  <div className="min-w-0 text-left">
+                    <p className="text-indigo-300 text-[9px] font-black uppercase tracking-widest">
+                      {t.viewingAs}
+                    </p>
+                    <p className="text-white text-xs font-semibold truncate">
+                      {activeOrgName || t.selectOrg}
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown 
+                  size={16} 
+                  className={cn(
+                    "text-indigo-400 transition-transform shrink-0",
+                    isOrgDropdownOpen && "rotate-180"
+                  )} 
+                />
+              </button>
+
+              {/* Dropdown Menu */}
+              {isOrgDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#111] border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50">
+                  <div className="max-h-[240px] overflow-y-auto">
+                    {availableOrgs.map((org) => (
+                      <button
+                        key={org.id}
+                        onClick={() => handleOrgChange(org.id)}
+                        className={cn(
+                          "w-full px-4 py-3 text-left text-sm transition-all flex items-center justify-between group",
+                          selectedOrgId === org.id 
+                            ? "bg-indigo-500/20 text-white" 
+                            : "text-gray-400 hover:bg-white/5 hover:text-white"
+                        )}
+                      >
+                        <span className="truncate">{org.name}</span>
+                        {selectedOrgId === org.id && (
+                          <div className="w-2 h-2 rounded-full bg-indigo-400 shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* MENU DE NAVEGAÇÃO */}
+        <nav className="flex-1 overflow-y-auto p-4 space-y-6">
           <div>
             <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
               {t.sectionTitle}
@@ -240,7 +359,7 @@ export default function Sidebar() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      onClick={() => setIsMobileOpen(false)} // Fecha a gaveta no mobile
+                      onClick={() => setIsMobileOpen(false)}
                       className={cn(
                         'flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group',
                         isActive
@@ -251,10 +370,14 @@ export default function Sidebar() {
                       <div className="flex items-center gap-3 truncate">
                         <Icon size={18} className={isActive ? 'text-blue-400' : 'text-gray-500 group-hover:text-white'} />
                         <span className="truncate">
-                          {link.label} {link.isComingSoon && <span className="text-[10px] opacity-60 ml-1">{t.comingSoon}</span>}
+                          {link.label}
+                          {link.isComingSoon && (
+                            <span className="text-[10px] opacity-60 ml-1">{t.comingSoon}</span>
+                          )}
                         </span>
                       </div>
                       
+                      {/* Badge de notificação */}
                       {link.badge && !isActive && (
                         <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse shrink-0" />
                       )}
@@ -267,21 +390,25 @@ export default function Sidebar() {
         </nav>
 
         {/* INDICADOR STAFF */}
-        {userRole === 'staff' && (
+        {isStaff && (
           <div className="px-4 pb-2">
             <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3 flex items-center gap-3">
               <div className="p-1.5 bg-indigo-500/20 rounded-lg shrink-0">
                 <ShieldCheck size={16} className="text-indigo-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-indigo-300 text-[9px] font-black uppercase tracking-widest truncate">Acesso Global</p>
-                <p className="text-indigo-400 text-xs font-medium truncate">Modo Staff</p>
+                <p className="text-indigo-300 text-[9px] font-black uppercase tracking-widest truncate">
+                  {t.globalAccess}
+                </p>
+                <p className="text-indigo-400 text-xs font-medium truncate">
+                  {t.staffMode}
+                </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* RODAPÉ */}
+        {/* RODAPÉ - LOGOUT */}
         <div className="border-t border-white/5 p-4 bg-black/20 shrink-0">
           <button 
             onClick={handleLogout}

@@ -1,9 +1,8 @@
-// @ts-nocheck
 'use client'
 
 import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/lib/AuthContext'
+import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { useSearchParams } from 'next/navigation'
 import {
   Search,
@@ -22,11 +21,12 @@ import {
   ArrowDown,
   Circle,
   Send,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react'
 
 /* =============================================
-   CUSTOM SCROLLBAR STYLES (inject once)
+   CUSTOM SCROLLBAR STYLES
    ============================================= */
 const scrollbarStyles = `
   .chat-scrollbar::-webkit-scrollbar {
@@ -58,7 +58,7 @@ const scrollbarStyles = `
 `
 
 /* =============================================
-   1. TRANSLATIONS
+   TRANSLATIONS
    ============================================= */
 const TRANSLATIONS = {
   pt: {
@@ -80,6 +80,7 @@ const TRANSLATIONS = {
     document: 'Documento',
     inputPlaceholder: 'Digite uma mensagem...',
     sendError: 'Erro ao enviar. Tente novamente.',
+    refresh: 'Atualizar',
     stages: {
       todos: 'Todas',
       contatado: 'Contatado',
@@ -108,6 +109,7 @@ const TRANSLATIONS = {
     document: 'Document',
     inputPlaceholder: 'Type a message...',
     sendError: 'Failed to send. Try again.',
+    refresh: 'Refresh',
     stages: {
       todos: 'All',
       contatado: 'Contacted',
@@ -136,6 +138,7 @@ const TRANSLATIONS = {
     document: 'Documento',
     inputPlaceholder: 'Escribe un mensaje...',
     sendError: 'Error al enviar. Inténtalo de nuevo.',
+    refresh: 'Actualizar',
     stages: {
       todos: 'Todas',
       contatado: 'Contactado',
@@ -147,36 +150,36 @@ const TRANSLATIONS = {
   },
 }
 
-type TranslationKey = keyof typeof TRANSLATIONS
+type Language = keyof typeof TRANSLATIONS
+type TranslationType = typeof TRANSLATIONS['pt']
 
 /* =============================================
-   2. CONSTANTS & SAFETY FUNCTIONS
+   CONSTANTS & SAFETY FUNCTIONS
    ============================================= */
 const WEBHOOK_SEND_MESSAGE = 'https://webhook2.letierren8n.com/webhook/message_agent_human'
 
-// Função de segurança para evitar falhas de "Invalid Date"
-const parseDateSafe = (dateValue: any) => {
+const parseDateSafe = (dateValue: unknown): Date => {
   try {
     if (!dateValue) return new Date()
-    const d = new Date(dateValue)
+    const d = new Date(String(dateValue))
     return isNaN(d.getTime()) ? new Date() : d
-  } catch (e) {
+  } catch {
     return new Date()
   }
 }
 
 /* =============================================
-   3. TYPES
+   TYPES
    ============================================= */
 interface Message {
   id: string
   lead_id: string
   conversation_id: string
   body: string
-  direction: string
-  sender_type: string
+  direction: 'inbound' | 'outbound'
+  sender_type: 'agent_bot' | 'agent_human' | 'lead'
   sender_name: string | null
-  message_type: string
+  message_type: 'text' | 'image' | 'audio' | 'video' | 'document'
   media_url: string | null
   media_mime_type: string | null
   emotion: string | null
@@ -203,17 +206,17 @@ interface Conversation {
   lead_emotion: string | null
 }
 
-interface AuthUser {
+interface Lead {
   id: string
-  org_id?: string
-  language?: string
-  name?: string
-  full_name?: string
-  email?: string
+  name: string | null
+  nome_empresa: string | null
+  phone: string | null
+  stage: string | null
+  last_message_emotion: string | null
 }
 
 /* =============================================
-   4. HELPERS
+   HELPERS
    ============================================= */
 function getEmotionEmoji(emotion: string | null): string {
   switch (emotion?.toLowerCase()) {
@@ -249,24 +252,20 @@ function formatPhone(phone: string | null): string {
 }
 
 function getDisplayName(conv: Conversation): string {
-  const n = conv.lead_name
-  if (n && n !== '' && n !== 'null') return n
-  const e = conv.lead_nome_empresa
-  if (e && e !== '' && e !== 'null') return e
+  if (conv.lead_name && conv.lead_name !== 'null') return conv.lead_name
+  if (conv.lead_nome_empresa && conv.lead_nome_empresa !== 'null') return conv.lead_nome_empresa
   if (conv.lead_phone) return formatPhone(conv.lead_phone)
   return 'Sem identificação'
 }
 
 function getInitial(conv: Conversation): string {
-  const name = conv.lead_name
-  if (name && name !== '' && name !== 'null') return name[0].toUpperCase()
-  const emp = conv.lead_nome_empresa
-  if (emp && emp !== '' && emp !== 'null') return emp[0].toUpperCase()
+  if (conv.lead_name && conv.lead_name !== 'null') return conv.lead_name[0].toUpperCase()
+  if (conv.lead_nome_empresa && conv.lead_nome_empresa !== 'null') return conv.lead_nome_empresa[0].toUpperCase()
   return '#'
 }
 
-function getSenderIcon(st: string) {
-  switch (st) {
+function getSenderIcon(senderType: string) {
+  switch (senderType) {
     case 'agent_bot': return <Bot size={12} />
     case 'agent_human': return <Headset size={12} />
     case 'lead': return <User size={12} />
@@ -274,8 +273,8 @@ function getSenderIcon(st: string) {
   }
 }
 
-function getSenderColor(st: string): string {
-  switch (st) {
+function getSenderColor(senderType: string): string {
+  switch (senderType) {
     case 'agent_bot': return 'text-violet-400'
     case 'agent_human': return 'text-amber-400'
     case 'lead': return 'text-emerald-400'
@@ -283,7 +282,7 @@ function getSenderColor(st: string): string {
   }
 }
 
-function formatDateLabel(dateStr: string, lang: string, t: typeof TRANSLATIONS.pt): string {
+function formatDateLabel(dateStr: string, lang: string, t: TranslationType): string {
   const d = parseDateSafe(dateStr)
   const today = new Date()
   const yesterday = new Date()
@@ -309,9 +308,9 @@ function formatLastMessageTime(dateStr: string | null, lang: string): string {
 }
 
 /* =============================================
-   5. MEDIA RENDERER
+   MEDIA RENDERER
    ============================================= */
-function MediaContent({ msg, t }: { msg: Message; t: typeof TRANSLATIONS.pt }) {
+function MediaContent({ msg, t }: { msg: Message; t: TranslationType }) {
   if (!msg.message_type || msg.message_type === 'text') return null
 
   switch (msg.message_type) {
@@ -388,12 +387,16 @@ function MediaContent({ msg, t }: { msg: Message; t: typeof TRANSLATIONS.pt }) {
 }
 
 /* =============================================
-   6. MESSAGE BUBBLE
+   MESSAGE BUBBLE
    ============================================= */
 function MessageBubble({
   msg, index, messages, userLang, t,
 }: {
-  msg: Message; index: number; messages: Message[]; userLang: string; t: typeof TRANSLATIONS.pt
+  msg: Message
+  index: number
+  messages: Message[]
+  userLang: string
+  t: TranslationType
 }) {
   const isOutbound = msg.direction === 'outbound'
   const msgDate = parseDateSafe(msg.created_at).toDateString()
@@ -403,7 +406,7 @@ function MessageBubble({
   const isSameSender = prevMsg?.sender_type === msg.sender_type && !showDateHeader
   const isSequence = prevMsg?.direction === msg.direction && !showDateHeader
 
-  const bubbleBg = () => {
+  const bubbleBg = (): string => {
     if (!isOutbound) return 'bg-[#202c33]'
     if (msg.sender_type === 'agent_bot') return 'bg-[#1a1a2e] border border-violet-500/10'
     if (msg.sender_type === 'agent_human') return 'bg-[#1a2e1a] border border-amber-500/10'
@@ -461,12 +464,16 @@ function MessageBubble({
 }
 
 /* =============================================
-   7. CONVERSATION LIST ITEM
+   CONVERSATION LIST ITEM
    ============================================= */
 function ConversationItem({
   conversation: c, isActive, onClick, userLang, t,
 }: {
-  conversation: Conversation; isActive: boolean; onClick: () => void; userLang: string; t: typeof TRANSLATIONS.pt
+  conversation: Conversation
+  isActive: boolean
+  onClick: () => void
+  userLang: string
+  t: TranslationType
 }) {
   return (
     <div
@@ -517,12 +524,15 @@ function ConversationItem({
 }
 
 /* =============================================
-   8. MESSAGE INPUT
+   MESSAGE INPUT
    ============================================= */
 function MessageInput({
   onSend, isSending, sendError, t,
 }: {
-  onSend: (text: string) => void; isSending: boolean; sendError: string | null; t: typeof TRANSLATIONS.pt
+  onSend: (text: string) => void
+  isSending: boolean
+  sendError: string | null
+  t: TranslationType
 }) {
   const [text, setText] = useState('')
   const taRef = useRef<HTMLTextAreaElement>(null)
@@ -582,11 +592,11 @@ function MessageInput({
 }
 
 /* =============================================
-   9. MAIN CONTENT
+   MAIN CONTENT
    ============================================= */
 function MessagesContent() {
-  const { user: rawUser } = useAuth()
-  const user = rawUser as AuthUser | null
+  const { user } = useAuth()
+  const orgId = useActiveOrgId()  // ← USA O HOOK CORRETO!
   const searchParams = useSearchParams()
   const targetLeadId = searchParams.get('lead_id')
 
@@ -604,7 +614,7 @@ function MessagesContent() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  const userLang = (user?.language as TranslationKey) || 'pt'
+  const userLang = (user?.language as Language) || 'pt'
   const t = TRANSLATIONS[userLang]
 
   // Scroll helpers
@@ -624,12 +634,14 @@ function MessagesContent() {
 
   // ---- Fetch conversations ----
   const fetchConversations = useCallback(async () => {
-    if (!user?.org_id) return
+    if (!orgId) return
+
+    setLoadingConversations(true)
 
     const { data, error } = await supabase
       .from('conversations')
       .select('id, org_id, lead_id, channel, status, assigned_to, is_bot_active, last_message_body, last_message_at, unread_count, created_at')
-      .eq('org_id', user.org_id)
+      .eq('org_id', orgId)  // ← USA orgId DO HOOK
       .eq('status', 'active')
       .order('last_message_at', { ascending: false, nullsFirst: false })
 
@@ -640,23 +652,23 @@ function MessagesContent() {
     }
 
     if (data.length > 0) {
-      const leadIds = [...new Set(data.map((c: { lead_id: string }) => c.lead_id).filter(Boolean))]
+      const leadIds = [...new Set(data.map((c) => c.lead_id).filter(Boolean))]
 
       const { data: leads } = await supabase
         .from('leads')
         .select('id, name, nome_empresa, phone, stage, last_message_emotion')
         .in('id', leadIds)
 
-      const leadMap = new Map(
-        (leads || []).map((l: { id: string; name: string; nome_empresa: string; phone: string; stage: string; last_message_emotion: string }) => [l.id, l])
+      const leadMap = new Map<string, Lead>(
+        (leads || []).map((l: Lead) => [l.id, l])
       )
 
-      const enriched: Conversation[] = data.map((c: Record<string, unknown>) => {
-        const lead = leadMap.get(c.lead_id as string) as { name?: string; nome_empresa?: string; phone?: string; stage?: string; last_message_emotion?: string } | undefined
+      const enriched: Conversation[] = data.map((c) => {
+        const lead = leadMap.get(c.lead_id)
         return {
           ...c,
-          lead_name: (lead?.name && lead.name !== '' && lead.name !== 'null') ? lead.name : '',
-          lead_nome_empresa: (lead?.nome_empresa && lead.nome_empresa !== '' && lead.nome_empresa !== 'null') ? lead.nome_empresa : '',
+          lead_name: lead?.name && lead.name !== 'null' ? lead.name : '',
+          lead_nome_empresa: lead?.nome_empresa && lead.nome_empresa !== 'null' ? lead.nome_empresa : '',
           lead_phone: lead?.phone || null,
           lead_stage: lead?.stage || '',
           lead_emotion: lead?.last_message_emotion || null,
@@ -664,19 +676,28 @@ function MessagesContent() {
       })
 
       setConversations(enriched)
+    } else {
+      setConversations([])
     }
 
     setLoadingConversations(false)
-  }, [user?.org_id])
+  }, [orgId])
 
-  useEffect(() => { fetchConversations() }, [fetchConversations])
+  // Re-fetch quando orgId mudar (staff trocou de org)
+  useEffect(() => { 
+    if (orgId) {
+      setActiveConversation(null) // Limpa conversa ativa ao trocar
+      setMessages([])
+      fetchConversations() 
+    }
+  }, [orgId, fetchConversations])
 
   // ---- Deep link ----
   useEffect(() => {
-    if (!targetLeadId || !user?.org_id || conversations.length === 0) return
+    if (!targetLeadId || !orgId || conversations.length === 0) return
     const found = conversations.find(c => c.lead_id === targetLeadId)
     if (found) { setActiveConversation(found); setFilterStage('todos') }
-  }, [targetLeadId, user?.org_id, conversations])
+  }, [targetLeadId, orgId, conversations])
 
   // ---- Fetch messages ----
   useEffect(() => {
@@ -705,7 +726,6 @@ function MessagesContent() {
     }
     go()
     return () => { cancelled = true }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConversation?.id])
 
   // ---- Send message ----
@@ -714,7 +734,8 @@ function MessagesContent() {
     setIsSending(true)
     setSendError(null)
 
-    const senderName = user.full_name || user.name || user.email || 'Atendente'
+    // user.email vem do Supabase Auth, name não existe no tipo AppUser
+    const senderName = user.email?.split('@')[0] || 'Atendente'
 
     try {
       // 1. Webhook → n8n → WhatsApp
@@ -786,10 +807,10 @@ function MessagesContent() {
 
   // ---- Realtime: messages ----
   useEffect(() => {
-    if (!user?.org_id) return
+    if (!orgId) return
     const ch = supabase
       .channel('messages-rt')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `org_id=eq.${user.org_id}` }, (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `org_id=eq.${orgId}` }, (payload) => {
         const m = payload.new as Message
         if (activeConversation && m.conversation_id === activeConversation.id) {
           setMessages(prev => prev.some(x => x.id === m.id) ? prev : [...prev, m])
@@ -810,20 +831,20 @@ function MessagesContent() {
       })
       .subscribe()
     return () => { supabase.removeChannel(ch) }
-  }, [user?.org_id, activeConversation?.id])
+  }, [orgId, activeConversation?.id])
 
   // ---- Realtime: new conversations ----
   useEffect(() => {
-    if (!user?.org_id) return
+    if (!orgId) return
     const ch = supabase
       .channel('convs-rt')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversations', filter: `org_id=eq.${user.org_id}` }, async (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversations', filter: `org_id=eq.${orgId}` }, async (payload) => {
         const nc = payload.new as Conversation
         const { data: lead } = await supabase.from('leads').select('id, name, nome_empresa, phone, stage, last_message_emotion').eq('id', nc.lead_id).single()
         const enriched: Conversation = {
           ...nc,
-          lead_name: (lead?.name && lead.name !== '' && lead.name !== 'null') ? lead.name : '',
-          lead_nome_empresa: (lead?.nome_empresa && lead.nome_empresa !== '' && lead.nome_empresa !== 'null') ? lead.nome_empresa : '',
+          lead_name: lead?.name && lead.name !== 'null' ? lead.name : '',
+          lead_nome_empresa: lead?.nome_empresa && lead.nome_empresa !== 'null' ? lead.nome_empresa : '',
           lead_phone: lead?.phone || null,
           lead_stage: lead?.stage || '',
           lead_emotion: lead?.last_message_emotion || null,
@@ -832,7 +853,7 @@ function MessagesContent() {
       })
       .subscribe()
     return () => { supabase.removeChannel(ch) }
-  }, [user?.org_id])
+  }, [orgId])
 
   // Filters
   const allowedStages = ['todos', 'contatado', 'Lead respondeu', 'qualificado', 'reuniao', 'ganho']
@@ -850,11 +871,20 @@ function MessagesContent() {
       <div className="flex h-[calc(100vh-120px)] bg-[#111b21] rounded-2xl border border-[#222d34] overflow-hidden shadow-2xl">
 
         {/* COL 1: PIPELINE FILTERS */}
-        <div className={`w-52 border-r border-[#222d34] bg-[#0b141a] p-4 flex flex-col gap-1 transition-opacity duration-300
+        <div className={`hidden lg:flex w-52 border-r border-[#222d34] bg-[#0b141a] p-4 flex-col gap-1 transition-opacity duration-300
           ${activeConversation ? 'opacity-40 hover:opacity-100' : ''}`}>
-          <h3 className="text-[10px] font-bold text-[#8696a0] uppercase tracking-widest mb-3 px-2">
-            {t.activePipeline}
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-[10px] font-bold text-[#8696a0] uppercase tracking-widest px-2">
+              {t.activePipeline}
+            </h3>
+            <button
+              onClick={fetchConversations}
+              className="p-1.5 text-[#8696a0] hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+              title={t.refresh}
+            >
+              <RefreshCw size={14} />
+            </button>
+          </div>
           {allowedStages.map(stage => (
             <button
               key={stage}
@@ -870,8 +900,8 @@ function MessagesContent() {
         </div>
 
         {/* COL 2: CONVERSATION LIST */}
-        <div className={`w-[340px] border-r border-[#222d34] flex flex-col bg-[#111b21] transition-opacity duration-300
-          ${activeConversation ? 'opacity-40 hover:opacity-100' : ''}`}>
+        <div className={`w-full sm:w-[340px] border-r border-[#222d34] flex flex-col bg-[#111b21] transition-opacity duration-300
+          ${activeConversation ? 'hidden sm:flex sm:opacity-40 sm:hover:opacity-100' : ''}`}>
           {/* Search */}
           <div className="p-2 bg-[#111b21]">
             <div className="relative">
@@ -912,11 +942,19 @@ function MessagesContent() {
         </div>
 
         {/* COL 3: CHAT */}
-        <div className="flex-1 flex flex-col bg-[#0b141a] relative">
+        <div className={`flex-1 flex flex-col bg-[#0b141a] relative ${!activeConversation ? 'hidden sm:flex' : ''}`}>
           {activeConversation ? (
             <>
               {/* Header */}
               <div className="px-4 py-[10px] bg-[#202c33] flex items-center gap-3 z-20">
+                {/* Botão voltar no mobile */}
+                <button
+                  onClick={() => setActiveConversation(null)}
+                  className="sm:hidden p-2 -ml-2 text-[#aebac1] hover:text-white"
+                >
+                  <X size={20} />
+                </button>
+                
                 <div className="w-10 h-10 rounded-full bg-[#6b7b8d] flex items-center justify-center text-white font-medium text-sm">
                   {getInitial(activeConversation)}
                 </div>
@@ -924,7 +962,7 @@ function MessagesContent() {
                   <h3 className="text-[#e9edef] font-normal text-[15px] truncate">
                     {getDisplayName(activeConversation)}
                   </h3>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[11px] text-[#8696a0] uppercase tracking-wide flex items-center gap-1">
                       <Circle size={6} className="fill-[#25d366] text-[#25d366]" />
                       {activeConversation.lead_stage}
@@ -935,7 +973,7 @@ function MessagesContent() {
                       </span>
                     )}
                     {activeConversation.lead_phone && (
-                      <span className="text-[11px] text-[#8696a0]">
+                      <span className="text-[11px] text-[#8696a0] hidden sm:inline">
                         {formatPhone(activeConversation.lead_phone)}
                       </span>
                     )}
@@ -955,7 +993,7 @@ function MessagesContent() {
                   )}
                   <button
                     onClick={() => { setActiveConversation(null); setSendError(null) }}
-                    className="p-2 text-[#aebac1] hover:text-white rounded-full hover:bg-[#374045] transition-colors"
+                    className="hidden sm:block p-2 text-[#aebac1] hover:text-white rounded-full hover:bg-[#374045] transition-colors"
                     title={t.closeChat}
                   >
                     <X size={18} />
@@ -1018,7 +1056,7 @@ function MessagesContent() {
 }
 
 /* =============================================
-   10. PAGE EXPORT
+   PAGE EXPORT
    ============================================= */
 export default function MessagesPage() {
   return (
