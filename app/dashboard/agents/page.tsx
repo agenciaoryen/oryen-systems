@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { 
   Lock, Settings, PlayCircle, PauseCircle, AlertTriangle, 
   CheckCircle2, Target, Headphones, Rocket, Zap, X, Save,
-  Activity, DollarSign, AlertCircle
+  Activity, DollarSign, AlertCircle, Loader2 // <--- Adicione o Loader2 aqui!
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 // Importando os locales para data
