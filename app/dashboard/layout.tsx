@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Sidebar from './Sidebar'
-import { Toaster } from 'sonner' // <--- 1. Importação da Sonner
+import { Toaster } from 'sonner' // <--- Importação da Sonner
 
 export default function DashboardLayout({
   children,
@@ -15,14 +15,14 @@ export default function DashboardLayout({
     */
     <div className="flex h-screen w-full bg-[#0A0A0A] overflow-hidden">
       
-      {/* Sidebar - Fixa na lateral */}
+      {/* Sidebar - Fixa na lateral (agora responsiva internamente) */}
       <Sidebar />
 
       {/* Conteúdo Principal (Main) 
-          Mudança: overflow-y-auto permite rolar para baixo.
-          Mudança: overflow-x-hidden impede o balanço lateral.
+          Mudança 1: md:ml-64 (Aplica a margem lateral só no PC)
+          Mudança 2: pt-16 md:pt-0 (Empurra o conteúdo para baixo no celular por causa da barra superior)
       */}
-      <main className="flex-1 ml-64 h-full flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar">
+      <main className="flex-1 md:ml-64 pt-16 md:pt-0 h-full flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar">
         {/* Adicionamos um container interno com padding para que 
             o conteúdo não cole nas bordas e tenha espaço para respirar.
         */}
@@ -31,7 +31,7 @@ export default function DashboardLayout({
         </div>
       </main>
 
-      {/* 2. Componente Toaster:
+      {/* Componente Toaster:
          Fica aqui "escondido", esperando ser chamado pelo Sidebar.
          - position: onde o balão aparece.
          - theme: dark (para combinar com o Oryen).
