@@ -22,7 +22,8 @@ import {
   Bot,
   Clock,
   Check,
-  ExternalLink
+  ExternalLink,
+  Pencil
 } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -68,7 +69,7 @@ interface PipelineStage {
   is_lost: boolean
 }
 
-interface Tag {
+interface LeadTag {
   id: string
   org_id: string
   name: string
@@ -116,7 +117,13 @@ const TRANSLATIONS = {
     quickActions: 'Ações Rápidas',
     stageChanged: 'Etapa alterada para',
     tagAdded: 'Tag adicionada:',
-    tagRemoved: 'Tag removida:'
+    tagRemoved: 'Tag removida:',
+    noName: 'Sem nome',
+    editName: 'Editar nome',
+    namePlaceholder: 'Nome do lead',
+    companyPlaceholder: 'Nome da empresa',
+    noTagsAvailable: 'Nenhuma tag disponível',
+    createTagsInSettings: 'Criar tags em Configurações'
   },
   en: {
     back: 'Back',
@@ -154,7 +161,13 @@ const TRANSLATIONS = {
     quickActions: 'Quick Actions',
     stageChanged: 'Stage changed to',
     tagAdded: 'Tag added:',
-    tagRemoved: 'Tag removed:'
+    tagRemoved: 'Tag removed:',
+    noName: 'No name',
+    editName: 'Edit name',
+    namePlaceholder: 'Lead name',
+    companyPlaceholder: 'Company name',
+    noTagsAvailable: 'No tags available',
+    createTagsInSettings: 'Create tags in Settings'
   },
   es: {
     back: 'Volver',
@@ -192,7 +205,13 @@ const TRANSLATIONS = {
     quickActions: 'Acciones Rápidas',
     stageChanged: 'Etapa cambiada a',
     tagAdded: 'Tag añadida:',
-    tagRemoved: 'Tag eliminada:'
+    tagRemoved: 'Tag eliminada:',
+    noName: 'Sin nombre',
+    editName: 'Editar nombre',
+    namePlaceholder: 'Nombre del lead',
+    companyPlaceholder: 'Nombre de la empresa',
+    noTagsAvailable: 'Ninguna tag disponible',
+    createTagsInSettings: 'Crear tags en Configuración'
   }
 }
 
@@ -280,8 +299,8 @@ export default function LeadProfilePage() {
   const [lead, setLead] = useState<LeadDetails | null>(null)
   const [events, setEvents] = useState<LeadEvent[]>([])
   const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([])
-  const [allTags, setAllTags] = useState<Tag[]>([])
-  const [leadTags, setLeadTags] = useState<Tag[]>([])
+  const [allTags, setAllTags] = useState<LeadTag[]>([])
+  const [leadTags, setLeadTags] = useState<LeadTag[]>([])
 
   // Estados de UI
   const [loading, setLoading] = useState(true)
@@ -292,6 +311,11 @@ export default function LeadProfilePage() {
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false)
   const [savingStage, setSavingStage] = useState(false)
 
+  // Estados de edição de nome
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editCompany, setEditCompany] = useState('')
+
   // ─── CARREGAR DADOS ───
   const fetchData = useCallback(async () => {
     if (!leadId || !orgId) return
@@ -300,7 +324,6 @@ export default function LeadProfilePage() {
       setLoading(true)
       setErrorMessage(null)
 
-      // Buscar tudo em paralelo
       const [leadRes, eventsRes, stagesRes, tagsRes, leadTagsRes] = await Promise.all([
         supabase.from('leads').select('*').eq('id', leadId).single(),
         supabase.from('lead_events').select('*').eq('lead_id', leadId).order('created_at', { ascending: false }),
@@ -311,22 +334,22 @@ export default function LeadProfilePage() {
 
       if (leadRes.error) throw leadRes.error
       if (!leadRes.data) {
-        setErrorMessage('Lead não encontrado no banco de dados.')
+        setErrorMessage(t.notFoundDesc)
         return
       }
 
-      // Verificar se o lead pertence à org atual
       if (leadRes.data.org_id !== orgId) {
-        setErrorMessage('Você não tem permissão para ver este lead.')
+        setErrorMessage(t.notFoundDesc)
         return
       }
 
       setLead(leadRes.data)
+      setEditName(leadRes.data.name || '')
+      setEditCompany(leadRes.data.nome_empresa || '')
       setEvents(eventsRes.data || [])
       setPipelineStages(stagesRes.data || [])
       setAllTags(tagsRes.data || [])
 
-      // Mapear tags do lead
       const leadTagIds = (leadTagsRes.data || []).map(lt => lt.tag_id)
       const leadTagsData = (tagsRes.data || []).filter(tag => leadTagIds.includes(tag.id))
       setLeadTags(leadTagsData)
@@ -334,11 +357,11 @@ export default function LeadProfilePage() {
     } catch (err: unknown) {
       console.error('Erro ao carregar dados:', err)
       const error = err as { message?: string }
-      setErrorMessage(error.message || 'Erro ao carregar dados')
+      setErrorMessage(error.message || t.errorUpdate)
     } finally {
       setLoading(false)
     }
-  }, [leadId, orgId])
+  }, [leadId, orgId, t.notFoundDesc, t.errorUpdate])
 
   useEffect(() => {
     fetchData()
@@ -383,6 +406,34 @@ export default function LeadProfilePage() {
     }
   }
 
+  // ─── SALVAR NOME/EMPRESA ───
+  const handleSaveName = async () => {
+    if (!leadId || !lead) return
+
+    const newName = editName.trim() || null
+    const newCompany = editCompany.trim() || null
+
+    setLead(prev => prev ? { ...prev, name: newName || '', nome_empresa: newCompany || undefined } : null)
+    setIsEditingName(false)
+
+    const { error } = await supabase
+      .from('leads')
+      .update({ 
+        name: newName, 
+        nome_empresa: newCompany, 
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', leadId)
+
+    if (error) {
+      console.error('Erro ao atualizar nome:', error)
+      setLead(prev => prev ? { ...prev, name: lead.name, nome_empresa: lead.nome_empresa } : null)
+      setEditName(lead.name || '')
+      setEditCompany(lead.nome_empresa || '')
+      alert(t.errorUpdate)
+    }
+  }
+
   // ─── MUDAR ESTÁGIO ───
   const handleChangeStage = async (newStage: string) => {
     if (!lead || !leadId || lead.stage === newStage) {
@@ -405,7 +456,6 @@ export default function LeadProfilePage() {
 
       if (error) throw error
 
-      // Registrar evento
       const { data: eventData } = await supabase
         .from('lead_events')
         .insert({
@@ -430,8 +480,8 @@ export default function LeadProfilePage() {
   }
 
   // ─── ADICIONAR TAG ───
-  const handleAddTag = async (tag: Tag) => {
-    if (!leadId || leadTags.some(t => t.id === tag.id)) {
+  const handleAddTag = async (tag: LeadTag) => {
+    if (!leadId || leadTags.some(lt => lt.id === tag.id)) {
       setIsTagDropdownOpen(false)
       return
     }
@@ -446,7 +496,6 @@ export default function LeadProfilePage() {
 
       if (error) throw error
 
-      // Registrar evento
       const { data: eventData } = await supabase
         .from('lead_events')
         .insert({
@@ -463,15 +512,15 @@ export default function LeadProfilePage() {
 
     } catch (error) {
       console.error('Erro ao adicionar tag:', error)
-      setLeadTags(prev => prev.filter(t => t.id !== tag.id))
+      setLeadTags(prev => prev.filter(lt => lt.id !== tag.id))
     }
   }
 
   // ─── REMOVER TAG ───
-  const handleRemoveTag = async (tag: Tag) => {
+  const handleRemoveTag = async (tag: LeadTag) => {
     if (!leadId) return
 
-    setLeadTags(prev => prev.filter(t => t.id !== tag.id))
+    setLeadTags(prev => prev.filter(lt => lt.id !== tag.id))
 
     try {
       const { error } = await supabase
@@ -482,7 +531,6 @@ export default function LeadProfilePage() {
 
       if (error) throw error
 
-      // Registrar evento
       const { data: eventData } = await supabase
         .from('lead_events')
         .insert({
@@ -552,7 +600,6 @@ export default function LeadProfilePage() {
   // RENDERIZAÇÃO
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  // Loading
   if (loading) {
     return (
       <div className="min-h-[calc(100vh-100px)] flex flex-col items-center justify-center bg-[#0A0A0A] text-white">
@@ -562,7 +609,6 @@ export default function LeadProfilePage() {
     )
   }
 
-  // Não encontrado
   if (!lead) {
     return (
       <div className="min-h-[calc(100vh-100px)] flex flex-col items-center justify-center bg-[#0A0A0A] text-white p-6 text-center">
@@ -570,7 +616,7 @@ export default function LeadProfilePage() {
         <h2 className="text-2xl font-bold mb-2">{t.notFoundTitle}</h2>
         <p className="text-gray-400 mb-6">{errorMessage || t.notFoundDesc}</p>
         <div className="bg-gray-900 p-2 rounded text-xs font-mono text-gray-500 mb-6 border border-gray-800">
-          {t.notFoundId} {leadId || 'Nenhum'}
+          {t.notFoundId} {leadId || 'N/A'}
         </div>
         <button
           onClick={() => router.push('/dashboard/crm')}
@@ -582,7 +628,7 @@ export default function LeadProfilePage() {
     )
   }
 
-  const displayName = lead.nome_empresa || lead.name || 'Sem nome'
+  const displayName = lead.nome_empresa || lead.name || t.noName
   const currentStage = pipelineStages.find(s => s.name === lead.stage)
   const stageColor = currentStage ? getStageColor(currentStage.color) : getStageColor('gray')
   const availableTags = allTags.filter(tag => !leadTags.some(lt => lt.id === tag.id))
@@ -625,20 +671,80 @@ export default function LeadProfilePage() {
           <div className="bg-[#111] border border-white/5 rounded-2xl p-5 md:p-8 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-blue-400 to-transparent opacity-50" />
 
-            <div className="flex flex-col md:flex-row gap-6 items-center">
-              <div className="w-20 h-20 md:w-24 md:h-24 shrink-0 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-2xl md:text-3xl font-black shadow-lg shadow-blue-900/40 text-white border border-blue-500/30">
-                {displayName[0]?.toUpperCase()}
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+              <div className="w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-xl md:text-2xl font-black shadow-lg shadow-blue-900/40 text-white border border-blue-500/30">
+                {displayName[0]?.toUpperCase() || '?'}
               </div>
 
-              <div className="flex-1 text-center md:text-left min-w-0">
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-white mb-1 truncate" title={displayName}>
-                  {displayName}
-                </h1>
-                {lead.nome_empresa && lead.name && (
-                  <p className="text-gray-400 text-sm mb-3 italic truncate">{t.contact}: {lead.name}</p>
+              <div className="flex-1 min-w-0 w-full">
+                {/* Nome Editável */}
+                {isEditingName ? (
+                  <div className="space-y-3 mb-4">
+                    <div>
+                      <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">
+                        {t.namePlaceholder}
+                      </label>
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder={t.namePlaceholder}
+                        className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-lg text-white outline-none focus:border-blue-500 transition-all"
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">
+                        {t.companyPlaceholder}
+                      </label>
+                      <input
+                        type="text"
+                        value={editCompany}
+                        onChange={(e) => setEditCompany(e.target.value)}
+                        placeholder={t.companyPlaceholder}
+                        className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-lg text-white outline-none focus:border-blue-500 transition-all"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSaveName}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors"
+                      >
+                        <Check size={16} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditingName(false)
+                          setEditName(lead.name || '')
+                          setEditCompany(lead.nome_empresa || '')
+                        }}
+                        className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-3">
+                    <div className="flex items-start gap-2 group">
+                      <h1 className="text-xl md:text-2xl font-bold text-white break-words leading-tight">
+                        {displayName}
+                      </h1>
+                      <button
+                        onClick={() => setIsEditingName(true)}
+                        className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 shrink-0 mt-1"
+                        title={t.editName}
+                      >
+                        <Pencil size={14} />
+                      </button>
+                    </div>
+                    {lead.nome_empresa && lead.name && (
+                      <p className="text-gray-400 text-sm mt-1">{t.contact}: {lead.name}</p>
+                    )}
+                  </div>
                 )}
 
-                <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
+                <div className="flex flex-wrap gap-2 mt-3">
                   {/* Seletor de Estágio */}
                   <div className="relative">
                     <button
@@ -692,25 +798,25 @@ export default function LeadProfilePage() {
                     </div>
                   )}
                 </div>
-              </div>
 
-              {/* Botões de Ação */}
-              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                <button
-                  onClick={openChat}
-                  className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-xl font-bold flex justify-center items-center gap-2 transition-all shadow-lg text-sm"
-                >
-                  <MessageSquare size={16} />
-                  {t.openChat}
-                </button>
-                <button
-                  onClick={openWhatsApp}
-                  disabled={!lead.phone}
-                  className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-800 disabled:text-gray-500 text-white px-4 py-3 rounded-xl font-bold flex justify-center items-center gap-2 transition-all shadow-lg text-sm"
-                >
-                  <ExternalLink size={16} />
-                  {t.whatsapp}
-                </button>
+                {/* Botões de Ação */}
+                <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                  <button
+                    onClick={openChat}
+                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 transition-all shadow-lg text-sm"
+                  >
+                    <MessageSquare size={16} />
+                    {t.openChat}
+                  </button>
+                  <button
+                    onClick={openWhatsApp}
+                    disabled={!lead.phone}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-800 disabled:text-gray-500 text-white px-4 py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 transition-all shadow-lg text-sm"
+                  >
+                    <ExternalLink size={16} />
+                    {t.whatsapp}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -768,12 +874,12 @@ export default function LeadProfilePage() {
                         })
                       ) : (
                         <div className="px-3 py-4 text-center">
-                          <p className="text-xs text-gray-500 mb-2">Nenhuma tag disponível</p>
+                          <p className="text-xs text-gray-500 mb-2">{t.noTagsAvailable}</p>
                           <a 
                             href="/dashboard/settings" 
                             className="text-xs text-blue-400 hover:text-blue-300 underline"
                           >
-                            Criar tags em Configurações
+                            {t.createTagsInSettings}
                           </a>
                         </div>
                       )}
