@@ -6,10 +6,14 @@ import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { 
   Plus, FileText, Settings, Trash2, X, Save, 
-  Clock, Calendar, MessageCircle, BarChart3, Loader2, Info
+  Clock, Calendar, MessageCircle, BarChart3, Loader2, Info,
+  CheckCircle2, XCircle, Send
 } from 'lucide-react'
 
-// --- DICIONÁRIO DE TRADUÇÃO ---
+// ═══════════════════════════════════════════════════════════════════════════════
+// TRADUÇÕES
+// ═══════════════════════════════════════════════════════════════════════════════
+
 const TRANSLATIONS = {
   pt: {
     title: 'Relatórios Automatizados',
@@ -22,19 +26,32 @@ const TRANSLATIONS = {
     saving: 'Salvando...',
     cancel: 'Cancelar',
     deleteConfirm: 'Tem certeza que deseja excluir este relatório?',
+    active: 'Ativo',
+    inactive: 'Inativo',
+    nextSend: 'Próximo envio',
+    metricsSelected: 'métricas selecionadas',
     // Form fields
     nameLabel: 'Nome do Relatório',
     namePlaceholder: 'Ex: Fechamento Diário Diretoria',
     whatsappLabel: 'WhatsApp Destinatário',
     whatsappPlaceholder: 'Ex: 5511999999999',
-    whatsappHint: 'Apenas números, inclua código do país (55) e DDD. Ex: 5551988887777',
+    whatsappHint: 'Apenas números, inclua código do país (55) e DDD',
     frequencyLabel: 'Frequência',
     timeLabel: 'Horário de Envio',
     dayLabel: 'Dia de Envio',
+    dayOfMonth: 'Dia do Mês',
     // Frequencies
     freqDaily: 'Diário',
     freqWeekly: 'Semanal',
     freqMonthly: 'Mensal',
+    // Days of week
+    monday: 'Segunda-feira',
+    tuesday: 'Terça-feira',
+    wednesday: 'Quarta-feira',
+    thursday: 'Quinta-feira',
+    friday: 'Sexta-feira',
+    saturday: 'Sábado',
+    sunday: 'Domingo',
     // Metrics
     metricsTitle: 'Métricas Operacionais',
     metricsDesc: 'Selecione os dados de esforço e tração',
@@ -44,7 +61,10 @@ const TRANSLATIONS = {
     m_canais_origem: 'Canais de Origem',
     m_mensagens_enviadas: 'Disparos de Mensagens',
     m_ligacoes_feitas: 'Ligações Realizadas',
-    m_leads_responderam: 'Leads que Responderam'
+    m_leads_responderam: 'Leads que Responderam',
+    // Next send
+    today: 'Hoje',
+    tomorrow: 'Amanhã'
   },
   en: {
     title: 'Automated Reports',
@@ -57,17 +77,29 @@ const TRANSLATIONS = {
     saving: 'Saving...',
     cancel: 'Cancel',
     deleteConfirm: 'Are you sure you want to delete this report?',
+    active: 'Active',
+    inactive: 'Inactive',
+    nextSend: 'Next send',
+    metricsSelected: 'metrics selected',
     nameLabel: 'Report Name',
     namePlaceholder: 'Ex: Daily Board Summary',
     whatsappLabel: 'Recipient WhatsApp',
     whatsappPlaceholder: 'Ex: 1234567890',
-    whatsappHint: 'Numbers only, with country code. Ex: 12125551234',
+    whatsappHint: 'Numbers only, with country code',
     frequencyLabel: 'Frequency',
     timeLabel: 'Send Time',
     dayLabel: 'Send Day',
+    dayOfMonth: 'Day of Month',
     freqDaily: 'Daily',
     freqWeekly: 'Weekly',
     freqMonthly: 'Monthly',
+    monday: 'Monday',
+    tuesday: 'Tuesday',
+    wednesday: 'Wednesday',
+    thursday: 'Thursday',
+    friday: 'Friday',
+    saturday: 'Saturday',
+    sunday: 'Sunday',
     metricsTitle: 'Operational Metrics',
     metricsDesc: 'Select effort and traction data',
     pipelineTitle: 'Pipeline Metrics',
@@ -76,7 +108,9 @@ const TRANSLATIONS = {
     m_canais_origem: 'Source Channels',
     m_mensagens_enviadas: 'Messages Sent',
     m_ligacoes_feitas: 'Calls Made',
-    m_leads_responderam: 'Leads Responded'
+    m_leads_responderam: 'Leads Responded',
+    today: 'Today',
+    tomorrow: 'Tomorrow'
   },
   es: {
     title: 'Reportes Automatizados',
@@ -89,17 +123,29 @@ const TRANSLATIONS = {
     saving: 'Guardando...',
     cancel: 'Cancelar',
     deleteConfirm: '¿Estás seguro de que deseas eliminar este reporte?',
+    active: 'Activo',
+    inactive: 'Inactivo',
+    nextSend: 'Próximo envío',
+    metricsSelected: 'métricas seleccionadas',
     nameLabel: 'Nombre del Reporte',
     namePlaceholder: 'Ej: Resumen Diario',
     whatsappLabel: 'WhatsApp Destinatario',
     whatsappPlaceholder: 'Ej: 56912345678',
-    whatsappHint: 'Solo números, con código de país. Ej: 56912345678',
+    whatsappHint: 'Solo números, con código de país',
     frequencyLabel: 'Frecuencia',
     timeLabel: 'Hora de Envío',
     dayLabel: 'Día de Envío',
+    dayOfMonth: 'Día del Mes',
     freqDaily: 'Diario',
     freqWeekly: 'Semanal',
     freqMonthly: 'Mensual',
+    monday: 'Lunes',
+    tuesday: 'Martes',
+    wednesday: 'Miércoles',
+    thursday: 'Jueves',
+    friday: 'Viernes',
+    saturday: 'Sábado',
+    sunday: 'Domingo',
     metricsTitle: 'Métricas Operativas',
     metricsDesc: 'Selecciona los datos de esfuerzo y tracción',
     pipelineTitle: 'Métricas del Embudo',
@@ -108,9 +154,13 @@ const TRANSLATIONS = {
     m_canais_origem: 'Canales de Origen',
     m_mensagens_enviadas: 'Mensajes Enviados',
     m_ligacoes_feitas: 'Llamadas Realizadas',
-    m_leads_responderam: 'Leads Respondieron'
+    m_leads_responderam: 'Leads Respondieron',
+    today: 'Hoy',
+    tomorrow: 'Mañana'
   }
 }
+
+type Language = keyof typeof TRANSLATIONS
 
 const DEFAULT_BASE_METRICS = {
   leads_captados: true,
@@ -120,11 +170,74 @@ const DEFAULT_BASE_METRICS = {
   leads_responderam: true
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function getNextSendDate(report: any, t: any): string {
+  const now = new Date()
+  const [hours, minutes] = (report.send_time || '18:00').substring(0, 5).split(':').map(Number)
+  
+  if (report.frequency === 'daily') {
+    const today = new Date()
+    today.setHours(hours, minutes, 0, 0)
+    
+    if (now < today) {
+      return `${t.today}, ${report.send_time.substring(0, 5)}`
+    } else {
+      return `${t.tomorrow}, ${report.send_time.substring(0, 5)}`
+    }
+  }
+  
+  if (report.frequency === 'weekly') {
+    const daysMap: Record<string, number> = {
+      sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+      thursday: 4, friday: 5, saturday: 6
+    }
+    const targetDay = daysMap[report.send_day] ?? 1
+    const currentDay = now.getDay()
+    let daysUntil = targetDay - currentDay
+    if (daysUntil < 0) daysUntil += 7
+    if (daysUntil === 0) {
+      const todayTime = new Date()
+      todayTime.setHours(hours, minutes, 0, 0)
+      if (now >= todayTime) daysUntil = 7
+    }
+    
+    const nextDate = new Date()
+    nextDate.setDate(now.getDate() + daysUntil)
+    return `${nextDate.toLocaleDateString()}, ${report.send_time.substring(0, 5)}`
+  }
+  
+  if (report.frequency === 'monthly') {
+    const targetDay = parseInt(report.send_day) || 1
+    let nextDate = new Date(now.getFullYear(), now.getMonth(), targetDay, hours, minutes)
+    
+    if (now >= nextDate) {
+      nextDate = new Date(now.getFullYear(), now.getMonth() + 1, targetDay, hours, minutes)
+    }
+    
+    return `${nextDate.toLocaleDateString()}, ${report.send_time.substring(0, 5)}`
+  }
+  
+  return '-'
+}
+
+function countSelectedMetrics(report: any): number {
+  const baseCount = Object.values(report.metrics?.base || {}).filter(Boolean).length
+  const pipelineCount = (report.metrics?.pipeline || []).length
+  return baseCount + pipelineCount
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENTE PRINCIPAL
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export default function ReportsPage() {
   const { user } = useAuth()
   const activeOrgId = useActiveOrgId()
   
-  const userLang = ((user as any)?.language as keyof typeof TRANSLATIONS) || 'pt'
+  const userLang = ((user as any)?.language as Language) || 'pt'
   const t = TRANSLATIONS[userLang]
 
   const [reports, setReports] = useState<any[]>([])
@@ -147,6 +260,17 @@ export default function ReportsPage() {
     pipeline_stages: [] as string[]
   })
 
+  // Dias da semana traduzidos
+  const daysOfWeek = [
+    { value: 'monday', label: t.monday },
+    { value: 'tuesday', label: t.tuesday },
+    { value: 'wednesday', label: t.wednesday },
+    { value: 'thursday', label: t.thursday },
+    { value: 'friday', label: t.friday },
+    { value: 'saturday', label: t.saturday },
+    { value: 'sunday', label: t.sunday }
+  ]
+
   useEffect(() => {
     fetchData()
   }, [activeOrgId])
@@ -155,7 +279,6 @@ export default function ReportsPage() {
     if (!activeOrgId) return
     setLoading(true)
     try {
-      // Busca os relatórios e as etapas do funil ao mesmo tempo
       const [reportsRes, stagesRes] = await Promise.all([
         supabase.from('report_configs').select('*').eq('org_id', activeOrgId).order('created_at', { ascending: false }),
         supabase.from('pipeline_stages').select('id, name, label').eq('org_id', activeOrgId).eq('is_active', true).order('position')
@@ -173,7 +296,7 @@ export default function ReportsPage() {
     }
   }
 
-  const handleOpenModal = (report = null) => {
+  const handleOpenModal = (report: any = null) => {
     if (report) {
       setEditingId(report.id)
       setFormData({
@@ -187,7 +310,6 @@ export default function ReportsPage() {
       })
     } else {
       setEditingId(null)
-      // Por padrão, todas as etapas vêm marcadas ao criar um novo relatório
       const allStageIds = pipelineStages.map(s => s.id)
       setFormData({
         name: '',
@@ -227,7 +349,7 @@ export default function ReportsPage() {
       await supabase.from('report_configs').update({ is_active: !currentStatus }).eq('id', id)
     } catch (err) {
       console.error(err)
-      fetchData() // Reverte visualmente em caso de erro
+      fetchData()
     }
   }
 
@@ -248,7 +370,6 @@ export default function ReportsPage() {
     
     setIsSaving(true)
     
-    // Constrói o novo JSON Híbrido
     const combinedMetrics = {
       base: formData.metrics,
       pipeline: formData.pipeline_stages
@@ -280,30 +401,24 @@ export default function ReportsPage() {
     }
   }
 
-  const daysOfWeek = [
-    { value: 'monday', label: 'Segunda-feira' },
-    { value: 'tuesday', label: 'Terça-feira' },
-    { value: 'wednesday', label: 'Quarta-feira' },
-    { value: 'thursday', label: 'Quinta-feira' },
-    { value: 'friday', label: 'Sexta-feira' },
-    { value: 'saturday', label: 'Sábado' },
-    { value: 'sunday', label: 'Domingo' }
-  ]
+  // Contador de métricas selecionadas no form
+  const selectedMetricsCount = Object.values(formData.metrics).filter(Boolean).length + formData.pipeline_stages.length
 
   return (
-    <div className="min-h-[calc(100vh-100px)] bg-[#0A0A0A] p-6 font-sans animate-in fade-in duration-300">
+    <div className="min-h-[calc(100vh-100px)] bg-[#0A0A0A] p-4 sm:p-6 font-sans animate-in fade-in duration-300 overflow-x-hidden">
       
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <BarChart3 className="text-blue-500" /> {t.title}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 max-w-full">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+            <BarChart3 className="text-blue-500 shrink-0" size={24} /> 
+            <span className="truncate">{t.title}</span>
           </h1>
-          <p className="text-sm text-gray-500 mt-1">{t.subtitle}</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.subtitle}</p>
         </div>
         <button 
           onClick={() => handleOpenModal()}
-          className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
+          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 shrink-0"
         >
           <Plus size={18} /> {t.newReport}
         </button>
@@ -318,7 +433,7 @@ export default function ReportsPage() {
 
       {/* EMPTY STATE */}
       {!loading && reports.length === 0 && (
-        <div className="bg-[#111] border border-white/5 rounded-2xl p-12 flex flex-col items-center justify-center text-center">
+        <div className="bg-[#111] border border-white/5 rounded-2xl p-8 sm:p-12 flex flex-col items-center justify-center text-center">
           <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mb-4">
             <FileText className="text-blue-500" size={32} />
           </div>
@@ -335,45 +450,84 @@ export default function ReportsPage() {
 
       {/* REPORTS GRID */}
       {!loading && reports.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {reports.map((report) => (
-            <div key={report.id} className="bg-[#111] border border-white/5 rounded-xl p-5 hover:border-white/10 transition-all group relative overflow-hidden flex flex-col h-full">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-transparent opacity-50"></div>
+            <div 
+              key={report.id} 
+              className="bg-[#111] border border-white/5 rounded-xl p-4 sm:p-5 hover:border-white/10 transition-all group relative overflow-hidden flex flex-col"
+            >
+              {/* Gradient top bar */}
+              <div className={`absolute top-0 left-0 w-full h-1 ${report.is_active ? 'bg-gradient-to-r from-blue-600 to-blue-400' : 'bg-gradient-to-r from-gray-700 to-gray-600'}`} />
               
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="font-bold text-white text-lg truncate max-w-[200px]" title={report.name}>
+              {/* Header */}
+              <div className="flex justify-between items-start gap-3 mb-4">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-white text-base sm:text-lg truncate" title={report.name}>
                     {report.name}
                   </h3>
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
-                    <MessageCircle size={12} /> +{report.recipient_whatsapp}
+                    <MessageCircle size={12} className="shrink-0" /> 
+                    <span className="truncate">+{report.recipient_whatsapp}</span>
                   </div>
                 </div>
-                {/* Custom Toggle */}
-                <button 
-                  onClick={() => handleToggleActive(report.id, report.is_active)}
-                  className={`w-10 h-5 rounded-full relative transition-colors ${report.is_active ? 'bg-blue-600' : 'bg-gray-800'}`}
-                >
-                  <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all ${report.is_active ? 'left-[22px]' : 'left-[3px]'}`}></div>
-                </button>
+                
+                {/* Status Badge + Toggle */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                    report.is_active 
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                      : 'bg-gray-800 text-gray-500 border border-gray-700'
+                  }`}>
+                    {report.is_active ? t.active : t.inactive}
+                  </span>
+                  <button 
+                    onClick={() => handleToggleActive(report.id, report.is_active)}
+                    className={`w-10 h-5 rounded-full relative transition-colors ${report.is_active ? 'bg-blue-600' : 'bg-gray-800'}`}
+                    aria-label="Toggle active"
+                  >
+                    <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${report.is_active ? 'left-[22px]' : 'left-[3px]'}`} />
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-4 mb-5 p-3 bg-[#0A0A0A] rounded-lg border border-white/5">
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <Calendar size={14} className="text-blue-400" />
-                  {report.frequency === 'daily' ? t.freqDaily : report.frequency === 'weekly' ? t.freqWeekly : t.freqMonthly}
+              {/* Info Cards */}
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <div className="flex items-center gap-2 p-2.5 bg-[#0A0A0A] rounded-lg border border-white/5">
+                  <Calendar size={14} className="text-blue-400 shrink-0" />
+                  <span className="text-xs text-gray-400 truncate">
+                    {report.frequency === 'daily' ? t.freqDaily : report.frequency === 'weekly' ? t.freqWeekly : t.freqMonthly}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <Clock size={14} className="text-blue-400" />
-                  {report.send_time.substring(0, 5)}
+                <div className="flex items-center gap-2 p-2.5 bg-[#0A0A0A] rounded-lg border border-white/5">
+                  <Clock size={14} className="text-blue-400 shrink-0" />
+                  <span className="text-xs text-gray-400">{report.send_time.substring(0, 5)}</span>
                 </div>
               </div>
 
+              {/* Next Send & Metrics Count */}
+              <div className="flex items-center justify-between text-[10px] text-gray-500 mb-4 px-1">
+                <span className="flex items-center gap-1">
+                  <Send size={10} className="text-gray-600" />
+                  {t.nextSend}: <span className="text-gray-400">{getNextSendDate(report, t)}</span>
+                </span>
+                <span className="text-gray-600">
+                  {countSelectedMetrics(report)} {t.metricsSelected}
+                </span>
+              </div>
+
+              {/* Actions */}
               <div className="mt-auto flex gap-2">
-                <button onClick={() => handleOpenModal(report)} className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5 border border-white/5">
-                  <Settings size={14} /> Editar
+                <button 
+                  onClick={() => handleOpenModal(report)} 
+                  className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5 border border-white/5"
+                >
+                  <Settings size={14} /> {userLang === 'en' ? 'Edit' : userLang === 'es' ? 'Editar' : 'Editar'}
                 </button>
-                <button onClick={() => handleDelete(report.id)} className="w-10 flex items-center justify-center bg-red-500/5 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors border border-red-500/10">
+                <button 
+                  onClick={() => handleDelete(report.id)} 
+                  className="w-10 flex items-center justify-center bg-red-500/5 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors border border-red-500/10"
+                  aria-label="Delete"
+                >
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -382,54 +536,73 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {/* MODAL CRIAR/EDITAR COM CORREÇÃO MOBILE */}
+      {/* MODAL CRIAR/EDITAR */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto"
+          onClick={(e) => e.target === e.currentTarget && setIsModalOpen(false)}
+        >
+          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col my-4 max-h-[calc(100vh-2rem)]">
             
-            {/* Cabeçalho Fixo */}
-            <div className="flex justify-between items-center p-5 border-b border-white/5 shrink-0">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <BarChart3 className="text-blue-500" size={20} />
-                {editingId ? t.editReport : t.newReport}
+            {/* Header Fixo */}
+            <div className="flex justify-between items-center p-4 sm:p-5 border-b border-white/5 shrink-0">
+              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <BarChart3 className="text-blue-500 shrink-0" size={20} />
+                <span className="truncate">{editingId ? t.editReport : t.newReport}</span>
               </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white transition-colors">
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="text-gray-500 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-lg"
+              >
                 <X size={20} />
               </button>
             </div>
 
-            {/* Corpo do Formulário com Scroll Vertical */}
-            <div className="p-6 overflow-y-auto">
-              <form id="report-form" onSubmit={handleSave}>
+            {/* Corpo com Scroll */}
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
+              <form id="report-form" onSubmit={handleSave} className="space-y-6">
                 
                 {/* Infos Básicas */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-                  <div className="space-y-1.5 md:col-span-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Nome - Full Width */}
+                  <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.nameLabel}</label>
                     <input 
-                      required type="text" placeholder={t.namePlaceholder}
-                      value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+                      required 
+                      type="text" 
+                      placeholder={t.namePlaceholder}
+                      value={formData.name} 
+                      onChange={e => setFormData({...formData, name: e.target.value})}
                       className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder-gray-700"
                     />
                   </div>
                   
-                  <div className="space-y-1.5 md:col-span-2">
+                  {/* WhatsApp - Full Width */}
+                  <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.whatsappLabel}</label>
                     <input 
-                      required type="text" placeholder={t.whatsappPlaceholder}
-                      value={formData.recipient_whatsapp} onChange={e => setFormData({...formData, recipient_whatsapp: e.target.value})}
-                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder-gray-700"
+                      required 
+                      type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={15}
+                      placeholder={t.whatsappPlaceholder}
+                      value={formData.recipient_whatsapp} 
+                      onChange={e => setFormData({...formData, recipient_whatsapp: e.target.value.replace(/\D/g, '')})}
+                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder-gray-700 font-mono"
                     />
-                    <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-gray-500">
-                      <Info size={12} className="text-blue-400" />
+                    <div className="flex items-center gap-1.5 mt-1 text-[10px] text-gray-500">
+                      <Info size={11} className="text-blue-400 shrink-0" />
                       <span>{t.whatsappHint}</span>
                     </div>
                   </div>
 
+                  {/* Frequência */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.frequencyLabel}</label>
                     <select 
-                      value={formData.frequency} onChange={e => setFormData({...formData, frequency: e.target.value})}
+                      value={formData.frequency} 
+                      onChange={e => setFormData({...formData, frequency: e.target.value})}
                       className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
                     >
                       <option value="daily">{t.freqDaily}</option>
@@ -438,59 +611,79 @@ export default function ReportsPage() {
                     </select>
                   </div>
 
+                  {/* Horário */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.timeLabel}</label>
                     <input 
-                      required type="time"
-                      value={formData.send_time} onChange={e => setFormData({...formData, send_time: e.target.value})}
+                      required 
+                      type="time"
+                      value={formData.send_time} 
+                      onChange={e => setFormData({...formData, send_time: e.target.value})}
                       className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all cursor-text [color-scheme:dark]"
                     />
                   </div>
 
+                  {/* Dia da Semana (Weekly) */}
                   {formData.frequency === 'weekly' && (
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 sm:col-span-2">
                       <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.dayLabel}</label>
                       <select 
-                        value={formData.send_day} onChange={e => setFormData({...formData, send_day: e.target.value})}
+                        value={formData.send_day} 
+                        onChange={e => setFormData({...formData, send_day: e.target.value})}
                         className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
                       >
                         {daysOfWeek.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                       </select>
                     </div>
                   )}
+
+                  {/* Dia do Mês (Monthly) */}
                   {formData.frequency === 'monthly' && (
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.dayLabel} (Dia do Mês)</label>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.dayOfMonth}</label>
                       <input 
-                        required type="number" min="1" max="31"
-                        value={formData.send_day} onChange={e => setFormData({...formData, send_day: e.target.value})}
+                        required 
+                        type="number" 
+                        min="1" 
+                        max="31"
+                        value={formData.send_day} 
+                        onChange={e => setFormData({...formData, send_day: e.target.value})}
                         className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all"
                       />
                     </div>
                   )}
                 </div>
 
-                {/* BLOCO 1: Métricas Operacionais */}
-                <div className="border-t border-white/5 pt-6 mb-6">
+                {/* Métricas Operacionais */}
+                <div className="border-t border-white/5 pt-6">
                   <div className="mb-4">
-                    <h3 className="text-white font-bold">{t.metricsTitle}</h3>
+                    <h3 className="text-white font-bold text-sm sm:text-base">{t.metricsTitle}</h3>
                     <p className="text-xs text-gray-500">{t.metricsDesc}</p>
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                     {Object.keys(DEFAULT_BASE_METRICS).map((key) => {
                       const isActive = formData.metrics[key as keyof typeof DEFAULT_BASE_METRICS]
                       return (
-                        <label key={key} className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none ${isActive ? 'bg-blue-500/5 border-blue-500/30' : 'bg-[#0A0A0A] border-white/5 hover:border-white/10'}`}>
-                          <span className={`text-sm font-medium ${isActive ? 'text-blue-400' : 'text-gray-400'}`}>
+                        <label 
+                          key={key} 
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none ${
+                            isActive 
+                              ? 'bg-blue-500/5 border-blue-500/30' 
+                              : 'bg-[#0A0A0A] border-white/5 hover:border-white/10'
+                          }`}
+                        >
+                          <span className={`text-sm font-medium truncate pr-2 ${isActive ? 'text-blue-400' : 'text-gray-400'}`}>
                             {t[`m_${key}` as keyof typeof t] || key}
                           </span>
-                          <div className={`w-9 h-5 rounded-full relative transition-colors ${isActive ? 'bg-blue-600' : 'bg-gray-800'}`}>
-                            <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all ${isActive ? 'left-[20px]' : 'left-[3px]'}`}></div>
+                          <div className={`shrink-0 w-9 h-5 rounded-full relative transition-colors ${isActive ? 'bg-blue-600' : 'bg-gray-800'}`}>
+                            <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
                           </div>
                           <input 
-                            type="checkbox" className="hidden" 
-                            checked={isActive} onChange={() => handleToggleBaseMetric(key)} 
+                            type="checkbox" 
+                            className="sr-only" 
+                            checked={isActive} 
+                            onChange={() => handleToggleBaseMetric(key)} 
                           />
                         </label>
                       )
@@ -498,28 +691,37 @@ export default function ReportsPage() {
                   </div>
                 </div>
 
-                {/* BLOCO 2: Métricas Dinâmicas do Funil */}
+                {/* Métricas do Funil */}
                 {pipelineStages.length > 0 && (
-                  <div className="border-t border-white/5 pt-6 mb-2">
+                  <div className="border-t border-white/5 pt-6">
                     <div className="mb-4">
-                      <h3 className="text-white font-bold">{t.pipelineTitle}</h3>
+                      <h3 className="text-white font-bold text-sm sm:text-base">{t.pipelineTitle}</h3>
                       <p className="text-xs text-gray-500">{t.pipelineDesc}</p>
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                       {pipelineStages.map((stage) => {
                         const isActive = formData.pipeline_stages.includes(stage.id)
                         return (
-                          <label key={stage.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none ${isActive ? 'bg-purple-500/5 border-purple-500/30' : 'bg-[#0A0A0A] border-white/5 hover:border-white/10'}`}>
-                            <span className={`text-sm font-medium ${isActive ? 'text-purple-400' : 'text-gray-400'} truncate mr-2`}>
+                          <label 
+                            key={stage.id} 
+                            className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none ${
+                              isActive 
+                                ? 'bg-purple-500/5 border-purple-500/30' 
+                                : 'bg-[#0A0A0A] border-white/5 hover:border-white/10'
+                            }`}
+                          >
+                            <span className={`text-sm font-medium truncate pr-2 ${isActive ? 'text-purple-400' : 'text-gray-400'}`}>
                               {stage.label}
                             </span>
                             <div className={`shrink-0 w-9 h-5 rounded-full relative transition-colors ${isActive ? 'bg-purple-600' : 'bg-gray-800'}`}>
-                              <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all ${isActive ? 'left-[20px]' : 'left-[3px]'}`}></div>
+                              <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
                             </div>
                             <input 
-                              type="checkbox" className="hidden" 
-                              checked={isActive} onChange={() => handleTogglePipelineStage(stage.id)} 
+                              type="checkbox" 
+                              className="sr-only" 
+                              checked={isActive} 
+                              onChange={() => handleTogglePipelineStage(stage.id)} 
                             />
                           </label>
                         )
@@ -531,15 +733,32 @@ export default function ReportsPage() {
               </form>
             </div>
 
-            {/* Rodapé Fixo (Botões) */}
-            <div className="flex justify-end gap-3 p-5 border-t border-white/5 bg-[#111] shrink-0 rounded-b-2xl">
-              <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-gray-400 hover:text-white transition-colors">
-                {t.cancel}
-              </button>
-              <button form="report-form" type="submit" disabled={isSaving} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50">
-                {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                {isSaving ? t.saving : t.save}
-              </button>
+            {/* Footer Fixo */}
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 sm:p-5 border-t border-white/5 bg-[#111] shrink-0 rounded-b-2xl">
+              {/* Contador de métricas */}
+              <div className="text-xs text-gray-500 order-2 sm:order-1">
+                <span className="text-blue-400 font-bold">{selectedMetricsCount}</span> {t.metricsSelected}
+              </div>
+              
+              {/* Botões */}
+              <div className="flex gap-3 w-full sm:w-auto order-1 sm:order-2">
+                <button 
+                  type="button" 
+                  onClick={() => setIsModalOpen(false)} 
+                  className="flex-1 sm:flex-none px-5 py-2.5 text-sm font-medium text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                >
+                  {t.cancel}
+                </button>
+                <button 
+                  form="report-form" 
+                  type="submit" 
+                  disabled={isSaving} 
+                  className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  {isSaving ? t.saving : t.save}
+                </button>
+              </div>
             </div>
             
           </div>
