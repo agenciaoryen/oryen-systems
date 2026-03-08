@@ -137,9 +137,9 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function usePlan() {
-  const { org } = useAuth()
+  const { activePlan, activePlanStatus } = useAuth()
   
-  const planName = (org?.plan as PlanName) || 'basic'
+  const planName = activePlan || 'basic'
   const planConfig = PLAN_CONFIGS[planName] || PLAN_CONFIGS.basic
 
   // Helpers memoizados
