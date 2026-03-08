@@ -5,9 +5,11 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/AuthContext'
+import { usePlan } from '@/lib/usePlan'
+import { FeatureLock } from '@/app/dashboard/components/FeatureLock'
 import { 
   ArrowLeft, Activity, Clock, AlertCircle, CheckCircle2, 
-  Terminal, Search, Loader2
+  Terminal, Search, Loader2, Bot
 } from 'lucide-react'
 import { format } from 'date-fns'
 // Importando os locales
@@ -19,6 +21,8 @@ const UI_TRANSLATIONS = {
     back: 'Voltar para Agentes',
     loading: 'Carregando dados do agente...',
     fallbackName: 'Agente Inteligente',
+    lockedTitle: 'Agentes de IA',
+    lockedDesc: 'Automatize tarefas com agentes de IA que trabalham 24/7 para você.',
     status: {
       active: 'Operando normalmente',
       inactive: 'Em Manutenção/Pausado'
@@ -45,6 +49,8 @@ const UI_TRANSLATIONS = {
     back: 'Back to Agents',
     loading: 'Loading agent data...',
     fallbackName: 'Smart Agent',
+    lockedTitle: 'AI Agents',
+    lockedDesc: 'Automate tasks with AI agents that work 24/7 for you.',
     status: {
       active: 'Operating normally',
       inactive: 'Maintenance/Paused'
@@ -71,6 +77,8 @@ const UI_TRANSLATIONS = {
     back: 'Volver a Agentes',
     loading: 'Cargando datos del agente...',
     fallbackName: 'Agente Inteligente',
+    lockedTitle: 'Agentes de IA',
+    lockedDesc: 'Automatiza tareas con agentes de IA que trabajan 24/7 para ti.',
     status: {
       active: 'Operando normalmente',
       inactive: 'Mantenimiento/Pausado'
@@ -132,6 +140,7 @@ const parseDateSafe = (dateValue: any) => {
 
 export default function AgentDetailsPage() {
   const { user } = useAuth()
+  const { canUseAiAgents } = usePlan()
   const params = useParams()
   const router = useRouter()
   
@@ -149,9 +158,9 @@ export default function AgentDetailsPage() {
   const currentLocale = dateLocales[userLang] || enUS
 
   useEffect(() => {
-    if (agentId) loadAgentData()
+    if (agentId && canUseAiAgents) loadAgentData()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agentId])
+  }, [agentId, canUseAiAgents])
 
   async function loadAgentData() {
     try {
@@ -221,6 +230,39 @@ export default function AgentDetailsPage() {
     if (translation) return translation.name
     
     return agent.solution?.name || t.fallbackName
+  }
+
+  // ─── VERIFICAR PERMISSÃO ───
+  if (!canUseAiAgents) {
+    return (
+      <div className="max-w-2xl mx-auto py-8 px-4">
+        {/* Header */}
+        <div className="mb-8">
+          <button 
+            onClick={() => router.push('/dashboard/agents')} 
+            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6 group w-fit"
+          >
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> {t.back}
+          </button>
+          
+          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+            <Bot className="text-blue-500" />
+            {t.lockedTitle}
+          </h1>
+        </div>
+        
+        {/* FeatureLock */}
+        <FeatureLock 
+          feature="hasAiAgents" 
+          variant="replace"
+          lang={userLang}
+          title={t.lockedTitle}
+          description={t.lockedDesc}
+        >
+          <div />
+        </FeatureLock>
+      </div>
+    )
   }
 
   if (loading) return (

@@ -4,6 +4,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
+import { usePlan } from '@/lib/usePlan'
+import { FeatureLock, UpgradeBanner } from '@/app/dashboard/components/FeatureLock'
 import { 
   Plus, FileText, Settings, Trash2, X, Save, 
   Clock, Calendar, MessageCircle, BarChart3, Loader2, Info,
@@ -236,6 +238,7 @@ function countSelectedMetrics(report: any): number {
 export default function ReportsPage() {
   const { user } = useAuth()
   const activeOrgId = useActiveOrgId()
+  const { canUseReports, isBasic } = usePlan()
   
   const userLang = ((user as any)?.language as Language) || 'pt'
   const t = TRANSLATIONS[userLang]
@@ -403,6 +406,40 @@ export default function ReportsPage() {
 
   // Contador de métricas selecionadas no form
   const selectedMetricsCount = Object.values(formData.metrics).filter(Boolean).length + formData.pipeline_stages.length
+
+  // Se não tem acesso a Reports, mostra tela de upgrade
+  if (!canUseReports) {
+    return (
+      <div className="min-h-[calc(100vh-100px)] bg-[#0A0A0A] p-4 sm:p-6 font-sans animate-in fade-in duration-300">
+        <div className="max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+              <BarChart3 className="text-blue-500 shrink-0" size={24} /> 
+              <span>{t.title}</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.subtitle}</p>
+          </div>
+          
+          {/* FeatureLock Replace */}
+          <FeatureLock 
+            feature="hasReports" 
+            variant="replace"
+            lang={userLang}
+            title={t.title}
+            description={userLang === 'pt' 
+              ? 'Envie métricas automaticamente via WhatsApp para sua equipe.' 
+              : userLang === 'es'
+              ? 'Envía métricas automáticamente vía WhatsApp a tu equipo.'
+              : 'Automatically send metrics via WhatsApp to your team.'
+            }
+          >
+            <div />
+          </FeatureLock>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-[calc(100vh-100px)] bg-[#0A0A0A] p-4 sm:p-6 font-sans animate-in fade-in duration-300 overflow-x-hidden">

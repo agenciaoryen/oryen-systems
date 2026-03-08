@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/lib/AuthContext'
+import { usePlan } from '@/lib/usePlan'
+import { FeatureLock } from '@/app/dashboard/components/FeatureLock'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import {
@@ -53,6 +55,7 @@ const TRANSLATIONS = {
     delete: 'Excluir alerta',
     filterAll: 'Todos',
     unreadCount: 'não lidos',
+    lockedDesc: 'Receba alertas inteligentes e sugestões da IA para priorizar seu dia.',
     types: {
       urgent: 'Urgente',
       suggestion: 'Sugestão IA',
@@ -71,6 +74,7 @@ const TRANSLATIONS = {
     delete: 'Delete alert',
     filterAll: 'All',
     unreadCount: 'unread',
+    lockedDesc: 'Get smart alerts and AI suggestions to prioritize your day.',
     types: {
       urgent: 'Urgent',
       suggestion: 'AI Suggestion',
@@ -89,6 +93,7 @@ const TRANSLATIONS = {
     delete: 'Eliminar alerta',
     filterAll: 'Todos',
     unreadCount: 'no leídos',
+    lockedDesc: 'Recibe alertas inteligentes y sugerencias de IA para priorizar tu día.',
     types: {
       urgent: 'Urgente',
       suggestion: 'Sugerencia IA',
@@ -174,6 +179,7 @@ const getTypeConfig = (type: string, t: typeof TRANSLATIONS['pt']) => {
 
 export default function AlertsPage() {
   const { user } = useAuth()
+  const { canUseAutomations } = usePlan()
 
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [loading, setLoading] = useState(true)
@@ -207,7 +213,7 @@ export default function AlertsPage() {
 
   // ─── EFEITOS ───
   useEffect(() => {
-    if (!user) return
+    if (!user || !canUseAutomations) return
 
     fetchAlerts()
 
@@ -231,7 +237,7 @@ export default function AlertsPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user, fetchAlerts])
+  }, [user, fetchAlerts, canUseAutomations])
 
   // ─── MARCAR COMO LIDO ───
   async function markAsRead(id: string) {
@@ -269,6 +275,33 @@ export default function AlertsPage() {
   })
 
   const unreadCount = alerts.filter(a => !a.is_read).length
+
+  // ─── VERIFICAR PERMISSÃO ───
+  if (!canUseAutomations) {
+    return (
+      <div className="max-w-2xl mx-auto py-8 px-4">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+            <Bell className="text-blue-500" />
+            {t.title}
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">{t.subtitle}</p>
+        </div>
+        
+        {/* FeatureLock */}
+        <FeatureLock 
+          feature="hasAutomations" 
+          variant="replace"
+          lang={userLang}
+          title={t.title}
+          description={t.lockedDesc}
+        >
+          <div />
+        </FeatureLock>
+      </div>
+    )
+  }
 
   // ─── LOADING ───
   if (loading) {

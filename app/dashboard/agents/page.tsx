@@ -4,11 +4,13 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/AuthContext'
+import { usePlan } from '@/lib/usePlan'
+import { FeatureLock } from '@/app/dashboard/components/FeatureLock'
 import { useRouter } from 'next/navigation'
 import { 
   Lock, Settings, PlayCircle, PauseCircle, AlertTriangle, 
   CheckCircle2, Target, Headphones, Rocket, Zap, X, Save,
-  Activity, DollarSign, AlertCircle, Loader2 // <--- Adicione o Loader2 aqui!
+  Activity, DollarSign, AlertCircle, Loader2, Bot
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 // Importando os locales para data
@@ -19,6 +21,7 @@ const UI_TRANSLATIONS = {
   pt: {
     pageTitle: 'Agentes & Soluções',
     pageDesc: 'Gerencie sua força de trabalho digital ativa ou ative novas soluções.',
+    lockedDesc: 'Automatize tarefas com agentes de IA que trabalham 24/7 para você.',
     modalTitle: 'Configurar Agente',
     modalDesc: 'Ajuste os parâmetros de inteligência.',
     nicheLabel: 'Nicho Alvo',
@@ -51,6 +54,7 @@ const UI_TRANSLATIONS = {
   en: {
     pageTitle: 'Agents & Solutions',
     pageDesc: 'Manage your active digital workforce or activate new solutions.',
+    lockedDesc: 'Automate tasks with AI agents that work 24/7 for you.',
     modalTitle: 'Configure Agent',
     modalDesc: 'Adjust intelligence parameters.',
     nicheLabel: 'Target Niche',
@@ -83,6 +87,7 @@ const UI_TRANSLATIONS = {
   es: {
     pageTitle: 'Agentes y Soluciones',
     pageDesc: 'Gestione su fuerza laboral digital activa o active nuevas soluciones.',
+    lockedDesc: 'Automatiza tareas con agentes de IA que trabajan 24/7 para ti.',
     modalTitle: 'Configurar Agente',
     modalDesc: 'Ajuste los parámetros de inteligencia.',
     nicheLabel: 'Nicho Objetivo',
@@ -257,6 +262,7 @@ const ConfigModal = ({ isOpen, onClose, agent, onSave, saving, t }: any) => {
 // --- PÁGINA PRINCIPAL ---
 export default function AgentsMarketplacePage() {
   const { user, org } = useAuth()
+  const { canUseAiAgents } = usePlan()
   const router = useRouter()
   const [solutions, setSolutions] = useState<AgentSolution[]>([])
   const [myAgents, setMyAgents] = useState<MyAgent[]>([])
@@ -275,9 +281,9 @@ export default function AgentsMarketplacePage() {
   const currentLocale = dateLocales[userLang] || enUS
 
   useEffect(() => {
-    if (org?.id) fetchData()
+    if (org?.id && canUseAiAgents) fetchData()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [org?.id])
+  }, [org?.id, canUseAiAgents])
 
   async function fetchData() {
     try {
@@ -408,6 +414,33 @@ export default function AgentsMarketplacePage() {
       console.error(err)
       alert(t.alerts.errorHire)
     }
+  }
+
+  // ─── VERIFICAR PERMISSÃO ───
+  if (!canUseAiAgents) {
+    return (
+      <div className="max-w-2xl mx-auto py-8 px-4">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+            <Bot className="text-blue-500" />
+            {t.pageTitle}
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">{t.pageDesc}</p>
+        </div>
+        
+        {/* FeatureLock */}
+        <FeatureLock 
+          feature="hasAiAgents" 
+          variant="replace"
+          lang={userLang}
+          title={t.pageTitle}
+          description={t.lockedDesc}
+        >
+          <div />
+        </FeatureLock>
+      </div>
+    )
   }
 
   if (loading) return (
