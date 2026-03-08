@@ -18,9 +18,15 @@ type UserProfile = {
 
 type AppUser = User & UserProfile
 
+type PlanName = 'basic' | 'gold' | 'diamond' | 'enterprise'
+type PlanStatus = 'active' | 'trial' | 'past_due' | 'canceled'
+
 type Org = {
   id: string
   name: string
+  plan: PlanName
+  plan_status: PlanStatus
+  plan_started_at: string | null
 }
 
 type AuthContextType = {
@@ -29,7 +35,7 @@ type AuthContextType = {
   user: AppUser | null
   org: Org | null
   
-  // ═══ NOVO: Sistema Staff Multi-Org ═══
+  // ═══ Sistema Staff Multi-Org ═══
   isStaff: boolean
   availableOrgs: Org[]
   selectedOrgId: string | null
@@ -38,19 +44,26 @@ type AuthContextType = {
   // Helper principal - use este em todos os módulos!
   activeOrgId: string | null
   activeOrgName: string
+  
+  // ═══ NOVO: Helpers de Plano ═══
+  activePlan: PlanName
+  activePlanStatus: PlanStatus
 }
 
 const AuthContext = createContext<AuthContextType>({
   loading: true,
   user: null,
   org: null,
-  // Novos valores default
+  // Staff
   isStaff: false,
   availableOrgs: [],
   selectedOrgId: null,
   setSelectedOrgId: () => {},
   activeOrgId: null,
   activeOrgName: 'Organização',
+  // Plano
+  activePlan: 'basic',
+  activePlanStatus: 'active',
 })
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -63,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null)
   const [org, setOrg] = useState<Org | null>(null)
   
-  // ═══ NOVOS ESTADOS PARA STAFF ═══
+  // ═══ ESTADOS PARA STAFF ═══
   const [availableOrgs, setAvailableOrgs] = useState<Org[]>([])
   const [selectedOrgId, setSelectedOrgIdState] = useState<string | null>(null)
 
@@ -88,6 +101,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const activeOrgName = isStaff 
     ? (selectedOrg?.name || 'Selecione uma organização')
     : (org?.name || 'Organização')
+
+  // ═══ NOVO: Plano ativo ═══
+  const activeOrg = isStaff ? selectedOrg : org
+  const activePlan: PlanName = activeOrg?.plan || 'basic'
+  const activePlanStatus: PlanStatus = activeOrg?.plan_status || 'active'
 
   // ─── Effect principal de autenticação ───
   useEffect(() => {
@@ -114,13 +132,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // ═══ LÓGICA STAFF ═══
         if (appUser.role === 'staff') {
-          // Staff: carregar TODAS as organizações
+          // Staff: carregar TODAS as organizações (com campos de plano)
           const { data: orgsData } = await supabase
             .from('orgs')
-            .select('id, name')
+            .select('id, name, plan, plan_status, plan_started_at')
             .order('name')
           
-          const orgs = orgsData || []
+          // Garantir valores default para plan
+          const orgs: Org[] = (orgsData || []).map(o => ({
+            ...o,
+            plan: o.plan || 'basic',
+            plan_status: o.plan_status || 'active',
+            plan_started_at: o.plan_started_at || null
+          }))
+          
           setAvailableOrgs(orgs)
           
           // Recuperar última org selecionada do localStorage
@@ -139,15 +164,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setOrg(null)
           
         } else {
-          // Usuário normal: buscar apenas sua org
+          // Usuário normal: buscar apenas sua org (com campos de plano)
           if (appUser.org_id) {
             const { data: orgData } = await supabase
               .from('orgs')
-              .select('id, name')
+              .select('id, name, plan, plan_status, plan_started_at')
               .eq('id', appUser.org_id)
               .maybeSingle()
             
-            setOrg(orgData)
+            if (orgData) {
+              setOrg({
+                ...orgData,
+                plan: orgData.plan || 'basic',
+                plan_status: orgData.plan_status || 'active',
+                plan_started_at: orgData.plan_started_at || null
+              })
+            } else {
+              setOrg(null)
+            }
           } else {
             setOrg(null)
           }
@@ -200,13 +234,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading, 
       user, 
       org,
-      // Novos
+      // Staff
       isStaff,
       availableOrgs,
       selectedOrgId,
       setSelectedOrgId,
       activeOrgId,
       activeOrgName,
+      // Plano
+      activePlan,
+      activePlanStatus,
     }}>
       {children}
     </AuthContext.Provider>
@@ -241,4 +278,16 @@ export const useActiveOrgId = (): string | null => {
 export const useIsStaff = (): boolean => {
   const { isStaff } = useContext(AuthContext)
   return isStaff
+}
+
+/**
+ * Hook para obter o plano ativo
+ * 
+ * @example
+ * const { plan, status } = useActivePlan()
+ * if (plan === 'basic') { showUpgradePrompt() }
+ */
+export const useActivePlan = (): { plan: PlanName; status: PlanStatus } => {
+  const { activePlan, activePlanStatus } = useContext(AuthContext)
+  return { plan: activePlan, status: activePlanStatus }
 }
