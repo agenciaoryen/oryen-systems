@@ -134,6 +134,9 @@ export function FeatureLock({
     hasAdvancedDashboard: t.advancedDashboard,
     hasCustomPipeline: 'Custom Pipeline',
     hasWhatsappIntegration: 'WhatsApp',
+    hasOfficialWhatsapp: 'WhatsApp Oficial',
+    hasPrioritySupport: 'Suporte Prioritário',
+    hasAccountManager: 'Gerente de Conta',
   }
 
   const featureName = featureNames[feature] || feature

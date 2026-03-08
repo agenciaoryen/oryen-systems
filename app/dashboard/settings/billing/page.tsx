@@ -276,7 +276,7 @@ type Language = keyof typeof TRANSLATIONS
 
 const PLAN_FEATURES: Record<PlanName, string[]> = {
   basic: ['f_crm', 'f_pipeline', 'f_whatsapp'],
-  gold: ['f_crm', 'f_pipeline', 'f_whatsapp', 'f_ai', 'f_automations', 'f_reports', 'f_api', 'f_campaigns', 'f_dashboard'],
+  gold: ['f_crm', 'f_pipeline', 'f_whatsapp', 'f_ai', 'f_automations', 'f_reports', 'f_dashboard'],
   diamond: ['f_crm', 'f_pipeline', 'f_whatsapp', 'f_ai', 'f_automations', 'f_reports', 'f_api', 'f_campaigns', 'f_dashboard', 'f_traffic', 'f_support'],
   enterprise: ['f_crm', 'f_pipeline', 'f_whatsapp', 'f_ai', 'f_automations', 'f_reports', 'f_api', 'f_campaigns', 'f_dashboard', 'f_traffic', 'f_support', 'f_dedicated'],
 }

@@ -20,12 +20,16 @@ export interface PlanFeatures {
   hasAdvancedDashboard: boolean
   hasCustomPipeline: boolean
   hasWhatsappIntegration: boolean
+  hasOfficialWhatsapp: boolean
+  hasPrioritySupport: boolean
+  hasAccountManager: boolean
 }
 
 export interface PlanLimits {
   maxUsers: number          // -1 = ilimitado
   maxActiveLeads: number    // -1 = ilimitado
   maxMonthlyMessages: number // -1 = ilimitado, 0 = só manual
+  maxWhatsappNumbers: number // -1 = ilimitado
 }
 
 export interface PlanConfig {
@@ -57,11 +61,15 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasAdvancedDashboard: false,
       hasCustomPipeline: true,
       hasWhatsappIntegration: true,
+      hasOfficialWhatsapp: false, // disponível com +taxa
+      hasPrioritySupport: false,
+      hasAccountManager: false,
     },
     limits: {
       maxUsers: 1,
-      maxActiveLeads: 100,
+      maxActiveLeads: 1000,
       maxMonthlyMessages: 0,
+      maxWhatsappNumbers: 1,
     }
   },
   gold: {
@@ -73,17 +81,21 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasAiAgents: true,
       hasAutomations: true,
       hasReports: true,
-      hasApiAccess: true,
-      hasCampaigns: true,
+      hasApiAccess: false,
+      hasCampaigns: false,
       hasTrafficManager: false,
       hasAdvancedDashboard: true,
       hasCustomPipeline: true,
       hasWhatsappIntegration: true,
+      hasOfficialWhatsapp: true,
+      hasPrioritySupport: false,
+      hasAccountManager: false,
     },
     limits: {
       maxUsers: 5,
-      maxActiveLeads: 1000,
-      maxMonthlyMessages: 5000,
+      maxActiveLeads: 5000,
+      maxMonthlyMessages: 10000,
+      maxWhatsappNumbers: 5,
     }
   },
   diamond: {
@@ -101,11 +113,15 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasAdvancedDashboard: true,
       hasCustomPipeline: true,
       hasWhatsappIntegration: true,
+      hasOfficialWhatsapp: true,
+      hasPrioritySupport: true,
+      hasAccountManager: false,
     },
     limits: {
       maxUsers: 15,
       maxActiveLeads: 10000,
       maxMonthlyMessages: 50000,
+      maxWhatsappNumbers: 15,
     }
   },
   enterprise: {
@@ -123,11 +139,15 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasAdvancedDashboard: true,
       hasCustomPipeline: true,
       hasWhatsappIntegration: true,
+      hasOfficialWhatsapp: true,
+      hasPrioritySupport: true,
+      hasAccountManager: true,
     },
     limits: {
       maxUsers: -1,
       maxActiveLeads: -1,
       maxMonthlyMessages: -1,
+      maxWhatsappNumbers: -1,
     }
   }
 }
