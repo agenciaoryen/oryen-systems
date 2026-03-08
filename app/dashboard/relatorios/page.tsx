@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { 
   Plus, FileText, Settings, Trash2, X, Save, 
-  Clock, Calendar, MessageCircle, BarChart3, Loader2, Play, Square
+  Clock, Calendar, MessageCircle, BarChart3, Loader2, Info
 } from 'lucide-react'
 
 // --- DICIONÁRIO DE TRADUÇÃO ---
@@ -27,6 +27,7 @@ const TRANSLATIONS = {
     namePlaceholder: 'Ex: Fechamento Diário Diretoria',
     whatsappLabel: 'WhatsApp Destinatário',
     whatsappPlaceholder: 'Ex: 5511999999999',
+    whatsappHint: 'Apenas números, inclua código do país (55) e DDD. Ex: 5551988887777',
     frequencyLabel: 'Frequência',
     timeLabel: 'Horário de Envio',
     dayLabel: 'Dia de Envio',
@@ -35,17 +36,15 @@ const TRANSLATIONS = {
     freqWeekly: 'Semanal',
     freqMonthly: 'Mensal',
     // Metrics
-    metricsTitle: 'Métricas do Relatório',
-    metricsDesc: 'Selecione os dados que deseja incluir no resumo',
+    metricsTitle: 'Métricas Operacionais',
+    metricsDesc: 'Selecione os dados de esforço e tração',
+    pipelineTitle: 'Métricas do Funil',
+    pipelineDesc: 'Selecione as etapas que deseja rastrear',
     m_leads_captados: 'Leads Captados',
     m_canais_origem: 'Canais de Origem',
     m_mensagens_enviadas: 'Disparos de Mensagens',
     m_ligacoes_feitas: 'Ligações Realizadas',
-    m_leads_responderam: 'Leads que Responderam',
-    m_reunioes_agendadas: 'Reuniões Agendadas',
-    m_compareceram_reuniao: 'Compareceram na Reunião',
-    m_propostas_apresentadas: 'Propostas Apresentadas',
-    m_fechamentos: 'Fechamentos (Ganho)',
+    m_leads_responderam: 'Leads que Responderam'
   },
   en: {
     title: 'Automated Reports',
@@ -62,23 +61,22 @@ const TRANSLATIONS = {
     namePlaceholder: 'Ex: Daily Board Summary',
     whatsappLabel: 'Recipient WhatsApp',
     whatsappPlaceholder: 'Ex: 1234567890',
+    whatsappHint: 'Numbers only, with country code. Ex: 12125551234',
     frequencyLabel: 'Frequency',
     timeLabel: 'Send Time',
     dayLabel: 'Send Day',
     freqDaily: 'Daily',
     freqWeekly: 'Weekly',
     freqMonthly: 'Monthly',
-    metricsTitle: 'Report Metrics',
-    metricsDesc: 'Select the data to include in the summary',
+    metricsTitle: 'Operational Metrics',
+    metricsDesc: 'Select effort and traction data',
+    pipelineTitle: 'Pipeline Metrics',
+    pipelineDesc: 'Select the stages you want to track',
     m_leads_captados: 'Captured Leads',
     m_canais_origem: 'Source Channels',
     m_mensagens_enviadas: 'Messages Sent',
     m_ligacoes_feitas: 'Calls Made',
-    m_leads_responderam: 'Leads Responded',
-    m_reunioes_agendadas: 'Meetings Scheduled',
-    m_compareceram_reuniao: 'Meetings Attended',
-    m_propostas_apresentadas: 'Proposals Sent',
-    m_fechamentos: 'Closed Won',
+    m_leads_responderam: 'Leads Responded'
   },
   es: {
     title: 'Reportes Automatizados',
@@ -95,36 +93,31 @@ const TRANSLATIONS = {
     namePlaceholder: 'Ej: Resumen Diario',
     whatsappLabel: 'WhatsApp Destinatario',
     whatsappPlaceholder: 'Ej: 56912345678',
+    whatsappHint: 'Solo números, con código de país. Ej: 56912345678',
     frequencyLabel: 'Frecuencia',
     timeLabel: 'Hora de Envío',
     dayLabel: 'Día de Envío',
     freqDaily: 'Diario',
     freqWeekly: 'Semanal',
     freqMonthly: 'Mensual',
-    metricsTitle: 'Métricas del Reporte',
-    metricsDesc: 'Selecciona los datos a incluir en el resumen',
+    metricsTitle: 'Métricas Operativas',
+    metricsDesc: 'Selecciona los datos de esfuerzo y tracción',
+    pipelineTitle: 'Métricas del Embudo',
+    pipelineDesc: 'Selecciona las etapas que deseas rastrear',
     m_leads_captados: 'Leads Captados',
     m_canais_origem: 'Canales de Origen',
     m_mensagens_enviadas: 'Mensajes Enviados',
     m_ligacoes_feitas: 'Llamadas Realizadas',
-    m_leads_responderam: 'Leads Respondieron',
-    m_reunioes_agendadas: 'Reuniones Agendadas',
-    m_compareceram_reuniao: 'Asistieron a Reunión',
-    m_propostas_apresentadas: 'Propuestas Presentadas',
-    m_fechamentos: 'Cierres (Ganados)',
+    m_leads_responderam: 'Leads Respondieron'
   }
 }
 
-const DEFAULT_METRICS = {
+const DEFAULT_BASE_METRICS = {
   leads_captados: true,
   canais_origem: true,
   mensagens_enviadas: false,
   ligacoes_feitas: true,
-  leads_responderam: true,
-  reunioes_agendadas: true,
-  compareceram_reuniao: false,
-  propostas_apresentadas: true,
-  fechamentos: true
+  leads_responderam: true
 }
 
 export default function ReportsPage() {
@@ -135,6 +128,7 @@ export default function ReportsPage() {
   const t = TRANSLATIONS[userLang]
 
   const [reports, setReports] = useState<any[]>([])
+  const [pipelineStages, setPipelineStages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   
   // Modal State
@@ -149,27 +143,31 @@ export default function ReportsPage() {
     frequency: 'daily',
     send_time: '18:00',
     send_day: 'monday',
-    metrics: DEFAULT_METRICS
+    metrics: DEFAULT_BASE_METRICS,
+    pipeline_stages: [] as string[]
   })
 
   useEffect(() => {
-    fetchReports()
+    fetchData()
   }, [activeOrgId])
 
-  const fetchReports = async () => {
+  const fetchData = async () => {
     if (!activeOrgId) return
     setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('report_configs')
-        .select('*')
-        .eq('org_id', activeOrgId)
-        .order('created_at', { ascending: false })
+      // Busca os relatórios e as etapas do funil ao mesmo tempo
+      const [reportsRes, stagesRes] = await Promise.all([
+        supabase.from('report_configs').select('*').eq('org_id', activeOrgId).order('created_at', { ascending: false }),
+        supabase.from('pipeline_stages').select('id, name, label').eq('org_id', activeOrgId).eq('is_active', true).order('position')
+      ])
 
-      if (error) throw error
-      setReports(data || [])
+      if (reportsRes.error) throw reportsRes.error
+      if (stagesRes.error) throw stagesRes.error
+      
+      setReports(reportsRes.data || [])
+      setPipelineStages(stagesRes.data || [])
     } catch (err) {
-      console.error('Erro ao buscar relatórios:', err)
+      console.error('Erro ao buscar dados:', err)
     } finally {
       setLoading(false)
     }
@@ -182,29 +180,45 @@ export default function ReportsPage() {
         name: report.name,
         recipient_whatsapp: report.recipient_whatsapp,
         frequency: report.frequency,
-        send_time: report.send_time.substring(0, 5), // '18:00:00' -> '18:00'
+        send_time: report.send_time.substring(0, 5),
         send_day: report.send_day || 'monday',
-        metrics: report.metrics || DEFAULT_METRICS
+        metrics: report.metrics?.base || DEFAULT_BASE_METRICS,
+        pipeline_stages: report.metrics?.pipeline || []
       })
     } else {
       setEditingId(null)
+      // Por padrão, todas as etapas vêm marcadas ao criar um novo relatório
+      const allStageIds = pipelineStages.map(s => s.id)
       setFormData({
         name: '',
         recipient_whatsapp: '',
         frequency: 'daily',
         send_time: '18:00',
         send_day: 'monday',
-        metrics: DEFAULT_METRICS
+        metrics: DEFAULT_BASE_METRICS,
+        pipeline_stages: allStageIds
       })
     }
     setIsModalOpen(true)
   }
 
-  const handleToggleMetric = (key: string) => {
+  const handleToggleBaseMetric = (key: string) => {
     setFormData(prev => ({
       ...prev,
-      metrics: { ...prev.metrics, [key]: !prev.metrics[key as keyof typeof DEFAULT_METRICS] }
+      metrics: { ...prev.metrics, [key]: !prev.metrics[key as keyof typeof DEFAULT_BASE_METRICS] }
     }))
+  }
+
+  const handleTogglePipelineStage = (stageId: string) => {
+    setFormData(prev => {
+      const isSelected = prev.pipeline_stages.includes(stageId)
+      return {
+        ...prev,
+        pipeline_stages: isSelected 
+          ? prev.pipeline_stages.filter(id => id !== stageId) 
+          : [...prev.pipeline_stages, stageId]
+      }
+    })
   }
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
@@ -213,7 +227,7 @@ export default function ReportsPage() {
       await supabase.from('report_configs').update({ is_active: !currentStatus }).eq('id', id)
     } catch (err) {
       console.error(err)
-      fetchReports() // Revert on error
+      fetchData() // Reverte visualmente em caso de erro
     }
   }
 
@@ -224,7 +238,7 @@ export default function ReportsPage() {
       await supabase.from('report_configs').delete().eq('id', id)
     } catch (err) {
       console.error(err)
-      fetchReports()
+      fetchData()
     }
   }
 
@@ -233,6 +247,13 @@ export default function ReportsPage() {
     if (!activeOrgId) return
     
     setIsSaving(true)
+    
+    // Constrói o novo JSON Híbrido
+    const combinedMetrics = {
+      base: formData.metrics,
+      pipeline: formData.pipeline_stages
+    }
+
     const payload = {
       org_id: activeOrgId,
       name: formData.name,
@@ -240,7 +261,7 @@ export default function ReportsPage() {
       frequency: formData.frequency,
       send_time: formData.send_time,
       send_day: formData.frequency === 'daily' ? null : formData.send_day,
-      metrics: formData.metrics
+      metrics: combinedMetrics
     }
 
     try {
@@ -249,7 +270,7 @@ export default function ReportsPage() {
       } else {
         await supabase.from('report_configs').insert(payload)
       }
-      await fetchReports()
+      await fetchData()
       setIsModalOpen(false)
     } catch (err) {
       console.error('Erro ao salvar:', err)
@@ -316,7 +337,7 @@ export default function ReportsPage() {
       {!loading && reports.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {reports.map((report) => (
-            <div key={report.id} className="bg-[#111] border border-white/5 rounded-xl p-5 hover:border-white/10 transition-all group relative overflow-hidden">
+            <div key={report.id} className="bg-[#111] border border-white/5 rounded-xl p-5 hover:border-white/10 transition-all group relative overflow-hidden flex flex-col h-full">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-transparent opacity-50"></div>
               
               <div className="flex justify-between items-start mb-4">
@@ -348,7 +369,7 @@ export default function ReportsPage() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="mt-auto flex gap-2">
                 <button onClick={() => handleOpenModal(report)} className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5 border border-white/5">
                   <Settings size={14} /> Editar
                 </button>
@@ -361,12 +382,13 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {/* MODAL CRIAR/EDITAR */}
+      {/* MODAL CRIAR/EDITAR COM CORREÇÃO MOBILE */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 my-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             
-            <div className="flex justify-between items-center p-5 border-b border-white/5">
+            {/* Cabeçalho Fixo */}
+            <div className="flex justify-between items-center p-5 border-b border-white/5 shrink-0">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <BarChart3 className="text-blue-500" size={20} />
                 {editingId ? t.editReport : t.newReport}
@@ -376,112 +398,150 @@ export default function ReportsPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="p-6">
-              
-              {/* Infos Básicas */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-                <div className="space-y-1.5 md:col-span-2">
-                  <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.nameLabel}</label>
-                  <input 
-                    required type="text" placeholder={t.namePlaceholder}
-                    value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder-gray-700"
-                  />
-                </div>
+            {/* Corpo do Formulário com Scroll Vertical */}
+            <div className="p-6 overflow-y-auto">
+              <form id="report-form" onSubmit={handleSave}>
                 
-                <div className="space-y-1.5">
-                  <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.whatsappLabel}</label>
-                  <input 
-                    required type="text" placeholder={t.whatsappPlaceholder}
-                    value={formData.recipient_whatsapp} onChange={e => setFormData({...formData, recipient_whatsapp: e.target.value})}
-                    className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder-gray-700"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.frequencyLabel}</label>
-                  <select 
-                    value={formData.frequency} onChange={e => setFormData({...formData, frequency: e.target.value})}
-                    className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
-                  >
-                    <option value="daily">{t.freqDaily}</option>
-                    <option value="weekly">{t.freqWeekly}</option>
-                    <option value="monthly">{t.freqMonthly}</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.timeLabel}</label>
-                  <input 
-                    required type="time"
-                    value={formData.send_time} onChange={e => setFormData({...formData, send_time: e.target.value})}
-                    className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all cursor-text [color-scheme:dark]"
-                  />
-                </div>
-
-                {formData.frequency === 'weekly' && (
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.dayLabel}</label>
-                    <select 
-                      value={formData.send_day} onChange={e => setFormData({...formData, send_day: e.target.value})}
-                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
-                    >
-                      {daysOfWeek.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-                    </select>
-                  </div>
-                )}
-                {formData.frequency === 'monthly' && (
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.dayLabel} (Dia do Mês)</label>
+                {/* Infos Básicas */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.nameLabel}</label>
                     <input 
-                      required type="number" min="1" max="31"
-                      value={formData.send_day} onChange={e => setFormData({...formData, send_day: e.target.value})}
-                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all"
+                      required type="text" placeholder={t.namePlaceholder}
+                      value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder-gray-700"
                     />
                   </div>
+                  
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.whatsappLabel}</label>
+                    <input 
+                      required type="text" placeholder={t.whatsappPlaceholder}
+                      value={formData.recipient_whatsapp} onChange={e => setFormData({...formData, recipient_whatsapp: e.target.value})}
+                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder-gray-700"
+                    />
+                    <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-gray-500">
+                      <Info size={12} className="text-blue-400" />
+                      <span>{t.whatsappHint}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.frequencyLabel}</label>
+                    <select 
+                      value={formData.frequency} onChange={e => setFormData({...formData, frequency: e.target.value})}
+                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
+                    >
+                      <option value="daily">{t.freqDaily}</option>
+                      <option value="weekly">{t.freqWeekly}</option>
+                      <option value="monthly">{t.freqMonthly}</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.timeLabel}</label>
+                    <input 
+                      required type="time"
+                      value={formData.send_time} onChange={e => setFormData({...formData, send_time: e.target.value})}
+                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all cursor-text [color-scheme:dark]"
+                    />
+                  </div>
+
+                  {formData.frequency === 'weekly' && (
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.dayLabel}</label>
+                      <select 
+                        value={formData.send_day} onChange={e => setFormData({...formData, send_day: e.target.value})}
+                        className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
+                      >
+                        {daysOfWeek.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  {formData.frequency === 'monthly' && (
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.dayLabel} (Dia do Mês)</label>
+                      <input 
+                        required type="number" min="1" max="31"
+                        value={formData.send_day} onChange={e => setFormData({...formData, send_day: e.target.value})}
+                        className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* BLOCO 1: Métricas Operacionais */}
+                <div className="border-t border-white/5 pt-6 mb-6">
+                  <div className="mb-4">
+                    <h3 className="text-white font-bold">{t.metricsTitle}</h3>
+                    <p className="text-xs text-gray-500">{t.metricsDesc}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {Object.keys(DEFAULT_BASE_METRICS).map((key) => {
+                      const isActive = formData.metrics[key as keyof typeof DEFAULT_BASE_METRICS]
+                      return (
+                        <label key={key} className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none ${isActive ? 'bg-blue-500/5 border-blue-500/30' : 'bg-[#0A0A0A] border-white/5 hover:border-white/10'}`}>
+                          <span className={`text-sm font-medium ${isActive ? 'text-blue-400' : 'text-gray-400'}`}>
+                            {t[`m_${key}` as keyof typeof t] || key}
+                          </span>
+                          <div className={`w-9 h-5 rounded-full relative transition-colors ${isActive ? 'bg-blue-600' : 'bg-gray-800'}`}>
+                            <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all ${isActive ? 'left-[20px]' : 'left-[3px]'}`}></div>
+                          </div>
+                          <input 
+                            type="checkbox" className="hidden" 
+                            checked={isActive} onChange={() => handleToggleBaseMetric(key)} 
+                          />
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* BLOCO 2: Métricas Dinâmicas do Funil */}
+                {pipelineStages.length > 0 && (
+                  <div className="border-t border-white/5 pt-6 mb-2">
+                    <div className="mb-4">
+                      <h3 className="text-white font-bold">{t.pipelineTitle}</h3>
+                      <p className="text-xs text-gray-500">{t.pipelineDesc}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {pipelineStages.map((stage) => {
+                        const isActive = formData.pipeline_stages.includes(stage.id)
+                        return (
+                          <label key={stage.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none ${isActive ? 'bg-purple-500/5 border-purple-500/30' : 'bg-[#0A0A0A] border-white/5 hover:border-white/10'}`}>
+                            <span className={`text-sm font-medium ${isActive ? 'text-purple-400' : 'text-gray-400'} truncate mr-2`}>
+                              {stage.label}
+                            </span>
+                            <div className={`shrink-0 w-9 h-5 rounded-full relative transition-colors ${isActive ? 'bg-purple-600' : 'bg-gray-800'}`}>
+                              <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all ${isActive ? 'left-[20px]' : 'left-[3px]'}`}></div>
+                            </div>
+                            <input 
+                              type="checkbox" className="hidden" 
+                              checked={isActive} onChange={() => handleTogglePipelineStage(stage.id)} 
+                            />
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
                 )}
-              </div>
 
-              {/* Métricas (Toggles) */}
-              <div className="border-t border-white/5 pt-6 mb-6">
-                <div className="mb-4">
-                  <h3 className="text-white font-bold">{t.metricsTitle}</h3>
-                  <p className="text-xs text-gray-500">{t.metricsDesc}</p>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {Object.keys(DEFAULT_METRICS).map((key) => {
-                    const isActive = formData.metrics[key as keyof typeof DEFAULT_METRICS]
-                    return (
-                      <label key={key} className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none ${isActive ? 'bg-blue-500/5 border-blue-500/30' : 'bg-[#0A0A0A] border-white/5 hover:border-white/10'}`}>
-                        <span className={`text-sm font-medium ${isActive ? 'text-blue-400' : 'text-gray-400'}`}>
-                          {t[`m_${key}` as keyof typeof t] || key}
-                        </span>
-                        <div className={`w-9 h-5 rounded-full relative transition-colors ${isActive ? 'bg-blue-600' : 'bg-gray-800'}`}>
-                          <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all ${isActive ? 'left-[20px]' : 'left-[3px]'}`}></div>
-                        </div>
-                        <input 
-                          type="checkbox" className="hidden" 
-                          checked={isActive} onChange={() => handleToggleMetric(key)} 
-                        />
-                      </label>
-                    )
-                  })}
-                </div>
-              </div>
+              </form>
+            </div>
 
-              {/* Botões Ação */}
-              <div className="flex justify-end gap-3 pt-6 border-t border-white/5">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-gray-400 hover:text-white transition-colors">
-                  {t.cancel}
-                </button>
-                <button type="submit" disabled={isSaving} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50">
-                  {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                  {isSaving ? t.saving : t.save}
-                </button>
-              </div>
-
-            </form>
+            {/* Rodapé Fixo (Botões) */}
+            <div className="flex justify-end gap-3 p-5 border-t border-white/5 bg-[#111] shrink-0 rounded-b-2xl">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                {t.cancel}
+              </button>
+              <button form="report-form" type="submit" disabled={isSaving} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50">
+                {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                {isSaving ? t.saving : t.save}
+              </button>
+            </div>
+            
           </div>
         </div>
       )}
