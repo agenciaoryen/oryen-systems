@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useAuth, useActivePlan } from '@/lib/AuthContext'
 import { usePlan, PLAN_CONFIGS, type PlanName } from '@/lib/usePlan'
 import { supabase } from '@/lib/supabase'
@@ -52,6 +53,8 @@ const TRANSLATIONS = {
     manage: 'Gerenciar',
     cancel: 'Cancelar Assinatura',
     reactivate: 'Reativar',
+    manageSubscription: 'Gerenciar Assinatura',
+    redirectingToStripe: 'Redirecionando para pagamento...',
     
     // Status
     active: 'Ativo',
@@ -465,6 +468,7 @@ function PlanCard({
 export default function BillingPage() {
   const { user, org, activeOrgId, activePlan, activePlanStatus } = useAuth()
   const { plan, planConfig } = usePlan()
+  const searchParams = useSearchParams()
   
   const userLang = (user?.language as Language) || 'pt'
   const userCurrency = user?.currency || 'BRL'
@@ -477,10 +481,28 @@ export default function BillingPage() {
 
   const colors = PLAN_COLORS[plan]
 
+  // Verificar se voltou do Stripe com sucesso ou cancelamento
+  useEffect(() => {
+    if (searchParams.get('success') === 'true') {
+      setSuccessMessage(t.planUpdated)
+      // Limpar URL
+      window.history.replaceState({}, '', '/dashboard/settings/billing')
+      // Recarregar para atualizar plano
+      setTimeout(() => window.location.reload(), 2000)
+    }
+    if (searchParams.get('canceled') === 'true') {
+      // Limpar URL
+      window.history.replaceState({}, '', '/dashboard/settings/billing')
+    }
+  }, [searchParams, t.planUpdated])
+
   // Calcular dias restantes do trial
   const trialDaysLeft = org?.plan_started_at 
     ? Math.max(0, 14 - Math.floor((Date.now() - new Date(org.plan_started_at).getTime()) / (1000 * 60 * 60 * 24)))
     : 0
+
+  // Verificar se já tem assinatura ativa (para mostrar botão de gerenciar)
+  const hasActiveSubscription = plan !== 'basic' && activePlanStatus === 'active'
 
   const handleSelectPlan = (newPlan: PlanName) => {
     setSelectedPlan(newPlan)
@@ -493,30 +515,59 @@ export default function BillingPage() {
     setLoading(true)
     
     try {
-      // TODO: Integrar com Stripe aqui
-      // Por enquanto, apenas atualiza o banco diretamente (para teste)
-      const { error } = await supabase
-        .from('orgs')
-        .update({ 
-          plan: selectedPlan,
-          plan_status: 'active',
-          plan_started_at: new Date().toISOString()
+      // Chamar API do Stripe para criar sessão de checkout
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orgId: activeOrgId,
+          planName: selectedPlan,
+          userId: user?.id,
+          userEmail: user?.email
         })
-        .eq('id', activeOrgId)
+      })
 
-      if (error) throw error
+      const data = await response.json()
 
-      setSuccessMessage(t.planUpdated)
-      setShowConfirmModal(false)
-      
-      // Reload para atualizar o contexto
-      setTimeout(() => {
-        window.location.reload()
-      }, 1500)
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao criar checkout')
+      }
+
+      // Redirecionar para o checkout do Stripe
+      if (data.url) {
+        window.location.href = data.url
+      }
       
     } catch (err) {
-      console.error('Erro ao atualizar plano:', err)
-      alert('Erro ao atualizar plano. Tente novamente.')
+      console.error('Erro ao iniciar checkout:', err)
+      alert('Erro ao iniciar checkout. Tente novamente.')
+      setLoading(false)
+    }
+  }
+
+  // Função para abrir portal de gerenciamento
+  const handleManageSubscription = async () => {
+    try {
+      setLoading(true)
+      
+      const response = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgId: activeOrgId })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao abrir portal')
+      }
+
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (err) {
+      console.error('Erro ao abrir portal:', err)
+      alert('Erro ao abrir portal de gerenciamento.')
     } finally {
       setLoading(false)
     }
@@ -599,6 +650,17 @@ export default function BillingPage() {
                 <p className="text-xs text-gray-600 mt-1">
                   {t.startedAt}: {new Date(org.plan_started_at).toLocaleDateString()}
                 </p>
+              )}
+              {/* Botão gerenciar assinatura */}
+              {hasActiveSubscription && (
+                <button
+                  onClick={handleManageSubscription}
+                  disabled={loading}
+                  className="mt-3 text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 ml-auto"
+                >
+                  {loading ? <Loader2 size={12} className="animate-spin" /> : <ExternalLink size={12} />}
+                  {t.manageSubscription}
+                </button>
               )}
             </div>
           </div>
