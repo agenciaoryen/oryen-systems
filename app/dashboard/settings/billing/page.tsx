@@ -432,7 +432,7 @@ function PlanCard({
       {/* CTA */}
       {isEnterprise ? (
         <a
-          href="mailto:contato@oryen.com.br?subject=Enterprise Plan"
+          href="mailto:contato@oryen.agency?subject=Enterprise Plan"
           className="w-full py-3 px-4 rounded-xl text-sm font-bold text-center transition-all bg-white/5 hover:bg-white/10 text-white border border-white/10"
         >
           {t.contactSales}
