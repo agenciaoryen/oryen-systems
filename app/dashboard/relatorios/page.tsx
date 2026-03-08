@@ -542,7 +542,7 @@ export default function ReportsPage() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto"
           onClick={(e) => e.target === e.currentTarget && setIsModalOpen(false)}
         >
-          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col my-4 max-h-[calc(100vh-2rem)]">
+          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col my-4 max-h-[calc(100vh-2rem)] overflow-hidden">
             
             {/* Header Fixo */}
             <div className="flex justify-between items-center p-4 sm:p-5 border-b border-white/5 shrink-0">
@@ -559,13 +559,13 @@ export default function ReportsPage() {
             </div>
 
             {/* Corpo com Scroll */}
-            <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
-              <form id="report-form" onSubmit={handleSave} className="space-y-6">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-4 sm:p-6">
+              <form id="report-form" onSubmit={handleSave} className="space-y-6 max-w-full">
                 
                 {/* Infos Básicas */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-full">
                   {/* Nome - Full Width */}
-                  <div className="space-y-1.5 sm:col-span-2">
+                  <div className="space-y-1.5 sm:col-span-2 min-w-0">
                     <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.nameLabel}</label>
                     <input 
                       required 
@@ -578,7 +578,7 @@ export default function ReportsPage() {
                   </div>
                   
                   {/* WhatsApp - Full Width */}
-                  <div className="space-y-1.5 sm:col-span-2">
+                  <div className="space-y-1.5 sm:col-span-2 min-w-0">
                     <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.whatsappLabel}</label>
                     <input 
                       required 
@@ -598,7 +598,7 @@ export default function ReportsPage() {
                   </div>
 
                   {/* Frequência */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 min-w-0">
                     <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.frequencyLabel}</label>
                     <select 
                       value={formData.frequency} 
@@ -612,14 +612,14 @@ export default function ReportsPage() {
                   </div>
 
                   {/* Horário */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 min-w-0">
                     <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.timeLabel}</label>
                     <input 
                       required 
                       type="time"
                       value={formData.send_time} 
                       onChange={e => setFormData({...formData, send_time: e.target.value})}
-                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all cursor-text [color-scheme:dark]"
+                      className="w-full max-w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all cursor-text [color-scheme:dark] [-webkit-appearance:none] [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert"
                     />
                   </div>
 
