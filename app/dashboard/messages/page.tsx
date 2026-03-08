@@ -4,7 +4,7 @@
 import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import {
   Search,
   MessageCircle,
@@ -23,7 +23,8 @@ import {
   Circle,
   Send,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  UserCircle
 } from 'lucide-react'
 
 /* =============================================
@@ -64,9 +65,10 @@ const scrollbarStyles = `
 const TRANSLATIONS = {
   pt: {
     activePipeline: 'Pipeline Ativo',
-    searchPlaceholder: 'Buscar conversa...',
+    searchPlaceholder: 'Buscar por nome ou telefone...',
     startConversation: 'Iniciar conversa...',
     openWhatsapp: 'Abrir no WhatsApp',
+    openLeadProfile: 'Ver perfil do lead',
     closeChat: 'Fechar conversa',
     emptyState: 'Selecione uma conversa ao lado para ver o histórico de mensagens',
     noConversations: 'Nenhuma conversa encontrada',
@@ -82,20 +84,14 @@ const TRANSLATIONS = {
     inputPlaceholder: 'Digite uma mensagem...',
     sendError: 'Erro ao enviar. Tente novamente.',
     refresh: 'Atualizar',
-    stages: {
-      todos: 'Todas',
-      contatado: 'Contatado',
-      'Lead respondeu': 'Lead Respondeu',
-      qualificado: 'Qualificado',
-      reuniao: 'Reunião',
-      ganho: 'Ganho',
-    } as Record<string, string>,
+    allStages: 'Todas',
   },
   en: {
     activePipeline: 'Active Pipeline',
-    searchPlaceholder: 'Search conversation...',
+    searchPlaceholder: 'Search by name or phone...',
     startConversation: 'Start conversation...',
     openWhatsapp: 'Open in WhatsApp',
+    openLeadProfile: 'View lead profile',
     closeChat: 'Close chat',
     emptyState: 'Select a conversation to view message history',
     noConversations: 'No conversations found',
@@ -111,20 +107,14 @@ const TRANSLATIONS = {
     inputPlaceholder: 'Type a message...',
     sendError: 'Failed to send. Try again.',
     refresh: 'Refresh',
-    stages: {
-      todos: 'All',
-      contatado: 'Contacted',
-      'Lead respondeu': 'Lead Responded',
-      qualificado: 'Qualified',
-      reuniao: 'Meeting',
-      ganho: 'Won',
-    } as Record<string, string>,
+    allStages: 'All',
   },
   es: {
     activePipeline: 'Pipeline Activo',
-    searchPlaceholder: 'Buscar conversación...',
+    searchPlaceholder: 'Buscar por nombre o teléfono...',
     startConversation: 'Iniciar conversación...',
     openWhatsapp: 'Abrir en WhatsApp',
+    openLeadProfile: 'Ver perfil del lead',
     closeChat: 'Cerrar chat',
     emptyState: 'Seleccione una conversación para ver el historial',
     noConversations: 'No se encontraron conversaciones',
@@ -140,14 +130,7 @@ const TRANSLATIONS = {
     inputPlaceholder: 'Escribe un mensaje...',
     sendError: 'Error al enviar. Inténtalo de nuevo.',
     refresh: 'Actualizar',
-    stages: {
-      todos: 'Todas',
-      contatado: 'Contactado',
-      'Lead respondeu': 'Lead Respondió',
-      qualificado: 'Calificado',
-      reuniao: 'Reunión',
-      ganho: 'Ganado',
-    } as Record<string, string>,
+    allStages: 'Todas',
   },
 }
 
@@ -155,23 +138,18 @@ type Language = keyof typeof TRANSLATIONS
 type TranslationType = typeof TRANSLATIONS['pt']
 
 /* =============================================
-   CONSTANTS & SAFETY FUNCTIONS
-   ============================================= */
-const WEBHOOK_SEND_MESSAGE = 'https://webhook2.letierren8n.com/webhook/message_agent_human'
-
-const parseDateSafe = (dateValue: unknown): Date => {
-  try {
-    if (!dateValue) return new Date()
-    const d = new Date(String(dateValue))
-    return isNaN(d.getTime()) ? new Date() : d
-  } catch {
-    return new Date()
-  }
-}
-
-/* =============================================
    TYPES
    ============================================= */
+interface PipelineStage {
+  id: string
+  org_id: string
+  name: string
+  label: string
+  color: string
+  position: number
+  is_active: boolean
+}
+
 interface Message {
   id: string
   lead_id: string
@@ -214,6 +192,21 @@ interface Lead {
   phone: string | null
   stage: string | null
   last_message_emotion: string | null
+}
+
+/* =============================================
+   CONSTANTS & SAFETY FUNCTIONS
+   ============================================= */
+const WEBHOOK_SEND_MESSAGE = 'https://webhook2.letierren8n.com/webhook/message_agent_human'
+
+const parseDateSafe = (dateValue: unknown): Date => {
+  try {
+    if (!dateValue) return new Date()
+    const d = new Date(String(dateValue))
+    return isNaN(d.getTime()) ? new Date() : d
+  } catch {
+    return new Date()
+  }
 }
 
 /* =============================================
@@ -596,14 +589,16 @@ function MessageInput({
    MAIN CONTENT
    ============================================= */
 function MessagesContent() {
+  const router = useRouter()
   const { user } = useAuth()
-  const orgId = useActiveOrgId()  // ← USA O HOOK CORRETO!
+  const orgId = useActiveOrgId()
   const searchParams = useSearchParams()
   const targetLeadId = searchParams.get('lead_id')
 
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [messages, setMessages] = useState<Message[]>([])
+  const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([])
   const [filterStage, setFilterStage] = useState('todos')
   const [searchTerm, setSearchTerm] = useState('')
   const [loadingConversations, setLoadingConversations] = useState(true)
@@ -615,7 +610,6 @@ function MessagesContent() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  // Bypass para evitar erro do TypeScript no Language
   const userLang = ((user as any)?.language as Language) || 'pt'
   const t = TRANSLATIONS[userLang]
 
@@ -634,6 +628,22 @@ function MessagesContent() {
     if (messages.length > 0) scrollToBottom(false)
   }, [messages, scrollToBottom])
 
+  // ---- Fetch pipeline stages ----
+  const fetchPipelineStages = useCallback(async () => {
+    if (!orgId) return
+
+    const { data, error } = await supabase
+      .from('pipeline_stages')
+      .select('*')
+      .eq('org_id', orgId)
+      .eq('is_active', true)
+      .order('position')
+
+    if (!error && data) {
+      setPipelineStages(data)
+    }
+  }, [orgId])
+
   // ---- Fetch conversations ----
   const fetchConversations = useCallback(async () => {
     if (!orgId) return
@@ -643,7 +653,7 @@ function MessagesContent() {
     const { data, error } = await supabase
       .from('conversations')
       .select('id, org_id, lead_id, channel, status, assigned_to, is_bot_active, last_message_body, last_message_at, unread_count, created_at')
-      .eq('org_id', orgId)  // ← USA orgId DO HOOK
+      .eq('org_id', orgId)
       .eq('status', 'active')
       .order('last_message_at', { ascending: false, nullsFirst: false })
 
@@ -685,14 +695,16 @@ function MessagesContent() {
     setLoadingConversations(false)
   }, [orgId])
 
-  // Re-fetch quando orgId mudar (staff trocou de org)
+  // Re-fetch quando orgId mudar
   useEffect(() => { 
     if (orgId) {
-      setActiveConversation(null) // Limpa conversa ativa ao trocar
+      setActiveConversation(null)
       setMessages([])
+      setFilterStage('todos')
+      fetchPipelineStages()
       fetchConversations() 
     }
-  }, [orgId, fetchConversations])
+  }, [orgId, fetchConversations, fetchPipelineStages])
 
   // ---- Deep link ----
   useEffect(() => {
@@ -736,11 +748,9 @@ function MessagesContent() {
     setIsSending(true)
     setSendError(null)
 
-    // user.email vem do Supabase Auth, name não existe no tipo AppUser. Bypass (user as any)
     const senderName = (user as any)?.email?.split('@')[0] || 'Atendente'
 
     try {
-      // 1. Webhook → n8n → WhatsApp
       const res = await fetch(WEBHOOK_SEND_MESSAGE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -754,7 +764,6 @@ function MessagesContent() {
       })
       if (!res.ok) throw new Error('Webhook failed')
 
-      // 2. Save to DB
       const { data: result } = await supabase.rpc('fn_insert_message', {
         p_org_id: activeConversation.org_id,
         p_lead_id: activeConversation.lead_id,
@@ -769,7 +778,6 @@ function MessagesContent() {
 
       const rpcResult = result as { message_id?: string } | null
 
-      // 3. Optimistic UI update
       const newMsg: Message = {
         id: rpcResult?.message_id || crypto.randomUUID(),
         lead_id: activeConversation.lead_id,
@@ -787,7 +795,6 @@ function MessagesContent() {
       }
       setMessages(prev => [...prev, newMsg])
 
-      // 4. Update sidebar
       setConversations(prev => {
         const updated = prev.map(c =>
           c.id === activeConversation.id
@@ -857,12 +864,35 @@ function MessagesContent() {
     return () => { supabase.removeChannel(ch) }
   }, [orgId])
 
-  // Filters
-  const allowedStages = ['todos', 'contatado', 'Lead respondeu', 'qualificado', 'reuniao', 'ganho']
+  // ---- Navigate to lead profile ----
+  const handleOpenLeadProfile = useCallback(() => {
+    if (activeConversation?.lead_id) {
+      router.push(`/dashboard/crm/${activeConversation.lead_id}`)
+    }
+  }, [activeConversation?.lead_id, router])
 
+  // ---- Filters ----
+  // Busca por nome OU número de telefone
   const filteredConversations = conversations
-    .filter(c => filterStage === 'todos' || c.lead_stage === filterStage)
-    .filter(c => getDisplayName(c).toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(c => {
+      if (filterStage === 'todos') return true
+      return c.lead_stage === filterStage
+    })
+    .filter(c => {
+      if (!searchTerm.trim()) return true
+      const query = searchTerm.toLowerCase()
+      const name = getDisplayName(c).toLowerCase()
+      const phone = (c.lead_phone || '').replace(/\D/g, '')
+      const searchDigits = searchTerm.replace(/\D/g, '')
+      
+      // Busca por nome
+      if (name.includes(query)) return true
+      
+      // Busca por telefone (só números)
+      if (searchDigits && phone.includes(searchDigits)) return true
+      
+      return false
+    })
 
   /* =============================================
      RENDER
@@ -872,7 +902,7 @@ function MessagesContent() {
       <style>{scrollbarStyles}</style>
       <div className="flex h-[calc(100vh-120px)] bg-[#111b21] rounded-2xl border border-[#222d34] overflow-hidden shadow-2xl">
 
-        {/* COL 1: PIPELINE FILTERS */}
+        {/* COL 1: PIPELINE FILTERS (DINÂMICO) */}
         <div className={`hidden lg:flex w-52 border-r border-[#222d34] bg-[#0b141a] p-4 flex-col gap-1 transition-opacity duration-300
           ${activeConversation ? 'opacity-40 hover:opacity-100' : ''}`}>
           <div className="flex items-center justify-between mb-3">
@@ -880,23 +910,36 @@ function MessagesContent() {
               {t.activePipeline}
             </h3>
             <button
-              onClick={fetchConversations}
+              onClick={() => { fetchPipelineStages(); fetchConversations() }}
               className="p-1.5 text-[#8696a0] hover:text-white hover:bg-white/5 rounded-lg transition-colors"
               title={t.refresh}
             >
               <RefreshCw size={14} />
             </button>
           </div>
-          {allowedStages.map(stage => (
+          
+          {/* Botão "Todas" */}
+          <button
+            onClick={() => setFilterStage('todos')}
+            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all
+              ${filterStage === 'todos'
+                ? 'bg-[#00a884] text-white font-medium'
+                : 'text-[#8696a0] hover:bg-[#202c33]'}`}
+          >
+            {t.allStages}
+          </button>
+
+          {/* Stages dinâmicos do banco */}
+          {pipelineStages.map(stage => (
             <button
-              key={stage}
-              onClick={() => setFilterStage(stage)}
+              key={stage.id}
+              onClick={() => setFilterStage(stage.name)}
               className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all
-                ${filterStage === stage
+                ${filterStage === stage.name
                   ? 'bg-[#00a884] text-white font-medium'
                   : 'text-[#8696a0] hover:bg-[#202c33]'}`}
             >
-              {t.stages[stage] || stage}
+              {stage.label}
             </button>
           ))}
         </div>
@@ -967,7 +1010,7 @@ function MessagesContent() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[11px] text-[#8696a0] uppercase tracking-wide flex items-center gap-1">
                       <Circle size={6} className="fill-[#25d366] text-[#25d366]" />
-                      {activeConversation.lead_stage}
+                      {pipelineStages.find(s => s.name === activeConversation.lead_stage)?.label || activeConversation.lead_stage}
                     </span>
                     {activeConversation.is_bot_active && (
                       <span className="text-[11px] text-violet-400 flex items-center gap-1">
@@ -982,6 +1025,14 @@ function MessagesContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
+                  {/* NOVO: Botão para ir ao perfil do lead */}
+                  <button
+                    onClick={handleOpenLeadProfile}
+                    className="p-2 text-[#aebac1] hover:text-white rounded-full hover:bg-[#374045] transition-colors"
+                    title={t.openLeadProfile}
+                  >
+                    <UserCircle size={18} />
+                  </button>
                   {activeConversation.lead_phone && (
                     <a
                       href={getWhatsappLink(activeConversation.lead_phone)}
