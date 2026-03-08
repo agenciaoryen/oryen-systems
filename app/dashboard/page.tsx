@@ -33,6 +33,8 @@ interface Lead {
   nome_empresa?: string
   owner: string | null
   source: string | null
+  data_agendamento: string | null
+  updated_at: string | null
 }
 
 interface Message {
@@ -52,7 +54,7 @@ interface SentimentDataPoint {
   name: string
   value: number
   color: string
-  [key: string]: string | number  // Index signature para compatibilidade com Recharts
+  [key: string]: string | number
 }
 
 interface SourceDataPoint {
@@ -121,6 +123,12 @@ const daysSince = (date: Date): number => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 }
 
+const isDateInRange = (dateStr: string | null, startDate: Date): boolean => {
+  if (!dateStr) return false
+  const date = parseDateSafe(dateStr)
+  return date >= startDate
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -179,7 +187,9 @@ const TRANSLATIONS = {
     companyNotInformed: 'Empresa não inf.',
     insufficientData: 'Dados insuficientes.',
     errorLoadingData: 'Erro ao carregar dados. Tente novamente.',
-    errorSavingGoals: 'Erro ao salvar metas. Tente novamente.'
+    errorSavingGoals: 'Erro ao salvar metas. Tente novamente.',
+    scheduledInPeriod: 'agendados no período',
+    attendedInPeriod: 'compareceram'
   },
   en: {
     overview: 'Overview',
@@ -234,7 +244,9 @@ const TRANSLATIONS = {
     companyNotInformed: 'Company not inf.',
     insufficientData: 'Insufficient data.',
     errorLoadingData: 'Error loading data. Please try again.',
-    errorSavingGoals: 'Error saving goals. Please try again.'
+    errorSavingGoals: 'Error saving goals. Please try again.',
+    scheduledInPeriod: 'scheduled in period',
+    attendedInPeriod: 'attended'
   },
   es: {
     overview: 'Visión General',
@@ -289,13 +301,14 @@ const TRANSLATIONS = {
     companyNotInformed: 'Empresa no inf.',
     insufficientData: 'Datos insuficientes.',
     errorLoadingData: 'Error al cargar datos. Inténtalo de nuevo.',
-    errorSavingGoals: 'Error al guardar metas. Inténtalo de nuevo.'
+    errorSavingGoals: 'Error al guardar metas. Inténtalo de nuevo.',
+    scheduledInPeriod: 'agendados en el período',
+    attendedInPeriod: 'asistieron'
   }
 } as const
 
 type Language = keyof typeof TRANSLATIONS
 
-// Tipo flexível para as traduções (não readonly)
 type TranslationKeys = {
   [K in keyof typeof TRANSLATIONS['pt']]: string
 }
@@ -459,9 +472,8 @@ const DashboardSkeleton = ({ message }: { message: string }) => (
 export default function DashboardPage() {
   const router = useRouter()
   
-  // ═══ ATUALIZADO: Usa os novos hooks do AuthContext ═══
   const { user, loading: authLoading, activeOrgName } = useAuth()
-  const activeOrgId = useActiveOrgId()  // ← Hook simplificado!
+  const activeOrgId = useActiveOrgId()
   
   // Estados de UI
   const [loading, setLoading] = useState(true)
@@ -478,8 +490,12 @@ export default function DashboardPage() {
 
   // Estados dos Dados
   const [goals, setGoals] = useState<Goals>({ revenue: 0, ads: 0 })
-  const [leads, setLeads] = useState<Lead[]>([])
+  const [leadsCreatedInPeriod, setLeadsCreatedInPeriod] = useState<Lead[]>([])
+  const [allActiveLeads, setAllActiveLeads] = useState<Lead[]>([])
   const [messages, setMessages] = useState<Message[]>([])
+
+  // Data de início do período
+  const startDate = useMemo(() => subDays(new Date(), range), [range])
 
   // ─── CARREGAR DADOS ───
   const loadData = useCallback(async () => {
@@ -488,12 +504,13 @@ export default function DashboardPage() {
     setLoading(true)
     setError(null)
     
-    const startDate = subDays(new Date(), range).toISOString()
+    const startDateStr = startDate.toISOString()
     const currentMonth = format(startOfMonth(new Date()), 'yyyy-MM-dd')
 
     try {
-      // Fetch em paralelo para melhor performance
-      const [goalsResult, leadsResult, messagesResult] = await Promise.all([
+      // Fetch em paralelo
+      const [goalsResult, leadsCreatedResult, allLeadsResult, messagesResult] = await Promise.all([
+        // Metas do mês
         supabase
           .from('goals')
           .select('revenue_target, ads_budget')
@@ -501,22 +518,34 @@ export default function DashboardPage() {
           .eq('month', currentMonth)
           .maybeSingle(),
         
+        // Leads CRIADOS no período (para métricas de captação)
         supabase
           .from('leads')
-          .select('id, created_at, total_em_vendas, stage, agendou_reuniao, compareceu_reuniao, name, nome_empresa, owner, source')
+          .select('id, created_at, total_em_vendas, stage, agendou_reuniao, compareceu_reuniao, name, nome_empresa, owner, source, data_agendamento, updated_at')
           .eq('org_id', activeOrgId)
-          .gte('created_at', startDate)
+          .gte('created_at', startDateStr)
           .order('created_at', { ascending: true }),
         
+        // TODOS os leads ativos (para métricas de agendamento por data_agendamento)
+        // Filtra por data_agendamento OU leads criados no período
+        supabase
+          .from('leads')
+          .select('id, created_at, total_em_vendas, stage, agendou_reuniao, compareceu_reuniao, name, nome_empresa, owner, source, data_agendamento, updated_at')
+          .eq('org_id', activeOrgId)
+          .or(`created_at.gte.${startDateStr},data_agendamento.gte.${startDateStr}`)
+          .order('created_at', { ascending: false }),
+        
+        // Mensagens do período
         supabase
           .from('messages')
           .select('direction, emotion, created_at')
           .eq('org_id', activeOrgId)
-          .gte('created_at', startDate)
+          .gte('created_at', startDateStr)
           .neq('emotion', null)
       ])
 
-      if (leadsResult.error) throw leadsResult.error
+      if (leadsCreatedResult.error) throw leadsCreatedResult.error
+      if (allLeadsResult.error) throw allLeadsResult.error
       if (messagesResult.error) throw messagesResult.error
 
       setGoals({
@@ -524,7 +553,8 @@ export default function DashboardPage() {
         ads: goalsResult.data?.ads_budget || 0
       })
       
-      setLeads(leadsResult.data || [])
+      setLeadsCreatedInPeriod(leadsCreatedResult.data || [])
+      setAllActiveLeads(allLeadsResult.data || [])
       setMessages(messagesResult.data || [])
 
     } catch (err) {
@@ -533,41 +563,76 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [activeOrgId, range, t.errorLoadingData])
+  }, [activeOrgId, startDate, t.errorLoadingData])
 
-  // ═══ IMPORTANTE: Re-carrega quando activeOrgId muda (staff trocou de org) ═══
   useEffect(() => {
     if (activeOrgId) loadData()
   }, [activeOrgId, loadData])
 
-  // ─── CÁLCULOS MEMOIZADOS (Performance) ───
+  // ─── CÁLCULOS MEMOIZADOS ───
+  
+  // Leads com agendamento NO PERÍODO (baseado em data_agendamento)
+  const leadsScheduledInPeriod = useMemo(() => {
+    return allActiveLeads.filter(lead => 
+      lead.agendou_reuniao && isDateInRange(lead.data_agendamento, startDate)
+    )
+  }, [allActiveLeads, startDate])
+
+  // Leads que compareceram à reunião (agendada no período)
+  const leadsAttendedInPeriod = useMemo(() => {
+    return leadsScheduledInPeriod.filter(lead => lead.compareceu_reuniao)
+  }, [leadsScheduledInPeriod])
+
+  // Leads com venda no período (baseado em updated_at quando stage = ganho/venda)
+  const leadsWithSalesInPeriod = useMemo(() => {
+    return allActiveLeads.filter(lead => {
+      const hasValue = Number(lead.total_em_vendas) > 0
+      const isWonStage = ['ganho', 'venda', 'won', 'fechado'].includes(lead.stage?.toLowerCase() || '')
+      // Considera venda no período se updated_at está no período E tem valor E stage de ganho
+      const updatedInPeriod = isDateInRange(lead.updated_at, startDate)
+      return hasValue && isWonStage && updatedInPeriod
+    })
+  }, [allActiveLeads, startDate])
+
+  // KPIs calculados
   const kpis = useMemo<KPIs>(() => {
-    const totalVendas = leads.reduce((acc, curr) => acc + (Number(curr.total_em_vendas) || 0), 0)
-    const leadsComVenda = leads.filter(l => Number(l.total_em_vendas) > 0).length
-    const leadsQualificados = leads.filter(l => 
+    // Faturamento: soma de vendas fechadas NO PERÍODO
+    const totalVendas = leadsWithSalesInPeriod.reduce((acc, curr) => acc + (Number(curr.total_em_vendas) || 0), 0)
+    
+    // Leads captados no período
+    const leadsTotal = leadsCreatedInPeriod.length
+    
+    // Taxa de conversão baseada em leads criados no período
+    const leadsComVenda = leadsCreatedInPeriod.filter(l => Number(l.total_em_vendas) > 0).length
+    
+    // Leads qualificados (criados no período)
+    const leadsQualificados = leadsCreatedInPeriod.filter(l => 
       ['qualificado', 'reuniao', 'fechamento', 'proposta'].includes(l.stage?.toLowerCase() || '')
     ).length
-    const reunioesAgendadas = leads.filter(l => l.agendou_reuniao).length
-    const reunioesRealizadas = leads.filter(l => l.compareceu_reuniao).length
+
+    // Agendamentos: usa data_agendamento no período
+    const reunioesAgendadas = leadsScheduledInPeriod.length
+    const reunioesRealizadas = leadsAttendedInPeriod.length
 
     return {
       totalFaturamento: totalVendas,
-      leadsTotal: leads.length,
-      taxaConversao: leads.length > 0 ? (leadsComVenda / leads.length) * 100 : 0,
+      leadsTotal,
+      taxaConversao: leadsTotal > 0 ? (leadsComVenda / leadsTotal) * 100 : 0,
       reunioesAgendadas,
       reunioesRealizadas,
       leadsQualificados,
       disparos: messages.filter(m => m.direction === 'outbound').length,
       respostas: messages.filter(m => m.direction === 'inbound').length,
       metaAtingida: goals.revenue > 0 ? (totalVendas / goals.revenue) * 100 : 0,
-      custoPorLead: leads.length > 0 ? goals.ads / leads.length : 0
+      custoPorLead: leadsTotal > 0 ? goals.ads / leadsTotal : 0
     }
-  }, [leads, messages, goals])
+  }, [leadsCreatedInPeriod, leadsScheduledInPeriod, leadsAttendedInPeriod, leadsWithSalesInPeriod, messages, goals])
 
+  // Gráfico de área (baseado em leads criados)
   const chartData = useMemo<ChartDataPoint[]>(() => {
     const dailyMap = new Map<string, ChartDataPoint>()
     
-    leads.forEach(lead => {
+    leadsCreatedInPeriod.forEach(lead => {
       const day = format(parseDateSafe(lead.created_at), 'dd/MM')
       if (!dailyMap.has(day)) {
         dailyMap.set(day, { name: day, leads: 0, vendas: 0, valor: 0 })
@@ -582,8 +647,9 @@ export default function DashboardPage() {
     })
     
     return Array.from(dailyMap.values())
-  }, [leads])
+  }, [leadsCreatedInPeriod])
 
+  // Sentimento das mensagens
   const sentimentData = useMemo<SentimentDataPoint[]>(() => {
     const counts = { positive: 0, neutral: 0, negative: 0 }
     
@@ -601,8 +667,9 @@ export default function DashboardPage() {
     ]
   }, [messages, t])
 
+  // Leads estagnados
   const stalledLeads = useMemo(() => {
-    return leads
+    return allActiveLeads
       .filter(l => {
         if (['ganho', 'perdido', 'venda'].includes(l.stage?.toLowerCase() || '')) return false
         const days = daysSince(parseDateSafe(l.created_at))
@@ -610,8 +677,9 @@ export default function DashboardPage() {
       })
       .sort((a, b) => Number(b.total_em_vendas) - Number(a.total_em_vendas))
       .slice(0, 4)
-  }, [leads])
+  }, [allActiveLeads])
 
+  // Horários de resposta
   const hourlyData = useMemo<HourlyDataPoint[]>(() => {
     const hoursMap = new Array(24).fill(0)
     
@@ -627,10 +695,11 @@ export default function DashboardPage() {
       .filter(h => h.responses > 0)
   }, [messages])
 
+  // Taxa de conversão por fonte
   const sourceData = useMemo<SourceDataPoint[]>(() => {
     const bySource: Record<string, { total: number; vendas: number }> = {}
     
-    leads.forEach(l => {
+    leadsCreatedInPeriod.forEach(l => {
       const source = l.source || 'Desconhecido'
       if (!bySource[source]) bySource[source] = { total: 0, vendas: 0 }
       bySource[source].total++
@@ -644,12 +713,14 @@ export default function DashboardPage() {
         volume: data.total
       }))
       .sort((a, b) => Number(b.rate) - Number(a.rate))
-  }, [leads])
+  }, [leadsCreatedInPeriod])
 
+  // Leads recentes (para tabela)
   const recentLeads = useMemo(() => {
-    return [...leads].reverse().slice(0, 5)
-  }, [leads])
+    return [...leadsCreatedInPeriod].reverse().slice(0, 5)
+  }, [leadsCreatedInPeriod])
 
+  // Porcentagem de sentimento positivo
   const sentimentPercentage = useMemo(() => {
     const total = sentimentData.reduce((sum, s) => sum + s.value, 0)
     return total > 0 ? ((sentimentData[0].value / total) * 100).toFixed(0) : '0'
@@ -687,10 +758,10 @@ export default function DashboardPage() {
 
   // ─── EXPORTAR CSV ───
   const handleExport = useCallback(() => {
-    if (leads.length === 0) return
+    if (leadsCreatedInPeriod.length === 0) return
     
     const headers = ['ID', t.tableLead, 'Empresa', t.tableDate, t.tableStatus, t.tableMeeting, t.tableValue, 'Responsável']
-    const rows = leads.map(lead => [
+    const rows = leadsCreatedInPeriod.map(lead => [
       lead.id,
       `"${lead.name || ''}"`,
       `"${lead.nome_empresa || ''}"`,
@@ -711,21 +782,18 @@ export default function DashboardPage() {
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
-  }, [leads, t])
+  }, [leadsCreatedInPeriod, t])
 
   // ─── RENDERIZAÇÃO CONDICIONAL ───
   
-  // Loading inicial de autenticação
   if (authLoading) {
     return <DashboardSkeleton message={t.loading} />
   }
 
-  // Usuário sem organização (e não é staff)
   if (user && !activeOrgId) {
     return <NoOrganizationState />
   }
 
-  // Loading dos dados
   if (loading) {
     return <DashboardSkeleton message={t.loading} />
   }
@@ -805,7 +873,7 @@ export default function DashboardPage() {
           {/* Botão Exportar */}
           <button 
             onClick={handleExport}
-            disabled={leads.length === 0}
+            disabled={leadsCreatedInPeriod.length === 0}
             className="flex-1 lg:flex-none justify-center flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download size={16} /> 
@@ -863,10 +931,10 @@ export default function DashboardPage() {
             </div>
           </Card>
 
-          {/* Agendamentos */}
+          {/* Agendamentos - CORRIGIDO: usa data_agendamento */}
           <Card className="p-4 sm:p-6 flex flex-col justify-between hover:border-white/10 transition-colors">
             <div className="flex justify-between items-start">
-              <StatBadge value={kpis.reunioesAgendadas} label={t.scheduling} trend={-2.1} />
+              <StatBadge value={kpis.reunioesAgendadas} label={t.scheduling} />
               <div className="p-2 bg-purple-900/20 rounded-lg text-purple-400 border border-purple-500/20">
                 <Calendar size={16} className="sm:w-5 sm:h-5" />
               </div>
@@ -879,6 +947,10 @@ export default function DashboardPage() {
                   : 0}%
               </span>
             </div>
+            {/* Indicador visual de que são agendamentos no período */}
+            <p className="text-[9px] text-gray-600 mt-1 text-right">
+              {kpis.reunioesRealizadas} {t.attendedInPeriod}
+            </p>
           </Card>
 
           {/* Pipeline */}
