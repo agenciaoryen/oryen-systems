@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuth, useActivePlan } from '@/lib/AuthContext'
 import { usePlan, PLAN_CONFIGS, type PlanName } from '@/lib/usePlan'
@@ -465,7 +465,7 @@ function PlanCard({
 // PÁGINA PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export default function BillingPage() {
+function BillingPageContent() {
   const { user, org, activeOrgId, activePlan, activePlanStatus } = useAuth()
   const { plan, planConfig } = usePlan()
   const searchParams = useSearchParams()
@@ -744,5 +744,18 @@ export default function BillingPage() {
         )}
       </div>
     </div>
+  )
+}
+
+// Wrapper com Suspense para useSearchParams
+export default function BillingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[calc(100vh-100px)] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    }>
+      <BillingPageContent />
+    </Suspense>
   )
 }
