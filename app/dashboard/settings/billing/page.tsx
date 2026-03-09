@@ -435,7 +435,7 @@ function PlanCard({
       {/* CTA */}
       {isEnterprise ? (
         <a
-          href={`https://wa.me/5551998838409?text=${encodeURIComponent(t.whatsappMessage)}`}
+          href={`https://wa.me/5551998388409?text=${encodeURIComponent(t.whatsappMessage)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="w-full py-3 px-4 rounded-xl text-sm font-bold text-center transition-all bg-white/5 hover:bg-white/10 text-white border border-white/10 block"
