@@ -114,8 +114,6 @@ const TRANSLATIONS = {
     faqTitle: 'Perguntas Frequentes',
     faq1q: 'Posso trocar de plano a qualquer momento?',
     faq1a: 'Sim! Upgrades são aplicados imediatamente. Downgrades entram em vigor no próximo ciclo de faturamento.',
-    faq2q: 'Como funciona o período de teste?',
-    faq2a: 'Novos usuários têm 14 dias para testar o plano Gold gratuitamente. Não é necessário cartão de crédito.',
     faq3q: 'Posso cancelar quando quiser?',
     faq3a: 'Sim, sem multas ou taxas. Você mantém acesso até o final do período pago.',
   },
