@@ -47,6 +47,7 @@ const TRANSLATIONS = {
     mostPopular: 'Mais Popular',
     enterprise: 'Sob Consulta',
     contactSales: 'Falar com Vendas',
+    whatsappMessage: 'Olá! Tenho interesse no plano Enterprise do Oryen Systems.',
     currentPlanBadge: 'Atual',
     upgrade: 'Fazer Upgrade',
     downgrade: 'Fazer Downgrade',
@@ -131,6 +132,7 @@ const TRANSLATIONS = {
     mostPopular: 'Most Popular',
     enterprise: 'Contact Us',
     contactSales: 'Contact Sales',
+    whatsappMessage: 'Hi! I am interested in the Enterprise plan for Oryen Systems.',
     currentPlanBadge: 'Current',
     upgrade: 'Upgrade',
     downgrade: 'Downgrade',
@@ -205,6 +207,7 @@ const TRANSLATIONS = {
     mostPopular: 'Más Popular',
     enterprise: 'Consultar',
     contactSales: 'Contactar Ventas',
+    whatsappMessage: '¡Hola! Tengo interés en el plan Enterprise de Oryen Systems.',
     currentPlanBadge: 'Actual',
     upgrade: 'Mejorar',
     downgrade: 'Reducir',
@@ -432,7 +435,9 @@ function PlanCard({
       {/* CTA */}
       {isEnterprise ? (
         <a
-          href="mailto:contato@oryen.com.br?subject=Enterprise Plan"
+          href={`https://wa.me/5551998838409?text=${encodeURIComponent(t.whatsappMessage)}`}
+          target="_blank"
+          rel="noopener noreferrer"
           className="w-full py-3 px-4 rounded-xl text-sm font-bold text-center transition-all bg-white/5 hover:bg-white/10 text-white border border-white/10 block"
         >
           {t.contactSales}
