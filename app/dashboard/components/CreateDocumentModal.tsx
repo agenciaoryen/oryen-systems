@@ -133,14 +133,14 @@ export default function CreateDocumentModal({
   leadData,
   onSuccess
 }: CreateDocumentModalProps) {
-  const { user, org, activeOrgId } = useAuth()
+  const { user, activeOrg, activeOrgId } = useAuth()
   
   const lang = (user?.language as Language) || 'es'
   const t = TRANSLATIONS[lang]
   
   // Buscar templates filtrados por nicho E idioma
   const { templates, loading: loadingTemplates } = useDocumentTemplates(
-    org?.niche ?? undefined,
+    activeOrg?.niche ?? undefined,
     lang
   )
 
@@ -172,7 +172,7 @@ export default function CreateDocumentModal({
           else if (v.source === 'lead.phone') initialData[v.key] = leadData?.phone || ''
           else if (v.source === 'lead.email') initialData[v.key] = leadData?.email || ''
           else if (v.source === 'user.name') initialData[v.key] = user?.name || ''
-          else if (v.source === 'org.name') initialData[v.key] = org?.name || ''
+          else if (v.source === 'org.name') initialData[v.key] = activeOrg?.name || ''
           else if (v.source === 'auto' && v.type === 'date') {
             initialData[v.key] = new Date().toLocaleDateString()
           }
@@ -191,7 +191,7 @@ export default function CreateDocumentModal({
 
       setFormData(prev => ({ ...initialData, ...prev }))
     }
-  }, [selectedTemplate, step, leadData, user, org])
+  }, [selectedTemplate, step, leadData, user, activeOrg])
 
   // Preview renderizado
   const previewHtml = useMemo(() => {

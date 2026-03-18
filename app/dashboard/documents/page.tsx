@@ -10,6 +10,7 @@ import {
   type LeadDocument,
   type DocumentStatus 
 } from '@/lib/documents/types'
+import CreateDocumentModal from '@/app/dashboard/components/CreateDocumentModal'
 import {
   FileText,
   Plus,
@@ -33,6 +34,7 @@ import {
   X
 } from 'lucide-react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -255,7 +257,7 @@ function DocumentCard({ doc, lang, t }: { doc: LeadDocument; lang: Language; t: 
 // COMPONENTE: EmptyState
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function EmptyState({ t }: { t: any }) {
+function EmptyState({ t, onNewDocument, onUpload }: { t: any; onNewDocument: () => void; onUpload: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mb-4">
@@ -264,11 +266,17 @@ function EmptyState({ t }: { t: any }) {
       <h3 className="text-lg font-semibold text-white mb-2">{t.noDocuments}</h3>
       <p className="text-gray-500 text-sm mb-6 max-w-sm">{t.noDocumentsDesc}</p>
       <div className="flex gap-3">
-        <button className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+        <button 
+          onClick={onNewDocument}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+        >
           <Plus size={16} />
           {t.newDocument}
         </button>
-        <button className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors border border-white/10">
+        <button 
+          onClick={onUpload}
+          className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors border border-white/10"
+        >
           <Upload size={16} />
           {t.upload}
         </button>
@@ -283,13 +291,14 @@ function EmptyState({ t }: { t: any }) {
 
 export default function DocumentsPage() {
   const { user } = useAuth()
-  const { documents, loading, error } = useLeadDocuments()
+  const { documents, loading, error, refetch } = useLeadDocuments()
   
   const lang = (user?.language as Language) || 'pt'
   const t = TRANSLATIONS[lang]
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<DocumentStatus | 'all'>('all')
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   // Filtrar documentos
   const filteredDocuments = useMemo(() => {
@@ -319,6 +328,11 @@ export default function DocumentsPage() {
     }, {} as Record<string, number>)
   }, [documents])
 
+  // Handler para upload (TODO: implementar)
+  const handleUpload = () => {
+    toast.info('Upload de arquivos em breve!')
+  }
+
   return (
     <div className="min-h-[calc(100vh-100px)] bg-[#0A0A0A] p-4 sm:p-6">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -334,11 +348,17 @@ export default function DocumentsPage() {
           </div>
 
           <div className="flex gap-2">
-            <button className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm font-medium flex items-center gap-2 transition-colors border border-white/10">
+            <button 
+              onClick={handleUpload}
+              className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm font-medium flex items-center gap-2 transition-colors border border-white/10"
+            >
               <Upload size={16} />
               {t.upload}
             </button>
-            <button className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-medium flex items-center gap-2 transition-colors shadow-lg shadow-blue-600/20">
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-medium flex items-center gap-2 transition-colors shadow-lg shadow-blue-600/20"
+            >
               <Plus size={16} />
               {t.newDocument}
             </button>
@@ -410,7 +430,7 @@ export default function DocumentsPage() {
             <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
           </div>
         ) : filteredDocuments.length === 0 ? (
-          <EmptyState t={t} />
+          <EmptyState t={t} onNewDocument={() => setShowCreateModal(true)} onUpload={handleUpload} />
         ) : (
           <div className="grid gap-3">
             {filteredDocuments.map((doc) => (
@@ -419,6 +439,39 @@ export default function DocumentsPage() {
           </div>
         )}
       </div>
+
+      {/* Create Document Modal - Nota: precisa de leadId */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 max-w-md w-full text-center">
+            <FileText className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">
+              {lang === 'pt' ? 'Criar Documento' : lang === 'es' ? 'Crear Documento' : 'Create Document'}
+            </h3>
+            <p className="text-gray-400 text-sm mb-6">
+              {lang === 'pt' 
+                ? 'Para criar um documento, acesse o perfil de um lead e clique em "Novo Documento" na seção de documentos.' 
+                : lang === 'es'
+                ? 'Para crear un documento, acceda al perfil de un lead y haga clic en "Nuevo Documento" en la sección de documentos.'
+                : 'To create a document, go to a lead profile and click "New Document" in the documents section.'}
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm font-medium transition-colors border border-white/10"
+              >
+                {lang === 'pt' ? 'Fechar' : lang === 'es' ? 'Cerrar' : 'Close'}
+              </button>
+              <Link
+                href="/dashboard/crm"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                {lang === 'pt' ? 'Ir para CRM' : lang === 'es' ? 'Ir al CRM' : 'Go to CRM'}
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

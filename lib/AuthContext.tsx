@@ -46,6 +46,7 @@ type AuthContextType = {
   // Helper principal - use este em todos os módulos!
   activeOrgId: string | null
   activeOrgName: string
+  activeOrg: Org | null  // <-- NOVO: org ativa (para staff = org selecionada)
   
   // ═══ NOVO: Helpers de Plano ═══
   activePlan: PlanName
@@ -63,6 +64,7 @@ const AuthContext = createContext<AuthContextType>({
   setSelectedOrgId: () => {},
   activeOrgId: null,
   activeOrgName: 'Organização',
+  activeOrg: null,
   // Plano
   activePlan: 'basic',
   activePlanStatus: 'active',
@@ -251,6 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSelectedOrgId,
       activeOrgId,
       activeOrgName,
+      activeOrg,
       // Plano
       activePlan,
       activePlanStatus,

@@ -285,7 +285,7 @@ const formatDateTime = (dateString: string, lang: string, timezone: string) => {
 export default function LeadProfilePage() {
   const params = useParams()
   const router = useRouter()
-  const { user, org } = useAuth()
+  const { user, activeOrg } = useAuth()
   const orgId = useActiveOrgId()
 
   // Configurações do usuário
@@ -1040,7 +1040,7 @@ export default function LeadProfilePage() {
           </div>
 
           {/* Documentos do Lead - Apenas para nichos específicos */}
-          {org?.niche === 'real_estate' && (
+          {activeOrg?.niche === 'real_estate' && (
             <div className="bg-[#111] border border-white/5 rounded-2xl p-5 md:p-6 shadow-xl">
               <LeadDocuments 
                 leadId={lead.id} 
