@@ -21,7 +21,13 @@ import {
   ChevronDown,
   Filter,
   RefreshCw,
-  Settings
+  Bot,
+  Maximize2,
+  Minimize2,
+  Users,
+  TrendingUp,
+  Pause,
+  Play
 } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -42,6 +48,7 @@ interface Lead {
   total_em_vendas?: number
   org_id?: string
   tags?: Tag[]
+  conversa_finalizada?: boolean // true = IA pausada, false = IA ativa
 }
 
 interface PipelineStage {
@@ -117,7 +124,19 @@ const TRANSLATIONS = {
     managePipeline: 'Gerenciar funil',
     errorLoading: 'Erro ao carregar dados',
     errorSaving: 'Erro ao salvar',
-    leads: 'Leads'
+    leads: 'Leads',
+    // Footer
+    totalLeads: 'Total de Leads',
+    totalValue: 'Valor Total',
+    aiActive: 'IA Ativa',
+    aiPaused: 'IA Pausada',
+    fullscreen: 'Tela cheia',
+    exitFullscreen: 'Sair da tela cheia',
+    filterAi: 'Filtrar por IA',
+    allLeads: 'Todos',
+    aiActiveOnly: 'IA Ativa',
+    aiPausedOnly: 'IA Pausada',
+    aiStatus: 'Status IA'
   },
   en: {
     title: 'Sales Pipeline',
@@ -163,7 +182,19 @@ const TRANSLATIONS = {
     managePipeline: 'Manage pipeline',
     errorLoading: 'Error loading data',
     errorSaving: 'Error saving',
-    leads: 'Leads'
+    leads: 'Leads',
+    // Footer
+    totalLeads: 'Total Leads',
+    totalValue: 'Total Value',
+    aiActive: 'AI Active',
+    aiPaused: 'AI Paused',
+    fullscreen: 'Fullscreen',
+    exitFullscreen: 'Exit fullscreen',
+    filterAi: 'Filter by AI',
+    allLeads: 'All',
+    aiActiveOnly: 'AI Active',
+    aiPausedOnly: 'AI Paused',
+    aiStatus: 'AI Status'
   },
   es: {
     title: 'Pipeline de Ventas',
@@ -209,7 +240,19 @@ const TRANSLATIONS = {
     managePipeline: 'Gestionar pipeline',
     errorLoading: 'Error al cargar datos',
     errorSaving: 'Error al guardar',
-    leads: 'Leads'
+    leads: 'Leads',
+    // Footer
+    totalLeads: 'Total de Leads',
+    totalValue: 'Valor Total',
+    aiActive: 'IA Activa',
+    aiPaused: 'IA Pausada',
+    fullscreen: 'Pantalla completa',
+    exitFullscreen: 'Salir de pantalla completa',
+    filterAi: 'Filtrar por IA',
+    allLeads: 'Todos',
+    aiActiveOnly: 'IA Activa',
+    aiPausedOnly: 'IA Pausada',
+    aiStatus: 'Estado IA'
   }
 }
 
@@ -281,6 +324,28 @@ const formatDate = (dateString: string, lang: string, timezone: string) => {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENTE: AI Status Badge
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function AiStatusBadge({ isActive, size = 'sm' }: { isActive: boolean; size?: 'sm' | 'md' }) {
+  const sizeClasses = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'
+  const iconSize = size === 'sm' ? 10 : 12
+  
+  return (
+    <div 
+      className={`${sizeClasses} rounded-full flex items-center justify-center ${
+        isActive 
+          ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' 
+          : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]'
+      }`}
+      title={isActive ? 'IA Ativa' : 'IA Pausada'}
+    >
+      <Bot size={iconSize} className="text-white" />
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -308,6 +373,8 @@ export default function CrmPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [isTagFilterOpen, setIsTagFilterOpen] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [aiFilter, setAiFilter] = useState<'all' | 'active' | 'paused'>('all')
 
   // Estados de Drag & Drop
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null)
@@ -323,6 +390,24 @@ export default function CrmPage() {
     selectedTags: [] as string[]
   })
 
+  // ─── FULLSCREEN ───
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen()
+      setIsFullscreen(true)
+    } else {
+      document.exitFullscreen()
+      setIsFullscreen(false)
+    }
+  }
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
 
   // ─── CARREGAR DADOS ───
   const loadData = useCallback(async () => {
@@ -369,7 +454,7 @@ export default function CrmPage() {
 
         let query = supabase
           .from('leads')
-          .select('*')
+          .select('*, conversa_finalizada')
           .eq('org_id', orgId)
           .order('created_at', { ascending: false })
           .range(from, to)
@@ -433,8 +518,23 @@ export default function CrmPage() {
       if (!hasSelectedTag) return false
     }
 
+    // Filtro de IA
+    if (aiFilter !== 'all') {
+      const isAiActive = lead.conversa_finalizada === false
+      if (aiFilter === 'active' && !isAiActive) return false
+      if (aiFilter === 'paused' && isAiActive) return false
+    }
+
     return true
   })
+
+  // ─── ESTATÍSTICAS ───
+  const stats = {
+    totalLeads: filteredLeads.length,
+    totalValue: filteredLeads.reduce((sum, lead) => sum + (lead.total_em_vendas || 0), 0),
+    aiActive: leads.filter(l => l.conversa_finalizada === false).length,
+    aiPaused: leads.filter(l => l.conversa_finalizada === true).length
+  }
 
   // ─── AGRUPAR LEADS POR ESTÁGIO ───
   const getGroupedLeads = () => {
@@ -780,6 +880,7 @@ export default function CrmPage() {
                 <thead className="bg-gray-900 text-gray-400 uppercase font-semibold text-[11px] tracking-wider sticky top-0 z-10 border-b border-gray-800">
                   <tr>
                     <th className="px-4 md:px-6 py-4 font-medium">{t.companyLead}</th>
+                    <th className="px-4 md:px-6 py-4 font-medium text-center">{t.aiStatus}</th>
                     <th className="px-4 md:px-6 py-4 font-medium text-emerald-500">{t.value}</th>
                     <th className="px-4 md:px-6 py-4 font-medium">{t.stage}</th>
                     <th className="px-4 md:px-6 py-4 font-medium">Tags</th>
@@ -796,6 +897,7 @@ export default function CrmPage() {
                     const daysSinceUpdate = getDaysSinceUpdate(lead.updated_at)
                     const isStale = daysSinceUpdate > 5
                     const leadTagsList = getLeadTags(lead.id)
+                    const isAiActive = lead.conversa_finalizada === false
 
                     return (
                       <tr
@@ -812,6 +914,11 @@ export default function CrmPage() {
                               <span className="font-medium text-gray-200 group-hover:text-white truncate">{leadDisplayName}</span>
                               {lead.nome_empresa && <span className="text-[10px] text-gray-500 truncate">{t.contactLabel} {lead.name}</span>}
                             </div>
+                          </div>
+                        </td>
+                        <td className="px-4 md:px-6 py-3">
+                          <div className="flex justify-center">
+                            <AiStatusBadge isActive={isAiActive} size="md" />
                           </div>
                         </td>
                         <td className="px-4 md:px-6 py-3 font-bold text-emerald-400 font-mono whitespace-nowrap">
@@ -924,6 +1031,7 @@ export default function CrmPage() {
                         const daysSinceUpdate = getDaysSinceUpdate(lead.updated_at)
                         const isStale = daysSinceUpdate > 5
                         const leadTagsList = getLeadTags(lead.id)
+                        const isAiActive = lead.conversa_finalizada === false
 
                         return (
                           <div
@@ -938,18 +1046,22 @@ export default function CrmPage() {
                               ${draggedLeadId === lead.id ? 'opacity-30 scale-95 border-dashed border-blue-500' : isStale ? 'border-amber-500/40' : 'border-gray-800'}
                             `}
                           >
-                            {isStale && (
-                              <div className="absolute -top-1 -right-1 bg-amber-500 text-gray-900 rounded-full p-1 shadow-lg" title={`${daysSinceUpdate} ${t.stale}`}>
-                                <Clock size={10} />
-                              </div>
-                            )}
+                            {/* Indicadores no canto superior direito */}
+                            <div className="absolute -top-1.5 -right-1.5 flex items-center gap-1">
+                              {isStale && (
+                                <div className="bg-amber-500 text-gray-900 rounded-full p-1 shadow-lg" title={`${daysSinceUpdate} ${t.stale}`}>
+                                  <Clock size={10} />
+                                </div>
+                              )}
+                              <AiStatusBadge isActive={isAiActive} />
+                            </div>
 
-                            <div className="absolute top-2 right-2 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">
+                            <div className="absolute top-2 right-6 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">
                               <GripVertical size={14} />
                             </div>
 
                             {/* Nome e Empresa */}
-                            <div className="flex items-start gap-2 mb-2 pr-4">
+                            <div className="flex items-start gap-2 mb-2 pr-6">
                               <div className="w-7 h-7 flex-shrink-0 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 flex items-center justify-center text-[9px] font-bold text-gray-400">
                                 {getInitials(leadDisplayName)}
                               </div>
@@ -1042,6 +1154,121 @@ export default function CrmPage() {
           </div>
         )}
       </main>
+
+      {/* FOOTER - ESTILO TRELLO */}
+      <footer className="shrink-0 border-t border-gray-800 bg-gray-900/80 backdrop-blur-sm px-4 md:px-6 py-2.5">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          {/* Estatísticas */}
+          <div className="flex items-center gap-4 md:gap-6">
+            {/* Total de Leads */}
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-blue-500/10">
+                <Users size={14} className="text-blue-400" />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t.totalLeads}</p>
+                <p className="text-sm font-bold text-white">{stats.totalLeads}</p>
+              </div>
+            </div>
+
+            {/* Valor Total */}
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-emerald-500/10">
+                <TrendingUp size={14} className="text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t.totalValue}</p>
+                <p className="text-sm font-bold text-emerald-400 font-mono">
+                  {formatPrice(stats.totalValue, userCurrency, userLang)}
+                </p>
+              </div>
+            </div>
+
+            {/* Separador */}
+            <div className="hidden md:block w-px h-8 bg-gray-800" />
+
+            {/* IA Ativa */}
+            <div className="hidden md:flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-emerald-500/10">
+                <Play size={14} className="text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t.aiActive}</p>
+                <p className="text-sm font-bold text-emerald-400">{stats.aiActive}</p>
+              </div>
+            </div>
+
+            {/* IA Pausada */}
+            <div className="hidden md:flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-amber-500/10">
+                <Pause size={14} className="text-amber-400" />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t.aiPaused}</p>
+                <p className="text-sm font-bold text-amber-400">{stats.aiPaused}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Ações do Footer */}
+          <div className="flex items-center gap-2">
+            {/* Filtro de IA */}
+            <div className="flex bg-gray-800 rounded-lg p-0.5 border border-gray-700">
+              <button
+                onClick={() => setAiFilter('all')}
+                className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${
+                  aiFilter === 'all'
+                    ? 'bg-gray-700 text-white'
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                {t.allLeads}
+              </button>
+              <button
+                onClick={() => setAiFilter('active')}
+                className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all flex items-center gap-1 ${
+                  aiFilter === 'active'
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                <Play size={10} />
+                <span className="hidden sm:inline">{t.aiActiveOnly}</span>
+              </button>
+              <button
+                onClick={() => setAiFilter('paused')}
+                className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all flex items-center gap-1 ${
+                  aiFilter === 'paused'
+                    ? 'bg-amber-500/20 text-amber-400'
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                <Pause size={10} />
+                <span className="hidden sm:inline">{t.aiPausedOnly}</span>
+              </button>
+            </div>
+
+            {/* Tela Cheia */}
+            <button
+              onClick={toggleFullscreen}
+              className="p-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+              title={isFullscreen ? t.exitFullscreen : t.fullscreen}
+            >
+              {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            </button>
+
+            {/* Refresh */}
+            <button
+              onClick={loadData}
+              disabled={loading}
+              className="p-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors disabled:opacity-50"
+              title={t.refresh}
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            </button>
+          </div>
+        </div>
+      </footer>
 
       {/* MODAL CRIAR LEAD */}
       {isModalOpen && (

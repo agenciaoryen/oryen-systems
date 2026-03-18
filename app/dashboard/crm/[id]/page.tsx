@@ -1007,7 +1007,7 @@ export default function LeadProfilePage() {
 
         {/* COLUNA LATERAL */}
         <div className="space-y-6">
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-5 md:p-6 sticky top-6 shadow-xl">
+          <div className="bg-[#111] border border-white/5 rounded-2xl p-5 md:p-6 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
               {t.quickNoteTitle}
