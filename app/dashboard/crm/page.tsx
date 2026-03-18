@@ -323,6 +323,7 @@ export default function CrmPage() {
     selectedTags: [] as string[]
   })
 
+
   // ─── CARREGAR DADOS ───
   const loadData = useCallback(async () => {
     if (!orgId) return

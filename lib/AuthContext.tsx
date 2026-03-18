@@ -14,6 +14,7 @@ type UserProfile = {
   language: string | null
   currency: string | null
   timezone: string | null
+  name: string | null
 }
 
 type AppUser = User & UserProfile
@@ -27,6 +28,7 @@ type Org = {
   plan: PlanName
   plan_status: PlanStatus
   plan_started_at: string | null
+  niche: string | null
 }
 
 type AuthContextType = {
@@ -96,13 +98,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // activeOrgId: para staff é a org selecionada, para usuário normal é a org do perfil
   const activeOrgId = isStaff ? selectedOrgId : (org?.id || null)
   
+  // Org selecionada (para staff)
+  const selectedOrg = availableOrgs.find(o => o.id === selectedOrgId) || null
+  
   // activeOrgName: nome da org ativa
-  const selectedOrg = availableOrgs.find(o => o.id === selectedOrgId)
   const activeOrgName = isStaff 
     ? (selectedOrg?.name || 'Selecione uma organização')
     : (org?.name || 'Organização')
 
-  // ═══ NOVO: Plano ativo ═══
+  // ═══ Plano ativo ═══
+  // Para staff: usa a org selecionada do availableOrgs
+  // Para usuário normal: usa a org do perfil
   const activeOrg = isStaff ? selectedOrg : org
   const activePlan: PlanName = activeOrg?.plan || 'basic'
   const activePlanStatus: PlanStatus = activeOrg?.plan_status || 'active'
@@ -125,7 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           org_id: profile?.org_id ?? null,
           language: profile?.language ?? 'pt',
           currency: profile?.currency ?? 'BRL',
-          timezone: profile?.timezone ?? 'America/Sao_Paulo'
+          timezone: profile?.timezone ?? 'America/Sao_Paulo',
+          name: profile?.name ?? null
         }
 
         setUser(appUser)
@@ -135,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Staff: carregar TODAS as organizações (com campos de plano)
           const { data: orgsData } = await supabase
             .from('orgs')
-            .select('id, name, plan, plan_status, plan_started_at')
+            .select('id, name, plan, plan_status, plan_started_at, niche')
             .order('name')
           
           // Garantir valores default para plan
@@ -143,7 +150,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             ...o,
             plan: o.plan || 'basic',
             plan_status: o.plan_status || 'active',
-            plan_started_at: o.plan_started_at || null
+            plan_started_at: o.plan_started_at || null,
+            niche: o.niche || null
           }))
           
           setAvailableOrgs(orgs)
@@ -168,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (appUser.org_id) {
             const { data: orgData } = await supabase
               .from('orgs')
-              .select('id, name, plan, plan_status, plan_started_at')
+              .select('id, name, plan, plan_status, plan_started_at, niche')
               .eq('id', appUser.org_id)
               .maybeSingle()
             
@@ -177,7 +185,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 ...orgData,
                 plan: orgData.plan || 'basic',
                 plan_status: orgData.plan_status || 'active',
-                plan_started_at: orgData.plan_started_at || null
+                plan_started_at: orgData.plan_started_at || null,
+                niche: orgData.niche || null
               })
             } else {
               setOrg(null)
@@ -200,7 +209,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           org_id: null,
           language: 'pt',
           currency: 'BRL',
-          timezone: 'America/Sao_Paulo'
+          timezone: 'America/Sao_Paulo',
+          name: null
         })
         setOrg(null)
       } finally {

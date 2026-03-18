@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/AuthContext'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'sonner' 
 import { 
   LayoutDashboard, 
@@ -20,7 +20,8 @@ import {
   ShieldCheck,
   Building2,
   ChevronDown,
-  BarChart3, // <-- Ícone Importado
+  BarChart3,
+  FileText,
   type LucideIcon 
 } from 'lucide-react'
 
@@ -37,7 +38,8 @@ const TRANSLATIONS = {
       crm: 'CRM & Leads',
       conversations: 'Conversas',
       agents: 'Agentes IA',
-      reports: 'Relatórios', // <-- Tradução adicionada
+      reports: 'Relatórios',
+      documents: 'Documentos',
       settings: 'Configurações'
     },
     comingSoon: '(Em Breve)',
@@ -56,7 +58,8 @@ const TRANSLATIONS = {
       crm: 'CRM & Leads',
       conversations: 'Conversations',
       agents: 'AI Agents',
-      reports: 'Reports', // <-- Tradução adicionada
+      reports: 'Reports',
+      documents: 'Documents',
       settings: 'Settings'
     },
     comingSoon: '(Coming Soon)',
@@ -75,7 +78,8 @@ const TRANSLATIONS = {
       crm: 'CRM & Leads',
       conversations: 'Conversaciones',
       agents: 'Agentes IA',
-      reports: 'Reportes', // <-- Tradução adicionada
+      reports: 'Reportes',
+      documents: 'Documentos',
       settings: 'Configuración'
     },
     comingSoon: '(Próximamente)',
@@ -89,6 +93,12 @@ const TRANSLATIONS = {
 }
 
 type Language = keyof typeof TRANSLATIONS
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NICHOS COM ACESSO A DOCUMENTOS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const NICHES_WITH_DOCUMENTS = ['real_estate']
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
@@ -108,6 +118,7 @@ interface SidebarItem {
   icon: LucideIcon
   badge?: boolean 
   isComingSoon?: boolean
+  requiredNiche?: string[] // Nichos que têm acesso a este item
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -121,6 +132,7 @@ export default function Sidebar() {
   // Auth Context com suporte a Staff
   const { 
     user, 
+    org,
     isStaff, 
     availableOrgs, 
     selectedOrgId, 
@@ -136,6 +148,15 @@ export default function Sidebar() {
   const [hasUnreadAlerts, setHasUnreadAlerts] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false)
+
+  // Nicho da org ativa (para staff, pega da org selecionada)
+  const activeNiche = useMemo(() => {
+    if (isStaff && selectedOrgId) {
+      const selectedOrg = availableOrgs.find(o => o.id === selectedOrgId)
+      return selectedOrg?.niche || null
+    }
+    return org?.niche || null
+  }, [isStaff, selectedOrgId, availableOrgs, org])
 
   // Função de Logout
   const handleLogout = async () => {
@@ -224,15 +245,26 @@ export default function Sidebar() {
   }, [isOrgDropdownOpen])
 
   // ─── LINKS DO MENU ───
-  const links: SidebarItem[] = [
+  const allLinks: SidebarItem[] = [
     { href: '/dashboard', label: t.menu.overview, icon: LayoutDashboard },
     { href: '/dashboard/alerts', label: t.menu.alerts, icon: Bell, badge: hasUnreadAlerts },
     { href: '/dashboard/crm', label: t.menu.crm, icon: Users },
     { href: '/dashboard/messages', label: t.menu.conversations, icon: MessageSquare },
-    { href: '/dashboard/relatorios', label: t.menu.reports, icon: BarChart3 }, // <-- Link Adicionado
+    { href: '/dashboard/documents', label: t.menu.documents, icon: FileText, requiredNiche: NICHES_WITH_DOCUMENTS },
+    { href: '/dashboard/relatorios', label: t.menu.reports, icon: BarChart3 },
     { href: '/dashboard/agents', label: t.menu.agents, icon: Bot, isComingSoon: true },
     { href: '/dashboard/settings', label: t.menu.settings, icon: Settings },
   ]
+
+  // Filtrar links baseado no nicho da org
+  const links = useMemo(() => {
+    return allLinks.filter(link => {
+      // Se não tem requiredNiche, mostra para todos
+      if (!link.requiredNiche) return true
+      // Se tem requiredNiche, verifica se o nicho da org está na lista
+      return activeNiche && link.requiredNiche.includes(activeNiche)
+    })
+  }, [allLinks, activeNiche])
 
   return (
     <>

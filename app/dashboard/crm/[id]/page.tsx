@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
@@ -6,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { formatPrice } from '@/lib/format'
+import LeadDocuments from './components/LeadDocuments'
 import {
   ArrowLeft,
   Mail,
@@ -24,10 +24,7 @@ import {
   Clock,
   Check,
   ExternalLink,
-  Pencil,
-  PhoneCall,
-  CalendarCheck,
-  FileSignature
+  Pencil
 } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -56,7 +53,7 @@ interface LeadDetails {
 interface LeadEvent {
   id: string
   lead_id: string
-  type: 'stage_change' | 'note' | 'contact' | 'tag_added' | 'tag_removed' | 'call_made' | 'meeting_attended' | 'proposal_sent'
+  type: 'stage_change' | 'note' | 'contact' | 'tag_added' | 'tag_removed'
   content: string
   created_at: string
 }
@@ -118,7 +115,7 @@ const TRANSLATIONS = {
     createdAt: 'Criado em',
     updatedAt: 'Atualizado em',
     leadInfo: 'Informações do Lead',
-    quickActions: 'Ações de Venda',
+    quickActions: 'Ações Rápidas',
     stageChanged: 'Etapa alterada para',
     tagAdded: 'Tag adicionada:',
     tagRemoved: 'Tag removida:',
@@ -127,14 +124,7 @@ const TRANSLATIONS = {
     namePlaceholder: 'Nome do lead',
     companyPlaceholder: 'Nome da empresa',
     noTagsAvailable: 'Nenhuma tag disponível',
-    createTagsInSettings: 'Criar tags em Configurações',
-    // Novos textos
-    actionCall: 'Ligação Feita',
-    actionMeeting: 'Reunião Realizada',
-    actionProposal: 'Proposta Enviada',
-    logCall: 'Registrou uma ligação.',
-    logMeeting: 'Compareceu à reunião agendada.',
-    logProposal: 'Enviou uma proposta comercial.'
+    createTagsInSettings: 'Criar tags em Configurações'
   },
   en: {
     back: 'Back',
@@ -169,7 +159,7 @@ const TRANSLATIONS = {
     createdAt: 'Created at',
     updatedAt: 'Updated at',
     leadInfo: 'Lead Information',
-    quickActions: 'Sales Actions',
+    quickActions: 'Quick Actions',
     stageChanged: 'Stage changed to',
     tagAdded: 'Tag added:',
     tagRemoved: 'Tag removed:',
@@ -178,14 +168,7 @@ const TRANSLATIONS = {
     namePlaceholder: 'Lead name',
     companyPlaceholder: 'Company name',
     noTagsAvailable: 'No tags available',
-    createTagsInSettings: 'Create tags in Settings',
-    // Novos textos
-    actionCall: 'Call Made',
-    actionMeeting: 'Meeting Attended',
-    actionProposal: 'Proposal Sent',
-    logCall: 'Logged a call.',
-    logMeeting: 'Attended the scheduled meeting.',
-    logProposal: 'Sent a commercial proposal.'
+    createTagsInSettings: 'Create tags in Settings'
   },
   es: {
     back: 'Volver',
@@ -220,7 +203,7 @@ const TRANSLATIONS = {
     createdAt: 'Creado el',
     updatedAt: 'Actualizado el',
     leadInfo: 'Información del Lead',
-    quickActions: 'Acciones de Venta',
+    quickActions: 'Acciones Rápidas',
     stageChanged: 'Etapa cambiada a',
     tagAdded: 'Tag añadida:',
     tagRemoved: 'Tag eliminada:',
@@ -229,14 +212,7 @@ const TRANSLATIONS = {
     namePlaceholder: 'Nombre del lead',
     companyPlaceholder: 'Nombre de la empresa',
     noTagsAvailable: 'Ninguna tag disponible',
-    createTagsInSettings: 'Crear tags en Configuración',
-    // Novos textos
-    actionCall: 'Llamada Realizada',
-    actionMeeting: 'Reunión Realizada',
-    actionProposal: 'Propuesta Enviada',
-    logCall: 'Registró una llamada.',
-    logMeeting: 'Asistió a la reunión agendada.',
-    logProposal: 'Envió una propuesta comercial.'
+    createTagsInSettings: 'Crear tags en Configuración'
   }
 }
 
@@ -309,14 +285,14 @@ const formatDateTime = (dateString: string, lang: string, timezone: string) => {
 export default function LeadProfilePage() {
   const params = useParams()
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, org } = useAuth()
   const orgId = useActiveOrgId()
 
   // Configurações do usuário
-  const userLang = ((user as any)?.language as Language) || 'pt'
+  const userLang = (user?.language as Language) || 'pt'
   const t = TRANSLATIONS[userLang]
-  const userCurrency = (user as any)?.currency || 'BRL'
-  const userTimezone = (user as any)?.timezone || 'America/Sao_Paulo'
+  const userCurrency = user?.currency || 'BRL'
+  const userTimezone = user?.timezone || 'America/Sao_Paulo'
 
   const leadId = params?.id ? String(params.id) : null
 
@@ -335,7 +311,6 @@ export default function LeadProfilePage() {
   const [isStageDropdownOpen, setIsStageDropdownOpen] = useState(false)
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false)
   const [savingStage, setSavingStage] = useState(false)
-  const [savingAction, setSavingAction] = useState<string | null>(null)
 
   // Estados de edição de nome
   const [isEditingName, setIsEditingName] = useState(false)
@@ -574,35 +549,6 @@ export default function LeadProfilePage() {
     } catch (error) {
       console.error('Erro ao remover tag:', error)
       setLeadTags(prev => [...prev, tag])
-    }
-  }
-
-  // ─── REGISTRAR AÇÃO DE VENDA (NOVO) ───
-  const handleQuickAction = async (type: 'call_made' | 'meeting_attended' | 'proposal_sent', logText: string) => {
-    if (!leadId) return
-    setSavingAction(type)
-
-    try {
-      const { data, error } = await supabase
-        .from('lead_events')
-        .insert({
-          lead_id: leadId,
-          type: type,
-          content: logText
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      if (data) {
-        setEvents(prev => [data, ...prev])
-      }
-    } catch (error) {
-      console.error(`Erro ao registrar ação ${type}:`, error)
-      alert(t.errorUpdate)
-    } finally {
-      setSavingAction(null)
     }
   }
 
@@ -854,7 +800,7 @@ export default function LeadProfilePage() {
                   )}
                 </div>
 
-                {/* Botões de Ação de Comunicação */}
+                {/* Botões de Ação */}
                 <div className="flex flex-col sm:flex-row gap-2 mt-4">
                   <button
                     onClick={openChat}
@@ -1042,10 +988,7 @@ export default function LeadProfilePage() {
                       event.type === 'stage_change' ? 'bg-purple-500' :
                       event.type === 'tag_added' ? 'bg-green-500' :
                       event.type === 'tag_removed' ? 'bg-red-500' :
-                      event.type === 'call_made' ? 'bg-amber-500' :
-                      event.type === 'meeting_attended' ? 'bg-blue-500' :
-                      event.type === 'proposal_sent' ? 'bg-emerald-500' :
-                      'bg-gray-500'
+                      'bg-blue-500'
                     }`} />
                   </div>
                   <div className="pb-6 flex-1">
@@ -1064,58 +1007,6 @@ export default function LeadProfilePage() {
 
         {/* COLUNA LATERAL */}
         <div className="space-y-6">
-          
-          {/* PAINEL DE AÇÕES DE VENDA (NOVO) */}
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-5 md:p-6 shadow-xl">
-             <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                <ChevronDown size={14} className="rotate-[-90deg] text-blue-500" />
-                {t.quickActions}
-             </h3>
-             <div className="flex flex-col gap-2">
-                <button 
-                  onClick={() => handleQuickAction('call_made', t.logCall)}
-                  disabled={savingAction !== null}
-                  className="flex items-center justify-between px-4 py-3 bg-[#0A0A0A] hover:bg-white/5 border border-white/5 rounded-xl text-sm text-gray-300 hover:text-white transition-all group disabled:opacity-50"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-6 h-6 rounded-md bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-colors">
-                      <PhoneCall size={12} />
-                    </div>
-                    <span>{t.actionCall}</span>
-                  </div>
-                  {savingAction === 'call_made' && <Loader2 size={14} className="animate-spin text-gray-500" />}
-                </button>
-
-                <button 
-                  onClick={() => handleQuickAction('meeting_attended', t.logMeeting)}
-                  disabled={savingAction !== null}
-                  className="flex items-center justify-between px-4 py-3 bg-[#0A0A0A] hover:bg-white/5 border border-white/5 rounded-xl text-sm text-gray-300 hover:text-white transition-all group disabled:opacity-50"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-6 h-6 rounded-md bg-blue-500/10 text-blue-500 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                      <CalendarCheck size={12} />
-                    </div>
-                    <span>{t.actionMeeting}</span>
-                  </div>
-                  {savingAction === 'meeting_attended' && <Loader2 size={14} className="animate-spin text-gray-500" />}
-                </button>
-
-                <button 
-                  onClick={() => handleQuickAction('proposal_sent', t.logProposal)}
-                  disabled={savingAction !== null}
-                  className="flex items-center justify-between px-4 py-3 bg-[#0A0A0A] hover:bg-white/5 border border-white/5 rounded-xl text-sm text-gray-300 hover:text-white transition-all group disabled:opacity-50"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-6 h-6 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                      <FileSignature size={12} />
-                    </div>
-                    <span>{t.actionProposal}</span>
-                  </div>
-                  {savingAction === 'proposal_sent' && <Loader2 size={14} className="animate-spin text-gray-500" />}
-                </button>
-             </div>
-          </div>
-
           <div className="bg-[#111] border border-white/5 rounded-2xl p-5 md:p-6 sticky top-6 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
@@ -1147,6 +1038,20 @@ export default function LeadProfilePage() {
               {formatPrice(lead.total_em_vendas, userCurrency, userLang)}
             </p>
           </div>
+
+          {/* Documentos do Lead - Apenas para nichos específicos */}
+          {org?.niche === 'real_estate' && (
+            <div className="bg-[#111] border border-white/5 rounded-2xl p-5 md:p-6 shadow-xl">
+              <LeadDocuments 
+                leadId={lead.id} 
+                leadData={{
+                  name: lead.name,
+                  phone: lead.phone,
+                  email: lead.email
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
 
