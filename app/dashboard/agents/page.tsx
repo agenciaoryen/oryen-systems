@@ -433,12 +433,14 @@ function MarketplaceCard({
   lang,
   t,
   isHired,
+  isHiring,
   onHire
 }: {
   solution: AgentSolution
   lang: Language
   t: typeof UI_TRANSLATIONS.pt
   isHired: boolean
+  isHiring: boolean
   onHire: () => void
 }) {
   const content = getAgentTranslation(solution.slug, lang)
@@ -569,11 +571,20 @@ function MarketplaceCard({
       {/* CTA */}
       <button
         onClick={onHire}
-        disabled={isHired}
+        disabled={isHired || isHiring}
         className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isInstant ? t.hireNow : t.hire}
-        <ArrowRight size={14} />
+        {isHiring ? (
+          <>
+            <Loader2 size={14} className="animate-spin" />
+            Contratando...
+          </>
+        ) : (
+          <>
+            {isInstant ? t.hireNow : t.hire}
+            <ArrowRight size={14} />
+          </>
+        )}
       </button>
     </div>
   )
@@ -758,10 +769,11 @@ export default function AgentsMarketplacePage() {
   }
   
   // UI State
-  const [activeTab, setActiveTab] = useState<'my-agents' | 'marketplace'>('my-agents')
+  const [activeTab, setActiveTab] = useState<'my-agents' | 'marketplace'>('marketplace')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [configAgent, setConfigAgent] = useState<Agent | null>(null)
+  const [hiring, setHiring] = useState<string | null>(null) // slug do agent sendo contratado
 
   // Localização
   const lang = ((user as any)?.language as Language) || 'pt'
@@ -787,23 +799,36 @@ export default function AgentsMarketplacePage() {
 
   // Handlers
   const handleHire = async (solution: AgentSolution) => {
-    if (!org?.id) return
+    if (!org?.id) {
+      toast.error('Organização não encontrada')
+      return
+    }
     
     const content = getAgentTranslation(solution.slug, lang)
     const confirmed = window.confirm(`${t.confirmHireMsg}\n\n${content.name} - $${solution.price_monthly || 0}${t.perMonth}`)
     
     if (!confirmed) return
     
-    const { agent, error } = await hireAgent(org.id, solution.slug)
+    setHiring(solution.slug)
     
-    if (error) {
-      toast.error(t.error)
-      return
+    try {
+      const { agent, error } = await hireAgent(org.id, solution.slug)
+      
+      if (error) {
+        console.error('Hire error:', error)
+        toast.error(`${t.error}: ${error}`)
+        return
+      }
+      
+      toast.success(t.hired)
+      await refreshAgents()
+      setActiveTab('my-agents')
+    } catch (err: any) {
+      console.error('Hire exception:', err)
+      toast.error(`${t.error}: ${err.message}`)
+    } finally {
+      setHiring(null)
     }
-    
-    toast.success(t.hired)
-    refreshAgents()
-    setActiveTab('my-agents')
   }
 
   const handleSaveConfig = async (config: Record<string, any>) => {
@@ -996,6 +1021,7 @@ export default function AgentsMarketplacePage() {
                   lang={lang}
                   t={t}
                   isHired={isHired}
+                  isHiring={hiring === solution.slug}
                   onHire={() => handleHire(solution)}
                 />
               )

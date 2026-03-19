@@ -328,6 +328,8 @@ export async function hireAgent(
   initialConfig?: Record<string, any>
 ): Promise<{ agent: Agent | null; error: string | null }> {
   try {
+    console.log('Hiring agent:', { orgId, solutionSlug, initialConfig })
+    
     const { data, error } = await supabase
       .from('agents')
       .insert({
@@ -338,25 +340,32 @@ export async function hireAgent(
         activated_at: new Date().toISOString(),
         billing_started_at: new Date().toISOString()
       })
-      .select(`
-        *,
-        solution:agent_solutions!agents_kind_fkey (*)
-      `)
+      .select('*')
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Insert agent error:', error)
+      throw error
+    }
 
-    // Registrar evento
-    await supabase.from('agent_events').insert({
-      agent_id: data.id,
-      org_id: orgId,
-      event_type: 'activated',
-      title: 'Agente ativado',
-      description: `Agente ${solutionSlug} foi contratado e ativado.`
-    })
+    console.log('Agent created:', data)
+
+    // Registrar evento (não bloquear se falhar)
+    try {
+      await supabase.from('agent_events').insert({
+        agent_id: data.id,
+        org_id: orgId,
+        event_type: 'activated',
+        title: 'Agente ativado',
+        description: `Agente ${solutionSlug} foi contratado e ativado.`
+      })
+    } catch (eventErr) {
+      console.warn('Failed to create event:', eventErr)
+    }
 
     return { agent: data, error: null }
   } catch (err: any) {
+    console.error('hireAgent error:', err)
     return { agent: null, error: err.message }
   }
 }
