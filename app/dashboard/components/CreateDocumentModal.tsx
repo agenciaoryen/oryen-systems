@@ -101,183 +101,222 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DICAS DE AJUDA PARA CAMPOS (por key do campo)
+// Explicações claras sobre o que é cada campo e qual informação deve conter
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const FIELD_HINTS: Record<string, { pt: string; en: string; es: string }> = {
-  // ═══ CAMPOS DE DATA ═══
+  // ═══ DADOS DA VISITA ═══
   visit_day: {
-    pt: 'Dia da visita (ex: 15)',
-    en: 'Day of visit (e.g.: 15)',
-    es: 'Día de la visita (ej: 15)'
+    pt: 'Dia do mês em que a visita ocorrerá (1-31)',
+    en: 'Day of the month when the visit will occur (1-31)',
+    es: 'Día del mes en que se realizará la visita (1-31). Ejemplo: 15'
   },
   visit_month: {
-    pt: 'Mês da visita (ex: Janeiro)',
-    en: 'Month of visit (e.g.: January)',
-    es: 'Mes de la visita (ej: Enero)'
+    pt: 'Nome do mês por extenso',
+    en: 'Full month name',
+    es: 'Nombre del mes escrito completo. Ejemplo: Marzo, Abril, Mayo'
   },
   visit_year: {
-    pt: 'Ano da visita (ex: 2026)',
-    en: 'Year of visit (e.g.: 2026)',
-    es: 'Año de la visita (ej: 2026)'
-  },
-  contract_day: {
-    pt: 'Dia do contrato',
-    en: 'Contract day',
-    es: 'Día del contrato'
-  },
-  contract_month: {
-    pt: 'Mês do contrato',
-    en: 'Contract month',
-    es: 'Mes del contrato'
-  },
-  contract_year: {
-    pt: 'Ano do contrato',
-    en: 'Contract year',
-    es: 'Año del contrato'
+    pt: 'Ano com 4 dígitos',
+    en: 'Year with 4 digits',
+    es: 'Año con 4 dígitos. Ejemplo: 2026'
   },
   
-  // ═══ CAMPOS DE CLIENTE ═══
+  // ═══ DADOS DO CONTRATO ═══
+  city: {
+    pt: 'Cidade onde o contrato está sendo assinado',
+    en: 'City where the contract is being signed',
+    es: 'Ciudad donde se firma el documento. Ejemplo: Santiago, Valparaíso, Concepción'
+  },
+  contract_day: {
+    pt: 'Dia do mês da assinatura do contrato',
+    en: 'Day of contract signature',
+    es: 'Día del mes en que se firma el contrato (1-31)'
+  },
+  contract_month: {
+    pt: 'Mês da assinatura por extenso',
+    en: 'Month of signature in full',
+    es: 'Mes de firma escrito completo. Ejemplo: Enero, Febrero'
+  },
+  contract_year: {
+    pt: 'Ano da assinatura com 4 dígitos',
+    en: 'Year of signature with 4 digits',
+    es: 'Año de firma con 4 dígitos. Ejemplo: 2026'
+  },
+  contract_duration: {
+    pt: 'Por quantos dias este contrato será válido',
+    en: 'How many days this contract will be valid',
+    es: 'Cantidad de días que el contrato/autorización tendrá validez. Generalmente 60, 90 o 120 días'
+  },
+  is_exclusive: {
+    pt: 'Se o contrato é exclusivo (só esta imobiliária pode negociar)',
+    en: 'If the contract is exclusive (only this agency can negotiate)',
+    es: 'Marque si este es un contrato de exclusividad, donde solo su corredora puede ofrecer la propiedad'
+  },
+  
+  // ═══ DADOS DO CLIENTE (visitante/interessado) ═══
   client_name: {
-    pt: 'Nome completo do cliente interessado',
-    en: 'Full name of the interested client',
-    es: 'Nombre completo del cliente interesado'
+    pt: 'Nome completo do cliente que visitará o imóvel',
+    en: 'Full name of client who will visit the property',
+    es: 'Nombre completo de la persona interesada que realizará la visita a la propiedad'
   },
-  client_cpf: {
-    pt: 'CPF do cliente (11 dígitos)',
-    en: 'Client ID number',
-    es: 'RUT del cliente (Ej: 12.345.678-9)'
-  },
-  client_id: {
-    pt: 'Documento de identificação do cliente',
-    en: 'Client ID or passport number',
-    es: 'RUT o Cédula de Identidad del cliente'
+  client_rut: {
+    pt: 'RUT é o documento de identificação chileno (equivalente ao CPF)',
+    en: 'RUT is the Chilean ID number',
+    es: 'RUT (Rol Único Tributario): Documento de identidad chileno. Formato: 12.345.678-9'
   },
   client_phone: {
     pt: 'Telefone de contato do cliente',
-    en: 'Client contact phone',
-    es: 'Teléfono de contacto del cliente'
+    en: 'Client contact phone number',
+    es: 'Número de teléfono del cliente para contacto. Incluya código de área (+56 9 ...)'
   },
   
-  // ═══ CAMPOS DE PROPRIETÁRIO ═══
+  // ═══ DADOS DO PROPRIETÁRIO ═══
   owner_name: {
-    pt: 'Nome completo do proprietário do imóvel',
-    en: 'Full name of the property owner',
-    es: 'Nombre completo del propietario del inmueble'
+    pt: 'Nome completo do dono do imóvel',
+    en: 'Full name of property owner',
+    es: 'Nombre completo del dueño de la propiedad tal como aparece en sus documentos'
   },
-  owner_cpf: {
-    pt: 'CPF do proprietário (11 dígitos)',
-    en: 'Owner ID number',
-    es: 'RUT del propietario (Ej: 12.345.678-9)'
+  owner_rut: {
+    pt: 'RUT é o documento de identificação chileno',
+    en: 'RUT is the Chilean ID number',
+    es: 'RUT del propietario (Rol Único Tributario). Formato: 12.345.678-9'
   },
-  owner_id: {
-    pt: 'Documento de identificação do proprietário',
-    en: 'Owner ID or passport number',
-    es: 'RUT o Cédula de Identidad del propietario'
+  owner_nationality: {
+    pt: 'País de origem do proprietário',
+    en: 'Owner country of origin',
+    es: 'Nacionalidad del propietario. Ejemplo: Chilena, Argentina, Peruana'
   },
   owner_address: {
-    pt: 'Endereço residencial do proprietário',
-    en: 'Owner residential address',
-    es: 'Dirección residencial del propietario'
+    pt: 'Endereço residencial atual do proprietário',
+    en: 'Current residential address of owner',
+    es: 'Dirección donde vive actualmente el propietario (puede ser diferente de la propiedad)'
   },
-  owner_neighborhood: {
-    pt: 'Bairro onde o proprietário reside',
-    en: 'Neighborhood where the owner lives',
-    es: 'Comuna/barrio donde reside el propietario'
+  owner_comuna: {
+    pt: 'Comuna/bairro onde o proprietário mora',
+    en: 'District where owner lives',
+    es: 'Comuna o sector donde reside el propietario. Ejemplo: Providencia, Las Condes, Ñuñoa'
+  },
+  owner_city: {
+    pt: 'Cidade onde o proprietário mora',
+    en: 'City where owner lives',
+    es: 'Ciudad de residencia del propietario'
+  },
+  owner_civil_status: {
+    pt: 'Estado civil do proprietário',
+    en: 'Owner marital status',
+    es: 'Estado civil del propietario: Soltero/a, Casado/a, Viudo/a o Divorciado/a'
+  },
+  owner_profession: {
+    pt: 'Profissão ou ocupação do proprietário',
+    en: 'Owner profession or occupation',
+    es: 'Profesión u ocupación del propietario. Ejemplo: Ingeniero, Médico, Comerciante'
   },
   owner_email: {
-    pt: 'Email do proprietário',
-    en: 'Owner email',
-    es: 'Correo electrónico del propietario'
+    pt: 'Email de contato do proprietário',
+    en: 'Owner contact email',
+    es: 'Correo electrónico del propietario para envío de documentos y notificaciones'
   },
   owner_phone: {
-    pt: 'Telefone do proprietário',
-    en: 'Owner phone',
-    es: 'Teléfono del propietario'
+    pt: 'Telefone de contato do proprietário',
+    en: 'Owner contact phone',
+    es: 'Teléfono del propietario. Incluya código de área (+56 9 ...)'
   },
   
-  // ═══ CAMPOS DO IMÓVEL ═══
+  // ═══ DADOS DO IMÓVEL ═══
   property_address: {
-    pt: 'Endereço completo do imóvel',
-    en: 'Full property address',
-    es: 'Dirección completa del inmueble'
+    pt: 'Endereço completo do imóvel (rua, número)',
+    en: 'Full property address (street, number)',
+    es: 'Dirección completa de la propiedad: calle, número, depto si aplica. Ejemplo: Av. Providencia 1234, Depto 501'
   },
-  property_neighborhood: {
-    pt: 'Bairro onde o imóvel está localizado',
-    en: 'Neighborhood where the property is located',
-    es: 'Comuna/barrio donde se ubica el inmueble'
+  property_comuna: {
+    pt: 'Comuna/bairro onde o imóvel está localizado',
+    en: 'District where property is located',
+    es: 'Comuna donde se ubica la propiedad. Ejemplo: Santiago Centro, Vitacura, La Florida'
   },
-  property_registration: {
-    pt: 'Número de matrícula do imóvel no cartório',
-    en: 'Property registration number',
-    es: 'Número de inscripción en el Conservador de Bienes Raíces (ROL)'
+  property_location: {
+    pt: 'Localização/região do imóvel',
+    en: 'Property location/region',
+    es: 'Ubicación o sector específico de la propiedad. Ejemplo: Barrio El Golf, Sector Oriente'
   },
-  property_area: {
-    pt: 'Área total do imóvel em m²',
-    en: 'Total property area in m²',
-    es: 'Superficie total del inmueble en metros cuadrados (m²)'
+  property_rol: {
+    pt: 'ROL é o número de identificação do imóvel no registro chileno',
+    en: 'ROL is the property ID number in Chilean registry',
+    es: 'ROL: Número único que identifica la propiedad en el Conservador de Bienes Raíces. Se encuentra en las contribuciones o escritura. Formato: 1234-5'
+  },
+  property_surface: {
+    pt: 'Área total do imóvel em metros quadrados',
+    en: 'Total property area in square meters',
+    es: 'Superficie total de la propiedad en metros cuadrados (m²). Ejemplo: 120 m²'
+  },
+  property_land_surface: {
+    pt: 'Área do terreno em metros quadrados',
+    en: 'Land area in square meters',
+    es: 'Superficie del terreno en m². Para casas, es el tamaño total del sitio'
+  },
+  property_built_surface: {
+    pt: 'Área construída em metros quadrados',
+    en: 'Built area in square meters',
+    es: 'Superficie construida en m². Es el área techada/habitable de la propiedad'
   },
   property_type: {
-    pt: 'Tipo/categoria do imóvel',
-    en: 'Property type/category',
-    es: 'Tipo de propiedad (Casa, Departamento, Terreno, etc.)'
+    pt: 'Tipo de imóvel (casa, apartamento, terreno, etc)',
+    en: 'Property type (house, apartment, land, etc)',
+    es: 'Tipo de propiedad: Casa, Departamento, Terreno, Local comercial, Oficina, Bodega o Parcela'
   },
   
-  // ═══ CAMPOS DE VALORES ═══
+  // ═══ VALORES E CONDIÇÕES ═══
   property_value: {
     pt: 'Valor de venda ou avaliação do imóvel',
     en: 'Property sale or appraisal value',
-    es: 'Valor de venta o tasación (en UF o CLP)'
+    es: 'Valor de la propiedad. Puede ser en UF (Unidad de Fomento) o CLP. Ejemplo: UF 5.000 o $150.000.000'
+  },
+  sale_price: {
+    pt: 'Preço de venda do imóvel',
+    en: 'Property sale price',
+    es: 'Precio de venta de la propiedad. En UF o CLP. Ejemplo: UF 8.000'
   },
   rental_price: {
     pt: 'Valor mensal do aluguel',
     en: 'Monthly rental price',
-    es: 'Valor mensual del arriendo (en UF o CLP)'
-  },
-  sale_price: {
-    pt: 'Valor de venda do imóvel',
-    en: 'Property sale price',
-    es: 'Precio de venta del inmueble (en UF o CLP)'
-  },
-  commission_percentage: {
-    pt: 'Percentual de comissão (%)',
-    en: 'Commission percentage (%)',
-    es: 'Porcentaje de comisión sobre la transacción (%)'
-  },
-  
-  // ═══ CAMPOS DE GARANTIA/PERÍODO ═══
-  guarantee_months: {
-    pt: 'Quantidade de meses de caução',
-    en: 'Security deposit months',
-    es: 'Meses de garantía (generalmente 1-2 meses de arriendo)'
+    es: 'Precio mensual de arriendo. En CLP o UF. Ejemplo: $500.000 o UF 15'
   },
   rental_period: {
     pt: 'Período mínimo de locação em meses',
     en: 'Minimum rental period in months',
-    es: 'Período mínimo de arriendo en meses'
+    es: 'Período mínimo de arriendo en meses. Generalmente 12 o 24 meses'
   },
-  contract_duration: {
-    pt: 'Vigência do contrato em dias',
-    en: 'Contract validity in days',
-    es: 'Vigencia del contrato/autorización en días'
+  guarantee_months: {
+    pt: 'Quantos meses de garantia/caução são exigidos',
+    en: 'How many months of deposit are required',
+    es: 'Meses de garantía que debe pagar el arrendatario. Generalmente 1 o 2 meses de arriendo'
   },
-  
-  // ═══ CAMPOS DE LOCALIZAÇÃO ═══
-  city: {
-    pt: 'Cidade onde o contrato é firmado',
-    en: 'City where the contract is signed',
-    es: 'Ciudad donde se firma el contrato'
+  commission_percentage: {
+    pt: 'Porcentagem de comissão sobre a transação',
+    en: 'Commission percentage on the transaction',
+    es: 'Porcentaje de comisión que cobra la corredora. Generalmente 50% del primer mes para arriendos, o 2% del valor para ventas'
   },
   
-  // ═══ CAMPOS DO CORRETOR/EMPRESA ═══
+  // ═══ DADOS DO CORRETOR/EMPRESA ═══
   agent_name: {
-    pt: 'Nome do corretor responsável',
-    en: 'Responsible agent name',
-    es: 'Nombre del corredor responsable de la operación'
+    pt: 'Nome do corretor responsável pela negociação',
+    en: 'Name of agent responsible for the deal',
+    es: 'Nombre completo del corredor de propiedades que gestiona esta operación'
   },
   org_name: {
-    pt: 'Nome da imobiliária/empresa',
+    pt: 'Nome da imobiliária ou corretora',
     en: 'Real estate agency name',
-    es: 'Nombre de la corredora de propiedades'
+    es: 'Nombre de la corredora de propiedades o empresa inmobiliaria'
+  },
+  org_logo: {
+    pt: 'Logo da empresa para o documento',
+    en: 'Company logo for the document',
+    es: 'Logo de su empresa que aparecerá en el documento generado'
+  },
+  generated_date: {
+    pt: 'Data de geração do documento',
+    en: 'Document generation date',
+    es: 'Fecha en que se genera el documento (automático)'
   },
 }
 
@@ -297,16 +336,16 @@ function FieldHint({ fieldKey, lang, label }: { fieldKey: string; lang: Language
   const [isVisible, setIsVisible] = useState(false)
   const hint = FIELD_HINTS[fieldKey]
   
-  // Se não tiver hint específico, criar um genérico baseado no label
+  // Se não tiver hint específico, criar um baseado no tipo de campo
   const getText = () => {
     if (hint) {
       return hint[lang] || hint.es || hint.en
     }
-    // Fallback: texto genérico
+    // Fallback inteligente baseado no label
     const fallbacks: Record<Language, string> = {
-      pt: `Preencha o campo "${label}"`,
-      en: `Fill in the "${label}" field`,
-      es: `Complete el campo "${label}"`
+      pt: `Informe: ${label}`,
+      en: `Enter: ${label}`,
+      es: `Ingrese la información correspondiente a "${label}"`
     }
     return fallbacks[lang]
   }
@@ -336,11 +375,11 @@ function FieldHint({ fieldKey, lang, label }: { fieldKey: string; lang: Language
             onClick={() => setIsVisible(false)} 
           />
           
-          {/* Tooltip - posicionado à direita no desktop, centralizado no mobile */}
-          <div className="absolute z-50 left-6 top-1/2 -translate-y-1/2 w-56 sm:w-64 p-2.5 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl text-xs text-gray-200 leading-relaxed whitespace-normal">
+          {/* Tooltip - posicionado à direita */}
+          <div className="absolute z-50 left-6 top-1/2 -translate-y-1/2 w-64 sm:w-72 p-3 bg-[#1a1a1a] border border-gray-600 rounded-lg shadow-2xl text-xs text-gray-200 leading-relaxed whitespace-normal">
             {getText()}
             {/* Seta apontando para a esquerda */}
-            <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px] border-r-gray-800" />
+            <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px] border-r-[#1a1a1a]" />
           </div>
         </>
       )}
