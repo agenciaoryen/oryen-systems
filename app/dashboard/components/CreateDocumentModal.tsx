@@ -104,18 +104,44 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const FIELD_HINTS: Record<string, { pt: string; en: string; es: string }> = {
-  // Campos de identificação do imóvel
-  property_registration: {
-    pt: 'Número de matrícula do imóvel no cartório de registro',
-    en: 'Property registration number at the registry office',
-    es: 'Número de inscripción del inmueble en el Conservador de Bienes Raíces (ROL)'
+  // ═══ CAMPOS DE DATA ═══
+  visit_day: {
+    pt: 'Dia da visita (ex: 15)',
+    en: 'Day of visit (e.g.: 15)',
+    es: 'Día de la visita (ej: 15)'
   },
-  property_area: {
-    pt: 'Área total do imóvel em metros quadrados (m²)',
-    en: 'Total property area in square meters (m²)',
-    es: 'Superficie total del inmueble en metros cuadrados (m²)'
+  visit_month: {
+    pt: 'Mês da visita (ex: Janeiro)',
+    en: 'Month of visit (e.g.: January)',
+    es: 'Mes de la visita (ej: Enero)'
   },
-  // Campos de cliente
+  visit_year: {
+    pt: 'Ano da visita (ex: 2026)',
+    en: 'Year of visit (e.g.: 2026)',
+    es: 'Año de la visita (ej: 2026)'
+  },
+  contract_day: {
+    pt: 'Dia do contrato',
+    en: 'Contract day',
+    es: 'Día del contrato'
+  },
+  contract_month: {
+    pt: 'Mês do contrato',
+    en: 'Contract month',
+    es: 'Mes del contrato'
+  },
+  contract_year: {
+    pt: 'Ano do contrato',
+    en: 'Contract year',
+    es: 'Año del contrato'
+  },
+  
+  // ═══ CAMPOS DE CLIENTE ═══
+  client_name: {
+    pt: 'Nome completo do cliente interessado',
+    en: 'Full name of the interested client',
+    es: 'Nombre completo del cliente interesado'
+  },
   client_cpf: {
     pt: 'CPF do cliente (11 dígitos)',
     en: 'Client ID number',
@@ -125,6 +151,18 @@ const FIELD_HINTS: Record<string, { pt: string; en: string; es: string }> = {
     pt: 'Documento de identificação do cliente',
     en: 'Client ID or passport number',
     es: 'RUT o Cédula de Identidad del cliente'
+  },
+  client_phone: {
+    pt: 'Telefone de contato do cliente',
+    en: 'Client contact phone',
+    es: 'Teléfono de contacto del cliente'
+  },
+  
+  // ═══ CAMPOS DE PROPRIETÁRIO ═══
+  owner_name: {
+    pt: 'Nome completo do proprietário do imóvel',
+    en: 'Full name of the property owner',
+    es: 'Nombre completo del propietario del inmueble'
   },
   owner_cpf: {
     pt: 'CPF do proprietário (11 dígitos)',
@@ -136,11 +174,59 @@ const FIELD_HINTS: Record<string, { pt: string; en: string; es: string }> = {
     en: 'Owner ID or passport number',
     es: 'RUT o Cédula de Identidad del propietario'
   },
-  // Campos de valores
+  owner_address: {
+    pt: 'Endereço residencial do proprietário',
+    en: 'Owner residential address',
+    es: 'Dirección residencial del propietario'
+  },
+  owner_neighborhood: {
+    pt: 'Bairro onde o proprietário reside',
+    en: 'Neighborhood where the owner lives',
+    es: 'Comuna/barrio donde reside el propietario'
+  },
+  owner_email: {
+    pt: 'Email do proprietário',
+    en: 'Owner email',
+    es: 'Correo electrónico del propietario'
+  },
+  owner_phone: {
+    pt: 'Telefone do proprietário',
+    en: 'Owner phone',
+    es: 'Teléfono del propietario'
+  },
+  
+  // ═══ CAMPOS DO IMÓVEL ═══
+  property_address: {
+    pt: 'Endereço completo do imóvel',
+    en: 'Full property address',
+    es: 'Dirección completa del inmueble'
+  },
+  property_neighborhood: {
+    pt: 'Bairro onde o imóvel está localizado',
+    en: 'Neighborhood where the property is located',
+    es: 'Comuna/barrio donde se ubica el inmueble'
+  },
+  property_registration: {
+    pt: 'Número de matrícula do imóvel no cartório',
+    en: 'Property registration number',
+    es: 'Número de inscripción en el Conservador de Bienes Raíces (ROL)'
+  },
+  property_area: {
+    pt: 'Área total do imóvel em m²',
+    en: 'Total property area in m²',
+    es: 'Superficie total del inmueble en metros cuadrados (m²)'
+  },
+  property_type: {
+    pt: 'Tipo/categoria do imóvel',
+    en: 'Property type/category',
+    es: 'Tipo de propiedad (Casa, Departamento, Terreno, etc.)'
+  },
+  
+  // ═══ CAMPOS DE VALORES ═══
   property_value: {
     pt: 'Valor de venda ou avaliação do imóvel',
     en: 'Property sale or appraisal value',
-    es: 'Valor de venta o tasación del inmueble (en UF o CLP)'
+    es: 'Valor de venta o tasación (en UF o CLP)'
   },
   rental_price: {
     pt: 'Valor mensal do aluguel',
@@ -153,17 +239,17 @@ const FIELD_HINTS: Record<string, { pt: string; en: string; es: string }> = {
     es: 'Precio de venta del inmueble (en UF o CLP)'
   },
   commission_percentage: {
-    pt: 'Percentual de comissão sobre a transação',
-    en: 'Commission percentage on the transaction',
-    es: 'Porcentaje de comisión sobre la transacción'
+    pt: 'Percentual de comissão (%)',
+    en: 'Commission percentage (%)',
+    es: 'Porcentaje de comisión sobre la transacción (%)'
   },
-  // Campos de garantia/caução
+  
+  // ═══ CAMPOS DE GARANTIA/PERÍODO ═══
   guarantee_months: {
-    pt: 'Quantidade de meses de caução/garantia',
-    en: 'Number of months for security deposit',
-    es: 'Cantidad de meses de garantía (generalmente 1-2 meses)'
+    pt: 'Quantidade de meses de caução',
+    en: 'Security deposit months',
+    es: 'Meses de garantía (generalmente 1-2 meses de arriendo)'
   },
-  // Campos de período
   rental_period: {
     pt: 'Período mínimo de locação em meses',
     en: 'Minimum rental period in months',
@@ -172,24 +258,26 @@ const FIELD_HINTS: Record<string, { pt: string; en: string; es: string }> = {
   contract_duration: {
     pt: 'Vigência do contrato em dias',
     en: 'Contract validity in days',
-    es: 'Vigencia del contrato en días'
+    es: 'Vigencia del contrato/autorización en días'
   },
-  // Campos de tipo de imóvel
-  property_type: {
-    pt: 'Tipo/categoria do imóvel',
-    en: 'Property type/category',
-    es: 'Tipo de propiedad (Casa, Departamento, Terreno, etc.)'
+  
+  // ═══ CAMPOS DE LOCALIZAÇÃO ═══
+  city: {
+    pt: 'Cidade onde o contrato é firmado',
+    en: 'City where the contract is signed',
+    es: 'Ciudad donde se firma el contrato'
   },
-  // Campos gerais
+  
+  // ═══ CAMPOS DO CORRETOR/EMPRESA ═══
   agent_name: {
     pt: 'Nome do corretor responsável',
     en: 'Responsible agent name',
-    es: 'Nombre del corredor responsable'
+    es: 'Nombre del corredor responsable de la operación'
   },
   org_name: {
     pt: 'Nome da imobiliária/empresa',
-    en: 'Real estate agency/company name',
-    es: 'Nombre de la corredora/empresa'
+    en: 'Real estate agency name',
+    es: 'Nombre de la corredora de propiedades'
   },
 }
 
@@ -205,34 +293,56 @@ const CATEGORY_COLORS: Record<string, string> = {
 // COMPONENTE: FieldHint (Tooltip de ajuda)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function FieldHint({ fieldKey, lang }: { fieldKey: string; lang: Language }) {
+function FieldHint({ fieldKey, lang, label }: { fieldKey: string; lang: Language; label: string }) {
   const [isVisible, setIsVisible] = useState(false)
   const hint = FIELD_HINTS[fieldKey]
   
-  if (!hint) return null
-  
-  const text = hint[lang] || hint.es || hint.en
+  // Se não tiver hint específico, criar um genérico baseado no label
+  const getText = () => {
+    if (hint) {
+      return hint[lang] || hint.es || hint.en
+    }
+    // Fallback: texto genérico
+    const fallbacks: Record<Language, string> = {
+      pt: `Preencha o campo "${label}"`,
+      en: `Fill in the "${label}" field`,
+      es: `Complete el campo "${label}"`
+    }
+    return fallbacks[lang]
+  }
   
   return (
-    <div className="relative inline-block ml-1.5">
+    <div className="relative inline-flex items-center ml-1.5">
       <button
         type="button"
         onMouseEnter={() => setIsVisible(true)}
         onMouseLeave={() => setIsVisible(false)}
         onClick={(e) => {
           e.preventDefault()
+          e.stopPropagation()
           setIsVisible(!isVisible)
         }}
-        className="text-gray-500 hover:text-blue-400 transition-colors"
+        className="text-gray-500 hover:text-blue-400 transition-colors focus:outline-none"
+        aria-label="Ajuda"
       >
         <HelpCircle size={14} />
       </button>
       
       {isVisible && (
-        <div className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2.5 bg-gray-800 border border-gray-700 rounded-lg shadow-xl text-xs text-gray-300 leading-relaxed">
-          {text}
-          <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-gray-800" />
-        </div>
+        <>
+          {/* Overlay para fechar no mobile */}
+          <div 
+            className="fixed inset-0 z-40 sm:hidden" 
+            onClick={() => setIsVisible(false)} 
+          />
+          
+          {/* Tooltip - posicionado à direita no desktop, centralizado no mobile */}
+          <div className="absolute z-50 left-6 top-1/2 -translate-y-1/2 w-56 sm:w-64 p-2.5 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl text-xs text-gray-200 leading-relaxed whitespace-normal">
+            {getText()}
+            {/* Seta apontando para a esquerda */}
+            <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px] border-r-gray-800" />
+          </div>
+        </>
       )}
     </div>
   )
@@ -496,7 +606,7 @@ export default function CreateDocumentModal({
                   <label className="flex items-center text-sm font-medium text-gray-300 mb-1.5">
                     {variable.label}
                     {variable.required && <span className="text-red-400 ml-1">*</span>}
-                    <FieldHint fieldKey={variable.key} lang={lang} />
+                    <FieldHint fieldKey={variable.key} lang={lang} label={variable.label} />
                   </label>
                   
                   {variable.type === 'select' && variable.options ? (
