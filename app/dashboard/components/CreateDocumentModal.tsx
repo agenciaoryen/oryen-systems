@@ -22,7 +22,8 @@ import {
   Home,
   Building2,
   FileSignature,
-  File
+  File,
+  HelpCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -98,12 +99,143 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   other: <File size={20} />,
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// DICAS DE AJUDA PARA CAMPOS (por key do campo)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const FIELD_HINTS: Record<string, { pt: string; en: string; es: string }> = {
+  // Campos de identificação do imóvel
+  property_registration: {
+    pt: 'Número de matrícula do imóvel no cartório de registro',
+    en: 'Property registration number at the registry office',
+    es: 'Número de inscripción del inmueble en el Conservador de Bienes Raíces (ROL)'
+  },
+  property_area: {
+    pt: 'Área total do imóvel em metros quadrados (m²)',
+    en: 'Total property area in square meters (m²)',
+    es: 'Superficie total del inmueble en metros cuadrados (m²)'
+  },
+  // Campos de cliente
+  client_cpf: {
+    pt: 'CPF do cliente (11 dígitos)',
+    en: 'Client ID number',
+    es: 'RUT del cliente (Ej: 12.345.678-9)'
+  },
+  client_id: {
+    pt: 'Documento de identificação do cliente',
+    en: 'Client ID or passport number',
+    es: 'RUT o Cédula de Identidad del cliente'
+  },
+  owner_cpf: {
+    pt: 'CPF do proprietário (11 dígitos)',
+    en: 'Owner ID number',
+    es: 'RUT del propietario (Ej: 12.345.678-9)'
+  },
+  owner_id: {
+    pt: 'Documento de identificação do proprietário',
+    en: 'Owner ID or passport number',
+    es: 'RUT o Cédula de Identidad del propietario'
+  },
+  // Campos de valores
+  property_value: {
+    pt: 'Valor de venda ou avaliação do imóvel',
+    en: 'Property sale or appraisal value',
+    es: 'Valor de venta o tasación del inmueble (en UF o CLP)'
+  },
+  rental_price: {
+    pt: 'Valor mensal do aluguel',
+    en: 'Monthly rental price',
+    es: 'Valor mensual del arriendo (en UF o CLP)'
+  },
+  sale_price: {
+    pt: 'Valor de venda do imóvel',
+    en: 'Property sale price',
+    es: 'Precio de venta del inmueble (en UF o CLP)'
+  },
+  commission_percentage: {
+    pt: 'Percentual de comissão sobre a transação',
+    en: 'Commission percentage on the transaction',
+    es: 'Porcentaje de comisión sobre la transacción'
+  },
+  // Campos de garantia/caução
+  guarantee_months: {
+    pt: 'Quantidade de meses de caução/garantia',
+    en: 'Number of months for security deposit',
+    es: 'Cantidad de meses de garantía (generalmente 1-2 meses)'
+  },
+  // Campos de período
+  rental_period: {
+    pt: 'Período mínimo de locação em meses',
+    en: 'Minimum rental period in months',
+    es: 'Período mínimo de arriendo en meses'
+  },
+  contract_duration: {
+    pt: 'Vigência do contrato em dias',
+    en: 'Contract validity in days',
+    es: 'Vigencia del contrato en días'
+  },
+  // Campos de tipo de imóvel
+  property_type: {
+    pt: 'Tipo/categoria do imóvel',
+    en: 'Property type/category',
+    es: 'Tipo de propiedad (Casa, Departamento, Terreno, etc.)'
+  },
+  // Campos gerais
+  agent_name: {
+    pt: 'Nome do corretor responsável',
+    en: 'Responsible agent name',
+    es: 'Nombre del corredor responsable'
+  },
+  org_name: {
+    pt: 'Nome da imobiliária/empresa',
+    en: 'Real estate agency/company name',
+    es: 'Nombre de la corredora/empresa'
+  },
+}
+
 const CATEGORY_COLORS: Record<string, string> = {
   visit_order: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
   rental_authorization: 'bg-green-500/10 text-green-400 border-green-500/30',
   sale_authorization: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
   commercial_proposal: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
   other: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENTE: FieldHint (Tooltip de ajuda)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function FieldHint({ fieldKey, lang }: { fieldKey: string; lang: Language }) {
+  const [isVisible, setIsVisible] = useState(false)
+  const hint = FIELD_HINTS[fieldKey]
+  
+  if (!hint) return null
+  
+  const text = hint[lang] || hint.es || hint.en
+  
+  return (
+    <div className="relative inline-block ml-1.5">
+      <button
+        type="button"
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+        onClick={(e) => {
+          e.preventDefault()
+          setIsVisible(!isVisible)
+        }}
+        className="text-gray-500 hover:text-blue-400 transition-colors"
+      >
+        <HelpCircle size={14} />
+      </button>
+      
+      {isVisible && (
+        <div className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2.5 bg-gray-800 border border-gray-700 rounded-lg shadow-xl text-xs text-gray-300 leading-relaxed">
+          {text}
+          <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-gray-800" />
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -361,9 +493,10 @@ export default function CreateDocumentModal({
             <div className="space-y-4">
               {selectedTemplate.variables.map((variable) => (
                 <div key={variable.key}>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  <label className="flex items-center text-sm font-medium text-gray-300 mb-1.5">
                     {variable.label}
                     {variable.required && <span className="text-red-400 ml-1">*</span>}
+                    <FieldHint fieldKey={variable.key} lang={lang} />
                   </label>
                   
                   {variable.type === 'select' && variable.options ? (
