@@ -5,123 +5,35 @@ import { supabase } from '@/lib/supabase'
 import type { 
   AgentSolution, 
   Agent, 
-  AgentRun, 
-  AgentMetrics,
-  AgentEvent,
-  AgentStatus 
+  AgentCampaign,
+  AgentRun,
+  Language,
+  UsageInfo,
+  CampaignStatus
 } from './types'
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TRADUÇÕES DOS AGENTES
+// HELPERS DE TRADUÇÃO
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const AGENT_TRANSLATIONS: Record<string, Record<string, { name: string; description: string; features: string[] }>> = {
-  'sdr': {
-    pt: {
-      name: 'SDR Conversacional',
-      description: 'Responde leads automaticamente via WhatsApp com IA. Qualifica, agenda e transfere para o time comercial.',
-      features: ['Respostas instantâneas 24/7', 'Qualificação automática', 'Agendamento integrado', 'Transferência inteligente']
-    },
-    en: {
-      name: 'Conversational SDR',
-      description: 'Automatically responds to leads via WhatsApp with AI. Qualifies, schedules, and transfers to sales team.',
-      features: ['24/7 instant responses', 'Auto qualification', 'Integrated scheduling', 'Smart handoff']
-    },
-    es: {
-      name: 'SDR Conversacional',
-      description: 'Responde leads automáticamente vía WhatsApp con IA. Califica, agenda y transfiere al equipo comercial.',
-      features: ['Respuestas instantáneas 24/7', 'Calificación automática', 'Agendamiento integrado', 'Transferencia inteligente']
-    }
-  },
-  'captacao': {
-    pt: {
-      name: 'Hunter Captação',
-      description: 'Busca e captura leads qualificados automaticamente usando Google Maps, redes sociais e bases públicas.',
-      features: ['Busca ativa por nicho', 'Enriquecimento de dados', 'Validação de contatos', 'Importação automática']
-    },
-    en: {
-      name: 'Hunter Prospecting',
-      description: 'Searches and captures qualified leads automatically using Google Maps, social media, and public databases.',
-      features: ['Active niche search', 'Data enrichment', 'Contact validation', 'Auto import']
-    },
-    es: {
-      name: 'Hunter Captación',
-      description: 'Busca y captura leads calificados automáticamente usando Google Maps, redes sociales y bases públicas.',
-      features: ['Búsqueda activa por nicho', 'Enriquecimiento de datos', 'Validación de contactos', 'Importación automática']
-    }
-  },
-  'followup': {
-    pt: {
-      name: 'Follow-up Automático',
-      description: 'Envia sequências de mensagens personalizadas para leads que não responderam. Nunca perca uma oportunidade.',
-      features: ['Sequências automáticas', 'Personalização por lead', 'Horários inteligentes', 'Detecção de resposta']
-    },
-    en: {
-      name: 'Auto Follow-up',
-      description: 'Sends personalized message sequences to leads who haven\'t responded. Never miss an opportunity.',
-      features: ['Auto sequences', 'Lead personalization', 'Smart timing', 'Response detection']
-    },
-    es: {
-      name: 'Follow-up Automático',
-      description: 'Envía secuencias de mensajes personalizados a leads que no respondieron. Nunca pierdas una oportunidad.',
-      features: ['Secuencias automáticas', 'Personalización por lead', 'Horarios inteligentes', 'Detección de respuesta']
-    }
-  },
-  'bdr': {
-    pt: {
-      name: 'BDR Outbound',
-      description: 'Campanhas de prospecção ativa multicanal: email, LinkedIn e WhatsApp. Ideal para B2B.',
-      features: ['Campanhas multicanal', 'Cadências personalizadas', 'A/B testing', 'Integração CRM']
-    },
-    en: {
-      name: 'BDR Outbound',
-      description: 'Multichannel active prospecting campaigns: email, LinkedIn, and WhatsApp. Ideal for B2B.',
-      features: ['Multichannel campaigns', 'Custom cadences', 'A/B testing', 'CRM integration']
-    },
-    es: {
-      name: 'BDR Outbound',
-      description: 'Campañas de prospección activa multicanal: email, LinkedIn y WhatsApp. Ideal para B2B.',
-      features: ['Campañas multicanal', 'Cadencias personalizadas', 'A/B testing', 'Integración CRM']
-    }
-  },
-  'atendimento': {
-    pt: {
-      name: 'SAC Inteligente',
-      description: 'Atende clientes 24/7 com respostas baseadas na sua base de conhecimento. Escala para humanos quando necessário.',
-      features: ['Base de conhecimento', 'Respostas contextuais', 'Escalação inteligente', 'Análise de sentimento']
-    },
-    en: {
-      name: 'Smart Support',
-      description: 'Serves customers 24/7 with responses based on your knowledge base. Escalates to humans when needed.',
-      features: ['Knowledge base', 'Contextual responses', 'Smart escalation', 'Sentiment analysis']
-    },
-    es: {
-      name: 'SAC Inteligente',
-      description: 'Atiende clientes 24/7 con respuestas basadas en tu base de conocimiento. Escala a humanos cuando es necesario.',
-      features: ['Base de conocimiento', 'Respuestas contextuales', 'Escalación inteligente', 'Análisis de sentimiento']
-    }
-  },
-  'onboarding': {
-    pt: {
-      name: 'Onboarding Guiado',
-      description: 'Guia novos clientes pelo processo de ativação com mensagens personalizadas e suporte proativo.',
-      features: ['Boas-vindas automáticas', 'Checklist interativo', 'Lembretes proativos', 'Suporte contextual']
-    },
-    en: {
-      name: 'Guided Onboarding',
-      description: 'Guides new customers through activation with personalized messages and proactive support.',
-      features: ['Auto welcome', 'Interactive checklist', 'Proactive reminders', 'Contextual support']
-    },
-    es: {
-      name: 'Onboarding Guiado',
-      description: 'Guía a nuevos clientes por el proceso de activación con mensajes personalizados y soporte proactivo.',
-      features: ['Bienvenida automática', 'Checklist interactivo', 'Recordatorios proactivos', 'Soporte contextual']
-    }
-  }
+/**
+ * Extrai texto traduzido de um objeto multilíngue
+ */
+export function t(obj: Record<string, string> | undefined | null, lang: Language): string {
+  if (!obj) return ''
+  return obj[lang] || obj['es'] || obj['pt'] || obj['en'] || ''
+}
+
+/**
+ * Extrai array de features traduzidas
+ */
+export function tFeatures(features: Array<Record<string, string>> | undefined, lang: Language): string[] {
+  if (!features) return []
+  return features.map(f => t(f, lang))
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// HOOKS
+// HOOKS - SOLUTIONS (Catálogo)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -138,13 +50,11 @@ export function useAgentSolutions() {
         const { data, error: fetchError } = await supabase
           .from('agent_solutions')
           .select('*')
+          .eq('is_active', true)
           .order('sort_order')
 
         if (fetchError) throw fetchError
-        
-        // Filtrar apenas ativos (campo pode não existir em todos os registros)
-        const activeSolutions = (data || []).filter(s => s.is_active !== false)
-        setSolutions(activeSolutions)
+        setSolutions(data || [])
       } catch (err: any) {
         console.error('Error fetching agent solutions:', err)
         setError(err.message)
@@ -158,10 +68,14 @@ export function useAgentSolutions() {
   return { solutions, loading, error }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// HOOKS - AGENTS (Contratação da Org)
+// ═══════════════════════════════════════════════════════════════════════════════
+
 /**
- * Hook para buscar agentes da organização
+ * Hook para buscar agentes contratados pela org
  */
-export function useMyAgents(orgId: string | undefined) {
+export function useOrgAgents(orgId: string | undefined) {
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -175,7 +89,7 @@ export function useMyAgents(orgId: string | undefined) {
     try {
       setLoading(true)
       
-      // Buscar agentes sem JOIN (evita erro de FK)
+      // Buscar agentes
       const { data: agentsData, error: agentsError } = await supabase
         .from('agents')
         .select('*')
@@ -184,32 +98,40 @@ export function useMyAgents(orgId: string | undefined) {
 
       if (agentsError) throw agentsError
       
-      // Se não tem agentes, retorna vazio
       if (!agentsData || agentsData.length === 0) {
         setAgents([])
         setLoading(false)
         return
       }
 
-      // Buscar solutions separadamente para fazer join manual
-      const kinds = [...new Set(agentsData.map(a => a.kind).filter(Boolean))]
-      
-      if (kinds.length > 0) {
-        const { data: solutionsData } = await supabase
-          .from('agent_solutions')
-          .select('*')
-          .in('slug', kinds)
+      // Buscar solutions para join
+      const slugs = [...new Set(agentsData.map(a => a.solution_slug))]
+      const { data: solutionsData } = await supabase
+        .from('agent_solutions')
+        .select('*')
+        .in('slug', slugs)
 
-        // Join manual
-        const agentsWithSolutions = agentsData.map(agent => ({
-          ...agent,
-          solution: solutionsData?.find(s => s.slug === agent.kind) || null
-        }))
-        
-        setAgents(agentsWithSolutions)
-      } else {
-        setAgents(agentsData)
-      }
+      // Buscar contagem de campanhas por agente
+      const { data: campaignCounts } = await supabase
+        .from('agent_campaigns')
+        .select('agent_id')
+        .eq('org_id', orgId)
+        .in('agent_id', agentsData.map(a => a.id))
+
+      // Contar campanhas por agente
+      const countsMap: Record<string, number> = {}
+      campaignCounts?.forEach(c => {
+        countsMap[c.agent_id] = (countsMap[c.agent_id] || 0) + 1
+      })
+
+      // Join manual
+      const agentsWithData = agentsData.map(agent => ({
+        ...agent,
+        solution: solutionsData?.find(s => s.slug === agent.solution_slug) || null,
+        campaigns_count: countsMap[agent.id] || 0
+      }))
+      
+      setAgents(agentsWithData)
     } catch (err: any) {
       console.error('Error fetching agents:', err)
       setError(err.message)
@@ -226,13 +148,11 @@ export function useMyAgents(orgId: string | undefined) {
 }
 
 /**
- * Hook para buscar detalhes de um agente específico
+ * Hook para buscar um agente específico com detalhes
  */
 export function useAgent(agentId: string | undefined) {
   const [agent, setAgent] = useState<Agent | null>(null)
-  const [runs, setRuns] = useState<AgentRun[]>([])
-  const [metrics, setMetrics] = useState<AgentMetrics[]>([])
-  const [events, setEvents] = useState<AgentEvent[]>([])
+  const [campaigns, setCampaigns] = useState<AgentCampaign[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -254,12 +174,12 @@ export function useAgent(agentId: string | undefined) {
 
       if (agentError) throw agentError
       
-      // Buscar solution separadamente
-      if (agentData?.kind) {
+      // Buscar solution
+      if (agentData?.solution_slug) {
         const { data: solutionData } = await supabase
           .from('agent_solutions')
           .select('*')
-          .eq('slug', agentData.kind)
+          .eq('slug', agentData.solution_slug)
           .single()
         
         agentData.solution = solutionData || null
@@ -267,41 +187,17 @@ export function useAgent(agentId: string | undefined) {
       
       setAgent(agentData)
 
-      // Buscar últimas execuções
-      const { data: runsData } = await supabase
-        .from('agent_runs')
-        .select('*')
-        .eq('agent_id', agentId)
-        .order('started_at', { ascending: false })
-        .limit(50)
-
-      setRuns(runsData || [])
-
-      // Buscar métricas dos últimos 30 dias
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
-      const { data: metricsData } = await supabase
-        .from('agent_metrics')
-        .select('*')
-        .eq('agent_id', agentId)
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
-        .order('date', { ascending: true })
-
-      setMetrics(metricsData || [])
-
-      // Buscar eventos recentes
-      const { data: eventsData } = await supabase
-        .from('agent_events')
+      // Buscar campanhas
+      const { data: campaignsData } = await supabase
+        .from('agent_campaigns')
         .select('*')
         .eq('agent_id', agentId)
         .order('created_at', { ascending: false })
-        .limit(20)
 
-      setEvents(eventsData || [])
+      setCampaigns(campaignsData || [])
 
     } catch (err: any) {
-      console.error('Error fetching agent details:', err)
+      console.error('Error fetching agent:', err)
       setError(err.message)
     } finally {
       setLoading(false)
@@ -312,57 +208,144 @@ export function useAgent(agentId: string | undefined) {
     refresh()
   }, [refresh])
 
-  return { agent, runs, metrics, events, loading, error, refresh }
+  return { agent, campaigns, loading, error, refresh }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// FUNÇÕES DE AÇÃO
+// HOOKS - CAMPAIGNS (Personalização do User)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Contratar/ativar um agente
+ * Hook para buscar campanhas de um agente
+ */
+export function useCampaigns(agentId: string | undefined) {
+  const [campaigns, setCampaigns] = useState<AgentCampaign[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const refresh = useCallback(async () => {
+    if (!agentId) {
+      setLoading(false)
+      return
+    }
+
+    try {
+      setLoading(true)
+      
+      const { data, error: fetchError } = await supabase
+        .from('agent_campaigns')
+        .select('*')
+        .eq('agent_id', agentId)
+        .order('created_at', { ascending: false })
+
+      if (fetchError) throw fetchError
+      setCampaigns(data || [])
+    } catch (err: any) {
+      console.error('Error fetching campaigns:', err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [agentId])
+
+  useEffect(() => {
+    refresh()
+  }, [refresh])
+
+  return { campaigns, loading, error, refresh }
+}
+
+/**
+ * Hook para buscar uma campanha específica com runs
+ */
+export function useCampaign(campaignId: string | undefined) {
+  const [campaign, setCampaign] = useState<AgentCampaign | null>(null)
+  const [runs, setRuns] = useState<AgentRun[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const refresh = useCallback(async () => {
+    if (!campaignId) {
+      setLoading(false)
+      return
+    }
+
+    try {
+      setLoading(true)
+
+      // Buscar campanha
+      const { data: campaignData, error: campaignError } = await supabase
+        .from('agent_campaigns')
+        .select('*')
+        .eq('id', campaignId)
+        .single()
+
+      if (campaignError) throw campaignError
+      setCampaign(campaignData)
+
+      // Buscar runs
+      const { data: runsData } = await supabase
+        .from('agent_runs')
+        .select('*')
+        .eq('campaign_id', campaignId)
+        .order('started_at', { ascending: false })
+        .limit(50)
+
+      setRuns(runsData || [])
+
+    } catch (err: any) {
+      console.error('Error fetching campaign:', err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [campaignId])
+
+  useEffect(() => {
+    refresh()
+  }, [refresh])
+
+  return { campaign, runs, loading, error, refresh }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNÇÕES DE AÇÃO - AGENTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Contratar um agente (criar contratação para a org)
  */
 export async function hireAgent(
   orgId: string, 
-  solutionSlug: string, 
-  initialConfig?: Record<string, any>
+  solutionSlug: string,
+  limits?: Record<string, number>
 ): Promise<{ agent: Agent | null; error: string | null }> {
   try {
-    console.log('Hiring agent:', { orgId, solutionSlug, initialConfig })
-    
+    // Buscar limites padrão da solution
+    const { data: solution } = await supabase
+      .from('agent_solutions')
+      .select('default_limits')
+      .eq('slug', solutionSlug)
+      .single()
+
+    const finalLimits = { ...(solution?.default_limits || {}), ...(limits || {}) }
+
     const { data, error } = await supabase
       .from('agents')
       .insert({
         org_id: orgId,
-        kind: solutionSlug,
+        solution_slug: solutionSlug,
         status: 'active',
-        cfg: initialConfig || {},
+        limits: finalLimits,
+        current_usage: { leads_captured: 0, period_start: new Date().toISOString() },
         activated_at: new Date().toISOString(),
-        billing_started_at: new Date().toISOString()
+        billing_started_at: new Date().toISOString(),
+        current_period_start: new Date().toISOString()
       })
       .select('*')
       .single()
 
-    if (error) {
-      console.error('Insert agent error:', error)
-      throw error
-    }
-
-    console.log('Agent created:', data)
-
-    // Registrar evento (não bloquear se falhar)
-    try {
-      await supabase.from('agent_events').insert({
-        agent_id: data.id,
-        org_id: orgId,
-        event_type: 'activated',
-        title: 'Agente ativado',
-        description: `Agente ${solutionSlug} foi contratado e ativado.`
-      })
-    } catch (eventErr) {
-      console.warn('Failed to create event:', eventErr)
-    }
-
+    if (error) throw error
     return { agent: data, error: null }
   } catch (err: any) {
     console.error('hireAgent error:', err)
@@ -371,58 +354,14 @@ export async function hireAgent(
 }
 
 /**
- * Atualizar configuração do agente
- */
-export async function updateAgentConfig(
-  agentId: string, 
-  orgId: string,
-  config: Record<string, any>
-): Promise<{ success: boolean; error: string | null }> {
-  try {
-    const { error } = await supabase
-      .from('agents')
-      .update({ 
-        cfg: config,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', agentId)
-
-    if (error) throw error
-
-    // Registrar evento
-    await supabase.from('agent_events').insert({
-      agent_id: agentId,
-      org_id: orgId,
-      event_type: 'config_changed',
-      title: 'Configuração alterada',
-      metadata: { new_config: config }
-    })
-
-    return { success: true, error: null }
-  } catch (err: any) {
-    return { success: false, error: err.message }
-  }
-}
-
-/**
- * Alterar status do agente (pausar/ativar)
+ * Pausar/ativar agente
  */
 export async function toggleAgentStatus(
   agentId: string,
-  orgId: string,
-  currentStatus: AgentStatus,
-  reason?: string
-): Promise<{ newStatus: AgentStatus | null; error: string | null }> {
+  currentStatus: string
+): Promise<{ success: boolean; error: string | null }> {
   try {
-    if (currentStatus === 'maintenance') {
-      return { newStatus: null, error: 'Agente em manutenção não pode ser alterado.' }
-    }
-
-    if (currentStatus === 'pending_setup') {
-      return { newStatus: null, error: 'Agente aguardando setup.' }
-    }
-
-    const newStatus: AgentStatus = currentStatus === 'active' ? 'paused' : 'active'
+    const newStatus = currentStatus === 'active' ? 'paused' : 'active'
     const updateData: any = { 
       status: newStatus,
       updated_at: new Date().toISOString()
@@ -430,10 +369,8 @@ export async function toggleAgentStatus(
 
     if (newStatus === 'paused') {
       updateData.paused_at = new Date().toISOString()
-      updateData.paused_reason = reason || null
     } else {
       updateData.paused_at = null
-      updateData.paused_reason = null
     }
 
     const { error } = await supabase
@@ -442,16 +379,150 @@ export async function toggleAgentStatus(
       .eq('id', agentId)
 
     if (error) throw error
+    return { success: true, error: null }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
 
-    // Registrar evento
-    await supabase.from('agent_events').insert({
-      agent_id: agentId,
-      org_id: orgId,
-      event_type: newStatus === 'active' ? 'resumed' : 'paused',
-      title: newStatus === 'active' ? 'Agente reativado' : 'Agente pausado',
-      description: reason || null
-    })
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNÇÕES DE AÇÃO - CAMPAIGNS
+// ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Criar nova campanha
+ */
+export async function createCampaign(
+  agentId: string,
+  orgId: string,
+  userId: string,
+  data: {
+    name: string
+    description?: string
+    config: Record<string, any>
+    target_leads?: number
+    schedule_frequency?: string
+    schedule_time?: string
+  }
+): Promise<{ campaign: AgentCampaign | null; error: string | null }> {
+  try {
+    // Calcular próxima execução
+    const nextRunAt = calculateNextRun(
+      data.schedule_frequency || 'daily',
+      data.schedule_time || '08:00'
+    )
+
+    const { data: campaign, error } = await supabase
+      .from('agent_campaigns')
+      .insert({
+        agent_id: agentId,
+        org_id: orgId,
+        user_id: userId,
+        name: data.name,
+        description: data.description || null,
+        config: data.config,
+        target_leads: data.target_leads || null,
+        status: 'active',
+        schedule_frequency: data.schedule_frequency || 'daily',
+        schedule_time: data.schedule_time || '08:00',
+        next_run_at: nextRunAt,
+        metrics: { leads_captured: 0, total_runs: 0 }
+      })
+      .select('*')
+      .single()
+
+    if (error) throw error
+    return { campaign, error: null }
+  } catch (err: any) {
+    console.error('createCampaign error:', err)
+    return { campaign: null, error: err.message }
+  }
+}
+
+/**
+ * Atualizar campanha
+ */
+export async function updateCampaign(
+  campaignId: string,
+  data: Partial<{
+    name: string
+    description: string
+    config: Record<string, any>
+    target_leads: number | null
+    status: CampaignStatus
+    schedule_frequency: string
+    schedule_time: string
+  }>
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const updateData: any = { ...data, updated_at: new Date().toISOString() }
+    
+    // Recalcular próxima execução se mudou agendamento
+    if (data.schedule_frequency || data.schedule_time) {
+      const { data: current } = await supabase
+        .from('agent_campaigns')
+        .select('schedule_frequency, schedule_time')
+        .eq('id', campaignId)
+        .single()
+      
+      const freq = data.schedule_frequency || current?.schedule_frequency || 'daily'
+      const time = data.schedule_time || current?.schedule_time || '08:00'
+      updateData.next_run_at = calculateNextRun(freq, time)
+    }
+
+    const { error } = await supabase
+      .from('agent_campaigns')
+      .update(updateData)
+      .eq('id', campaignId)
+
+    if (error) throw error
+    return { success: true, error: null }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Pausar/ativar campanha
+ */
+export async function toggleCampaignStatus(
+  campaignId: string,
+  currentStatus: CampaignStatus
+): Promise<{ newStatus: CampaignStatus | null; error: string | null }> {
+  try {
+    if (currentStatus === 'completed' || currentStatus === 'cancelled') {
+      return { newStatus: null, error: 'Campanha finalizada não pode ser alterada' }
+    }
+
+    const newStatus: CampaignStatus = currentStatus === 'active' ? 'paused' : 'active'
+    
+    const updateData: any = { 
+      status: newStatus,
+      updated_at: new Date().toISOString()
+    }
+
+    // Se reativando, recalcular próxima execução
+    if (newStatus === 'active') {
+      const { data: campaign } = await supabase
+        .from('agent_campaigns')
+        .select('schedule_frequency, schedule_time')
+        .eq('id', campaignId)
+        .single()
+      
+      if (campaign) {
+        updateData.next_run_at = calculateNextRun(
+          campaign.schedule_frequency,
+          campaign.schedule_time
+        )
+      }
+    }
+
+    const { error } = await supabase
+      .from('agent_campaigns')
+      .update(updateData)
+      .eq('id', campaignId)
+
+    if (error) throw error
     return { newStatus, error: null }
   } catch (err: any) {
     return { newStatus: null, error: err.message }
@@ -459,48 +530,94 @@ export async function toggleAgentStatus(
 }
 
 /**
- * Calcular estatísticas agregadas dos runs
+ * Deletar campanha
  */
-export function calculateAgentStats(runs: AgentRun[]) {
-  if (!runs || runs.length === 0) {
-    return {
-      totalRuns: 0,
-      successRate: 0,
-      totalCost: 0,
-      avgDuration: 0,
-      lastRunAt: null,
-      lastRunStatus: null
-    }
-  }
+export async function deleteCampaign(
+  campaignId: string
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const { error } = await supabase
+      .from('agent_campaigns')
+      .delete()
+      .eq('id', campaignId)
 
-  const total = runs.length
-  const successful = runs.filter(r => r.status === 'success').length
-  const totalCost = runs.reduce((acc, r) => acc + (Number(r.cost_usd) || 0), 0)
-  const avgDuration = runs.reduce((acc, r) => acc + (r.duration_ms || 0), 0) / total
-  
-  const lastRun = runs[0]
-
-  return {
-    totalRuns: total,
-    successRate: total > 0 ? (successful / total) * 100 : 0,
-    totalCost,
-    avgDuration,
-    lastRunAt: lastRun?.started_at || null,
-    lastRunStatus: lastRun?.status || null
+    if (error) throw error
+    return { success: true, error: null }
+  } catch (err: any) {
+    return { success: false, error: err.message }
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNÇÕES AUXILIARES
+// ═══════════════════════════════════════════════════════════════════════════════
+
 /**
- * Helper para obter conteúdo traduzido do agente
+ * Calcular próxima execução baseado na frequência
  */
-export function getAgentTranslation(slug: string, lang: string) {
-  const translation = AGENT_TRANSLATIONS[slug]?.[lang]
-  if (translation) return translation
+function calculateNextRun(frequency: string, time: string): string {
+  const now = new Date()
+  const [hours, minutes] = time.split(':').map(Number)
   
-  // Fallback para português
-  return AGENT_TRANSLATIONS[slug]?.pt || {
-    name: slug,
-    description: '',
-    features: []
+  let next = new Date(now)
+  next.setHours(hours, minutes, 0, 0)
+  
+  // Se já passou do horário hoje, vai para o próximo período
+  if (next <= now) {
+    switch (frequency) {
+      case 'hourly':
+        next.setHours(next.getHours() + 1)
+        break
+      case 'daily':
+        next.setDate(next.getDate() + 1)
+        break
+      case 'weekly':
+        next.setDate(next.getDate() + 7)
+        break
+      default:
+        next.setDate(next.getDate() + 1)
+    }
   }
+  
+  return next.toISOString()
+}
+
+/**
+ * Calcular informações de uso do agente
+ */
+export function calculateUsage(agent: Agent): UsageInfo {
+  const limit = agent.limits?.leads_per_month || 0
+  const used = agent.current_usage?.leads_captured || 0
+  const remaining = Math.max(limit - used, 0)
+  const percentage = limit > 0 ? (used / limit) * 100 : 0
+
+  return { limit, used, remaining, percentage }
+}
+
+/**
+ * Verificar se campanha pode capturar mais leads
+ */
+export function canCampaignCapture(
+  campaign: AgentCampaign,
+  agentUsage: UsageInfo
+): { canCapture: boolean; reason?: string } {
+  // Verificar se campanha está ativa
+  if (campaign.status !== 'active') {
+    return { canCapture: false, reason: 'campaign_not_active' }
+  }
+
+  // Verificar limite da org
+  if (agentUsage.remaining <= 0) {
+    return { canCapture: false, reason: 'org_limit_reached' }
+  }
+
+  // Verificar meta da campanha
+  if (campaign.target_leads) {
+    const captured = campaign.metrics?.leads_captured || 0
+    if (captured >= campaign.target_leads) {
+      return { canCapture: false, reason: 'campaign_target_reached' }
+    }
+  }
+
+  return { canCapture: true }
 }

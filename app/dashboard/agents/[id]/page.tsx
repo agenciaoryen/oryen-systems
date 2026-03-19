@@ -1,446 +1,386 @@
-// app/dashboard/agents/[id]/page.tsx
+// app/dashboard/agents/page.tsx
 'use client'
 
-import { useState, useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { useAgent, getAgentTranslation, toggleAgentStatus, updateAgentConfig } from '@/lib/agents'
-import type { AgentRun, AgentEvent, ConfigField } from '@/lib/agents/types'
-import { format, formatDistanceToNow, subDays } from 'date-fns'
-import { ptBR, enUS, es } from 'date-fns/locale'
+import { 
+  useAgentSolutions, 
+  useOrgAgents, 
+  hireAgent,
+  calculateUsage,
+  t,
+  tFeatures
+} from '@/lib/agents'
+import type { AgentSolution, Agent, Language } from '@/lib/agents/types'
 import { toast } from 'sonner'
-import {
-  ArrowLeft, Bot, Activity, Clock, DollarSign, TrendingUp,
-  CheckCircle2, XCircle, AlertTriangle, Loader2, PlayCircle,
-  PauseCircle, Settings, RefreshCw, ChevronDown, ChevronRight,
-  Zap, MessageSquare, Target, Users, Filter, Calendar,
-  BarChart3, List, Info, X, Save, ExternalLink, Copy
+import { 
+  Bot, Target, MessageSquare, Zap, Headphones,
+  PlayCircle, PauseCircle, Settings, Activity,
+  CheckCircle2, Clock, DollarSign, Users,
+  Loader2, Sparkles, ArrowRight, Search,
+  Plus, BarChart3, Layers, TrendingUp
 } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TRADUÇÕES
+// ÍCONES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const TRANSLATIONS = {
-  pt: {
-    back: 'Voltar',
-    overview: 'Visão Geral',
-    runs: 'Execuções',
-    metrics: 'Métricas',
-    events: 'Eventos',
-    config: 'Configuração',
-    status: 'Status',
-    active: 'Ativo',
-    paused: 'Pausado',
-    maintenance: 'Manutenção',
-    pendingSetup: 'Aguardando Setup',
-    pause: 'Pausar',
-    activate: 'Ativar',
-    refresh: 'Atualizar',
-    loading: 'Carregando...',
-    notFound: 'Agente não encontrado',
-    totalRuns: 'Total de Execuções',
-    successRate: 'Taxa de Sucesso',
-    totalCost: 'Custo Total',
-    avgDuration: 'Duração Média',
-    last24h: 'Últimas 24h',
-    last7d: 'Últimos 7 dias',
-    last30d: 'Últimos 30 dias',
-    allTime: 'Todo período',
-    noRuns: 'Nenhuma execução ainda',
-    noRunsHint: 'As execuções aparecerão aqui quando o agente processar leads',
-    noEvents: 'Nenhum evento registrado',
-    runDetails: 'Detalhes da Execução',
-    input: 'Entrada',
-    output: 'Saída',
-    error: 'Erro',
-    duration: 'Duração',
-    cost: 'Custo',
-    tokens: 'Tokens',
-    model: 'Modelo',
-    trigger: 'Gatilho',
-    webhook: 'Webhook',
-    schedule: 'Agendado',
-    manual: 'Manual',
-    event: 'Evento',
-    success: 'Sucesso',
-    failed: 'Falhou',
-    running: 'Executando',
-    pending: 'Pendente',
-    activated: 'Ativado',
-    resumed: 'Reativado',
-    config_changed: 'Configuração alterada',
-    error_alert: 'Alerta de erro',
-    limit_reached: 'Limite atingido',
-    billing_started: 'Cobrança iniciada',
-    copyId: 'Copiar ID',
-    copied: 'Copiado!',
-    save: 'Salvar',
-    saving: 'Salvando...',
-    cancel: 'Cancelar',
-    configSaved: 'Configuração salva!',
-    statusChanged: 'Status alterado!',
-    errorOccurred: 'Ocorreu um erro',
-    tier: 'Tipo',
-    instant: 'Instantâneo',
-    template: 'Template',
-    custom: 'Personalizado',
-    createdAt: 'Criado em',
-    billingStarted: 'Cobrança desde',
-    webhookUrl: 'Webhook URL',
-    n8nWorkflow: 'Workflow N8N'
-  },
-  en: {
-    back: 'Back',
-    overview: 'Overview',
-    runs: 'Runs',
-    metrics: 'Metrics',
-    events: 'Events',
-    config: 'Configuration',
-    status: 'Status',
-    active: 'Active',
-    paused: 'Paused',
-    maintenance: 'Maintenance',
-    pendingSetup: 'Pending Setup',
-    pause: 'Pause',
-    activate: 'Activate',
-    refresh: 'Refresh',
-    loading: 'Loading...',
-    notFound: 'Agent not found',
-    totalRuns: 'Total Runs',
-    successRate: 'Success Rate',
-    totalCost: 'Total Cost',
-    avgDuration: 'Avg Duration',
-    last24h: 'Last 24h',
-    last7d: 'Last 7 days',
-    last30d: 'Last 30 days',
-    allTime: 'All time',
-    noRuns: 'No runs yet',
-    noRunsHint: 'Runs will appear here when the agent processes leads',
-    noEvents: 'No events recorded',
-    runDetails: 'Run Details',
-    input: 'Input',
-    output: 'Output',
-    error: 'Error',
-    duration: 'Duration',
-    cost: 'Cost',
-    tokens: 'Tokens',
-    model: 'Model',
-    trigger: 'Trigger',
-    webhook: 'Webhook',
-    schedule: 'Scheduled',
-    manual: 'Manual',
-    event: 'Event',
-    success: 'Success',
-    failed: 'Failed',
-    running: 'Running',
-    pending: 'Pending',
-    activated: 'Activated',
-    resumed: 'Resumed',
-    config_changed: 'Config changed',
-    error_alert: 'Error alert',
-    limit_reached: 'Limit reached',
-    billing_started: 'Billing started',
-    copyId: 'Copy ID',
-    copied: 'Copied!',
-    save: 'Save',
-    saving: 'Saving...',
-    cancel: 'Cancel',
-    configSaved: 'Configuration saved!',
-    statusChanged: 'Status changed!',
-    errorOccurred: 'An error occurred',
-    tier: 'Type',
-    instant: 'Instant',
-    template: 'Template',
-    custom: 'Custom',
-    createdAt: 'Created at',
-    billingStarted: 'Billing since',
-    webhookUrl: 'Webhook URL',
-    n8nWorkflow: 'N8N Workflow'
-  },
-  es: {
-    back: 'Volver',
-    overview: 'Visión General',
-    runs: 'Ejecuciones',
-    metrics: 'Métricas',
-    events: 'Eventos',
-    config: 'Configuración',
-    status: 'Estado',
-    active: 'Activo',
-    paused: 'Pausado',
-    maintenance: 'Mantenimiento',
-    pendingSetup: 'Esperando Setup',
-    pause: 'Pausar',
-    activate: 'Activar',
-    refresh: 'Actualizar',
-    loading: 'Cargando...',
-    notFound: 'Agente no encontrado',
-    totalRuns: 'Total de Ejecuciones',
-    successRate: 'Tasa de Éxito',
-    totalCost: 'Costo Total',
-    avgDuration: 'Duración Promedio',
-    last24h: 'Últimas 24h',
-    last7d: 'Últimos 7 días',
-    last30d: 'Últimos 30 días',
-    allTime: 'Todo el período',
-    noRuns: 'Sin ejecuciones aún',
-    noRunsHint: 'Las ejecuciones aparecerán aquí cuando el agente procese leads',
-    noEvents: 'Sin eventos registrados',
-    runDetails: 'Detalles de Ejecución',
-    input: 'Entrada',
-    output: 'Salida',
-    error: 'Error',
-    duration: 'Duración',
-    cost: 'Costo',
-    tokens: 'Tokens',
-    model: 'Modelo',
-    trigger: 'Disparador',
-    webhook: 'Webhook',
-    schedule: 'Programado',
-    manual: 'Manual',
-    event: 'Evento',
-    success: 'Éxito',
-    failed: 'Falló',
-    running: 'Ejecutando',
-    pending: 'Pendiente',
-    activated: 'Activado',
-    resumed: 'Reactivado',
-    config_changed: 'Configuración cambiada',
-    error_alert: 'Alerta de error',
-    limit_reached: 'Límite alcanzado',
-    billing_started: 'Facturación iniciada',
-    copyId: 'Copiar ID',
-    copied: '¡Copiado!',
-    save: 'Guardar',
-    saving: 'Guardando...',
-    cancel: 'Cancelar',
-    configSaved: '¡Configuración guardada!',
-    statusChanged: '¡Estado cambiado!',
-    errorOccurred: 'Ocurrió un error',
-    tier: 'Tipo',
-    instant: 'Instantáneo',
-    template: 'Template',
-    custom: 'Personalizado',
-    createdAt: 'Creado en',
-    billingStarted: 'Facturación desde',
-    webhookUrl: 'Webhook URL',
-    n8nWorkflow: 'Workflow N8N'
-  }
+const CATEGORY_ICONS: Record<string, any> = {
+  conversation: MessageSquare,
+  prospecting: Target,
+  support: Headphones,
+  automation: Zap
 }
 
-type Language = keyof typeof TRANSLATIONS
-type Tab = 'overview' | 'runs' | 'events' | 'config'
+const SOLUTION_ICONS: Record<string, any> = {
+  hunter_b2b: Target,
+  sdr: MessageSquare,
+  followup: Clock,
+  support: Headphones
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TRADUÇÕES UI
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const UI = {
+  pt: {
+    title: 'Agentes de IA',
+    subtitle: 'Automatize vendas e prospecção com inteligência artificial',
+    myAgents: 'Meus Agentes',
+    marketplace: 'Marketplace',
+    active: 'Ativo',
+    paused: 'Pausado',
+    campaigns: 'campanhas',
+    leadsMonth: 'leads/mês',
+    used: 'usados',
+    remaining: 'restantes',
+    manage: 'Gerenciar',
+    viewCampaigns: 'Ver Campanhas',
+    hire: 'Contratar',
+    hiring: 'Contratando...',
+    perMonth: '/mês',
+    setup: 'Setup',
+    features: 'Recursos',
+    limits: 'Limites inclusos',
+    noAgents: 'Você ainda não tem agentes',
+    noAgentsHint: 'Explore o marketplace e contrate seu primeiro agente de IA',
+    explore: 'Explorar Marketplace',
+    confirmHire: 'Confirmar contratação?',
+    confirmHireDesc: 'Deseja contratar este agente? A cobrança iniciará imediatamente.',
+    hired: 'Agente contratado com sucesso!',
+    error: 'Erro ao contratar',
+    loading: 'Carregando...',
+    featured: 'Destaque',
+    all: 'Todos',
+    prospecting: 'Prospecção',
+    conversation: 'Conversação',
+    support: 'Suporte',
+    searchPlaceholder: 'Buscar soluções...'
+  },
+  en: {
+    title: 'AI Agents',
+    subtitle: 'Automate sales and prospecting with artificial intelligence',
+    myAgents: 'My Agents',
+    marketplace: 'Marketplace',
+    active: 'Active',
+    paused: 'Paused',
+    campaigns: 'campaigns',
+    leadsMonth: 'leads/mo',
+    used: 'used',
+    remaining: 'remaining',
+    manage: 'Manage',
+    viewCampaigns: 'View Campaigns',
+    hire: 'Hire',
+    hiring: 'Hiring...',
+    perMonth: '/mo',
+    setup: 'Setup',
+    features: 'Features',
+    limits: 'Included limits',
+    noAgents: 'You don\'t have any agents yet',
+    noAgentsHint: 'Explore the marketplace and hire your first AI agent',
+    explore: 'Explore Marketplace',
+    confirmHire: 'Confirm hiring?',
+    confirmHireDesc: 'Do you want to hire this agent? Billing will start immediately.',
+    hired: 'Agent hired successfully!',
+    error: 'Error hiring',
+    loading: 'Loading...',
+    featured: 'Featured',
+    all: 'All',
+    prospecting: 'Prospecting',
+    conversation: 'Conversation',
+    support: 'Support',
+    searchPlaceholder: 'Search solutions...'
+  },
+  es: {
+    title: 'Agentes de IA',
+    subtitle: 'Automatiza ventas y prospección con inteligencia artificial',
+    myAgents: 'Mis Agentes',
+    marketplace: 'Marketplace',
+    active: 'Activo',
+    paused: 'Pausado',
+    campaigns: 'campañas',
+    leadsMonth: 'leads/mes',
+    used: 'usados',
+    remaining: 'restantes',
+    manage: 'Gestionar',
+    viewCampaigns: 'Ver Campañas',
+    hire: 'Contratar',
+    hiring: 'Contratando...',
+    perMonth: '/mes',
+    setup: 'Setup',
+    features: 'Recursos',
+    limits: 'Límites incluidos',
+    noAgents: 'Aún no tienes agentes',
+    noAgentsHint: 'Explora el marketplace y contrata tu primer agente de IA',
+    explore: 'Explorar Marketplace',
+    confirmHire: '¿Confirmar contratación?',
+    confirmHireDesc: '¿Deseas contratar este agente? La facturación comenzará inmediatamente.',
+    hired: '¡Agente contratado con éxito!',
+    error: 'Error al contratar',
+    loading: 'Cargando...',
+    featured: 'Destacado',
+    all: 'Todos',
+    prospecting: 'Prospección',
+    conversation: 'Conversación',
+    support: 'Soporte',
+    searchPlaceholder: 'Buscar soluciones...'
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function StatCard({ 
-  icon: Icon, 
-  label, 
-  value, 
-  suffix,
-  trend,
-  color = 'blue'
-}: { 
-  icon: any
-  label: string
-  value: string | number
-  suffix?: string
-  trend?: number
-  color?: 'blue' | 'green' | 'amber' | 'red'
-}) {
-  const colors = {
-    blue: 'from-blue-500/20 to-blue-600/10 text-blue-400 border-blue-500/20',
-    green: 'from-emerald-500/20 to-emerald-600/10 text-emerald-400 border-emerald-500/20',
-    amber: 'from-amber-500/20 to-amber-600/10 text-amber-400 border-amber-500/20',
-    red: 'from-red-500/20 to-red-600/10 text-red-400 border-red-500/20'
-  }
-
-  return (
-    <div className={`bg-gradient-to-br ${colors[color]} border rounded-2xl p-4`}>
-      <div className="flex items-center gap-2 mb-2">
-        <Icon size={14} className="opacity-70" />
-        <span className="text-xs font-medium opacity-70">{label}</span>
-      </div>
-      <div className="flex items-baseline gap-1">
-        <span className="text-2xl font-bold text-white">{value}</span>
-        {suffix && <span className="text-sm opacity-50">{suffix}</span>}
-      </div>
-      {trend !== undefined && (
-        <div className={`flex items-center gap-1 mt-1 text-xs ${trend >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-          <TrendingUp size={10} className={trend < 0 ? 'rotate-180' : ''} />
-          {Math.abs(trend)}% vs período anterior
-        </div>
-      )}
-    </div>
-  )
-}
-
-function RunRow({ 
-  run, 
-  lang, 
-  t, 
-  dateLocale,
-  isExpanded,
-  onToggle 
-}: { 
-  run: AgentRun
+// Card de Agente Contratado
+function AgentCard({ 
+  agent,
+  lang,
+  ui,
+  onManage
+}: {
+  agent: Agent
   lang: Language
-  t: typeof TRANSLATIONS.pt
-  dateLocale: any
-  isExpanded: boolean
-  onToggle: () => void
+  ui: typeof UI.es
+  onManage: () => void
 }) {
-  const statusConfig = {
-    success: { icon: CheckCircle2, color: 'text-emerald-400 bg-emerald-500/10', label: t.success },
-    error: { icon: XCircle, color: 'text-red-400 bg-red-500/10', label: t.error },
-    failed: { icon: XCircle, color: 'text-red-400 bg-red-500/10', label: t.failed },
-    running: { icon: Loader2, color: 'text-blue-400 bg-blue-500/10', label: t.running },
-    pending: { icon: Clock, color: 'text-amber-400 bg-amber-500/10', label: t.pending }
-  }
-
-  const triggerLabels: Record<string, string> = {
-    webhook: t.webhook,
-    schedule: t.schedule,
-    manual: t.manual,
-    event: t.event
-  }
-
-  const config = statusConfig[run.status] || statusConfig.pending
-  const StatusIcon = config.icon
+  const solution = agent.solution
+  const Icon = SOLUTION_ICONS[agent.solution_slug] || Bot
+  const usage = calculateUsage(agent)
+  const isActive = agent.status === 'active'
 
   return (
-    <div className="border-b border-white/5 last:border-0">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors text-left"
-      >
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${config.color}`}>
-          <StatusIcon size={14} className={run.status === 'running' ? 'animate-spin' : ''} />
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-white">{config.label}</span>
-            {run.trigger_type && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-400">
-                {triggerLabels[run.trigger_type] || run.trigger_type}
-              </span>
-            )}
+    <div className={`
+      bg-[#0a0a0a] border rounded-2xl p-5 transition-all duration-300
+      hover:border-white/20 hover:shadow-xl hover:shadow-white/5
+      ${isActive ? 'border-white/10' : 'border-amber-500/20'}
+    `}>
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className={`
+            w-12 h-12 rounded-xl flex items-center justify-center
+            ${isActive 
+              ? 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 text-blue-400' 
+              : 'bg-amber-500/10 text-amber-400'
+            }
+          `}>
+            <Icon size={24} />
           </div>
-          <span className="text-xs text-gray-500">
-            {formatDistanceToNow(new Date(run.started_at), { addSuffix: true, locale: dateLocale })}
+          <div>
+            <h3 className="font-bold text-white">
+              {solution ? t(solution.name, lang) : agent.solution_slug}
+            </h3>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className={`
+                inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full
+                ${isActive 
+                  ? 'bg-emerald-500/10 text-emerald-400' 
+                  : 'bg-amber-500/10 text-amber-400'
+                }
+              `}>
+                {isActive ? <PlayCircle size={8} /> : <PauseCircle size={8} />}
+                {isActive ? ui.active : ui.paused}
+              </span>
+              <span className="text-[10px] text-gray-500">
+                {agent.campaigns_count || 0} {ui.campaigns}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Usage Bar */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between text-xs mb-1.5">
+          <span className="text-gray-400">{ui.leadsMonth}</span>
+          <span className="text-gray-300 font-mono">
+            {usage.used} / {usage.limit}
           </span>
         </div>
-
-        <div className="flex items-center gap-4 text-xs text-gray-400">
-          {run.duration_ms && (
-            <span className="flex items-center gap-1">
-              <Clock size={10} />
-              {(run.duration_ms / 1000).toFixed(1)}s
-            </span>
-          )}
-          {run.cost_usd && (
-            <span className="flex items-center gap-1 text-emerald-400">
-              <DollarSign size={10} />
-              {Number(run.cost_usd).toFixed(4)}
-            </span>
-          )}
+        <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+          <div 
+            className={`h-full rounded-full transition-all ${
+              usage.percentage > 90 ? 'bg-red-500' :
+              usage.percentage > 70 ? 'bg-amber-500' :
+              'bg-gradient-to-r from-blue-500 to-purple-500'
+            }`}
+            style={{ width: `${Math.min(usage.percentage, 100)}%` }}
+          />
         </div>
+        <div className="flex justify-between text-[10px] mt-1">
+          <span className="text-gray-500">{usage.used} {ui.used}</span>
+          <span className="text-emerald-400">{usage.remaining} {ui.remaining}</span>
+        </div>
+      </div>
 
-        <ChevronRight size={14} className={`text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+      {/* Actions */}
+      <button
+        onClick={onManage}
+        className="w-full flex items-center justify-center gap-2 py-2.5 bg-white text-black hover:bg-gray-200 rounded-xl text-sm font-bold transition-colors"
+      >
+        <Layers size={14} />
+        {ui.viewCampaigns}
       </button>
-
-      {isExpanded && (
-        <div className="px-4 pb-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {run.duration_ms && (
-              <div className="bg-gray-900/50 rounded-lg p-3">
-                <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">{t.duration}</div>
-                <div className="text-sm text-white font-mono">{(run.duration_ms / 1000).toFixed(2)}s</div>
-              </div>
-            )}
-            {run.cost_usd && (
-              <div className="bg-gray-900/50 rounded-lg p-3">
-                <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">{t.cost}</div>
-                <div className="text-sm text-emerald-400 font-mono">${Number(run.cost_usd).toFixed(4)}</div>
-              </div>
-            )}
-            {(run.tokens_input || run.tokens_output) && (
-              <div className="bg-gray-900/50 rounded-lg p-3">
-                <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">{t.tokens}</div>
-                <div className="text-sm text-white font-mono">
-                  {run.tokens_input || 0} → {run.tokens_output || 0}
-                </div>
-              </div>
-            )}
-            {run.model_used && (
-              <div className="bg-gray-900/50 rounded-lg p-3">
-                <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">{t.model}</div>
-                <div className="text-sm text-white truncate">{run.model_used}</div>
-              </div>
-            )}
-          </div>
-
-          {run.error_msg && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-              <div className="text-[10px] text-red-400 uppercase font-bold mb-1">{t.error}</div>
-              <div className="text-sm text-red-300 font-mono break-all">{run.error_msg}</div>
-            </div>
-          )}
-
-          {run.input_data && (
-            <div className="bg-gray-900/50 rounded-lg p-3">
-              <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">{t.input}</div>
-              <pre className="text-xs text-gray-300 overflow-x-auto">
-                {JSON.stringify(run.input_data, null, 2)}
-              </pre>
-            </div>
-          )}
-
-          {run.output_data && (
-            <div className="bg-gray-900/50 rounded-lg p-3">
-              <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">{t.output}</div>
-              <pre className="text-xs text-gray-300 overflow-x-auto">
-                {JSON.stringify(run.output_data, null, 2)}
-              </pre>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 }
 
-function EventRow({ event, t, dateLocale }: { event: AgentEvent; t: typeof TRANSLATIONS.pt; dateLocale: any }) {
-  const eventConfig: Record<string, { icon: any; color: string }> = {
-    activated: { icon: PlayCircle, color: 'text-emerald-400 bg-emerald-500/10' },
-    paused: { icon: PauseCircle, color: 'text-amber-400 bg-amber-500/10' },
-    resumed: { icon: PlayCircle, color: 'text-emerald-400 bg-emerald-500/10' },
-    config_changed: { icon: Settings, color: 'text-blue-400 bg-blue-500/10' },
-    error_alert: { icon: AlertTriangle, color: 'text-red-400 bg-red-500/10' },
-    limit_reached: { icon: AlertTriangle, color: 'text-amber-400 bg-amber-500/10' },
-    billing_started: { icon: DollarSign, color: 'text-emerald-400 bg-emerald-500/10' }
-  }
-
-  const config = eventConfig[event.event_type] || { icon: Info, color: 'text-gray-400 bg-gray-500/10' }
-  const Icon = config.icon
+// Card do Marketplace
+function MarketplaceCard({
+  solution,
+  lang,
+  ui,
+  isHired,
+  isHiring,
+  onHire
+}: {
+  solution: AgentSolution
+  lang: Language
+  ui: typeof UI.es
+  isHired: boolean
+  isHiring: boolean
+  onHire: () => void
+}) {
+  const Icon = SOLUTION_ICONS[solution.slug] || Bot
+  const CategoryIcon = CATEGORY_ICONS[solution.category] || Zap
+  const features = tFeatures(solution.features, lang)
+  const hasSetup = solution.price_setup > 0
 
   return (
-    <div className="flex items-start gap-4 p-4 border-b border-white/5 last:border-0">
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${config.color}`}>
-        <Icon size={14} />
+    <div className={`
+      relative bg-[#0a0a0a] border border-white/10 rounded-2xl p-5 transition-all duration-300
+      hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/5
+      ${isHired ? 'opacity-60' : ''}
+      ${solution.is_featured ? 'ring-1 ring-blue-500/30' : ''}
+    `}>
+      {/* Featured Badge */}
+      {solution.is_featured && !isHired && (
+        <div className="absolute -top-2 -right-2 z-10">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[9px] font-bold uppercase rounded-full shadow-lg">
+            <Sparkles size={8} />
+            {ui.featured}
+          </span>
+        </div>
+      )}
+
+      {/* Hired Overlay */}
+      {isHired && (
+        <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center z-10">
+          <span className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-full text-sm font-bold">
+            <CheckCircle2 size={14} />
+            Contratado
+          </span>
+        </div>
+      )}
+
+      {/* Category */}
+      <div className="flex items-center gap-1.5 text-[10px] text-gray-500 mb-3">
+        <CategoryIcon size={10} />
+        {ui[solution.category as keyof typeof ui] || solution.category}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-white">{event.title}</div>
-        {event.description && (
-          <div className="text-xs text-gray-500 mt-0.5">{event.description}</div>
-        )}
-        <div className="text-[10px] text-gray-600 mt-1">
-          {format(new Date(event.created_at), 'PPp', { locale: dateLocale })}
+
+      {/* Header */}
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 border border-white/10 flex items-center justify-center text-gray-400 shrink-0">
+          <Icon size={22} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-white text-lg leading-tight">
+            {t(solution.name, lang)}
+          </h3>
+          <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+            {t(solution.description, lang)}
+          </p>
         </div>
       </div>
+
+      {/* Features */}
+      <div className="space-y-1.5 mb-4">
+        {features.slice(0, 4).map((feature, i) => (
+          <div key={i} className="flex items-center gap-2 text-xs text-gray-400">
+            <CheckCircle2 size={10} className="text-blue-400 shrink-0" />
+            <span className="truncate">{feature}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Limits */}
+      {solution.default_limits && (
+        <div className="flex items-center gap-3 mb-4 py-2 px-3 bg-gray-900/50 rounded-lg border border-white/5">
+          <div className="flex items-center gap-1.5 text-xs">
+            <TrendingUp size={10} className="text-emerald-400" />
+            <span className="text-gray-400">
+              {solution.default_limits.leads_per_month} {ui.leadsMonth}
+            </span>
+          </div>
+          {solution.default_limits.campaigns_max && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <Layers size={10} className="text-blue-400" />
+              <span className="text-gray-400">
+                {solution.default_limits.campaigns_max} {ui.campaigns}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Price */}
+      <div className="flex items-end justify-between mb-4">
+        <div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-bold text-white">
+              ${solution.price_monthly}
+            </span>
+            <span className="text-xs text-gray-500">{ui.perMonth}</span>
+          </div>
+          {hasSetup && (
+            <span className="text-[10px] text-gray-500">
+              + ${solution.price_setup} {ui.setup}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* CTA */}
+      <button
+        onClick={onHire}
+        disabled={isHired || isHiring}
+        className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isHiring ? (
+          <>
+            <Loader2 size={14} className="animate-spin" />
+            {ui.hiring}
+          </>
+        ) : (
+          <>
+            {ui.hire}
+            <ArrowRight size={14} />
+          </>
+        )}
+      </button>
     </div>
   )
 }
@@ -449,514 +389,238 @@ function EventRow({ event, t, dateLocale }: { event: AgentEvent; t: typeof TRANS
 // PÁGINA PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export default function AgentDetailPage() {
-  const params = useParams()
+export default function AgentsPage() {
   const router = useRouter()
-  const { user, org } = useAuth()
-  const agentId = params.id as string
+  const { user, org, loading: authLoading } = useAuth()
+  
+  // Dados
+  const { solutions, loading: loadingSolutions } = useAgentSolutions()
+  const { agents, loading: loadingAgents, refresh } = useOrgAgents(org?.id)
+  
+  // UI State
+  const [activeTab, setActiveTab] = useState<'agents' | 'marketplace'>(
+    agents.length > 0 ? 'agents' : 'marketplace'
+  )
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [hiring, setHiring] = useState<string | null>(null)
 
-  const { agent, runs, metrics, events, loading, error, refresh } = useAgent(agentId)
+  // Language
+  const lang = ((user as any)?.language as Language) || 'es'
+  const ui = UI[lang]
 
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
-  const [expandedRun, setExpandedRun] = useState<string | null>(null)
-  const [timeFilter, setTimeFilter] = useState<'24h' | '7d' | '30d' | 'all'>('7d')
-  const [configEditing, setConfigEditing] = useState(false)
-  const [configValues, setConfigValues] = useState<Record<string, any>>({})
-  const [saving, setSaving] = useState(false)
-
-  const lang = ((user as any)?.language as Language) || 'pt'
-  const t = TRANSLATIONS[lang]
-  const dateLocale = { pt: ptBR, en: enUS, es }[lang]
-
-  // Filtrar runs por período
-  const filteredRuns = useMemo(() => {
-    if (!runs) return []
-    
-    const now = new Date()
-    let cutoff: Date
-
-    switch (timeFilter) {
-      case '24h':
-        cutoff = subDays(now, 1)
-        break
-      case '7d':
-        cutoff = subDays(now, 7)
-        break
-      case '30d':
-        cutoff = subDays(now, 30)
-        break
-      default:
-        return runs
+  // Filtrar soluções
+  const filteredSolutions = solutions.filter(s => {
+    if (categoryFilter !== 'all' && s.category !== categoryFilter) return false
+    if (searchQuery) {
+      const name = t(s.name, lang).toLowerCase()
+      const desc = t(s.description, lang).toLowerCase()
+      const query = searchQuery.toLowerCase()
+      if (!name.includes(query) && !desc.includes(query)) return false
     }
-
-    return runs.filter(r => new Date(r.started_at) >= cutoff)
-  }, [runs, timeFilter])
-
-  // Calcular estatísticas
-  const stats = useMemo(() => {
-    const data = filteredRuns
-    if (!data.length) {
-      return { totalRuns: 0, successRate: 0, totalCost: 0, avgDuration: 0 }
-    }
-
-    const successful = data.filter(r => r.status === 'success').length
-    const totalCost = data.reduce((acc, r) => acc + (Number(r.cost_usd) || 0), 0)
-    const avgDuration = data.reduce((acc, r) => acc + (r.duration_ms || 0), 0) / data.length
-
-    return {
-      totalRuns: data.length,
-      successRate: (successful / data.length) * 100,
-      totalCost,
-      avgDuration
-    }
-  }, [filteredRuns])
+    return true
+  })
 
   // Handlers
-  const handleToggleStatus = async () => {
-    if (!agent || !org?.id) return
-
-    const { newStatus, error } = await toggleAgentStatus(agent.id, org.id, agent.status)
-
-    if (error) {
-      toast.error(error)
+  const handleHire = async (solution: AgentSolution) => {
+    if (!org?.id) {
+      toast.error('Organización no encontrada')
       return
     }
 
-    toast.success(t.statusChanged)
-    refresh()
-  }
+    const confirmed = window.confirm(
+      `${ui.confirmHire}\n\n${t(solution.name, lang)} - $${solution.price_monthly}${ui.perMonth}`
+    )
+    if (!confirmed) return
 
-  const handleSaveConfig = async () => {
-    if (!agent || !org?.id) return
-
-    setSaving(true)
-    const { success, error } = await updateAgentConfig(agent.id, org.id, configValues)
-    setSaving(false)
-
-    if (error) {
-      toast.error(t.errorOccurred)
-      return
+    setHiring(solution.slug)
+    
+    try {
+      const { agent, error } = await hireAgent(org.id, solution.slug)
+      
+      if (error) {
+        toast.error(`${ui.error}: ${error}`)
+        return
+      }
+      
+      toast.success(ui.hired)
+      await refresh()
+      
+      // Redirecionar para a página do agente
+      if (agent) {
+        router.push(`/dashboard/agents/${agent.id}`)
+      }
+    } catch (err: any) {
+      toast.error(`${ui.error}: ${err.message}`)
+    } finally {
+      setHiring(null)
     }
-
-    toast.success(t.configSaved)
-    setConfigEditing(false)
-    refresh()
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    toast.success(t.copied)
-  }
+  // Loading
+  const loading = authLoading || loadingSolutions || loadingAgents
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-[calc(100vh-100px)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-          <p className="text-gray-500 text-sm">{t.loading}</p>
+          <p className="text-gray-500 text-sm">{ui.loading}</p>
         </div>
       </div>
     )
-  }
-
-  // Not found
-  if (!agent) {
-    return (
-      <div className="min-h-[calc(100vh-100px)] flex items-center justify-center">
-        <div className="text-center">
-          <Bot size={48} className="mx-auto text-gray-600 mb-4" />
-          <p className="text-gray-400">{t.notFound}</p>
-          <button
-            onClick={() => router.push('/dashboard/agents')}
-            className="mt-4 text-blue-400 hover:text-blue-300 text-sm"
-          >
-            {t.back}
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  const content = getAgentTranslation(agent.kind, lang)
-  const solution = agent.solution
-  const isActive = agent.status === 'active'
-  const isPaused = agent.status === 'paused'
-  const isMaintenance = agent.status === 'maintenance'
-
-  const statusColors = {
-    active: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
-    paused: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
-    maintenance: 'bg-red-500/10 border-red-500/30 text-red-400',
-    pending_setup: 'bg-blue-500/10 border-blue-500/30 text-blue-400'
-  }
-
-  const statusLabels = {
-    active: t.active,
-    paused: t.paused,
-    maintenance: t.maintenance,
-    pending_setup: t.pendingSetup
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-7xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <button
-            onClick={() => router.push('/dashboard/agents')}
-            className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors mt-1"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-2xl font-bold text-white">{content.name}</h1>
-              <span className={`
-                inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border
-                ${statusColors[agent.status]}
-              `}>
-                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
-                {statusLabels[agent.status]}
-              </span>
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <Bot size={20} className="text-white" />
             </div>
-            <p className="text-sm text-gray-500">{content.description}</p>
-          </div>
+            {ui.title}
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">{ui.subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Tabs */}
+        <div className="flex bg-[#0a0a0a] rounded-xl p-1 border border-white/10">
           <button
-            onClick={refresh}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-all text-sm"
-          >
-            <RefreshCw size={14} />
-            {t.refresh}
-          </button>
-          
-          <button
-            onClick={handleToggleStatus}
-            disabled={isMaintenance}
+            onClick={() => setActiveTab('agents')}
             className={`
-              flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all
-              ${isActive 
-                ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20' 
-                : isPaused
-                  ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-                  : 'bg-gray-800 border border-gray-700 text-gray-600 cursor-not-allowed'
-              }
-            `}
-          >
-            {isActive ? <PauseCircle size={14} /> : <PlayCircle size={14} />}
-            {isActive ? t.pause : t.activate}
-          </button>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex bg-[#0a0a0a] rounded-xl p-1 border border-white/10 overflow-x-auto">
-        {(['overview', 'runs', 'events', 'config'] as Tab[]).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all
-              ${activeTab === tab 
+              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
+              ${activeTab === 'agents' 
                 ? 'bg-white text-black' 
                 : 'text-gray-400 hover:text-white'
               }
             `}
           >
-            {tab === 'overview' && <BarChart3 size={14} />}
-            {tab === 'runs' && <Activity size={14} />}
-            {tab === 'events' && <List size={14} />}
-            {tab === 'config' && <Settings size={14} />}
-            {t[tab]}
+            <Activity size={14} />
+            {ui.myAgents}
+            {agents.length > 0 && (
+              <span className={`
+                px-1.5 py-0.5 rounded text-[10px] font-bold
+                ${activeTab === 'agents' ? 'bg-black/10' : 'bg-white/10'}
+              `}>
+                {agents.length}
+              </span>
+            )}
           </button>
-        ))}
+          <button
+            onClick={() => setActiveTab('marketplace')}
+            className={`
+              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
+              ${activeTab === 'marketplace' 
+                ? 'bg-white text-black' 
+                : 'text-gray-400 hover:text-white'
+              }
+            `}
+          >
+            <Sparkles size={14} />
+            {ui.marketplace}
+          </button>
+        </div>
       </div>
 
-      {/* Overview Tab */}
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
-          {/* Time Filter */}
-          <div className="flex justify-end">
-            <div className="flex bg-[#0a0a0a] rounded-lg p-0.5 border border-white/10">
-              {(['24h', '7d', '30d', 'all'] as const).map(period => (
-                <button
-                  key={period}
-                  onClick={() => setTimeFilter(period)}
-                  className={`
-                    px-3 py-1.5 rounded-md text-xs font-medium transition-all
-                    ${timeFilter === period 
-                      ? 'bg-white text-black' 
-                      : 'text-gray-400 hover:text-white'
-                    }
-                  `}
-                >
-                  {t[`last${period.toUpperCase()}` as keyof typeof t] || t.allTime}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard
-              icon={Activity}
-              label={t.totalRuns}
-              value={stats.totalRuns}
-              color="blue"
-            />
-            <StatCard
-              icon={CheckCircle2}
-              label={t.successRate}
-              value={stats.successRate.toFixed(1)}
-              suffix="%"
-              color="green"
-            />
-            <StatCard
-              icon={DollarSign}
-              label={t.totalCost}
-              value={`$${stats.totalCost.toFixed(2)}`}
-              color="amber"
-            />
-            <StatCard
-              icon={Clock}
-              label={t.avgDuration}
-              value={(stats.avgDuration / 1000).toFixed(1)}
-              suffix="s"
-              color="blue"
-            />
-          </div>
-
-          {/* Agent Info */}
-          <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5">
-            <h3 className="text-sm font-bold text-white mb-4">Informações do Agente</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">ID</span>
-                  <button
-                    onClick={() => copyToClipboard(agent.id)}
-                    className="flex items-center gap-1 text-gray-300 hover:text-white font-mono text-xs"
-                  >
-                    {agent.id.slice(0, 8)}...
-                    <Copy size={10} />
-                  </button>
-                </div>
-                
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{t.tier}</span>
-                  <span className="text-gray-300">
-                    {solution?.tier === 'instant' ? t.instant : solution?.tier === 'template' ? t.template : t.custom}
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{t.createdAt}</span>
-                  <span className="text-gray-300">
-                    {format(new Date(agent.created_at), 'PP', { locale: dateLocale })}
-                  </span>
-                </div>
+      {/* My Agents Tab */}
+      {activeTab === 'agents' && (
+        <>
+          {agents.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-gray-900 border border-white/10 flex items-center justify-center mb-4">
+                <Bot size={32} className="text-gray-600" />
               </div>
-
-              <div className="space-y-3">
-                {agent.billing_started_at && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">{t.billingStarted}</span>
-                    <span className="text-gray-300">
-                      {format(new Date(agent.billing_started_at), 'PP', { locale: dateLocale })}
-                    </span>
-                  </div>
-                )}
-
-                {agent.n8n_workflow_id && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">{t.n8nWorkflow}</span>
-                    <span className="text-gray-300 font-mono text-xs">{agent.n8n_workflow_id}</span>
-                  </div>
-                )}
-
-                {agent.n8n_webhook_url && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">{t.webhookUrl}</span>
-                    <button
-                      onClick={() => copyToClipboard(agent.n8n_webhook_url!)}
-                      className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-xs"
-                    >
-                      Copiar
-                      <Copy size={10} />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Runs Tab */}
-      {activeTab === 'runs' && (
-        <div className="space-y-4">
-          {/* Time Filter */}
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-400">
-              {filteredRuns.length} {t.runs}
-            </span>
-            <div className="flex bg-[#0a0a0a] rounded-lg p-0.5 border border-white/10">
-              {(['24h', '7d', '30d', 'all'] as const).map(period => (
-                <button
-                  key={period}
-                  onClick={() => setTimeFilter(period)}
-                  className={`
-                    px-3 py-1.5 rounded-md text-xs font-medium transition-all
-                    ${timeFilter === period 
-                      ? 'bg-white text-black' 
-                      : 'text-gray-400 hover:text-white'
-                    }
-                  `}
-                >
-                  {t[`last${period.toUpperCase()}` as keyof typeof t] || t.allTime}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Runs List */}
-          <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden">
-            {filteredRuns.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <Activity size={32} className="text-gray-600 mb-4" />
-                <h3 className="text-sm font-bold text-white mb-1">{t.noRuns}</h3>
-                <p className="text-xs text-gray-500">{t.noRunsHint}</p>
-              </div>
-            ) : (
-              filteredRuns.map(run => (
-                <RunRow
-                  key={run.id}
-                  run={run}
-                  lang={lang}
-                  t={t}
-                  dateLocale={dateLocale}
-                  isExpanded={expandedRun === run.id}
-                  onToggle={() => setExpandedRun(expandedRun === run.id ? null : run.id)}
-                />
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Events Tab */}
-      {activeTab === 'events' && (
-        <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden">
-          {events.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <List size={32} className="text-gray-600 mb-4" />
-              <p className="text-sm text-gray-500">{t.noEvents}</p>
-            </div>
-          ) : (
-            events.map(event => (
-              <EventRow key={event.id} event={event} t={t} dateLocale={dateLocale} />
-            ))
-          )}
-        </div>
-      )}
-
-      {/* Config Tab */}
-      {activeTab === 'config' && (
-        <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-bold text-white">{t.config}</h3>
-            {!configEditing ? (
+              <h3 className="text-lg font-bold text-white mb-1">{ui.noAgents}</h3>
+              <p className="text-sm text-gray-500 mb-6">{ui.noAgentsHint}</p>
               <button
-                onClick={() => {
-                  setConfigValues(agent.cfg || {})
-                  setConfigEditing(true)
-                }}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                onClick={() => setActiveTab('marketplace')}
+                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors"
               >
-                <Settings size={12} />
-                Editar
+                {ui.explore}
+                <ArrowRight size={14} />
               </button>
-            ) : (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setConfigEditing(false)}
-                  className="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors"
-                >
-                  {t.cancel}
-                </button>
-                <button
-                  onClick={handleSaveConfig}
-                  disabled={saving}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition-colors disabled:opacity-50"
-                >
-                  {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                  {saving ? t.saving : t.save}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {solution?.config_schema?.fields && solution.config_schema.fields.length > 0 ? (
-            <div className="space-y-4">
-              {solution.config_schema.fields.map((field: ConfigField) => (
-                <div key={field.key}>
-                  <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase mb-2">
-                    {field.label}
-                    {field.required && <span className="text-red-400">*</span>}
-                  </label>
-                  
-                  {configEditing ? (
-                    field.type === 'textarea' ? (
-                      <textarea
-                        value={configValues[field.key] || ''}
-                        onChange={(e) => setConfigValues({ ...configValues, [field.key]: e.target.value })}
-                        placeholder={field.placeholder}
-                        className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none resize-none h-24 transition-colors"
-                      />
-                    ) : field.type === 'select' ? (
-                      <select
-                        value={configValues[field.key] || ''}
-                        onChange={(e) => setConfigValues({ ...configValues, [field.key]: e.target.value })}
-                        className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                      >
-                        <option value="">Selecionar...</option>
-                        {field.options?.map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type={field.type === 'number' ? 'number' : 'text'}
-                        value={configValues[field.key] || ''}
-                        onChange={(e) => setConfigValues({ 
-                          ...configValues, 
-                          [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value 
-                        })}
-                        placeholder={field.placeholder}
-                        className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                      />
-                    )
-                  ) : (
-                    <div className="bg-gray-900/50 rounded-xl p-3 text-sm text-gray-300">
-                      {agent.cfg?.[field.key] || <span className="text-gray-600">Não configurado</span>}
-                    </div>
-                  )}
-                </div>
-              ))}
             </div>
           ) : (
-            <div className="p-6 bg-gray-900/50 rounded-xl border border-white/5 text-center">
-              <Info size={24} className="mx-auto mb-2 text-gray-600" />
-              <p className="text-sm text-gray-500">Este agente não possui configurações personalizáveis.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {agents.map(agent => (
+                <AgentCard
+                  key={agent.id}
+                  agent={agent}
+                  lang={lang}
+                  ui={ui}
+                  onManage={() => router.push(`/dashboard/agents/${agent.id}`)}
+                />
+              ))}
             </div>
           )}
-        </div>
+        </>
+      )}
+
+      {/* Marketplace Tab */}
+      {activeTab === 'marketplace' && (
+        <>
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={ui.searchPlaceholder}
+                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-blue-500 outline-none transition-colors"
+              />
+            </div>
+
+            {/* Category Filter */}
+            <div className="flex bg-[#0a0a0a] rounded-xl p-1 border border-white/10 overflow-x-auto">
+              {['all', 'prospecting', 'conversation', 'support'].map(category => (
+                <button
+                  key={category}
+                  onClick={() => setCategoryFilter(category)}
+                  className={`
+                    px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all
+                    ${categoryFilter === category 
+                      ? 'bg-white text-black' 
+                      : 'text-gray-400 hover:text-white'
+                    }
+                  `}
+                >
+                  {ui[category as keyof typeof ui] || category}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Solutions Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredSolutions.map(solution => {
+              const isHired = agents.some(a => a.solution_slug === solution.slug)
+              return (
+                <MarketplaceCard
+                  key={solution.slug}
+                  solution={solution}
+                  lang={lang}
+                  ui={ui}
+                  isHired={isHired}
+                  isHiring={hiring === solution.slug}
+                  onHire={() => handleHire(solution)}
+                />
+              )
+            })}
+          </div>
+
+          {filteredSolutions.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <Search size={32} className="text-gray-600 mb-4" />
+              <p className="text-sm text-gray-500">Nenhuma solução encontrada</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

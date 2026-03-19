@@ -1,647 +1,415 @@
-// app/dashboard/agents/page.tsx
+// app/dashboard/agents/[id]/page.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { usePlan } from '@/lib/usePlan'
-import { FeatureLock } from '@/app/dashboard/components/FeatureLock'
 import { 
-  useAgentSolutions, 
-  useMyAgents, 
-  hireAgent, 
-  updateAgentConfig, 
-  toggleAgentStatus,
-  getAgentTranslation
+  useAgent,
+  createCampaign,
+  toggleCampaignStatus,
+  deleteCampaign,
+  calculateUsage,
+  t,
+  tFeatures
 } from '@/lib/agents'
-import type { Agent, AgentSolution, ConfigField } from '@/lib/agents/types'
-import { formatDistanceToNow } from 'date-fns'
+import type { AgentCampaign, Language, ConfigField } from '@/lib/agents/types'
+import { formatDistanceToNow, format } from 'date-fns'
 import { ptBR, enUS, es } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { 
-  Bot, Target, MessageSquare, Zap, Users, Rocket, Headphones,
-  PlayCircle, PauseCircle, Settings, Activity, ChevronRight,
-  AlertTriangle, CheckCircle2, Clock, DollarSign, TrendingUp,
-  X, Save, Loader2, Sparkles, ArrowRight, Shield, BarChart3,
-  Lock, Star, Filter, Search, LayoutGrid, List, ExternalLink,
-  HelpCircle, Info
+import {
+  ArrowLeft, Bot, Target, Plus, Loader2, PlayCircle, PauseCircle,
+  Settings, Trash2, Clock, Calendar, TrendingUp, Users, X,
+  CheckCircle2, AlertTriangle, ChevronRight, BarChart3, Zap,
+  Search, Filter, MoreVertical, Edit2, Copy, ExternalLink
 } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const UI_TRANSLATIONS = {
+const UI = {
   pt: {
-    pageTitle: 'Soluções de IA',
-    pageSubtitle: 'Automatize vendas e atendimento com agentes inteligentes',
-    myAgents: 'Meus Agentes',
-    marketplace: 'Marketplace',
-    all: 'Todos',
-    conversation: 'Conversação',
-    prospecting: 'Prospecção',
-    support: 'Suporte',
-    automation: 'Automação',
-    instant: 'Ativação Instantânea',
-    template: 'Setup Rápido',
-    custom: 'Personalizado',
-    active: 'Ativo',
-    paused: 'Pausado',
-    maintenance: 'Manutenção',
-    pendingSetup: 'Aguardando Setup',
+    back: 'Voltar',
+    campaigns: 'Campanhas',
+    newCampaign: 'Nova Campanha',
+    noCampaigns: 'Nenhuma campanha criada',
+    noCampaignsHint: 'Crie sua primeira campanha para começar a captar leads',
+    createFirst: 'Criar Campanha',
+    usage: 'Uso do Período',
+    leadsMonth: 'leads/mês',
+    used: 'usados',
+    remaining: 'restantes',
+    active: 'Ativa',
+    paused: 'Pausada',
+    draft: 'Rascunho',
+    completed: 'Concluída',
+    cancelled: 'Cancelada',
+    target: 'Meta',
+    captured: 'Capturados',
+    nextRun: 'Próxima execução',
     lastRun: 'Última execução',
-    neverRan: 'Nunca executou',
-    totalCost: 'Custo total',
-    successRate: 'Taxa de sucesso',
-    runs: 'execuções',
-    configure: 'Configurar',
-    viewDetails: 'Ver detalhes',
+    never: 'Nunca',
+    daily: 'Diário',
+    weekly: 'Semanal',
+    manual: 'Manual',
     pause: 'Pausar',
-    activate: 'Ativar',
-    hire: 'Contratar',
-    hireNow: 'Contratar agora',
-    setupRequired: 'Requer setup',
-    perMonth: '/mês',
-    setupFee: 'Taxa de setup',
-    features: 'Funcionalidades',
-    limits: 'Limites',
-    integrations: 'Integrações',
-    leadsPerMonth: 'leads/mês',
-    messagesPerDay: 'msgs/dia',
-    searchesPerDay: 'buscas/dia',
-    configTitle: 'Configurar Agente',
-    configSubtitle: 'Personalize o comportamento da IA',
-    save: 'Salvar',
-    saving: 'Salvando...',
-    cancel: 'Cancelar',
-    confirmHire: 'Confirmar contratação',
-    confirmHireMsg: 'Deseja ativar este agente? A cobrança será iniciada imediatamente.',
-    hired: 'Agente contratado com sucesso!',
-    configSaved: 'Configuração salva!',
-    statusChanged: 'Status alterado!',
-    error: 'Ocorreu um erro',
-    lockedTitle: 'Soluções de IA',
-    lockedDesc: 'Automatize tarefas com agentes de IA que trabalham 24/7 para você.',
-    noAgents: 'Você ainda não tem agentes ativos',
-    noAgentsHint: 'Explore o marketplace e contrate sua primeira solução de IA',
-    exploreMarketplace: 'Explorar Marketplace',
+    resume: 'Retomar',
+    delete: 'Excluir',
+    edit: 'Editar',
+    confirmDelete: 'Tem certeza que deseja excluir esta campanha?',
+    deleted: 'Campanha excluída',
+    statusChanged: 'Status alterado',
+    error: 'Erro',
     loading: 'Carregando...',
-    filterByCategory: 'Filtrar por categoria',
-    searchPlaceholder: 'Buscar soluções...',
-    featured: 'Destaque',
-    popular: 'Popular',
-    new: 'Novo',
-    whatsapp: 'WhatsApp',
-    email: 'Email',
-    linkedin: 'LinkedIn',
-    openai: 'OpenAI',
-    google_maps: 'Google Maps'
+    notFound: 'Agente não encontrado',
+    // Create modal
+    createTitle: 'Nova Campanha',
+    createSubtitle: 'Configure os parâmetros de busca',
+    campaignName: 'Nome da campanha',
+    campaignNamePlaceholder: 'Ex: Restaurantes em Santiago',
+    targetLeads: 'Meta de leads',
+    targetLeadsHint: 'Deixe vazio para usar todo o limite disponível',
+    schedule: 'Agendamento',
+    scheduleTime: 'Horário',
+    create: 'Criar Campanha',
+    creating: 'Criando...',
+    created: 'Campanha criada!',
+    cancel: 'Cancelar',
+    required: 'Campo obrigatório'
   },
   en: {
-    pageTitle: 'AI Solutions',
-    pageSubtitle: 'Automate sales and support with intelligent agents',
-    myAgents: 'My Agents',
-    marketplace: 'Marketplace',
-    all: 'All',
-    conversation: 'Conversation',
-    prospecting: 'Prospecting',
-    support: 'Support',
-    automation: 'Automation',
-    instant: 'Instant Activation',
-    template: 'Quick Setup',
-    custom: 'Custom',
+    back: 'Back',
+    campaigns: 'Campaigns',
+    newCampaign: 'New Campaign',
+    noCampaigns: 'No campaigns created',
+    noCampaignsHint: 'Create your first campaign to start capturing leads',
+    createFirst: 'Create Campaign',
+    usage: 'Period Usage',
+    leadsMonth: 'leads/mo',
+    used: 'used',
+    remaining: 'remaining',
     active: 'Active',
     paused: 'Paused',
-    maintenance: 'Maintenance',
-    pendingSetup: 'Pending Setup',
+    draft: 'Draft',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    target: 'Target',
+    captured: 'Captured',
+    nextRun: 'Next run',
     lastRun: 'Last run',
-    neverRan: 'Never ran',
-    totalCost: 'Total cost',
-    successRate: 'Success rate',
-    runs: 'runs',
-    configure: 'Configure',
-    viewDetails: 'View details',
+    never: 'Never',
+    daily: 'Daily',
+    weekly: 'Weekly',
+    manual: 'Manual',
     pause: 'Pause',
-    activate: 'Activate',
-    hire: 'Hire',
-    hireNow: 'Hire now',
-    setupRequired: 'Setup required',
-    perMonth: '/mo',
-    setupFee: 'Setup fee',
-    features: 'Features',
-    limits: 'Limits',
-    integrations: 'Integrations',
-    leadsPerMonth: 'leads/mo',
-    messagesPerDay: 'msgs/day',
-    searchesPerDay: 'searches/day',
-    configTitle: 'Configure Agent',
-    configSubtitle: 'Customize the AI behavior',
-    save: 'Save',
-    saving: 'Saving...',
-    cancel: 'Cancel',
-    confirmHire: 'Confirm hiring',
-    confirmHireMsg: 'Do you want to activate this agent? Billing will start immediately.',
-    hired: 'Agent hired successfully!',
-    configSaved: 'Configuration saved!',
-    statusChanged: 'Status changed!',
-    error: 'An error occurred',
-    lockedTitle: 'AI Solutions',
-    lockedDesc: 'Automate tasks with AI agents that work 24/7 for you.',
-    noAgents: 'You don\'t have any active agents yet',
-    noAgentsHint: 'Explore the marketplace and hire your first AI solution',
-    exploreMarketplace: 'Explore Marketplace',
+    resume: 'Resume',
+    delete: 'Delete',
+    edit: 'Edit',
+    confirmDelete: 'Are you sure you want to delete this campaign?',
+    deleted: 'Campaign deleted',
+    statusChanged: 'Status changed',
+    error: 'Error',
     loading: 'Loading...',
-    filterByCategory: 'Filter by category',
-    searchPlaceholder: 'Search solutions...',
-    featured: 'Featured',
-    popular: 'Popular',
-    new: 'New',
-    whatsapp: 'WhatsApp',
-    email: 'Email',
-    linkedin: 'LinkedIn',
-    openai: 'OpenAI',
-    google_maps: 'Google Maps'
+    notFound: 'Agent not found',
+    createTitle: 'New Campaign',
+    createSubtitle: 'Configure search parameters',
+    campaignName: 'Campaign name',
+    campaignNamePlaceholder: 'Ex: Restaurants in Santiago',
+    targetLeads: 'Lead target',
+    targetLeadsHint: 'Leave empty to use all available limit',
+    schedule: 'Schedule',
+    scheduleTime: 'Time',
+    create: 'Create Campaign',
+    creating: 'Creating...',
+    created: 'Campaign created!',
+    cancel: 'Cancel',
+    required: 'Required field'
   },
   es: {
-    pageTitle: 'Soluciones de IA',
-    pageSubtitle: 'Automatiza ventas y atención con agentes inteligentes',
-    myAgents: 'Mis Agentes',
-    marketplace: 'Marketplace',
-    all: 'Todos',
-    conversation: 'Conversación',
-    prospecting: 'Prospección',
-    support: 'Soporte',
-    automation: 'Automatización',
-    instant: 'Activación Instantánea',
-    template: 'Setup Rápido',
-    custom: 'Personalizado',
-    active: 'Activo',
-    paused: 'Pausado',
-    maintenance: 'Mantenimiento',
-    pendingSetup: 'Esperando Setup',
+    back: 'Volver',
+    campaigns: 'Campañas',
+    newCampaign: 'Nueva Campaña',
+    noCampaigns: 'Sin campañas creadas',
+    noCampaignsHint: 'Crea tu primera campaña para comenzar a captar leads',
+    createFirst: 'Crear Campaña',
+    usage: 'Uso del Período',
+    leadsMonth: 'leads/mes',
+    used: 'usados',
+    remaining: 'restantes',
+    active: 'Activa',
+    paused: 'Pausada',
+    draft: 'Borrador',
+    completed: 'Completada',
+    cancelled: 'Cancelada',
+    target: 'Meta',
+    captured: 'Capturados',
+    nextRun: 'Próxima ejecución',
     lastRun: 'Última ejecución',
-    neverRan: 'Nunca ejecutó',
-    totalCost: 'Costo total',
-    successRate: 'Tasa de éxito',
-    runs: 'ejecuciones',
-    configure: 'Configurar',
-    viewDetails: 'Ver detalles',
+    never: 'Nunca',
+    daily: 'Diario',
+    weekly: 'Semanal',
+    manual: 'Manual',
     pause: 'Pausar',
-    activate: 'Activar',
-    hire: 'Contratar',
-    hireNow: 'Contratar ahora',
-    setupRequired: 'Requiere setup',
-    perMonth: '/mes',
-    setupFee: 'Tarifa de setup',
-    features: 'Funcionalidades',
-    limits: 'Límites',
-    integrations: 'Integraciones',
-    leadsPerMonth: 'leads/mes',
-    messagesPerDay: 'msgs/día',
-    searchesPerDay: 'búsquedas/día',
-    configTitle: 'Configurar Agente',
-    configSubtitle: 'Personaliza el comportamiento de la IA',
-    save: 'Guardar',
-    saving: 'Guardando...',
-    cancel: 'Cancelar',
-    confirmHire: 'Confirmar contratación',
-    confirmHireMsg: '¿Deseas activar este agente? La facturación comenzará inmediatamente.',
-    hired: '¡Agente contratado con éxito!',
-    configSaved: '¡Configuración guardada!',
-    statusChanged: '¡Estado cambiado!',
-    error: 'Ocurrió un error',
-    lockedTitle: 'Soluciones de IA',
-    lockedDesc: 'Automatiza tareas con agentes de IA que trabajan 24/7 para ti.',
-    noAgents: 'Aún no tienes agentes activos',
-    noAgentsHint: 'Explora el marketplace y contrata tu primera solución de IA',
-    exploreMarketplace: 'Explorar Marketplace',
+    resume: 'Reanudar',
+    delete: 'Eliminar',
+    edit: 'Editar',
+    confirmDelete: '¿Estás seguro de que deseas eliminar esta campaña?',
+    deleted: 'Campaña eliminada',
+    statusChanged: 'Estado cambiado',
+    error: 'Error',
     loading: 'Cargando...',
-    filterByCategory: 'Filtrar por categoría',
-    searchPlaceholder: 'Buscar soluciones...',
-    featured: 'Destacado',
-    popular: 'Popular',
-    new: 'Nuevo',
-    whatsapp: 'WhatsApp',
-    email: 'Email',
-    linkedin: 'LinkedIn',
-    openai: 'OpenAI',
-    google_maps: 'Google Maps'
+    notFound: 'Agente no encontrado',
+    createTitle: 'Nueva Campaña',
+    createSubtitle: 'Configura los parámetros de búsqueda',
+    campaignName: 'Nombre de la campaña',
+    campaignNamePlaceholder: 'Ej: Restaurantes en Santiago',
+    targetLeads: 'Meta de leads',
+    targetLeadsHint: 'Deja vacío para usar todo el límite disponible',
+    schedule: 'Programación',
+    scheduleTime: 'Horario',
+    create: 'Crear Campaña',
+    creating: 'Creando...',
+    created: '¡Campaña creada!',
+    cancel: 'Cancelar',
+    required: 'Campo requerido'
   }
-}
-
-type Language = keyof typeof UI_TRANSLATIONS
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ÍCONES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const CATEGORY_ICONS: Record<string, any> = {
-  conversation: MessageSquare,
-  prospecting: Target,
-  support: Headphones,
-  automation: Zap
-}
-
-const SOLUTION_ICONS: Record<string, any> = {
-  sdr: MessageSquare,
-  captacao: Target,
-  followup: Clock,
-  bdr: Rocket,
-  atendimento: Headphones,
-  onboarding: Users
-}
-
-const INTEGRATION_ICONS: Record<string, any> = {
-  whatsapp: MessageSquare,
-  email: MessageSquare,
-  linkedin: Users,
-  openai: Sparkles,
-  google_maps: Target
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Card do Agente Ativo
-function ActiveAgentCard({ 
-  agent, 
-  solution,
+// Card de Campanha
+function CampaignCard({
+  campaign,
   lang,
-  t,
-  onConfigure,
-  onToggleStatus,
-  onViewDetails
+  ui,
+  dateLocale,
+  onToggle,
+  onDelete,
+  onClick
 }: {
-  agent: Agent
-  solution?: AgentSolution
+  campaign: AgentCampaign
   lang: Language
-  t: typeof UI_TRANSLATIONS.pt
-  onConfigure: () => void
-  onToggleStatus: () => void
-  onViewDetails: () => void
+  ui: typeof UI.es
+  dateLocale: any
+  onToggle: () => void
+  onDelete: () => void
+  onClick: () => void
 }) {
-  const content = getAgentTranslation(agent.kind, lang)
-  const Icon = SOLUTION_ICONS[agent.kind] || Bot
-  const dateLocale = { pt: ptBR, en: enUS, es }[lang]
+  const isActive = campaign.status === 'active'
+  const isPaused = campaign.status === 'paused'
+  const isCompleted = campaign.status === 'completed'
   
-  const metrics = agent.metrics || {}
-  const isActive = agent.status === 'active'
-  const isPaused = agent.status === 'paused'
-  const isMaintenance = agent.status === 'maintenance'
-  const isPending = agent.status === 'pending_setup'
-  
-  const statusColors = {
-    active: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
-    paused: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
-    maintenance: 'bg-red-500/10 border-red-500/30 text-red-400',
-    pending_setup: 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+  const captured = campaign.metrics?.leads_captured || 0
+  const target = campaign.target_leads
+  const progress = target ? (captured / target) * 100 : 0
+
+  const statusConfig = {
+    active: { label: ui.active, color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+    paused: { label: ui.paused, color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    draft: { label: ui.draft, color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+    completed: { label: ui.completed, color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    cancelled: { label: ui.cancelled, color: 'bg-red-500/10 text-red-400 border-red-500/20' }
   }
 
-  const statusLabels = {
-    active: t.active,
-    paused: t.paused,
-    maintenance: t.maintenance,
-    pending_setup: t.pendingSetup
+  const scheduleLabels: Record<string, string> = {
+    daily: ui.daily,
+    weekly: ui.weekly,
+    manual: ui.manual
   }
+
+  const status = statusConfig[campaign.status] || statusConfig.draft
 
   return (
-    <div className={`
-      relative bg-[#0a0a0a] border rounded-2xl p-5 transition-all duration-300
-      hover:border-white/20 hover:shadow-xl hover:shadow-white/5
-      ${isMaintenance ? 'border-red-500/30' : isPaused ? 'border-amber-500/20' : 'border-white/10'}
-    `}>
-      {/* Status Badge */}
-      <div className="absolute top-4 right-4">
-        <span className={`
-          inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border
-          ${statusColors[agent.status]}
-        `}>
-          {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
-          {isPaused && <PauseCircle size={10} />}
-          {isMaintenance && <AlertTriangle size={10} />}
-          {isPending && <Clock size={10} />}
-          {statusLabels[agent.status]}
-        </span>
-      </div>
-
+    <div 
+      className="bg-[#0a0a0a] border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all cursor-pointer group"
+      onClick={onClick}
+    >
       {/* Header */}
-      <div className="flex items-start gap-4 mb-5">
-        <div className={`
-          w-12 h-12 rounded-xl flex items-center justify-center shrink-0
-          ${isActive ? 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 text-blue-400' : 'bg-gray-800 text-gray-500'}
-        `}>
-          <Icon size={24} />
-        </div>
-        <div className="flex-1 min-w-0 pr-20">
-          <h3 className="font-bold text-white text-lg truncate">{content.name}</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {solution?.tier === 'instant' ? t.instant : solution?.tier === 'template' ? t.template : t.custom}
-          </p>
-        </div>
-      </div>
-
-      {/* Métricas */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
-        <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-          <div className="flex items-center gap-1.5 text-[10px] text-gray-500 uppercase font-bold mb-1">
-            <Activity size={10} />
-            {t.lastRun}
-          </div>
-          <div className="flex items-center gap-2">
-            {metrics.last_run_status === 'error' ? (
-              <AlertTriangle size={12} className="text-red-400" />
-            ) : (
-              <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-gray-600'}`} />
-            )}
-            <span className="text-sm text-gray-300">
-              {metrics.last_run_at 
-                ? formatDistanceToNow(new Date(metrics.last_run_at), { addSuffix: true, locale: dateLocale })
-                : t.neverRan
-              }
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+            {campaign.name}
+          </h4>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${status.color}`}>
+              {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+              {status.label}
+            </span>
+            <span className="text-[10px] text-gray-500 flex items-center gap-1">
+              <Clock size={9} />
+              {scheduleLabels[campaign.schedule_frequency] || campaign.schedule_frequency}
             </span>
           </div>
         </div>
         
-        <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-          <div className="flex items-center gap-1.5 text-[10px] text-gray-500 uppercase font-bold mb-1">
-            <DollarSign size={10} />
-            {t.totalCost}
-          </div>
-          <span className="text-sm font-mono text-emerald-400">
-            ${(metrics.total_cost || 0).toFixed(2)}
-          </span>
+        {/* Actions */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+          {(isActive || isPaused) && (
+            <button
+              onClick={onToggle}
+              className={`p-1.5 rounded-lg transition-colors ${
+                isActive 
+                  ? 'hover:bg-amber-500/10 text-amber-400' 
+                  : 'hover:bg-emerald-500/10 text-emerald-400'
+              }`}
+              title={isActive ? ui.pause : ui.resume}
+            >
+              {isActive ? <PauseCircle size={14} /> : <PlayCircle size={14} />}
+            </button>
+          )}
+          <button
+            onClick={onDelete}
+            className="p-1.5 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors"
+            title={ui.delete}
+          >
+            <Trash2 size={14} />
+          </button>
         </div>
       </div>
+
+      {/* Progress */}
+      {target && (
+        <div className="mb-3">
+          <div className="flex items-center justify-between text-[10px] mb-1">
+            <span className="text-gray-500">{ui.target}: {target} leads</span>
+            <span className="text-gray-300 font-mono">{captured} {ui.captured}</span>
+          </div>
+          <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+            <div 
+              className={`h-full rounded-full transition-all ${
+                isCompleted ? 'bg-blue-500' : 'bg-gradient-to-r from-blue-500 to-purple-500'
+              }`}
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Config Tags */}
-      {agent.cfg && Object.keys(agent.cfg).length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-5">
-          {Object.entries(agent.cfg).slice(0, 3).map(([key, value]) => (
-            <span 
-              key={key}
-              className="text-[9px] bg-gray-800 border border-gray-700 text-gray-400 px-2 py-0.5 rounded-full truncate max-w-[120px]"
-            >
-              {String(value)}
-            </span>
-          ))}
+      {campaign.config && Object.keys(campaign.config).length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {Object.entries(campaign.config).slice(0, 3).map(([key, value]) => {
+            const displayValue = Array.isArray(value) ? value.join(', ') : String(value)
+            return (
+              <span 
+                key={key}
+                className="text-[9px] bg-gray-800 border border-gray-700 text-gray-400 px-2 py-0.5 rounded-full truncate max-w-[150px]"
+                title={`${key}: ${displayValue}`}
+              >
+                {displayValue}
+              </span>
+            )
+          })}
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex gap-2 pt-4 border-t border-white/5">
-        <button
-          onClick={onConfigure}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white text-black hover:bg-gray-200 rounded-xl text-sm font-bold transition-colors"
-        >
-          <Settings size={14} />
-          {t.configure}
-        </button>
-        
-        <button
-          onClick={onToggleStatus}
-          disabled={isMaintenance || isPending}
-          className={`
-            w-11 flex items-center justify-center rounded-xl border transition-all
-            ${isActive 
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20' 
-              : isPaused
-                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
-                : 'bg-gray-800 border-gray-700 text-gray-600 cursor-not-allowed'
-            }
-          `}
-          title={isActive ? t.pause : t.activate}
-        >
-          {isActive ? <PauseCircle size={16} /> : <PlayCircle size={16} />}
-        </button>
-
-        <button
-          onClick={onViewDetails}
-          className="w-11 flex items-center justify-center rounded-xl border bg-gray-900 border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-all"
-          title={t.viewDetails}
-        >
-          <BarChart3 size={16} />
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// Card do Marketplace
-function MarketplaceCard({
-  solution,
-  lang,
-  t,
-  isHired,
-  isHiring,
-  onHire
-}: {
-  solution: AgentSolution
-  lang: Language
-  t: typeof UI_TRANSLATIONS.pt
-  isHired: boolean
-  isHiring: boolean
-  onHire: () => void
-}) {
-  const content = getAgentTranslation(solution.slug, lang)
-  const Icon = SOLUTION_ICONS[solution.slug] || Bot
-  const CategoryIcon = CATEGORY_ICONS[solution.category] || Zap
-  
-  const isInstant = solution.tier === 'instant'
-  const hasSetupFee = (solution.price_setup || 0) > 0
-
-  return (
-    <div className={`
-      relative bg-[#0a0a0a] border border-white/10 rounded-2xl p-5 transition-all duration-300
-      hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/5
-      ${isHired ? 'opacity-50 pointer-events-none' : ''}
-      ${solution.is_featured ? 'ring-1 ring-blue-500/30' : ''}
-    `}>
-      {/* Featured Badge */}
-      {solution.is_featured && !isHired && (
-        <div className="absolute -top-2 -right-2">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[9px] font-bold uppercase rounded-full shadow-lg">
-            <Star size={8} />
-            {t.featured}
-          </span>
-        </div>
-      )}
-
-      {/* Hired Badge */}
-      {isHired && (
-        <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center z-10">
-          <span className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-full text-sm font-bold">
-            <CheckCircle2 size={14} />
-            Contratado
-          </span>
-        </div>
-      )}
-
-      {/* Tier Badge */}
-      <div className="flex items-center justify-between mb-4">
-        <span className={`
-          inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide
-          ${isInstant 
-            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+      {/* Footer */}
+      <div className="flex items-center justify-between text-[10px] text-gray-500 pt-2 border-t border-white/5">
+        <span className="flex items-center gap-1">
+          <Calendar size={9} />
+          {ui.nextRun}: {campaign.next_run_at 
+            ? formatDistanceToNow(new Date(campaign.next_run_at), { addSuffix: true, locale: dateLocale })
+            : ui.never
           }
-        `}>
-          {isInstant ? <Zap size={9} /> : <Clock size={9} />}
-          {isInstant ? t.instant : t.setupRequired}
         </span>
-        
-        <span className="flex items-center gap-1 text-[10px] text-gray-500">
-          <CategoryIcon size={10} />
-          {t[solution.category as keyof typeof t] || solution.category}
-        </span>
+        <ChevronRight size={12} className="text-gray-600 group-hover:text-blue-400 transition-colors" />
       </div>
-
-      {/* Header */}
-      <div className="flex items-start gap-4 mb-4">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 border border-white/10 flex items-center justify-center text-gray-400 shrink-0">
-          <Icon size={24} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-white text-lg">{content.name}</h3>
-          <p className="text-xs text-gray-500 mt-1 line-clamp-2">{content.description}</p>
-        </div>
-      </div>
-
-      {/* Features */}
-      <div className="space-y-1.5 mb-4">
-        {content.features.slice(0, 3).map((feature, i) => (
-          <div key={i} className="flex items-center gap-2 text-xs text-gray-400">
-            <div className="w-1 h-1 rounded-full bg-blue-500" />
-            {feature}
-          </div>
-        ))}
-      </div>
-
-      {/* Integrations */}
-      {solution.required_integrations && solution.required_integrations.length > 0 && (
-        <div className="flex items-center gap-2 mb-4 pb-4 border-b border-white/5">
-          <span className="text-[9px] text-gray-600 uppercase font-bold">{t.integrations}:</span>
-          <div className="flex gap-1">
-            {solution.required_integrations.map(integration => {
-              const IntIcon = INTEGRATION_ICONS[integration] || Zap
-              return (
-                <span 
-                  key={integration}
-                  className="w-5 h-5 rounded bg-gray-800 flex items-center justify-center text-gray-500"
-                  title={t[integration as keyof typeof t] || integration}
-                >
-                  <IntIcon size={10} />
-                </span>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Pricing */}
-      <div className="flex items-end justify-between mb-4">
-        <div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-white">${solution.price_monthly || 0}</span>
-            <span className="text-xs text-gray-500">{t.perMonth}</span>
-          </div>
-          {hasSetupFee && (
-            <span className="text-[10px] text-gray-500">
-              + ${solution.price_setup} {t.setupFee}
-            </span>
-          )}
-        </div>
-        
-        {solution.limits && (
-          <div className="text-right">
-            {solution.limits.leads_per_month && (
-              <div className="text-[10px] text-gray-500">
-                {solution.limits.leads_per_month} {t.leadsPerMonth}
-              </div>
-            )}
-            {solution.limits.messages_per_day && (
-              <div className="text-[10px] text-gray-500">
-                {solution.limits.messages_per_day} {t.messagesPerDay}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* CTA */}
-      <button
-        onClick={onHire}
-        disabled={isHired || isHiring}
-        className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isHiring ? (
-          <>
-            <Loader2 size={14} className="animate-spin" />
-            Contratando...
-          </>
-        ) : (
-          <>
-            {isInstant ? t.hireNow : t.hire}
-            <ArrowRight size={14} />
-          </>
-        )}
-      </button>
     </div>
   )
 }
 
-// Modal de Configuração
-function ConfigModal({
+// Modal de Criar Campanha
+function CreateCampaignModal({
   isOpen,
-  agent,
-  solution,
+  agentId,
+  orgId,
+  userId,
+  configSchema,
   lang,
-  t,
+  ui,
   onClose,
-  onSave
+  onCreated
 }: {
   isOpen: boolean
-  agent: Agent | null
-  solution?: AgentSolution
+  agentId: string
+  orgId: string
+  userId: string
+  configSchema: { fields: ConfigField[] }
   lang: Language
-  t: typeof UI_TRANSLATIONS.pt
+  ui: typeof UI.es
   onClose: () => void
-  onSave: (config: Record<string, any>) => Promise<void>
+  onCreated: () => void
 }) {
+  const [name, setName] = useState('')
+  const [targetLeads, setTargetLeads] = useState<number | ''>('')
+  const [scheduleFrequency, setScheduleFrequency] = useState('daily')
+  const [scheduleTime, setScheduleTime] = useState('08:00')
   const [config, setConfig] = useState<Record<string, any>>({})
-  const [saving, setSaving] = useState(false)
-  const content = agent ? getAgentTranslation(agent.kind, lang) : null
+  const [creating, setCreating] = useState(false)
+  const [errors, setErrors] = useState<Record<string, boolean>>({})
 
-  useEffect(() => {
-    if (agent) {
-      setConfig(agent.cfg || {})
+  if (!isOpen) return null
+
+  const fields = configSchema?.fields || []
+
+  const handleCreate = async () => {
+    // Validar
+    const newErrors: Record<string, boolean> = {}
+    if (!name.trim()) newErrors.name = true
+    fields.forEach(field => {
+      if (field.required && !config[field.key]) {
+        newErrors[field.key] = true
+      }
+    })
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
     }
-  }, [agent])
 
-  if (!isOpen || !agent) return null
+    setCreating(true)
 
-  const configSchema = solution?.config_schema?.fields || []
+    const { campaign, error } = await createCampaign(agentId, orgId, userId, {
+      name: name.trim(),
+      config,
+      target_leads: targetLeads || undefined,
+      schedule_frequency: scheduleFrequency,
+      schedule_time: scheduleTime
+    })
 
-  const handleSave = async () => {
-    setSaving(true)
-    await onSave(config)
-    setSaving(false)
+    setCreating(false)
+
+    if (error) {
+      toast.error(`${ui.error}: ${error}`)
+      return
+    }
+
+    toast.success(ui.created)
+    onCreated()
+    onClose()
+  }
+
+  const updateConfig = (key: string, value: any) => {
+    setConfig({ ...config, [key]: value })
+    if (errors[key]) {
+      setErrors({ ...errors, [key]: false })
+    }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div 
-        className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-white/10">
           <div>
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Settings size={18} className="text-blue-400" />
-              {t.configTitle}
+              <Plus size={18} className="text-blue-400" />
+              {ui.createTitle}
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">{content?.name}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{ui.createSubtitle}</p>
           </div>
           <button 
             onClick={onClose}
@@ -653,69 +421,166 @@ function ConfigModal({
 
         {/* Content */}
         <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
-          {configSchema.length === 0 ? (
-            <div className="p-6 bg-gray-900/50 rounded-xl border border-white/5 text-center">
-              <Info size={24} className="mx-auto mb-2 text-gray-600" />
-              <p className="text-sm text-gray-500">Este agente não possui configurações personalizáveis.</p>
-            </div>
-          ) : (
-            configSchema.map((field: ConfigField) => (
-              <div key={field.key}>
-                <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase mb-2">
-                  {field.label}
-                  {field.required && <span className="text-red-400">*</span>}
-                </label>
-                
-                {field.type === 'textarea' ? (
-                  <textarea
-                    value={config[field.key] || ''}
-                    onChange={(e) => setConfig({ ...config, [field.key]: e.target.value })}
-                    placeholder={field.placeholder}
-                    className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none resize-none h-24 transition-colors"
-                  />
-                ) : field.type === 'select' ? (
-                  <select
-                    value={config[field.key] || ''}
-                    onChange={(e) => setConfig({ ...config, [field.key]: e.target.value })}
-                    className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                  >
-                    <option value="">Selecionar...</option>
-                    {field.options?.map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                ) : field.type === 'number' ? (
-                  <input
-                    type="number"
-                    value={config[field.key] || ''}
-                    onChange={(e) => setConfig({ ...config, [field.key]: Number(e.target.value) })}
-                    placeholder={field.placeholder}
-                    min={field.min}
-                    max={field.max}
-                    className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                  />
-                ) : field.type === 'boolean' ? (
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={config[field.key] || false}
-                      onChange={(e) => setConfig({ ...config, [field.key]: e.target.checked })}
-                      className="w-5 h-5 rounded bg-black border-white/10 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
-                    />
-                    <span className="text-sm text-gray-400">Sim</span>
-                  </label>
-                ) : (
+          {/* Nome */}
+          <div>
+            <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase mb-2">
+              {ui.campaignName}
+              <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value)
+                if (errors.name) setErrors({ ...errors, name: false })
+              }}
+              placeholder={ui.campaignNamePlaceholder}
+              className={`w-full bg-black border rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors ${
+                errors.name ? 'border-red-500' : 'border-white/10'
+              }`}
+            />
+          </div>
+
+          {/* Campos dinâmicos do config_schema */}
+          {fields.map(field => (
+            <div key={field.key}>
+              <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase mb-2">
+                {t(field.label, lang)}
+                {field.required && <span className="text-red-400">*</span>}
+              </label>
+              
+              {field.type === 'text' && (
+                <input
+                  type="text"
+                  value={config[field.key] || ''}
+                  onChange={(e) => updateConfig(field.key, e.target.value)}
+                  placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+                  className={`w-full bg-black border rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors ${
+                    errors[field.key] ? 'border-red-500' : 'border-white/10'
+                  }`}
+                />
+              )}
+
+              {field.type === 'tags' && (
+                <div>
                   <input
                     type="text"
-                    value={config[field.key] || ''}
-                    onChange={(e) => setConfig({ ...config, [field.key]: e.target.value })}
-                    placeholder={field.placeholder}
-                    className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+                    placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+                    className={`w-full bg-black border rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors ${
+                      errors[field.key] ? 'border-red-500' : 'border-white/10'
+                    }`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        const input = e.target as HTMLInputElement
+                        const value = input.value.trim()
+                        if (value) {
+                          const current = config[field.key] || []
+                          updateConfig(field.key, [...current, value])
+                          input.value = ''
+                        }
+                      }
+                    }}
                   />
-                )}
-              </div>
-            ))
-          )}
+                  {config[field.key]?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {config[field.key].map((tag: string, i: number) => (
+                        <span 
+                          key={i}
+                          className="inline-flex items-center gap-1 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded-lg"
+                        >
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newTags = config[field.key].filter((_: any, idx: number) => idx !== i)
+                              updateConfig(field.key, newTags)
+                            }}
+                            className="hover:text-red-400"
+                          >
+                            <X size={10} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {field.type === 'select' && (
+                <select
+                  value={config[field.key] || ''}
+                  onChange={(e) => updateConfig(field.key, e.target.value)}
+                  className={`w-full bg-black border rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors ${
+                    errors[field.key] ? 'border-red-500' : 'border-white/10'
+                  }`}
+                >
+                  {field.options?.map(opt => (
+                    <option key={opt.value} value={opt.value}>
+                      {t(opt.label, lang)}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {field.type === 'boolean' && (
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config[field.key] ?? field.default ?? false}
+                    onChange={(e) => updateConfig(field.key, e.target.checked)}
+                    className="w-5 h-5 rounded bg-black border-white/10 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                  />
+                  <span className="text-sm text-gray-400">Sim</span>
+                </label>
+              )}
+            </div>
+          ))}
+
+          {/* Meta de leads */}
+          <div>
+            <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase mb-2">
+              {ui.targetLeads}
+            </label>
+            <input
+              type="number"
+              value={targetLeads}
+              onChange={(e) => setTargetLeads(e.target.value ? Number(e.target.value) : '')}
+              placeholder="Ex: 100"
+              min={1}
+              className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+            />
+            <p className="text-[10px] text-gray-500 mt-1">{ui.targetLeadsHint}</p>
+          </div>
+
+          {/* Agendamento */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">
+                {ui.schedule}
+              </label>
+              <select
+                value={scheduleFrequency}
+                onChange={(e) => setScheduleFrequency(e.target.value)}
+                className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+              >
+                <option value="daily">{ui.daily}</option>
+                <option value="weekly">{ui.weekly}</option>
+                <option value="manual">{ui.manual}</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">
+                {ui.scheduleTime}
+              </label>
+              <input
+                type="time"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
@@ -724,15 +589,24 @@ function ConfigModal({
             onClick={onClose}
             className="px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-white transition-colors"
           >
-            {t.cancel}
+            {ui.cancel}
           </button>
           <button
-            onClick={handleSave}
-            disabled={saving}
+            onClick={handleCreate}
+            disabled={creating}
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
           >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            {saving ? t.saving : t.save}
+            {creating ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                {ui.creating}
+              </>
+            ) : (
+              <>
+                <Plus size={14} />
+                {ui.create}
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -744,308 +618,201 @@ function ConfigModal({
 // PÁGINA PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export default function AgentsMarketplacePage() {
+export default function AgentDetailPage() {
+  const params = useParams()
   const router = useRouter()
-  const { user, org, loading: authLoading } = useAuth()
-  const { canUseAiAgents } = usePlan()
-  
-  // Dados - só busca quando org estiver carregada
-  const { solutions, loading: loadingSolutions, error: solutionsError } = useAgentSolutions()
-  const { agents, loading: loadingAgents, refresh: refreshAgents, error: agentsError } = useMyAgents(org?.id)
-  
-  // Debug logs
-  if (process.env.NODE_ENV === 'development') {
-    console.log('AgentsPage Debug:', { 
-      authLoading, 
-      orgId: org?.id, 
-      canUseAiAgents,
-      loadingSolutions,
-      loadingAgents,
-      solutionsError,
-      agentsError,
-      solutionsCount: solutions.length,
-      agentsCount: agents.length
-    })
-  }
-  
-  // UI State
-  const [activeTab, setActiveTab] = useState<'my-agents' | 'marketplace'>('marketplace')
-  const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [configAgent, setConfigAgent] = useState<Agent | null>(null)
-  const [hiring, setHiring] = useState<string | null>(null) // slug do agent sendo contratado
+  const { user, org } = useAuth()
+  const agentId = params.id as string
 
-  // Localização
-  const lang = ((user as any)?.language as Language) || 'pt'
-  const t = UI_TRANSLATIONS[lang]
+  const { agent, campaigns, loading, error, refresh } = useAgent(agentId)
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
-  // Filtrar soluções do marketplace
-  const filteredSolutions = solutions.filter(s => {
-    // Filtro de categoria
-    if (categoryFilter !== 'all' && s.category !== categoryFilter) return false
-    
-    // Filtro de busca
-    if (searchQuery) {
-      const content = getAgentTranslation(s.slug, lang)
-      const query = searchQuery.toLowerCase()
-      if (!content.name.toLowerCase().includes(query) && 
-          !content.description.toLowerCase().includes(query)) {
-        return false
-      }
-    }
-    
-    return true
-  })
+  const lang = ((user as any)?.language as Language) || 'es'
+  const ui = UI[lang]
+  const dateLocale = { pt: ptBR, en: enUS, es }[lang]
 
   // Handlers
-  const handleHire = async (solution: AgentSolution) => {
-    if (!org?.id) {
-      toast.error('Organização não encontrada')
-      return
-    }
-    
-    const content = getAgentTranslation(solution.slug, lang)
-    const confirmed = window.confirm(`${t.confirmHireMsg}\n\n${content.name} - $${solution.price_monthly || 0}${t.perMonth}`)
-    
-    if (!confirmed) return
-    
-    setHiring(solution.slug)
-    
-    try {
-      const { agent, error } = await hireAgent(org.id, solution.slug)
-      
-      if (error) {
-        console.error('Hire error:', error)
-        toast.error(`${t.error}: ${error}`)
-        return
-      }
-      
-      toast.success(t.hired)
-      await refreshAgents()
-      setActiveTab('my-agents')
-    } catch (err: any) {
-      console.error('Hire exception:', err)
-      toast.error(`${t.error}: ${err.message}`)
-    } finally {
-      setHiring(null)
-    }
-  }
-
-  const handleSaveConfig = async (config: Record<string, any>) => {
-    if (!configAgent || !org?.id) return
-    
-    const { success, error } = await updateAgentConfig(configAgent.id, org.id, config)
-    
+  const handleToggleCampaign = async (campaign: AgentCampaign) => {
+    const { newStatus, error } = await toggleCampaignStatus(campaign.id, campaign.status)
     if (error) {
-      toast.error(t.error)
+      toast.error(`${ui.error}: ${error}`)
       return
     }
-    
-    toast.success(t.configSaved)
-    refreshAgents()
-    setConfigAgent(null)
+    toast.success(ui.statusChanged)
+    refresh()
   }
 
-  const handleToggleStatus = async (agent: Agent) => {
-    if (!org?.id) return
+  const handleDeleteCampaign = async (campaign: AgentCampaign) => {
+    if (!confirm(ui.confirmDelete)) return
     
-    const { newStatus, error } = await toggleAgentStatus(agent.id, org.id, agent.status)
-    
+    const { success, error } = await deleteCampaign(campaign.id)
     if (error) {
-      toast.error(error)
+      toast.error(`${ui.error}: ${error}`)
       return
     }
-    
-    toast.success(t.statusChanged)
-    refreshAgents()
+    toast.success(ui.deleted)
+    refresh()
   }
 
-  // ─── VERIFICAR PERMISSÃO ───
-  // Temporariamente desabilitado para teste - remover depois
-  // if (!canUseAiAgents) {
-  //   return (...)
-  // }
-
-  const loading = authLoading || loadingSolutions || loadingAgents
-
+  // Loading
   if (loading) {
     return (
       <div className="min-h-[calc(100vh-100px)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-          <p className="text-gray-500 text-sm">{t.loading}</p>
+          <p className="text-gray-500 text-sm">{ui.loading}</p>
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <Bot size={20} className="text-white" />
-            </div>
-            {t.pageTitle}
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">{t.pageSubtitle}</p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex bg-[#0a0a0a] rounded-xl p-1 border border-white/10">
+  // Not found
+  if (!agent) {
+    return (
+      <div className="min-h-[calc(100vh-100px)] flex items-center justify-center">
+        <div className="text-center">
+          <Bot size={48} className="mx-auto text-gray-600 mb-4" />
+          <p className="text-gray-400">{ui.notFound}</p>
           <button
-            onClick={() => setActiveTab('my-agents')}
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
-              ${activeTab === 'my-agents' 
-                ? 'bg-white text-black' 
-                : 'text-gray-400 hover:text-white'
-              }
-            `}
+            onClick={() => router.push('/dashboard/agents')}
+            className="mt-4 text-blue-400 hover:text-blue-300 text-sm"
           >
-            <Activity size={14} />
-            {t.myAgents}
-            {agents.length > 0 && (
-              <span className={`
-                px-1.5 py-0.5 rounded text-[10px] font-bold
-                ${activeTab === 'my-agents' ? 'bg-black/10' : 'bg-white/10'}
-              `}>
-                {agents.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('marketplace')}
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
-              ${activeTab === 'marketplace' 
-                ? 'bg-white text-black' 
-                : 'text-gray-400 hover:text-white'
-              }
-            `}
-          >
-            <Sparkles size={14} />
-            {t.marketplace}
+            {ui.back}
           </button>
         </div>
       </div>
+    )
+  }
 
-      {/* My Agents Tab */}
-      {activeTab === 'my-agents' && (
-        <>
-          {agents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gray-900 border border-white/10 flex items-center justify-center mb-4">
-                <Bot size={32} className="text-gray-600" />
+  const solution = agent.solution
+  const usage = calculateUsage(agent)
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <button
+            onClick={() => router.push('/dashboard/agents')}
+            className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors mt-1"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          
+          <div>
+            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                <Target size={20} className="text-blue-400" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-1">{t.noAgents}</h3>
-              <p className="text-sm text-gray-500 mb-6">{t.noAgentsHint}</p>
-              <button
-                onClick={() => setActiveTab('marketplace')}
-                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors"
-              >
-                {t.exploreMarketplace}
-                <ArrowRight size={14} />
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {agents.map(agent => {
-                const solution = solutions.find(s => s.slug === agent.kind)
-                return (
-                  <ActiveAgentCard
-                    key={agent.id}
-                    agent={agent}
-                    solution={solution}
-                    lang={lang}
-                    t={t}
-                    onConfigure={() => setConfigAgent(agent)}
-                    onToggleStatus={() => handleToggleStatus(agent)}
-                    onViewDetails={() => router.push(`/dashboard/agents/${agent.id}`)}
-                  />
-                )
-              })}
-            </div>
-          )}
-        </>
-      )}
+              {solution ? t(solution.name, lang) : agent.solution_slug}
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {solution ? t(solution.description, lang) : ''}
+            </p>
+          </div>
+        </div>
 
-      {/* Marketplace Tab */}
-      {activeTab === 'marketplace' && (
-        <>
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t.searchPlaceholder}
-                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-blue-500 outline-none transition-colors"
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors"
+        >
+          <Plus size={16} />
+          {ui.newCampaign}
+        </button>
+      </div>
+
+      {/* Usage Card */}
+      <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5">
+        <h3 className="text-sm font-bold text-gray-400 uppercase mb-4 flex items-center gap-2">
+          <BarChart3 size={14} />
+          {ui.usage}
+        </h3>
+        
+        <div className="flex items-center gap-6">
+          <div className="flex-1">
+            <div className="flex items-center justify-between text-sm mb-2">
+              <span className="text-gray-400">{ui.leadsMonth}</span>
+              <span className="text-white font-mono font-bold">
+                {usage.used} / {usage.limit}
+              </span>
+            </div>
+            <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all ${
+                  usage.percentage > 90 ? 'bg-red-500' :
+                  usage.percentage > 70 ? 'bg-amber-500' :
+                  'bg-gradient-to-r from-blue-500 to-purple-500'
+                }`}
+                style={{ width: `${Math.min(usage.percentage, 100)}%` }}
               />
             </div>
-
-            {/* Category Filter */}
-            <div className="flex bg-[#0a0a0a] rounded-xl p-1 border border-white/10 overflow-x-auto">
-              {['all', 'conversation', 'prospecting', 'support'].map(category => (
-                <button
-                  key={category}
-                  onClick={() => setCategoryFilter(category)}
-                  className={`
-                    px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all
-                    ${categoryFilter === category 
-                      ? 'bg-white text-black' 
-                      : 'text-gray-400 hover:text-white'
-                    }
-                  `}
-                >
-                  {t[category as keyof typeof t] || category}
-                </button>
-              ))}
+          </div>
+          
+          <div className="flex gap-6 text-center">
+            <div>
+              <div className="text-2xl font-bold text-white">{usage.used}</div>
+              <div className="text-[10px] text-gray-500 uppercase">{ui.used}</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-emerald-400">{usage.remaining}</div>
+              <div className="text-[10px] text-gray-500 uppercase">{ui.remaining}</div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Solutions Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredSolutions.map(solution => {
-              const isHired = agents.some(a => a.kind === solution.slug)
-              return (
-                <MarketplaceCard
-                  key={solution.slug}
-                  solution={solution}
-                  lang={lang}
-                  t={t}
-                  isHired={isHired}
-                  isHiring={hiring === solution.slug}
-                  onHire={() => handleHire(solution)}
-                />
-              )
-            })}
-          </div>
+      {/* Campaigns */}
+      <div>
+        <h3 className="text-sm font-bold text-gray-400 uppercase mb-4 flex items-center gap-2">
+          <Zap size={14} />
+          {ui.campaigns} ({campaigns.length})
+        </h3>
 
-          {filteredSolutions.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <Search size={32} className="text-gray-600 mb-4" />
-              <p className="text-sm text-gray-500">Nenhuma solução encontrada</p>
+        {campaigns.length === 0 ? (
+          <div className="bg-[#0a0a0a] border border-white/10 border-dashed rounded-2xl p-12 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-gray-900 border border-white/10 flex items-center justify-center mx-auto mb-4">
+              <Target size={24} className="text-gray-600" />
             </div>
-          )}
-        </>
-      )}
+            <h4 className="text-lg font-bold text-white mb-1">{ui.noCampaigns}</h4>
+            <p className="text-sm text-gray-500 mb-6">{ui.noCampaignsHint}</p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors"
+            >
+              <Plus size={14} />
+              {ui.createFirst}
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {campaigns.map(campaign => (
+              <CampaignCard
+                key={campaign.id}
+                campaign={campaign}
+                lang={lang}
+                ui={ui}
+                dateLocale={dateLocale}
+                onToggle={() => handleToggleCampaign(campaign)}
+                onDelete={() => handleDeleteCampaign(campaign)}
+                onClick={() => router.push(`/dashboard/agents/${agentId}/campaigns/${campaign.id}`)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* Config Modal */}
-      <ConfigModal
-        isOpen={!!configAgent}
-        agent={configAgent}
-        solution={configAgent ? solutions.find(s => s.slug === configAgent.kind) : undefined}
+      {/* Create Modal */}
+      <CreateCampaignModal
+        isOpen={showCreateModal}
+        agentId={agentId}
+        orgId={org?.id || ''}
+        userId={user?.id || ''}
+        configSchema={solution?.campaign_config_schema || { fields: [] }}
         lang={lang}
-        t={t}
-        onClose={() => setConfigAgent(null)}
-        onSave={handleSaveConfig}
+        ui={ui}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={refresh}
       />
     </div>
   )
