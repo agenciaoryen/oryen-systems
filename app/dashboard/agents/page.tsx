@@ -735,12 +735,27 @@ function ConfigModal({
 
 export default function AgentsMarketplacePage() {
   const router = useRouter()
-  const { user, org } = useAuth()
+  const { user, org, loading: authLoading } = useAuth()
   const { canUseAiAgents } = usePlan()
   
-  // Dados
-  const { solutions, loading: loadingSolutions } = useAgentSolutions()
-  const { agents, loading: loadingAgents, refresh: refreshAgents } = useMyAgents(org?.id)
+  // Dados - só busca quando org estiver carregada
+  const { solutions, loading: loadingSolutions, error: solutionsError } = useAgentSolutions()
+  const { agents, loading: loadingAgents, refresh: refreshAgents, error: agentsError } = useMyAgents(org?.id)
+  
+  // Debug logs
+  if (process.env.NODE_ENV === 'development') {
+    console.log('AgentsPage Debug:', { 
+      authLoading, 
+      orgId: org?.id, 
+      canUseAiAgents,
+      loadingSolutions,
+      loadingAgents,
+      solutionsError,
+      agentsError,
+      solutionsCount: solutions.length,
+      agentsCount: agents.length
+    })
+  }
   
   // UI State
   const [activeTab, setActiveTab] = useState<'my-agents' | 'marketplace'>('my-agents')
@@ -821,31 +836,12 @@ export default function AgentsMarketplacePage() {
   }
 
   // ─── VERIFICAR PERMISSÃO ───
-  if (!canUseAiAgents) {
-    return (
-      <div className="max-w-2xl mx-auto py-8 px-4">
-        <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-            <Bot className="text-blue-500" />
-            {t.lockedTitle}
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">{t.pageSubtitle}</p>
-        </div>
-        
-        <FeatureLock 
-          feature="hasAiAgents" 
-          variant="replace"
-          lang={lang}
-          title={t.lockedTitle}
-          description={t.lockedDesc}
-        >
-          <div />
-        </FeatureLock>
-      </div>
-    )
-  }
+  // Temporariamente desabilitado para teste - remover depois
+  // if (!canUseAiAgents) {
+  //   return (...)
+  // }
 
-  const loading = loadingSolutions || loadingAgents
+  const loading = authLoading || loadingSolutions || loadingAgents
 
   if (loading) {
     return (

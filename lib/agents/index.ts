@@ -133,23 +133,26 @@ export function useAgentSolutions() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function fetch() {
+    async function fetchData() {
       try {
-        const { data, error } = await supabase
+        const { data, error: fetchError } = await supabase
           .from('agent_solutions')
           .select('*')
-          .eq('is_active', true)
           .order('sort_order')
 
-        if (error) throw error
-        setSolutions(data || [])
+        if (fetchError) throw fetchError
+        
+        // Filtrar apenas ativos (campo pode não existir em todos os registros)
+        const activeSolutions = (data || []).filter(s => s.is_active !== false)
+        setSolutions(activeSolutions)
       } catch (err: any) {
+        console.error('Error fetching agent solutions:', err)
         setError(err.message)
       } finally {
         setLoading(false)
       }
     }
-    fetch()
+    fetchData()
   }, [])
 
   return { solutions, loading, error }
@@ -164,22 +167,51 @@ export function useMyAgents(orgId: string | undefined) {
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
-    if (!orgId) return
+    if (!orgId) {
+      setLoading(false)
+      return
+    }
 
     try {
       setLoading(true)
-      const { data, error } = await supabase
+      
+      // Buscar agentes sem JOIN (evita erro de FK)
+      const { data: agentsData, error: agentsError } = await supabase
         .from('agents')
-        .select(`
-          *,
-          solution:agent_solutions!agents_kind_fkey (*)
-        `)
+        .select('*')
         .eq('org_id', orgId)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
-      setAgents(data || [])
+      if (agentsError) throw agentsError
+      
+      // Se não tem agentes, retorna vazio
+      if (!agentsData || agentsData.length === 0) {
+        setAgents([])
+        setLoading(false)
+        return
+      }
+
+      // Buscar solutions separadamente para fazer join manual
+      const kinds = [...new Set(agentsData.map(a => a.kind).filter(Boolean))]
+      
+      if (kinds.length > 0) {
+        const { data: solutionsData } = await supabase
+          .from('agent_solutions')
+          .select('*')
+          .in('slug', kinds)
+
+        // Join manual
+        const agentsWithSolutions = agentsData.map(agent => ({
+          ...agent,
+          solution: solutionsData?.find(s => s.slug === agent.kind) || null
+        }))
+        
+        setAgents(agentsWithSolutions)
+      } else {
+        setAgents(agentsData)
+      }
     } catch (err: any) {
+      console.error('Error fetching agents:', err)
       setError(err.message)
     } finally {
       setLoading(false)
@@ -205,22 +237,34 @@ export function useAgent(agentId: string | undefined) {
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
-    if (!agentId) return
+    if (!agentId) {
+      setLoading(false)
+      return
+    }
 
     try {
       setLoading(true)
 
-      // Buscar agente com solução
+      // Buscar agente
       const { data: agentData, error: agentError } = await supabase
         .from('agents')
-        .select(`
-          *,
-          solution:agent_solutions!agents_kind_fkey (*)
-        `)
+        .select('*')
         .eq('id', agentId)
         .single()
 
       if (agentError) throw agentError
+      
+      // Buscar solution separadamente
+      if (agentData?.kind) {
+        const { data: solutionData } = await supabase
+          .from('agent_solutions')
+          .select('*')
+          .eq('slug', agentData.kind)
+          .single()
+        
+        agentData.solution = solutionData || null
+      }
+      
       setAgent(agentData)
 
       // Buscar últimas execuções
@@ -257,6 +301,7 @@ export function useAgent(agentId: string | undefined) {
       setEvents(eventsData || [])
 
     } catch (err: any) {
+      console.error('Error fetching agent details:', err)
       setError(err.message)
     } finally {
       setLoading(false)
