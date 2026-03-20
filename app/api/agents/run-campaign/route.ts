@@ -155,16 +155,29 @@ export async function POST(request: NextRequest) {
 
     // 7. Chamar webhook do N8N
     const n8nWebhookUrl = process.env.N8N_HUNTER_WEBHOOK_URL
+    let webhookStatus = 'not_configured'
     
     if (n8nWebhookUrl) {
-      // Disparar webhook (fire and forget)
-      fetch(n8nWebhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(webhookPayload)
-      }).catch(err => {
-        console.error('Error calling n8n webhook:', err)
-      })
+      try {
+        // Disparar webhook com timeout de 5 segundos
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)
+        
+        const webhookResponse = await fetch(n8nWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(webhookPayload),
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeoutId)
+        webhookStatus = webhookResponse.ok ? 'success' : `error_${webhookResponse.status}`
+        console.log('Webhook response:', webhookResponse.status)
+      } catch (err: any) {
+        console.error('Error calling n8n webhook:', err.message)
+        webhookStatus = `error_${err.code || 'unknown'}`
+        // Não bloqueia - continua mesmo se webhook falhar
+      }
     } else {
       console.log('N8N webhook not configured. Payload:', webhookPayload)
     }
@@ -184,7 +197,8 @@ export async function POST(request: NextRequest) {
       max_leads: leadsToFetch,
       trigger_type: trigger_type,
       message: 'Campaign execution started',
-      webhook_configured: !!n8nWebhookUrl
+      webhook_configured: !!n8nWebhookUrl,
+      webhook_status: webhookStatus
     })
 
   } catch (error: any) {
