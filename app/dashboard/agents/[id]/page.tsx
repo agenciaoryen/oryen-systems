@@ -1,151 +1,178 @@
-// app/dashboard/agents/page.tsx
+// app/dashboard/agents/[id]/page.tsx
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { 
-  useAgentSolutions, 
-  useOrgAgents, 
-  hireAgent,
+  useAgent,
+  createCampaign,
+  toggleCampaignStatus,
+  deleteCampaign,
   calculateUsage,
   t,
   tFeatures
 } from '@/lib/agents'
-import type { AgentSolution, Agent, Language } from '@/lib/agents/types'
+import type { AgentCampaign, Language, ConfigField } from '@/lib/agents/types'
+import { formatDistanceToNow, format } from 'date-fns'
+import { ptBR, enUS, es } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { 
-  Bot, Target, MessageSquare, Zap, Headphones,
-  PlayCircle, PauseCircle, Settings, Activity,
-  CheckCircle2, Clock, DollarSign, Users,
-  Loader2, Sparkles, ArrowRight, Search,
-  Plus, BarChart3, Layers, TrendingUp
+import {
+  ArrowLeft, Bot, Target, Plus, Loader2, PlayCircle, PauseCircle,
+  Settings, Trash2, Clock, Calendar, TrendingUp, Users, X,
+  CheckCircle2, AlertTriangle, ChevronRight, BarChart3, Zap,
+  Search, Filter, MoreVertical, Edit2, Copy, ExternalLink
 } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ÍCONES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const CATEGORY_ICONS: Record<string, any> = {
-  conversation: MessageSquare,
-  prospecting: Target,
-  support: Headphones,
-  automation: Zap
-}
-
-const SOLUTION_ICONS: Record<string, any> = {
-  hunter_b2b: Target,
-  sdr: MessageSquare,
-  followup: Clock,
-  support: Headphones
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TRADUÇÕES UI
+// TRADUÇÕES
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const UI = {
   pt: {
-    title: 'Agentes de IA',
-    subtitle: 'Automatize vendas e prospecção com inteligência artificial',
-    myAgents: 'Meus Agentes',
-    marketplace: 'Marketplace',
-    active: 'Ativo',
-    paused: 'Pausado',
-    campaigns: 'campanhas',
+    back: 'Voltar',
+    campaigns: 'Campanhas',
+    newCampaign: 'Nova Campanha',
+    noCampaigns: 'Nenhuma campanha criada',
+    noCampaignsHint: 'Crie sua primeira campanha para começar a captar leads',
+    createFirst: 'Criar Campanha',
+    usage: 'Uso do Período',
     leadsMonth: 'leads/mês',
     used: 'usados',
     remaining: 'restantes',
-    manage: 'Gerenciar',
-    viewCampaigns: 'Ver Campanhas',
-    hire: 'Contratar',
-    hiring: 'Contratando...',
-    perMonth: '/mês',
-    setup: 'Setup',
-    features: 'Recursos',
-    limits: 'Limites inclusos',
-    noAgents: 'Você ainda não tem agentes',
-    noAgentsHint: 'Explore o marketplace e contrate seu primeiro agente de IA',
-    explore: 'Explorar Marketplace',
-    confirmHire: 'Confirmar contratação?',
-    confirmHireDesc: 'Deseja contratar este agente? A cobrança iniciará imediatamente.',
-    hired: 'Agente contratado com sucesso!',
-    error: 'Erro ao contratar',
+    active: 'Ativa',
+    paused: 'Pausada',
+    draft: 'Rascunho',
+    completed: 'Concluída',
+    cancelled: 'Cancelada',
+    target: 'Meta',
+    captured: 'Capturados',
+    nextRun: 'Próxima execução',
+    lastRun: 'Última execução',
+    never: 'Nunca',
+    daily: 'Diário',
+    weekly: 'Semanal',
+    manual: 'Manual',
+    pause: 'Pausar',
+    resume: 'Retomar',
+    delete: 'Excluir',
+    edit: 'Editar',
+    confirmDelete: 'Tem certeza que deseja excluir esta campanha?',
+    deleted: 'Campanha excluída',
+    statusChanged: 'Status alterado',
+    error: 'Erro',
     loading: 'Carregando...',
-    featured: 'Destaque',
-    all: 'Todos',
-    prospecting: 'Prospecção',
-    conversation: 'Conversação',
-    support: 'Suporte',
-    searchPlaceholder: 'Buscar soluções...'
+    notFound: 'Agente não encontrado',
+    // Create modal
+    createTitle: 'Nova Campanha',
+    createSubtitle: 'Configure os parâmetros de busca',
+    campaignName: 'Nome da campanha',
+    campaignNamePlaceholder: 'Ex: Restaurantes em Santiago',
+    targetLeads: 'Meta de leads',
+    targetLeadsHint: 'Deixe vazio para usar todo o limite disponível',
+    schedule: 'Agendamento',
+    scheduleTime: 'Horário',
+    create: 'Criar Campanha',
+    creating: 'Criando...',
+    created: 'Campanha criada!',
+    cancel: 'Cancelar',
+    required: 'Campo obrigatório'
   },
   en: {
-    title: 'AI Agents',
-    subtitle: 'Automate sales and prospecting with artificial intelligence',
-    myAgents: 'My Agents',
-    marketplace: 'Marketplace',
-    active: 'Active',
-    paused: 'Paused',
-    campaigns: 'campaigns',
+    back: 'Back',
+    campaigns: 'Campaigns',
+    newCampaign: 'New Campaign',
+    noCampaigns: 'No campaigns created',
+    noCampaignsHint: 'Create your first campaign to start capturing leads',
+    createFirst: 'Create Campaign',
+    usage: 'Period Usage',
     leadsMonth: 'leads/mo',
     used: 'used',
     remaining: 'remaining',
-    manage: 'Manage',
-    viewCampaigns: 'View Campaigns',
-    hire: 'Hire',
-    hiring: 'Hiring...',
-    perMonth: '/mo',
-    setup: 'Setup',
-    features: 'Features',
-    limits: 'Included limits',
-    noAgents: 'You don\'t have any agents yet',
-    noAgentsHint: 'Explore the marketplace and hire your first AI agent',
-    explore: 'Explore Marketplace',
-    confirmHire: 'Confirm hiring?',
-    confirmHireDesc: 'Do you want to hire this agent? Billing will start immediately.',
-    hired: 'Agent hired successfully!',
-    error: 'Error hiring',
+    active: 'Active',
+    paused: 'Paused',
+    draft: 'Draft',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    target: 'Target',
+    captured: 'Captured',
+    nextRun: 'Next run',
+    lastRun: 'Last run',
+    never: 'Never',
+    daily: 'Daily',
+    weekly: 'Weekly',
+    manual: 'Manual',
+    pause: 'Pause',
+    resume: 'Resume',
+    delete: 'Delete',
+    edit: 'Edit',
+    confirmDelete: 'Are you sure you want to delete this campaign?',
+    deleted: 'Campaign deleted',
+    statusChanged: 'Status changed',
+    error: 'Error',
     loading: 'Loading...',
-    featured: 'Featured',
-    all: 'All',
-    prospecting: 'Prospecting',
-    conversation: 'Conversation',
-    support: 'Support',
-    searchPlaceholder: 'Search solutions...'
+    notFound: 'Agent not found',
+    createTitle: 'New Campaign',
+    createSubtitle: 'Configure search parameters',
+    campaignName: 'Campaign name',
+    campaignNamePlaceholder: 'Ex: Restaurants in Santiago',
+    targetLeads: 'Lead target',
+    targetLeadsHint: 'Leave empty to use all available limit',
+    schedule: 'Schedule',
+    scheduleTime: 'Time',
+    create: 'Create Campaign',
+    creating: 'Creating...',
+    created: 'Campaign created!',
+    cancel: 'Cancel',
+    required: 'Required field'
   },
   es: {
-    title: 'Agentes de IA',
-    subtitle: 'Automatiza ventas y prospección con inteligencia artificial',
-    myAgents: 'Mis Agentes',
-    marketplace: 'Marketplace',
-    active: 'Activo',
-    paused: 'Pausado',
-    campaigns: 'campañas',
+    back: 'Volver',
+    campaigns: 'Campañas',
+    newCampaign: 'Nueva Campaña',
+    noCampaigns: 'Sin campañas creadas',
+    noCampaignsHint: 'Crea tu primera campaña para comenzar a captar leads',
+    createFirst: 'Crear Campaña',
+    usage: 'Uso del Período',
     leadsMonth: 'leads/mes',
     used: 'usados',
     remaining: 'restantes',
-    manage: 'Gestionar',
-    viewCampaigns: 'Ver Campañas',
-    hire: 'Contratar',
-    hiring: 'Contratando...',
-    perMonth: '/mes',
-    setup: 'Setup',
-    features: 'Recursos',
-    limits: 'Límites incluidos',
-    noAgents: 'Aún no tienes agentes',
-    noAgentsHint: 'Explora el marketplace y contrata tu primer agente de IA',
-    explore: 'Explorar Marketplace',
-    confirmHire: '¿Confirmar contratación?',
-    confirmHireDesc: '¿Deseas contratar este agente? La facturación comenzará inmediatamente.',
-    hired: '¡Agente contratado con éxito!',
-    error: 'Error al contratar',
+    active: 'Activa',
+    paused: 'Pausada',
+    draft: 'Borrador',
+    completed: 'Completada',
+    cancelled: 'Cancelada',
+    target: 'Meta',
+    captured: 'Capturados',
+    nextRun: 'Próxima ejecución',
+    lastRun: 'Última ejecución',
+    never: 'Nunca',
+    daily: 'Diario',
+    weekly: 'Semanal',
+    manual: 'Manual',
+    pause: 'Pausar',
+    resume: 'Reanudar',
+    delete: 'Eliminar',
+    edit: 'Editar',
+    confirmDelete: '¿Estás seguro de que deseas eliminar esta campaña?',
+    deleted: 'Campaña eliminada',
+    statusChanged: 'Estado cambiado',
+    error: 'Error',
     loading: 'Cargando...',
-    featured: 'Destacado',
-    all: 'Todos',
-    prospecting: 'Prospección',
-    conversation: 'Conversación',
-    support: 'Soporte',
-    searchPlaceholder: 'Buscar soluciones...'
+    notFound: 'Agente no encontrado',
+    createTitle: 'Nueva Campaña',
+    createSubtitle: 'Configura los parámetros de búsqueda',
+    campaignName: 'Nombre de la campaña',
+    campaignNamePlaceholder: 'Ej: Restaurantes en Santiago',
+    targetLeads: 'Meta de leads',
+    targetLeadsHint: 'Deja vacío para usar todo el límite disponible',
+    schedule: 'Programación',
+    scheduleTime: 'Horario',
+    create: 'Crear Campaña',
+    creating: 'Creando...',
+    created: '¡Campaña creada!',
+    cancel: 'Cancelar',
+    required: 'Campo requerido'
   }
 }
 
@@ -153,234 +180,436 @@ const UI = {
 // COMPONENTES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Card de Agente Contratado
-function AgentCard({ 
-  agent,
+// Card de Campanha
+function CampaignCard({
+  campaign,
   lang,
   ui,
-  onManage
+  dateLocale,
+  onToggle,
+  onDelete,
+  onClick
 }: {
-  agent: Agent
+  campaign: AgentCampaign
   lang: Language
   ui: typeof UI.es
-  onManage: () => void
+  dateLocale: any
+  onToggle: () => void
+  onDelete: () => void
+  onClick: () => void
 }) {
-  const solution = agent.solution
-  const Icon = SOLUTION_ICONS[agent.solution_slug] || Bot
-  const usage = calculateUsage(agent)
-  const isActive = agent.status === 'active'
+  const isActive = campaign.status === 'active'
+  const isPaused = campaign.status === 'paused'
+  const isCompleted = campaign.status === 'completed'
+  
+  const captured = campaign.metrics?.leads_captured || 0
+  const target = campaign.target_leads
+  const progress = target ? (captured / target) * 100 : 0
+
+  const statusConfig = {
+    active: { label: ui.active, color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+    paused: { label: ui.paused, color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    draft: { label: ui.draft, color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+    completed: { label: ui.completed, color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    cancelled: { label: ui.cancelled, color: 'bg-red-500/10 text-red-400 border-red-500/20' }
+  }
+
+  const scheduleLabels: Record<string, string> = {
+    daily: ui.daily,
+    weekly: ui.weekly,
+    manual: ui.manual
+  }
+
+  const status = statusConfig[campaign.status] || statusConfig.draft
 
   return (
-    <div className={`
-      bg-[#0a0a0a] border rounded-2xl p-5 transition-all duration-300
-      hover:border-white/20 hover:shadow-xl hover:shadow-white/5
-      ${isActive ? 'border-white/10' : 'border-amber-500/20'}
-    `}>
+    <div 
+      className="bg-[#0a0a0a] border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all cursor-pointer group"
+      onClick={onClick}
+    >
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className={`
-            w-12 h-12 rounded-xl flex items-center justify-center
-            ${isActive 
-              ? 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 text-blue-400' 
-              : 'bg-amber-500/10 text-amber-400'
-            }
-          `}>
-            <Icon size={24} />
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+            {campaign.name}
+          </h4>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${status.color}`}>
+              {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+              {status.label}
+            </span>
+            <span className="text-[10px] text-gray-500 flex items-center gap-1">
+              <Clock size={9} />
+              {scheduleLabels[campaign.schedule_frequency] || campaign.schedule_frequency}
+            </span>
           </div>
-          <div>
-            <h3 className="font-bold text-white">
-              {solution ? t(solution.name, lang) : agent.solution_slug}
-            </h3>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className={`
-                inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full
-                ${isActive 
-                  ? 'bg-emerald-500/10 text-emerald-400' 
-                  : 'bg-amber-500/10 text-amber-400'
-                }
-              `}>
-                {isActive ? <PlayCircle size={8} /> : <PauseCircle size={8} />}
-                {isActive ? ui.active : ui.paused}
-              </span>
-              <span className="text-[10px] text-gray-500">
-                {agent.campaigns_count || 0} {ui.campaigns}
-              </span>
-            </div>
-          </div>
+        </div>
+        
+        {/* Actions */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+          {(isActive || isPaused) && (
+            <button
+              onClick={onToggle}
+              className={`p-1.5 rounded-lg transition-colors ${
+                isActive 
+                  ? 'hover:bg-amber-500/10 text-amber-400' 
+                  : 'hover:bg-emerald-500/10 text-emerald-400'
+              }`}
+              title={isActive ? ui.pause : ui.resume}
+            >
+              {isActive ? <PauseCircle size={14} /> : <PlayCircle size={14} />}
+            </button>
+          )}
+          <button
+            onClick={onDelete}
+            className="p-1.5 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors"
+            title={ui.delete}
+          >
+            <Trash2 size={14} />
+          </button>
         </div>
       </div>
 
-      {/* Usage Bar */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between text-xs mb-1.5">
-          <span className="text-gray-400">{ui.leadsMonth}</span>
-          <span className="text-gray-300 font-mono">
-            {usage.used} / {usage.limit}
-          </span>
+      {/* Progress */}
+      {target && (
+        <div className="mb-3">
+          <div className="flex items-center justify-between text-[10px] mb-1">
+            <span className="text-gray-500">{ui.target}: {target} leads</span>
+            <span className="text-gray-300 font-mono">{captured} {ui.captured}</span>
+          </div>
+          <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+            <div 
+              className={`h-full rounded-full transition-all ${
+                isCompleted ? 'bg-blue-500' : 'bg-gradient-to-r from-blue-500 to-purple-500'
+              }`}
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            />
+          </div>
         </div>
-        <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-          <div 
-            className={`h-full rounded-full transition-all ${
-              usage.percentage > 90 ? 'bg-red-500' :
-              usage.percentage > 70 ? 'bg-amber-500' :
-              'bg-gradient-to-r from-blue-500 to-purple-500'
-            }`}
-            style={{ width: `${Math.min(usage.percentage, 100)}%` }}
-          />
-        </div>
-        <div className="flex justify-between text-[10px] mt-1">
-          <span className="text-gray-500">{usage.used} {ui.used}</span>
-          <span className="text-emerald-400">{usage.remaining} {ui.remaining}</span>
-        </div>
-      </div>
+      )}
 
-      {/* Actions */}
-      <button
-        onClick={onManage}
-        className="w-full flex items-center justify-center gap-2 py-2.5 bg-white text-black hover:bg-gray-200 rounded-xl text-sm font-bold transition-colors"
-      >
-        <Layers size={14} />
-        {ui.viewCampaigns}
-      </button>
+      {/* Config Tags */}
+      {campaign.config && Object.keys(campaign.config).length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {Object.entries(campaign.config).slice(0, 3).map(([key, value]) => {
+            const displayValue = Array.isArray(value) ? value.join(', ') : String(value)
+            return (
+              <span 
+                key={key}
+                className="text-[9px] bg-gray-800 border border-gray-700 text-gray-400 px-2 py-0.5 rounded-full truncate max-w-[150px]"
+                title={`${key}: ${displayValue}`}
+              >
+                {displayValue}
+              </span>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="flex items-center justify-between text-[10px] text-gray-500 pt-2 border-t border-white/5">
+        <span className="flex items-center gap-1">
+          <Calendar size={9} />
+          {ui.nextRun}: {campaign.next_run_at 
+            ? formatDistanceToNow(new Date(campaign.next_run_at), { addSuffix: true, locale: dateLocale })
+            : ui.never
+          }
+        </span>
+        <ChevronRight size={12} className="text-gray-600 group-hover:text-blue-400 transition-colors" />
+      </div>
     </div>
   )
 }
 
-// Card do Marketplace
-function MarketplaceCard({
-  solution,
+// Modal de Criar Campanha
+function CreateCampaignModal({
+  isOpen,
+  agentId,
+  orgId,
+  userId,
+  configSchema,
   lang,
   ui,
-  isHired,
-  isHiring,
-  onHire
+  onClose,
+  onCreated
 }: {
-  solution: AgentSolution
+  isOpen: boolean
+  agentId: string
+  orgId: string
+  userId: string
+  configSchema: { fields: ConfigField[] }
   lang: Language
   ui: typeof UI.es
-  isHired: boolean
-  isHiring: boolean
-  onHire: () => void
+  onClose: () => void
+  onCreated: () => void
 }) {
-  const Icon = SOLUTION_ICONS[solution.slug] || Bot
-  const CategoryIcon = CATEGORY_ICONS[solution.category] || Zap
-  const features = tFeatures(solution.features, lang)
-  const hasSetup = solution.price_setup > 0
+  const [name, setName] = useState('')
+  const [targetLeads, setTargetLeads] = useState<number | ''>('')
+  const [scheduleFrequency, setScheduleFrequency] = useState('daily')
+  const [scheduleTime, setScheduleTime] = useState('08:00')
+  const [config, setConfig] = useState<Record<string, any>>({})
+  const [creating, setCreating] = useState(false)
+  const [errors, setErrors] = useState<Record<string, boolean>>({})
+
+  if (!isOpen) return null
+
+  const fields = configSchema?.fields || []
+
+  const handleCreate = async () => {
+    // Validar
+    const newErrors: Record<string, boolean> = {}
+    if (!name.trim()) newErrors.name = true
+    fields.forEach(field => {
+      if (field.required && !config[field.key]) {
+        newErrors[field.key] = true
+      }
+    })
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+
+    setCreating(true)
+
+    const { campaign, error } = await createCampaign(agentId, orgId, userId, {
+      name: name.trim(),
+      config,
+      target_leads: targetLeads || undefined,
+      schedule_frequency: scheduleFrequency,
+      schedule_time: scheduleTime
+    })
+
+    setCreating(false)
+
+    if (error) {
+      toast.error(`${ui.error}: ${error}`)
+      return
+    }
+
+    toast.success(ui.created)
+    onCreated()
+    onClose()
+  }
+
+  const updateConfig = (key: string, value: any) => {
+    setConfig({ ...config, [key]: value })
+    if (errors[key]) {
+      setErrors({ ...errors, [key]: false })
+    }
+  }
 
   return (
-    <div className={`
-      relative bg-[#0a0a0a] border border-white/10 rounded-2xl p-5 transition-all duration-300
-      hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/5
-      ${isHired ? 'opacity-60' : ''}
-      ${solution.is_featured ? 'ring-1 ring-blue-500/30' : ''}
-    `}>
-      {/* Featured Badge */}
-      {solution.is_featured && !isHired && (
-        <div className="absolute -top-2 -right-2 z-10">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[9px] font-bold uppercase rounded-full shadow-lg">
-            <Sparkles size={8} />
-            {ui.featured}
-          </span>
-        </div>
-      )}
-
-      {/* Hired Overlay */}
-      {isHired && (
-        <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center z-10">
-          <span className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-full text-sm font-bold">
-            <CheckCircle2 size={14} />
-            Contratado
-          </span>
-        </div>
-      )}
-
-      {/* Category */}
-      <div className="flex items-center gap-1.5 text-[10px] text-gray-500 mb-3">
-        <CategoryIcon size={10} />
-        {ui[solution.category as keyof typeof ui] || solution.category}
-      </div>
-
-      {/* Header */}
-      <div className="flex items-start gap-3 mb-4">
-        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 border border-white/10 flex items-center justify-center text-gray-400 shrink-0">
-          <Icon size={22} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-white text-lg leading-tight">
-            {t(solution.name, lang)}
-          </h3>
-          <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-            {t(solution.description, lang)}
-          </p>
-        </div>
-      </div>
-
-      {/* Features */}
-      <div className="space-y-1.5 mb-4">
-        {features.slice(0, 4).map((feature, i) => (
-          <div key={i} className="flex items-center gap-2 text-xs text-gray-400">
-            <CheckCircle2 size={10} className="text-blue-400 shrink-0" />
-            <span className="truncate">{feature}</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-white/10">
+          <div>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Plus size={18} className="text-blue-400" />
+              {ui.createTitle}
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">{ui.createSubtitle}</p>
           </div>
-        ))}
-      </div>
+          <button 
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
-      {/* Limits */}
-      {solution.default_limits && (
-        <div className="flex items-center gap-3 mb-4 py-2 px-3 bg-gray-900/50 rounded-lg border border-white/5">
-          <div className="flex items-center gap-1.5 text-xs">
-            <TrendingUp size={10} className="text-emerald-400" />
-            <span className="text-gray-400">
-              {solution.default_limits.leads_per_month} {ui.leadsMonth}
-            </span>
+        {/* Content */}
+        <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+          {/* Nome */}
+          <div>
+            <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase mb-2">
+              {ui.campaignName}
+              <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value)
+                if (errors.name) setErrors({ ...errors, name: false })
+              }}
+              placeholder={ui.campaignNamePlaceholder}
+              className={`w-full bg-black border rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors ${
+                errors.name ? 'border-red-500' : 'border-white/10'
+              }`}
+            />
           </div>
-          {solution.default_limits.campaigns_max && (
-            <div className="flex items-center gap-1.5 text-xs">
-              <Layers size={10} className="text-blue-400" />
-              <span className="text-gray-400">
-                {solution.default_limits.campaigns_max} {ui.campaigns}
-              </span>
+
+          {/* Campos dinâmicos do config_schema */}
+          {fields.map(field => (
+            <div key={field.key}>
+              <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase mb-2">
+                {t(field.label, lang)}
+                {field.required && <span className="text-red-400">*</span>}
+              </label>
+              
+              {field.type === 'text' && (
+                <input
+                  type="text"
+                  value={config[field.key] || ''}
+                  onChange={(e) => updateConfig(field.key, e.target.value)}
+                  placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+                  className={`w-full bg-black border rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors ${
+                    errors[field.key] ? 'border-red-500' : 'border-white/10'
+                  }`}
+                />
+              )}
+
+              {field.type === 'tags' && (
+                <div>
+                  <input
+                    type="text"
+                    placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+                    className={`w-full bg-black border rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors ${
+                      errors[field.key] ? 'border-red-500' : 'border-white/10'
+                    }`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        const input = e.target as HTMLInputElement
+                        const value = input.value.trim()
+                        if (value) {
+                          const current = config[field.key] || []
+                          updateConfig(field.key, [...current, value])
+                          input.value = ''
+                        }
+                      }
+                    }}
+                  />
+                  {config[field.key]?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {config[field.key].map((tag: string, i: number) => (
+                        <span 
+                          key={i}
+                          className="inline-flex items-center gap-1 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded-lg"
+                        >
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newTags = config[field.key].filter((_: any, idx: number) => idx !== i)
+                              updateConfig(field.key, newTags)
+                            }}
+                            className="hover:text-red-400"
+                          >
+                            <X size={10} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {field.type === 'select' && (
+                <select
+                  value={config[field.key] || ''}
+                  onChange={(e) => updateConfig(field.key, e.target.value)}
+                  className={`w-full bg-black border rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors ${
+                    errors[field.key] ? 'border-red-500' : 'border-white/10'
+                  }`}
+                >
+                  {field.options?.map(opt => (
+                    <option key={opt.value} value={opt.value}>
+                      {t(opt.label, lang)}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {field.type === 'boolean' && (
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config[field.key] ?? field.default ?? false}
+                    onChange={(e) => updateConfig(field.key, e.target.checked)}
+                    className="w-5 h-5 rounded bg-black border-white/10 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                  />
+                  <span className="text-sm text-gray-400">Sim</span>
+                </label>
+              )}
             </div>
-          )}
-        </div>
-      )}
+          ))}
 
-      {/* Price */}
-      <div className="flex items-end justify-between mb-4">
-        <div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-white">
-              ${solution.price_monthly}
-            </span>
-            <span className="text-xs text-gray-500">{ui.perMonth}</span>
+          {/* Meta de leads */}
+          <div>
+            <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase mb-2">
+              {ui.targetLeads}
+            </label>
+            <input
+              type="number"
+              value={targetLeads}
+              onChange={(e) => setTargetLeads(e.target.value ? Number(e.target.value) : '')}
+              placeholder="Ex: 100"
+              min={1}
+              className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+            />
+            <p className="text-[10px] text-gray-500 mt-1">{ui.targetLeadsHint}</p>
           </div>
-          {hasSetup && (
-            <span className="text-[10px] text-gray-500">
-              + ${solution.price_setup} {ui.setup}
-            </span>
-          )}
+
+          {/* Agendamento */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">
+                {ui.schedule}
+              </label>
+              <select
+                value={scheduleFrequency}
+                onChange={(e) => setScheduleFrequency(e.target.value)}
+                className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+              >
+                <option value="daily">{ui.daily}</option>
+                <option value="weekly">{ui.weekly}</option>
+                <option value="manual">{ui.manual}</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">
+                {ui.scheduleTime}
+              </label>
+              <input
+                type="time"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 p-5 border-t border-white/10 bg-black/30">
+          <button
+            onClick={onClose}
+            className="px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-white transition-colors"
+          >
+            {ui.cancel}
+          </button>
+          <button
+            onClick={handleCreate}
+            disabled={creating}
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+          >
+            {creating ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                {ui.creating}
+              </>
+            ) : (
+              <>
+                <Plus size={14} />
+                {ui.create}
+              </>
+            )}
+          </button>
         </div>
       </div>
-
-      {/* CTA */}
-      <button
-        onClick={onHire}
-        disabled={isHired || isHiring}
-        className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isHiring ? (
-          <>
-            <Loader2 size={14} className="animate-spin" />
-            {ui.hiring}
-          </>
-        ) : (
-          <>
-            {ui.hire}
-            <ArrowRight size={14} />
-          </>
-        )}
-      </button>
     </div>
   )
 }
@@ -389,77 +618,43 @@ function MarketplaceCard({
 // PÁGINA PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export default function AgentsPage() {
+export default function AgentDetailPage() {
+  const params = useParams()
   const router = useRouter()
-  const { user, org, loading: authLoading } = useAuth()
-  
-  // Dados
-  const { solutions, loading: loadingSolutions } = useAgentSolutions()
-  const { agents, loading: loadingAgents, refresh } = useOrgAgents(org?.id)
-  
-  // UI State
-  const [activeTab, setActiveTab] = useState<'agents' | 'marketplace'>(
-    agents.length > 0 ? 'agents' : 'marketplace'
-  )
-  const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [hiring, setHiring] = useState<string | null>(null)
+  const { user, org } = useAuth()
+  const agentId = params.id as string
 
-  // Language
+  const { agent, campaigns, loading, error, refresh } = useAgent(agentId)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+
   const lang = ((user as any)?.language as Language) || 'es'
   const ui = UI[lang]
-
-  // Filtrar soluções
-  const filteredSolutions = solutions.filter(s => {
-    if (categoryFilter !== 'all' && s.category !== categoryFilter) return false
-    if (searchQuery) {
-      const name = t(s.name, lang).toLowerCase()
-      const desc = t(s.description, lang).toLowerCase()
-      const query = searchQuery.toLowerCase()
-      if (!name.includes(query) && !desc.includes(query)) return false
-    }
-    return true
-  })
+  const dateLocale = { pt: ptBR, en: enUS, es }[lang]
 
   // Handlers
-  const handleHire = async (solution: AgentSolution) => {
-    if (!org?.id) {
-      toast.error('Organización no encontrada')
+  const handleToggleCampaign = async (campaign: AgentCampaign) => {
+    const { newStatus, error } = await toggleCampaignStatus(campaign.id, campaign.status)
+    if (error) {
+      toast.error(`${ui.error}: ${error}`)
       return
     }
+    toast.success(ui.statusChanged)
+    refresh()
+  }
 
-    const confirmed = window.confirm(
-      `${ui.confirmHire}\n\n${t(solution.name, lang)} - $${solution.price_monthly}${ui.perMonth}`
-    )
-    if (!confirmed) return
-
-    setHiring(solution.slug)
+  const handleDeleteCampaign = async (campaign: AgentCampaign) => {
+    if (!confirm(ui.confirmDelete)) return
     
-    try {
-      const { agent, error } = await hireAgent(org.id, solution.slug)
-      
-      if (error) {
-        toast.error(`${ui.error}: ${error}`)
-        return
-      }
-      
-      toast.success(ui.hired)
-      await refresh()
-      
-      // Redirecionar para a página do agente
-      if (agent) {
-        router.push(`/dashboard/agents/${agent.id}`)
-      }
-    } catch (err: any) {
-      toast.error(`${ui.error}: ${err.message}`)
-    } finally {
-      setHiring(null)
+    const { success, error } = await deleteCampaign(campaign.id)
+    if (error) {
+      toast.error(`${ui.error}: ${error}`)
+      return
     }
+    toast.success(ui.deleted)
+    refresh()
   }
 
   // Loading
-  const loading = authLoading || loadingSolutions || loadingAgents
-
   if (loading) {
     return (
       <div className="min-h-[calc(100vh-100px)] flex items-center justify-center">
@@ -471,157 +666,154 @@ export default function AgentsPage() {
     )
   }
 
-  return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <Bot size={20} className="text-white" />
-            </div>
-            {ui.title}
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">{ui.subtitle}</p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex bg-[#0a0a0a] rounded-xl p-1 border border-white/10">
+  // Not found
+  if (!agent) {
+    return (
+      <div className="min-h-[calc(100vh-100px)] flex items-center justify-center">
+        <div className="text-center">
+          <Bot size={48} className="mx-auto text-gray-600 mb-4" />
+          <p className="text-gray-400">{ui.notFound}</p>
           <button
-            onClick={() => setActiveTab('agents')}
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
-              ${activeTab === 'agents' 
-                ? 'bg-white text-black' 
-                : 'text-gray-400 hover:text-white'
-              }
-            `}
+            onClick={() => router.push('/dashboard/agents')}
+            className="mt-4 text-blue-400 hover:text-blue-300 text-sm"
           >
-            <Activity size={14} />
-            {ui.myAgents}
-            {agents.length > 0 && (
-              <span className={`
-                px-1.5 py-0.5 rounded text-[10px] font-bold
-                ${activeTab === 'agents' ? 'bg-black/10' : 'bg-white/10'}
-              `}>
-                {agents.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('marketplace')}
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
-              ${activeTab === 'marketplace' 
-                ? 'bg-white text-black' 
-                : 'text-gray-400 hover:text-white'
-              }
-            `}
-          >
-            <Sparkles size={14} />
-            {ui.marketplace}
+            {ui.back}
           </button>
         </div>
       </div>
+    )
+  }
 
-      {/* My Agents Tab */}
-      {activeTab === 'agents' && (
-        <>
-          {agents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gray-900 border border-white/10 flex items-center justify-center mb-4">
-                <Bot size={32} className="text-gray-600" />
+  const solution = agent.solution
+  const usage = calculateUsage(agent)
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <button
+            onClick={() => router.push('/dashboard/agents')}
+            className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors mt-1"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          
+          <div>
+            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                <Target size={20} className="text-blue-400" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-1">{ui.noAgents}</h3>
-              <p className="text-sm text-gray-500 mb-6">{ui.noAgentsHint}</p>
-              <button
-                onClick={() => setActiveTab('marketplace')}
-                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors"
-              >
-                {ui.explore}
-                <ArrowRight size={14} />
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {agents.map(agent => (
-                <AgentCard
-                  key={agent.id}
-                  agent={agent}
-                  lang={lang}
-                  ui={ui}
-                  onManage={() => router.push(`/dashboard/agents/${agent.id}`)}
-                />
-              ))}
-            </div>
-          )}
-        </>
-      )}
+              {solution ? t(solution.name, lang) : agent.solution_slug}
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {solution ? t(solution.description, lang) : ''}
+            </p>
+          </div>
+        </div>
 
-      {/* Marketplace Tab */}
-      {activeTab === 'marketplace' && (
-        <>
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={ui.searchPlaceholder}
-                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-blue-500 outline-none transition-colors"
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors"
+        >
+          <Plus size={16} />
+          {ui.newCampaign}
+        </button>
+      </div>
+
+      {/* Usage Card */}
+      <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5">
+        <h3 className="text-sm font-bold text-gray-400 uppercase mb-4 flex items-center gap-2">
+          <BarChart3 size={14} />
+          {ui.usage}
+        </h3>
+        
+        <div className="flex items-center gap-6">
+          <div className="flex-1">
+            <div className="flex items-center justify-between text-sm mb-2">
+              <span className="text-gray-400">{ui.leadsMonth}</span>
+              <span className="text-white font-mono font-bold">
+                {usage.used} / {usage.limit}
+              </span>
+            </div>
+            <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all ${
+                  usage.percentage > 90 ? 'bg-red-500' :
+                  usage.percentage > 70 ? 'bg-amber-500' :
+                  'bg-gradient-to-r from-blue-500 to-purple-500'
+                }`}
+                style={{ width: `${Math.min(usage.percentage, 100)}%` }}
               />
             </div>
-
-            {/* Category Filter */}
-            <div className="flex bg-[#0a0a0a] rounded-xl p-1 border border-white/10 overflow-x-auto">
-              {['all', 'prospecting', 'conversation', 'support'].map(category => (
-                <button
-                  key={category}
-                  onClick={() => setCategoryFilter(category)}
-                  className={`
-                    px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all
-                    ${categoryFilter === category 
-                      ? 'bg-white text-black' 
-                      : 'text-gray-400 hover:text-white'
-                    }
-                  `}
-                >
-                  {ui[category as keyof typeof ui] || category}
-                </button>
-              ))}
+          </div>
+          
+          <div className="flex gap-6 text-center">
+            <div>
+              <div className="text-2xl font-bold text-white">{usage.used}</div>
+              <div className="text-[10px] text-gray-500 uppercase">{ui.used}</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-emerald-400">{usage.remaining}</div>
+              <div className="text-[10px] text-gray-500 uppercase">{ui.remaining}</div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Solutions Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredSolutions.map(solution => {
-              const isHired = agents.some(a => a.solution_slug === solution.slug)
-              return (
-                <MarketplaceCard
-                  key={solution.slug}
-                  solution={solution}
-                  lang={lang}
-                  ui={ui}
-                  isHired={isHired}
-                  isHiring={hiring === solution.slug}
-                  onHire={() => handleHire(solution)}
-                />
-              )
-            })}
-          </div>
+      {/* Campaigns */}
+      <div>
+        <h3 className="text-sm font-bold text-gray-400 uppercase mb-4 flex items-center gap-2">
+          <Zap size={14} />
+          {ui.campaigns} ({campaigns.length})
+        </h3>
 
-          {filteredSolutions.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <Search size={32} className="text-gray-600 mb-4" />
-              <p className="text-sm text-gray-500">Nenhuma solução encontrada</p>
+        {campaigns.length === 0 ? (
+          <div className="bg-[#0a0a0a] border border-white/10 border-dashed rounded-2xl p-12 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-gray-900 border border-white/10 flex items-center justify-center mx-auto mb-4">
+              <Target size={24} className="text-gray-600" />
             </div>
-          )}
-        </>
-      )}
+            <h4 className="text-lg font-bold text-white mb-1">{ui.noCampaigns}</h4>
+            <p className="text-sm text-gray-500 mb-6">{ui.noCampaignsHint}</p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors"
+            >
+              <Plus size={14} />
+              {ui.createFirst}
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {campaigns.map(campaign => (
+              <CampaignCard
+                key={campaign.id}
+                campaign={campaign}
+                lang={lang}
+                ui={ui}
+                dateLocale={dateLocale}
+                onToggle={() => handleToggleCampaign(campaign)}
+                onDelete={() => handleDeleteCampaign(campaign)}
+                onClick={() => router.push(`/dashboard/agents/${agentId}/campaigns/${campaign.id}`)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Create Modal */}
+      <CreateCampaignModal
+        isOpen={showCreateModal}
+        agentId={agentId}
+        orgId={org?.id || ''}
+        userId={user?.id || ''}
+        configSchema={solution?.campaign_config_schema || { fields: [] }}
+        lang={lang}
+        ui={ui}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={refresh}
+      />
     </div>
   )
 }
