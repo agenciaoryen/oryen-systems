@@ -34,6 +34,8 @@ const UI = {
     draft: 'Rascunho',
     pause: 'Pausar',
     resume: 'Retomar',
+    runNow: 'Executar Agora',
+    running: 'Executando...',
     target: 'Meta',
     captured: 'Capturados',
     progress: 'Progresso',
@@ -56,11 +58,13 @@ const UI = {
     success: 'Sucesso',
     error: 'Erro',
     partial: 'Parcial',
-    running: 'Executando',
+    running_status: 'Executando',
     pending: 'Pendente',
     loading: 'Carregando...',
     notFound: 'Campanha não encontrada',
     statusChanged: 'Status alterado',
+    runStarted: 'Execução iniciada!',
+    runError: 'Erro ao executar',
     unlimited: 'Sem limite',
     leads: 'leads',
     createdAt: 'Criada em',
@@ -79,6 +83,8 @@ const UI = {
     draft: 'Draft',
     pause: 'Pause',
     resume: 'Resume',
+    runNow: 'Run Now',
+    running: 'Running...',
     target: 'Target',
     captured: 'Captured',
     progress: 'Progress',
@@ -101,11 +107,13 @@ const UI = {
     success: 'Success',
     error: 'Error',
     partial: 'Partial',
-    running: 'Running',
+    running_status: 'Running',
     pending: 'Pending',
     loading: 'Loading...',
     notFound: 'Campaign not found',
     statusChanged: 'Status changed',
+    runStarted: 'Run started!',
+    runError: 'Error running',
     unlimited: 'Unlimited',
     leads: 'leads',
     createdAt: 'Created at',
@@ -124,6 +132,8 @@ const UI = {
     draft: 'Borrador',
     pause: 'Pausar',
     resume: 'Reanudar',
+    runNow: 'Ejecutar Ahora',
+    running: 'Ejecutando...',
     target: 'Meta',
     captured: 'Capturados',
     progress: 'Progreso',
@@ -146,11 +156,13 @@ const UI = {
     success: 'Éxito',
     error: 'Error',
     partial: 'Parcial',
-    running: 'Ejecutando',
+    running_status: 'Ejecutando',
     pending: 'Pendiente',
     loading: 'Cargando...',
     notFound: 'Campaña no encontrada',
     statusChanged: 'Estado cambiado',
+    runStarted: '¡Ejecución iniciada!',
+    runError: 'Error al ejecutar',
     unlimited: 'Sin límite',
     leads: 'leads',
     createdAt: 'Creada el',
@@ -294,6 +306,7 @@ export default function CampaignDetailPage() {
 
   const { campaign, runs, loading, error, refresh } = useCampaign(campaignId)
   const [activeTab, setActiveTab] = useState<'overview' | 'runs' | 'config'>('overview')
+  const [isRunning, setIsRunning] = useState(false)
 
   const lang = ((user as any)?.language as Language) || 'es'
   const ui = UI[lang]
@@ -310,6 +323,41 @@ export default function CampaignDetailPage() {
     }
     toast.success(ui.statusChanged)
     refresh()
+  }
+
+  const handleRunNow = async () => {
+    if (!campaign || isRunning) return
+    
+    setIsRunning(true)
+    
+    try {
+      const response = await fetch('/api/agents/run-campaign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaign_id: campaign.id,
+          triggered_by: user?.id
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to run campaign')
+      }
+
+      toast.success(ui.runStarted)
+      
+      // Aguardar um pouco e recarregar para ver o novo run
+      setTimeout(() => {
+        refresh()
+      }, 1000)
+      
+    } catch (err: any) {
+      toast.error(`${ui.runError}: ${err.message}`)
+    } finally {
+      setIsRunning(false)
+    }
   }
 
   // Loading
@@ -401,21 +449,43 @@ export default function CampaignDetailPage() {
         </div>
 
         {/* Actions */}
-        {(isActive || isPaused) && (
-          <button
-            onClick={handleToggleStatus}
-            className={`
-              flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors
-              ${isActive 
-                ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20' 
-                : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
-              }
-            `}
-          >
-            {isActive ? <PauseCircle size={16} /> : <PlayCircle size={16} />}
-            {isActive ? ui.pause : ui.resume}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {isActive && (
+            <button
+              onClick={handleRunNow}
+              disabled={isRunning}
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+            >
+              {isRunning ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  {ui.running}
+                </>
+              ) : (
+                <>
+                  <Zap size={16} />
+                  {ui.runNow}
+                </>
+              )}
+            </button>
+          )}
+          
+          {(isActive || isPaused) && (
+            <button
+              onClick={handleToggleStatus}
+              className={`
+                flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors
+                ${isActive 
+                  ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20' 
+                  : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
+                }
+              `}
+            >
+              {isActive ? <PauseCircle size={16} /> : <PlayCircle size={16} />}
+              {isActive ? ui.pause : ui.resume}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
