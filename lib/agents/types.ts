@@ -39,12 +39,12 @@ export interface AgentSolution {
 }
 
 export interface ConfigField {
-  key: string
+  name: string                           // identificador do campo (ex: 'business_type')
   type: 'text' | 'textarea' | 'number' | 'select' | 'boolean' | 'tags'
   required: boolean
   label: Record<string, string>
   placeholder?: Record<string, string>
-  options?: Array<{ value: string; label: Record<string, string> }>
+  options?: Array<{ value: string; label: Record<string, string> | string }>
   default?: any
   min?: number
   max?: number
