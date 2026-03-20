@@ -57,6 +57,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Buscar dados da org (país, idioma, etc)
+    const { data: org } = await supabase
+      .from('orgs')
+      .select('id, name, country, language, timezone, niche')
+      .eq('id', agent.org_id)
+      .single()
+
     // 2. Verificar se campanha está ativa
     if (campaign.status !== 'active') {
       return NextResponse.json(
@@ -142,6 +149,15 @@ export async function POST(request: NextRequest) {
       
       // Controles
       max_leads: leadsToFetch,
+      
+      // Dados da organização
+      org: {
+        name: org?.name || '',
+        country: org?.country || 'CL',      // Default Chile
+        language: org?.language || 'es',     // Default Espanhol
+        timezone: org?.timezone || 'America/Santiago',
+        niche: org?.niche || 'general'
+      },
       
       // Callback URL
       callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/agents/run-callback`,
