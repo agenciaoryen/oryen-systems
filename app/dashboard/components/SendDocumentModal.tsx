@@ -1,8 +1,9 @@
 // app/dashboard/components/SendDocumentModal.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useAuth } from '@/lib/AuthContext'
+import { supabase } from '@/lib/supabase'
 import type { LeadDocument } from '@/lib/documents/types'
 import {
   X,
@@ -133,9 +134,10 @@ export default function SendDocumentModal({
   leadData,
   onSuccess
 }: SendDocumentModalProps) {
-  const { user } = useAuth()
+  const { user, activeOrgId } = useAuth()
   const lang = (user?.language as Language) || 'es'
   const t = TRANSLATIONS[lang]
+  const contentRef = useRef<HTMLDivElement>(null)
 
   // Estados
   const [pdfUrl, setPdfUrl] = useState(document.file_url || '')
@@ -148,25 +150,91 @@ export default function SendDocumentModal({
   const [emailSubject, setEmailSubject] = useState(document.name)
   const [emailMessage, setEmailMessage] = useState('')
 
-  // ─── GERAR PDF ───
+  // ─── GERAR PDF NO CLIENTE ───
   const handleGeneratePdf = async () => {
+    if (!document.content) {
+      toast.error('Documento não tem conteúdo')
+      return
+    }
+
     setGenerating(true)
     try {
-      const response = await fetch('/api/documents/generate-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ documentId: document.id })
-      })
+      // Importar html2pdf dinamicamente
+      const html2pdf = (await import('html2pdf.js')).default
 
-      const data = await response.json()
+      // Criar elemento temporário com o conteúdo
+      const tempDiv = window.document.createElement('div')
+      tempDiv.innerHTML = document.content
+      tempDiv.style.width = '210mm'
+      tempDiv.style.padding = '10mm'
+      tempDiv.style.background = 'white'
+      tempDiv.style.color = 'black'
+      window.document.body.appendChild(tempDiv)
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Erro ao gerar PDF')
+      // Configurações do PDF
+      const opt = {
+        margin: 10,
+        filename: `${document.name}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          letterRendering: true
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' as const
+        }
       }
 
-      setPdfUrl(data.url)
+      // Gerar PDF como Blob
+      const pdfBlob = await html2pdf().set(opt).from(tempDiv).outputPdf('blob')
+      
+      // Remover elemento temporário
+      window.document.body.removeChild(tempDiv)
+
+      // Nome do arquivo para o storage
+      const timestamp = Date.now()
+      const safeName = document.name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .toLowerCase()
+      const fileName = `${activeOrgId}/${document.lead_id}/${safeName}-${timestamp}.pdf`
+
+      // Upload para Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(fileName, pdfBlob, {
+          contentType: 'application/pdf',
+          upsert: false
+        })
+
+      if (uploadError) throw uploadError
+
+      // Obter URL pública
+      const { data: urlData } = supabase.storage
+        .from('documents')
+        .getPublicUrl(fileName)
+
+      const publicUrl = urlData.publicUrl
+      setPdfUrl(publicUrl)
+
+      // Atualizar documento no banco
+      await supabase
+        .from('lead_documents')
+        .update({
+          file_url: publicUrl,
+          file_type: 'application/pdf',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', document.id)
+
       toast.success(t.pdfReady)
     } catch (error: any) {
+      console.error('Erro ao gerar PDF:', error)
       toast.error(t.errorGenerating + ': ' + error.message)
     } finally {
       setGenerating(false)
@@ -181,7 +249,7 @@ export default function SendDocumentModal({
   }
 
   // ─── ENVIAR WHATSAPP ───
-  const handleSendWhatsApp = () => {
+  const handleSendWhatsApp = async () => {
     if (!leadData.phone) {
       toast.error(t.noPhone)
       return
@@ -198,15 +266,15 @@ export default function SendDocumentModal({
     window.open(whatsappUrl, '_blank')
     
     // Marcar como enviado
-    fetch('/api/documents/mark-sent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        documentId: document.id, 
-        via: 'whatsapp',
-        to: leadData.phone 
+    await supabase
+      .from('lead_documents')
+      .update({
+        status: 'sent',
+        sent_via: 'whatsapp',
+        sent_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
-    }).catch(console.error)
+      .eq('id', document.id)
 
     toast.success(t.sent)
     onSuccess?.()
@@ -234,7 +302,8 @@ export default function SendDocumentModal({
           toEmail: emailTo,
           toName: leadData.name,
           subject: emailSubject,
-          message: emailMessage
+          message: emailMessage,
+          pdfUrl: pdfUrl
         })
       })
 
