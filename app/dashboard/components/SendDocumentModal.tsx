@@ -1,7 +1,8 @@
 // app/dashboard/components/SendDocumentModal.tsx
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { supabase } from '@/lib/supabase'
 import type { LeadDocument } from '@/lib/documents/types'
@@ -15,14 +16,15 @@ import {
   Download,
   CheckCircle2,
   AlertCircle,
-  Copy,
-  ExternalLink
+  Copy
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TRADUÇÕES
+// CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
+
+const WEBHOOK_SEND_MESSAGE = 'https://webhook2.letierren8n.com/webhook/message_agent_human'
 
 const TRANSLATIONS = {
   pt: {
@@ -43,13 +45,13 @@ const TRANSLATIONS = {
     messagePlaceholder: 'Olá, segue o documento...',
     send: 'Enviar',
     sending: 'Enviando...',
-    sent: 'Enviado com sucesso!',
+    sent: 'Documento enviado! Redirecionando...',
     cancel: 'Cancelar',
     errorGenerating: 'Erro ao gerar PDF',
     errorSending: 'Erro ao enviar',
     noPhone: 'Lead não tem telefone cadastrado',
     noEmail: 'Lead não tem email cadastrado',
-    whatsappMessage: 'Olá! Segue o documento:',
+    noConversation: 'Lead não tem conversa ativa. Inicie uma conversa primeiro.',
   },
   en: {
     title: 'Send Document',
@@ -69,13 +71,13 @@ const TRANSLATIONS = {
     messagePlaceholder: 'Hello, here is the document...',
     send: 'Send',
     sending: 'Sending...',
-    sent: 'Sent successfully!',
+    sent: 'Document sent! Redirecting...',
     cancel: 'Cancel',
     errorGenerating: 'Error generating PDF',
     errorSending: 'Error sending',
     noPhone: 'Lead has no phone registered',
     noEmail: 'Lead has no email registered',
-    whatsappMessage: 'Hello! Here is the document:',
+    noConversation: 'Lead has no active conversation. Start a conversation first.',
   },
   es: {
     title: 'Enviar Documento',
@@ -95,17 +97,115 @@ const TRANSLATIONS = {
     messagePlaceholder: 'Hola, aquí está el documento...',
     send: 'Enviar',
     sending: 'Enviando...',
-    sent: '¡Enviado con éxito!',
+    sent: '¡Documento enviado! Redirigiendo...',
     cancel: 'Cancelar',
     errorGenerating: 'Error al generar PDF',
     errorSending: 'Error al enviar',
     noPhone: 'Lead no tiene teléfono registrado',
     noEmail: 'Lead no tiene email registrado',
-    whatsappMessage: '¡Hola! Aquí está el documento:',
+    noConversation: 'Lead no tiene conversación activa. Inicie una conversación primero.',
   }
-}
+} as const
 
 type Language = keyof typeof TRANSLATIONS
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PDF STYLES - Estilos profissionais para o documento
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PDF_STYLES = `
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #1a1a1a;
+      background: #ffffff;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      color: #0f172a;
+      margin-bottom: 0.5em;
+      font-weight: 600;
+    }
+    h1 { font-size: 18pt; }
+    h2 { font-size: 14pt; }
+    h3 { font-size: 12pt; }
+    p {
+      margin-bottom: 0.75em;
+      color: #374151;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1em 0;
+      font-size: 10pt;
+    }
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background-color: #f3f4f6;
+      font-weight: 600;
+      color: #1f2937;
+    }
+    tr:nth-child(even) {
+      background-color: #f9fafb;
+    }
+    .header {
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+    }
+    .section-title {
+      color: #2563eb;
+      font-size: 12pt;
+      font-weight: 600;
+      margin-bottom: 10px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .signature-line {
+      border-top: 1px solid #374151;
+      margin-top: 40px;
+      padding-top: 5px;
+      text-align: center;
+      font-size: 10pt;
+      color: #6b7280;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 9pt;
+      color: #6b7280;
+    }
+    strong, b {
+      font-weight: 600;
+      color: #1f2937;
+    }
+    ul, ol {
+      margin: 0.5em 0 0.5em 1.5em;
+    }
+    li {
+      margin-bottom: 0.25em;
+    }
+  </style>
+`
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PROPS
@@ -124,7 +224,7 @@ interface SendDocumentModalProps {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// COMPONENTE PRINCIPAL
+// COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function SendDocumentModal({
@@ -134,90 +234,99 @@ export default function SendDocumentModal({
   leadData,
   onSuccess
 }: SendDocumentModalProps) {
+  const router = useRouter()
   const { user, activeOrgId } = useAuth()
   const lang = (user?.language as Language) || 'es'
   const t = TRANSLATIONS[lang]
-  const contentRef = useRef<HTMLDivElement>(null)
 
-  // Estados
+  // State
   const [pdfUrl, setPdfUrl] = useState(document.file_url || '')
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null)
   const [generating, setGenerating] = useState(false)
   const [sendMethod, setSendMethod] = useState<'whatsapp' | 'email' | null>(null)
   const [sending, setSending] = useState(false)
   
-  // Form de email
+  // Email form
   const [emailTo, setEmailTo] = useState(leadData.email || '')
   const [emailSubject, setEmailSubject] = useState(document.name)
   const [emailMessage, setEmailMessage] = useState('')
 
-  // ─── GERAR PDF NO CLIENTE ───
-  const handleGeneratePdf = async () => {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // GENERATE PDF
+  // ─────────────────────────────────────────────────────────────────────────────
+  const handleGeneratePdf = useCallback(async () => {
     if (!document.content) {
       toast.error('Documento não tem conteúdo')
       return
     }
 
     setGenerating(true)
+    
     try {
-      // Importar html2pdf dinamicamente
       const html2pdf = (await import('html2pdf.js')).default
 
-      // Criar elemento temporário com o conteúdo
-      const tempDiv = window.document.createElement('div')
-      tempDiv.innerHTML = `
-        <div style="
-          width: 190mm;
-          max-width: 190mm;
-          padding: 0;
-          margin: 0 auto;
-          font-family: Arial, sans-serif;
-          font-size: 12pt;
-          line-height: 1.4;
-          color: #000;
-          background: #fff;
-          box-sizing: border-box;
-        ">
-          <style>
-            * { box-sizing: border-box; }
-            table { width: 100% !important; max-width: 100% !important; border-collapse: collapse; }
-            td, th { padding: 8px; word-wrap: break-word; }
-            img { max-width: 100% !important; height: auto !important; }
-            p, div, span { max-width: 100% !important; word-wrap: break-word; }
-          </style>
-          ${document.content}
-        </div>
+      // Criar container com estilos profissionais
+      const container = window.document.createElement('div')
+      container.innerHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          ${PDF_STYLES}
+        </head>
+        <body>
+          <div style="
+            width: 180mm;
+            min-height: 250mm;
+            padding: 15mm;
+            margin: 0 auto;
+            background: #ffffff;
+          ">
+            ${document.content}
+          </div>
+        </body>
+        </html>
       `
-      tempDiv.style.position = 'absolute'
-      tempDiv.style.left = '-9999px'
-      tempDiv.style.top = '0'
-      window.document.body.appendChild(tempDiv)
+      
+      // Posicionar fora da tela para renderização
+      container.style.cssText = 'position:fixed;left:-10000px;top:0;width:210mm;'
+      window.document.body.appendChild(container)
 
-      // Configurações do PDF - A4 com margens adequadas
-      const opt = {
-        margin: [10, 10, 10, 10] as [number, number, number, number], // top, left, bottom, right em mm
+      // Aguardar renderização
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const options = {
+        margin: 0,
         filename: `${document.name}.pdf`,
         image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: { 
           scale: 2,
           useCORS: true,
-          letterRendering: true,
-          width: 794, // A4 width em pixels (210mm * 3.78)
-          windowWidth: 794
+          logging: false,
+          backgroundColor: '#ffffff'
         },
         jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
+          unit: 'mm' as const, 
+          format: 'a4' as const, 
           orientation: 'portrait' as const
         }
       }
 
-      // Gerar PDF como Blob
-      const pdfBlob = await html2pdf().set(opt).from(tempDiv).outputPdf('blob')
+      // Gerar blob
+      const blob = await html2pdf()
+        .set(options)
+        .from(container)
+        .outputPdf('blob') as Blob
       
-      // Remover elemento temporário
-      window.document.body.removeChild(tempDiv)
+      window.document.body.removeChild(container)
 
-      // Nome do arquivo para o storage
+      if (!blob || blob.size === 0) {
+        throw new Error('PDF gerado está vazio')
+      }
+
+      setPdfBlob(blob)
+
+      // Upload para Storage
       const timestamp = Date.now()
       const safeName = document.name
         .normalize('NFD')
@@ -225,22 +334,21 @@ export default function SendDocumentModal({
         .replace(/[^a-zA-Z0-9\s-]/g, '')
         .replace(/\s+/g, '-')
         .toLowerCase()
-      const fileName = `${activeOrgId}/${document.lead_id}/${safeName}-${timestamp}.pdf`
+      
+      const filePath = `${activeOrgId}/${document.lead_id}/${safeName}-${timestamp}.pdf`
 
-      // Upload para Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('documents')
-        .upload(fileName, pdfBlob, {
+        .upload(filePath, blob, {
           contentType: 'application/pdf',
           upsert: false
         })
 
       if (uploadError) throw uploadError
 
-      // Obter URL pública
       const { data: urlData } = supabase.storage
         .from('documents')
-        .getPublicUrl(fileName)
+        .getPublicUrl(filePath)
 
       const publicUrl = urlData.publicUrl
       setPdfUrl(publicUrl)
@@ -256,95 +364,122 @@ export default function SendDocumentModal({
         .eq('id', document.id)
 
       toast.success(t.pdfReady)
+      
     } catch (error: any) {
       console.error('Erro ao gerar PDF:', error)
-      toast.error(t.errorGenerating + ': ' + error.message)
+      toast.error(`${t.errorGenerating}: ${error.message}`)
     } finally {
       setGenerating(false)
     }
-  }
+  }, [document, activeOrgId, t])
 
-  // ─── COPIAR LINK ───
-  const handleCopyLink = async () => {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // DOWNLOAD PDF
+  // ─────────────────────────────────────────────────────────────────────────────
+  const handleDownload = useCallback(() => {
+    if (pdfBlob) {
+      // Download do blob local (mais confiável)
+      const url = URL.createObjectURL(pdfBlob)
+      const link = window.document.createElement('a')
+      link.href = url
+      link.download = `${document.name}.pdf`
+      link.click()
+      URL.revokeObjectURL(url)
+    } else if (pdfUrl) {
+      // Fallback para URL remota
+      window.open(pdfUrl, '_blank')
+    }
+  }, [pdfBlob, pdfUrl, document.name])
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // COPY LINK
+  // ─────────────────────────────────────────────────────────────────────────────
+  const handleCopyLink = useCallback(async () => {
     if (!pdfUrl) return
-    // Usar URL amigável
-    const friendlyUrl = `${window.location.origin}/api/documents/download?id=${document.id}`
-    await navigator.clipboard.writeText(friendlyUrl)
-    toast.success(t.linkCopied)
-  }
+    
+    try {
+      await navigator.clipboard.writeText(pdfUrl)
+      toast.success(t.linkCopied)
+    } catch {
+      toast.error('Erro ao copiar')
+    }
+  }, [pdfUrl, t])
 
-  // ─── ENVIAR WHATSAPP VIA UAZAPI ───
-  const handleSendWhatsApp = async () => {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SEND WHATSAPP VIA UAZAPI
+  // ─────────────────────────────────────────────────────────────────────────────
+  const handleSendWhatsApp = useCallback(async () => {
     if (!leadData.phone) {
       toast.error(t.noPhone)
       return
     }
+    
     if (!pdfUrl) {
       toast.error('Gere o PDF primeiro')
       return
     }
 
     setSending(true)
+    
     try {
-      // Buscar lead_id e conversation_id do lead
-      const { data: leadInfo, error: leadError } = await supabase
-        .from('leads')
-        .select('id, conversations(id)')
-        .eq('id', document.lead_id)
-        .single()
+      // Buscar conversation_id do lead
+      const { data: conversations, error: convError } = await supabase
+        .from('conversations')
+        .select('id, org_id')
+        .eq('lead_id', document.lead_id)
+        .order('last_message_at', { ascending: false })
+        .limit(1)
 
-      if (leadError || !leadInfo) {
-        throw new Error('Lead não encontrado')
+      if (convError) throw convError
+
+      const conversation = conversations?.[0]
+
+      if (!conversation) {
+        toast.error(t.noConversation)
+        setSending(false)
+        return
       }
 
-      const conversationId = (leadInfo.conversations as any)?.[0]?.id
-
-      if (!conversationId) {
-        // Se não tem conversa, abre no WhatsApp Web (fallback)
-        const phone = leadData.phone.replace(/\D/g, '')
-        const friendlyUrl = `${window.location.origin}/api/documents/download?id=${document.id}`
-        const message = `${t.whatsappMessage}\n\n📄 *${document.name}*\n\n${friendlyUrl}`
-        const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
-        window.open(whatsappUrl, '_blank')
-      } else {
-        // Enviar via UazAPI com o documento
-        const webhookUrl = 'https://webhook2.letierren8n.com/webhook/message_agent_human'
-        
-        const res = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            org_id: activeOrgId,
-            lead_id: document.lead_id,
-            conversation_id: conversationId,
-            user_id: user?.id,
-            message: `📄 ${document.name}`,
-            message_type: 'document',
-            media_url: pdfUrl,
-            media_mime_type: 'application/pdf',
-            file_name: `${document.name}.pdf`
-          }),
-        })
-
-        if (!res.ok) {
-          throw new Error('Falha ao enviar via WhatsApp')
-        }
-
-        // Registrar mensagem no banco
-        await supabase.rpc('fn_insert_message', {
-          p_org_id: activeOrgId,
-          p_lead_id: document.lead_id,
-          p_channel: 'whatsapp',
-          p_direction: 'outbound',
-          p_body: `📄 ${document.name}`,
-          p_sender_type: 'agent_human',
-          p_sender_name: user?.name || user?.email?.split('@')[0] || 'Atendente',
-          p_message_type: 'document',
-          p_media_url: pdfUrl,
-          p_media_mime_type: 'application/pdf',
-          p_timestamp: new Date().toISOString(),
-        })
+      // Enviar via webhook UazAPI
+      const webhookPayload = {
+        org_id: activeOrgId,
+        lead_id: document.lead_id,
+        conversation_id: conversation.id,
+        user_id: user?.id,
+        message: `📄 ${document.name}`,
+        message_type: 'document',
+        media_url: pdfUrl,
+        media_mime_type: 'application/pdf',
+        file_name: `${document.name}.pdf`
       }
+
+      const response = await fetch(WEBHOOK_SEND_MESSAGE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(webhookPayload)
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Webhook error: ${errorText}`)
+      }
+
+      // Registrar mensagem no banco
+      const senderName = user?.name || user?.email?.split('@')[0] || 'Atendente'
+      
+      await supabase.rpc('fn_insert_message', {
+        p_org_id: activeOrgId,
+        p_lead_id: document.lead_id,
+        p_channel: 'whatsapp',
+        p_direction: 'outbound',
+        p_body: `📄 ${document.name}`,
+        p_sender_type: 'agent_human',
+        p_sender_name: senderName,
+        p_message_type: 'document',
+        p_media_url: pdfUrl,
+        p_media_mime_type: 'application/pdf',
+        p_timestamp: new Date().toISOString()
+      })
 
       // Atualizar documento como enviado
       await supabase
@@ -360,26 +495,34 @@ export default function SendDocumentModal({
       toast.success(t.sent)
       onSuccess?.()
       onClose()
+      
+      // Redirecionar para o módulo de conversas
+      router.push(`/dashboard/messages?conversation=${conversation.id}`)
+
     } catch (error: any) {
       console.error('Erro ao enviar WhatsApp:', error)
-      toast.error(t.errorSending + ': ' + error.message)
+      toast.error(`${t.errorSending}: ${error.message}`)
     } finally {
       setSending(false)
     }
-  }
+  }, [document, leadData, pdfUrl, activeOrgId, user, t, router, onSuccess, onClose])
 
-  // ─── ENVIAR EMAIL ───
-  const handleSendEmail = async () => {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SEND EMAIL
+  // ─────────────────────────────────────────────────────────────────────────────
+  const handleSendEmail = useCallback(async () => {
     if (!emailTo) {
       toast.error(t.noEmail)
       return
     }
+    
     if (!pdfUrl) {
       toast.error('Gere o PDF primeiro')
       return
     }
 
     setSending(true)
+    
     try {
       const response = await fetch('/api/documents/send-email', {
         method: 'POST',
@@ -390,7 +533,7 @@ export default function SendDocumentModal({
           toName: leadData.name,
           subject: emailSubject,
           message: emailMessage,
-          pdfUrl: pdfUrl
+          pdfUrl
         })
       })
 
@@ -403,17 +546,24 @@ export default function SendDocumentModal({
       toast.success(t.sent)
       onSuccess?.()
       onClose()
+      
     } catch (error: any) {
-      toast.error(t.errorSending + ': ' + error.message)
+      toast.error(`${t.errorSending}: ${error.message}`)
     } finally {
       setSending(false)
     }
-  }
+  }, [document, leadData, emailTo, emailSubject, emailMessage, pdfUrl, t, onSuccess, onClose])
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────────────────────────
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
       <div 
         className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -434,27 +584,24 @@ export default function SendDocumentModal({
 
         {/* Content */}
         <div className="p-4 space-y-4">
-          
-          {/* Info do documento */}
+          {/* Document info */}
           <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-3 flex items-center gap-3">
             <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
               <FileText size={20} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white font-medium truncate">{document.name}</p>
-              <p className="text-gray-500 text-xs">
-                {leadData.name}
-              </p>
+              <p className="text-gray-500 text-xs">{leadData.name}</p>
             </div>
           </div>
 
-          {/* Gerar/Baixar PDF */}
+          {/* Generate / Download PDF */}
           <div className="space-y-2">
             {!pdfUrl ? (
               <button
                 onClick={handleGeneratePdf}
                 disabled={generating}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {generating ? (
                   <>
@@ -475,18 +622,17 @@ export default function SendDocumentModal({
                   <span className="font-medium">{t.pdfReady}</span>
                 </div>
                 <div className="flex gap-2">
-                  <a
-                    href={pdfUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={handleDownload}
                     className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
                   >
                     <Download size={14} />
                     {t.download}
-                  </a>
+                  </button>
                   <button
                     onClick={handleCopyLink}
                     className="py-2 px-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors border border-white/10"
+                    title={t.copyLink}
                   >
                     <Copy size={14} />
                   </button>
@@ -495,7 +641,7 @@ export default function SendDocumentModal({
             )}
           </div>
 
-          {/* Opções de envio (só aparecem se tem PDF) */}
+          {/* Send options */}
           {pdfUrl && (
             <>
               <div className="pt-2">
@@ -528,7 +674,7 @@ export default function SendDocumentModal({
                 </div>
               </div>
 
-              {/* Form WhatsApp */}
+              {/* WhatsApp send */}
               {sendMethod === 'whatsapp' && (
                 <div className="pt-2 space-y-3">
                   {!leadData.phone ? (
@@ -540,7 +686,7 @@ export default function SendDocumentModal({
                     <button
                       onClick={handleSendWhatsApp}
                       disabled={sending}
-                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {sending ? (
                         <>
@@ -558,7 +704,7 @@ export default function SendDocumentModal({
                 </div>
               )}
 
-              {/* Form Email */}
+              {/* Email form */}
               {sendMethod === 'email' && (
                 <div className="pt-2 space-y-3">
                   <div>
@@ -599,7 +745,7 @@ export default function SendDocumentModal({
                   <button
                     onClick={handleSendEmail}
                     disabled={sending || !emailTo}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {sending ? (
                       <>

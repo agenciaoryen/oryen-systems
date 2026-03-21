@@ -284,35 +284,136 @@ function DocumentItem({
           onClick={() => setShowPreview(false)}
         >
           <div 
-            className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col"
+            className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-3 border-b bg-gray-50">
-              <h3 className="font-medium text-gray-900">{doc.name}</h3>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FileText size={20} className="text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">{doc.name}</h3>
+                  <p className="text-sm text-gray-500">Vista previa del documento</p>
+                </div>
+              </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
-                    const win = window.open('', '_blank')
-                    win?.document.write(doc.content || '')
-                    win?.print()
+                    const printWindow = window.open('', '_blank')
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                          <meta charset="UTF-8">
+                          <title>${doc.name}</title>
+                          <style>
+                            * { box-sizing: border-box; margin: 0; padding: 0; }
+                            body {
+                              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                              font-size: 11pt;
+                              line-height: 1.5;
+                              color: #1a1a1a;
+                              background: #fff;
+                              padding: 20mm;
+                            }
+                            h1, h2, h3, h4 { color: #0f172a; margin-bottom: 0.5em; font-weight: 600; }
+                            h1 { font-size: 18pt; }
+                            h2 { font-size: 14pt; }
+                            h3 { font-size: 12pt; }
+                            p { margin-bottom: 0.75em; color: #374151; }
+                            table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+                            th, td { border: 1px solid #d1d5db; padding: 10px 12px; text-align: left; }
+                            th { background-color: #f3f4f6; font-weight: 600; color: #1f2937; }
+                            tr:nth-child(even) { background-color: #f9fafb; }
+                            strong, b { font-weight: 600; color: #1f2937; }
+                            @media print { body { padding: 10mm; } }
+                          </style>
+                        </head>
+                        <body>${doc.content}</body>
+                        </html>
+                      `)
+                      printWindow.document.close()
+                      printWindow.print()
+                    }
                   }}
-                  className="p-2 rounded hover:bg-gray-200 text-gray-600"
-                  title="Imprimir"
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
                 >
                   <ExternalLink size={16} />
+                  Imprimir
                 </button>
                 <button
                   onClick={() => setShowPreview(false)}
-                  className="p-2 rounded hover:bg-gray-200 text-gray-600"
+                  className="p-2 rounded-lg hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
                 >
-                  <X size={16} />
+                  <X size={20} />
                 </button>
               </div>
             </div>
-            <div 
-              className="flex-1 overflow-auto p-4"
-              dangerouslySetInnerHTML={{ __html: doc.content }}
-            />
+            
+            {/* Document Content */}
+            <div className="flex-1 overflow-auto bg-gray-100 p-6">
+              <div 
+                className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8"
+                style={{
+                  fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                  fontSize: '11pt',
+                  lineHeight: '1.5',
+                  color: '#1a1a1a'
+                }}
+              >
+                <style dangerouslySetInnerHTML={{ __html: `
+                  .doc-preview h1, .doc-preview h2, .doc-preview h3, .doc-preview h4 {
+                    color: #0f172a;
+                    margin-bottom: 0.5em;
+                    font-weight: 600;
+                  }
+                  .doc-preview h1 { font-size: 18pt; }
+                  .doc-preview h2 { font-size: 14pt; }
+                  .doc-preview h3 { font-size: 12pt; }
+                  .doc-preview p {
+                    margin-bottom: 0.75em;
+                    color: #374151;
+                  }
+                  .doc-preview table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 1em 0;
+                    font-size: 10pt;
+                  }
+                  .doc-preview th, .doc-preview td {
+                    border: 1px solid #d1d5db;
+                    padding: 10px 12px;
+                    text-align: left;
+                    vertical-align: top;
+                  }
+                  .doc-preview th {
+                    background-color: #f3f4f6;
+                    font-weight: 600;
+                    color: #1f2937;
+                  }
+                  .doc-preview tr:nth-child(even) {
+                    background-color: #f9fafb;
+                  }
+                  .doc-preview strong, .doc-preview b {
+                    font-weight: 600;
+                    color: #1f2937;
+                  }
+                  .doc-preview ul, .doc-preview ol {
+                    margin: 0.5em 0 0.5em 1.5em;
+                  }
+                  .doc-preview li {
+                    margin-bottom: 0.25em;
+                  }
+                `}} />
+                <div 
+                  className="doc-preview"
+                  dangerouslySetInnerHTML={{ __html: doc.content }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
