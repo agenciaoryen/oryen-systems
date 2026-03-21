@@ -224,10 +224,14 @@ export async function createDocument(
     // Renderizar o conteúdo
     const contentHtml = renderTemplate(template.content, form.filled_data)
     
+    // Gerar UUID para o documento
+    const documentId = crypto.randomUUID()
+    
     // Criar documento
     const { data, error } = await supabase
       .from('lead_documents')
       .insert({
+        id: documentId,
         lead_id: form.lead_id,
         org_id: orgId,
         template_id: form.template_id,
@@ -324,6 +328,9 @@ export async function uploadDocument(
   description?: string
 ): Promise<{ data: LeadDocument | null; error: string | null }> {
   try {
+    // Gerar UUID para o documento
+    const documentId = crypto.randomUUID()
+    
     // Upload do arquivo para o Storage
     const fileExt = file.name.split('.').pop()
     const fileName = `${orgId}/${leadId}/${Date.now()}.${fileExt}`
@@ -343,6 +350,7 @@ export async function uploadDocument(
     const { data, error } = await supabase
       .from('lead_documents')
       .insert({
+        id: documentId,
         lead_id: leadId,
         org_id: orgId,
         name,
