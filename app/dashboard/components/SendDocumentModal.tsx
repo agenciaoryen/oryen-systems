@@ -167,6 +167,21 @@ export default function SendDocumentModal({
     try {
       const html2pdf = (await import('html2pdf.js')).default
 
+      // Processar o conteúdo HTML para normalizar campos dinâmicos
+      let processedContent = document.content
+      
+      // Normalizar spans com background amarelo para manter alinhamento
+      processedContent = processedContent.replace(
+        /<span([^>]*style="[^"]*background[^"]*"[^>]*)>/gi,
+        '<span$1 style="display:inline;vertical-align:baseline;line-height:inherit;padding:1px 3px;margin:0;">'
+      )
+      
+      // Remover line-height excessivo de spans
+      processedContent = processedContent.replace(
+        /(<span[^>]*)(line-height:\s*[^;]+;?)([^>]*>)/gi,
+        '$1$3'
+      )
+
       // Criar container com estilos inline para garantir renderização
       const containerId = 'pdf-container-' + Date.now()
       const container = window.document.createElement('div')
@@ -181,7 +196,7 @@ export default function SendDocumentModal({
           color: #1a1a1a;
           font-family: Helvetica, Arial, sans-serif;
           font-size: 11pt;
-          line-height: 1.6;
+          line-height: 1.4;
           box-sizing: border-box;
           text-align: left;
         ">
@@ -192,30 +207,36 @@ export default function SendDocumentModal({
             #${containerId} h1, #${containerId} h2, #${containerId} h3, #${containerId} h4 {
               color: #0f172a;
               margin: 0 0 0.5em 0;
+              padding: 0;
               font-weight: 600;
               text-align: center;
+              line-height: 1.3;
             }
             #${containerId} h1 { font-size: 18pt; }
             #${containerId} h2 { font-size: 14pt; }
             #${containerId} h3 { font-size: 12pt; text-align: left; }
             #${containerId} h4 { font-size: 11pt; text-align: left; }
             #${containerId} p {
-              margin: 0 0 0.75em 0;
+              margin: 0 0 0.5em 0;
+              padding: 0;
               color: #374151;
               text-align: justify;
+              line-height: 1.4;
             }
             #${containerId} table {
               width: 100%;
               border-collapse: collapse;
-              margin: 1em auto;
+              margin: 0.5em 0;
               font-size: 10pt;
+              line-height: 1.3;
             }
             #${containerId} th, #${containerId} td {
               border: 1px solid #9ca3af;
-              padding: 10px 12px;
+              padding: 6px 8px;
               text-align: left;
-              vertical-align: top;
+              vertical-align: middle;
               color: #1f2937;
+              line-height: 1.3;
             }
             #${containerId} th {
               background-color: #e5e7eb;
@@ -231,41 +252,64 @@ export default function SendDocumentModal({
             }
             #${containerId} li {
               margin-bottom: 0.25em;
+              line-height: 1.4;
+            }
+            /* Forçar todos os spans a ficarem inline e alinhados */
+            #${containerId} span {
+              display: inline !important;
+              vertical-align: baseline !important;
+              line-height: inherit !important;
+              margin: 0 !important;
+              position: static !important;
+            }
+            /* Campos dinâmicos com fundo */
+            #${containerId} span[style*="background"] {
+              padding: 1px 3px !important;
+            }
+            /* Linhas horizontais */
+            #${containerId} hr {
+              margin: 0.5em 0;
+              border: none;
+              border-top: 1px solid #000;
+            }
+            /* Elementos com underline/linha */
+            #${containerId} [style*="border-bottom"],
+            #${containerId} [style*="text-decoration"] {
+              display: inline !important;
+              vertical-align: baseline !important;
             }
           </style>
-          ${document.content}
+          ${processedContent}
         </div>
       `
       
-      // Importante: posicionar visível mas fora da viewport
+      // Posicionar o container de forma visível para renderização correta
       container.style.cssText = `
-        position: absolute;
+        position: fixed;
         left: 0;
         top: 0;
         width: 210mm;
         background: white;
-        z-index: -9999;
-        opacity: 0;
-        pointer-events: none;
+        z-index: 99999;
+        visibility: hidden;
       `
       window.document.body.appendChild(container)
 
       // Aguardar renderização completa
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await new Promise(resolve => setTimeout(resolve, 500))
 
       const options = {
         margin: [0, 0, 0, 0] as [number, number, number, number],
         filename: `${document.name}.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.95 },
+        image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: { 
           scale: 2,
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
-          width: 794,
-          height: 1123,
-          windowWidth: 794,
-          windowHeight: 1123
+          letterRendering: true,
+          allowTaint: true,
+          foreignObjectRendering: false
         },
         jsPDF: { 
           unit: 'mm' as const, 
