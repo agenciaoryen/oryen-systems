@@ -110,104 +110,6 @@ const TRANSLATIONS = {
 type Language = keyof typeof TRANSLATIONS
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PDF STYLES - Estilos profissionais para o documento
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const PDF_STYLES = `
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body, html {
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      font-size: 11pt;
-      line-height: 1.5;
-      color: #1a1a1a;
-      background: #ffffff;
-    }
-    h1, h2, h3, h4, h5, h6 {
-      color: #0f172a;
-      margin-bottom: 0.5em;
-      font-weight: 600;
-    }
-    h1 { font-size: 18pt; }
-    h2 { font-size: 14pt; }
-    h3 { font-size: 12pt; }
-    p {
-      margin-bottom: 0.75em;
-      color: #374151;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1em 0;
-      font-size: 10pt;
-    }
-    th, td {
-      border: 1px solid #d1d5db;
-      padding: 10px 12px;
-      text-align: left;
-      vertical-align: top;
-    }
-    th {
-      background-color: #f3f4f6;
-      font-weight: 600;
-      color: #1f2937;
-    }
-    tr:nth-child(even) {
-      background-color: #f9fafb;
-    }
-    .header {
-      border-bottom: 2px solid #2563eb;
-      padding-bottom: 15px;
-      margin-bottom: 20px;
-    }
-    .section {
-      margin: 20px 0;
-      padding: 15px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 4px;
-    }
-    .section-title {
-      color: #2563eb;
-      font-size: 12pt;
-      font-weight: 600;
-      margin-bottom: 10px;
-      padding-bottom: 5px;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .signature-line {
-      border-top: 1px solid #374151;
-      margin-top: 40px;
-      padding-top: 5px;
-      text-align: center;
-      font-size: 10pt;
-      color: #6b7280;
-    }
-    .footer {
-      margin-top: 30px;
-      padding-top: 15px;
-      border-top: 1px solid #e5e7eb;
-      font-size: 9pt;
-      color: #6b7280;
-    }
-    strong, b {
-      font-weight: 600;
-      color: #1f2937;
-    }
-    ul, ol {
-      margin: 0.5em 0 0.5em 1.5em;
-    }
-    li {
-      margin-bottom: 0.25em;
-    }
-  </style>
-`
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // PROPS
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -265,45 +167,100 @@ export default function SendDocumentModal({
     try {
       const html2pdf = (await import('html2pdf.js')).default
 
-      // Criar container com estilos profissionais
+      // Criar container com estilos inline para garantir renderização
       const container = window.document.createElement('div')
+      container.id = 'pdf-container-' + Date.now()
       container.innerHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          ${PDF_STYLES}
-        </head>
-        <body>
-          <div style="
-            width: 180mm;
-            min-height: 250mm;
-            padding: 15mm;
-            margin: 0 auto;
-            background: #ffffff;
-          ">
-            ${document.content}
-          </div>
-        </body>
-        </html>
+        <div style="
+          width: 190mm;
+          min-height: 277mm;
+          padding: 10mm;
+          margin: 0;
+          background-color: #ffffff;
+          color: #1a1a1a;
+          font-family: Helvetica, Arial, sans-serif;
+          font-size: 11pt;
+          line-height: 1.5;
+          box-sizing: border-box;
+        ">
+          <style>
+            #${container.id} * {
+              box-sizing: border-box;
+            }
+            #${container.id} h1, #${container.id} h2, #${container.id} h3, #${container.id} h4 {
+              color: #0f172a;
+              margin: 0 0 0.5em 0;
+              font-weight: 600;
+            }
+            #${container.id} h1 { font-size: 18pt; }
+            #${container.id} h2 { font-size: 14pt; }
+            #${container.id} h3 { font-size: 12pt; }
+            #${container.id} p {
+              margin: 0 0 0.75em 0;
+              color: #374151;
+            }
+            #${container.id} table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 1em 0;
+              font-size: 10pt;
+            }
+            #${container.id} th, #${container.id} td {
+              border: 1px solid #9ca3af;
+              padding: 8px 10px;
+              text-align: left;
+              vertical-align: top;
+              color: #1f2937;
+            }
+            #${container.id} th {
+              background-color: #e5e7eb;
+              font-weight: 600;
+            }
+            #${container.id} strong, #${container.id} b {
+              font-weight: 600;
+              color: #1f2937;
+            }
+            #${container.id} ul, #${container.id} ol {
+              margin: 0.5em 0 0.5em 1.5em;
+              padding: 0;
+            }
+            #${container.id} li {
+              margin-bottom: 0.25em;
+            }
+          </style>
+          ${document.content}
+        </div>
       `
       
-      // Posicionar fora da tela para renderização
-      container.style.cssText = 'position:fixed;left:-10000px;top:0;width:210mm;'
+      // Importante: posicionar visível mas fora da viewport
+      container.style.cssText = `
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 210mm;
+        background: white;
+        z-index: -9999;
+        opacity: 0;
+        pointer-events: none;
+      `
       window.document.body.appendChild(container)
 
-      // Aguardar renderização
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Aguardar renderização completa
+      await new Promise(resolve => setTimeout(resolve, 300))
 
       const options = {
-        margin: 0,
+        margin: [0, 0, 0, 0] as [number, number, number, number],
         filename: `${document.name}.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.98 },
+        image: { type: 'jpeg' as const, quality: 0.95 },
         html2canvas: { 
           scale: 2,
           useCORS: true,
           logging: false,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          width: 794,
+          height: 1123,
+          windowWidth: 794,
+          windowHeight: 1123
         },
         jsPDF: { 
           unit: 'mm' as const, 
@@ -312,12 +269,15 @@ export default function SendDocumentModal({
         }
       }
 
-      // Gerar blob
+      // Gerar blob - pegar o primeiro filho que tem o conteúdo
+      const contentElement = container.firstElementChild as HTMLElement
+      
       const blob = await html2pdf()
         .set(options)
-        .from(container)
+        .from(contentElement)
         .outputPdf('blob') as Blob
       
+      // Limpar
       window.document.body.removeChild(container)
 
       if (!blob || blob.size === 0) {

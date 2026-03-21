@@ -696,11 +696,73 @@ export default function CreateDocumentModal({
 
           {/* Step 3: Preview */}
           {step === 3 && (
-            <div className="bg-white rounded-lg overflow-hidden">
+            <div className="bg-gray-100 rounded-lg overflow-hidden p-4">
               <div 
-                className="p-4"
-                dangerouslySetInnerHTML={{ __html: previewHtml }}
-              />
+                className="mx-auto bg-white rounded-lg shadow-lg p-8"
+                style={{
+                  maxWidth: '210mm',
+                  width: '100%',
+                  fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                  fontSize: '11pt',
+                  lineHeight: '1.5',
+                  color: '#1a1a1a'
+                }}
+              >
+                <style dangerouslySetInnerHTML={{ __html: `
+                  .doc-preview-create h1, .doc-preview-create h2, .doc-preview-create h3, .doc-preview-create h4 {
+                    color: #0f172a !important;
+                    margin-bottom: 0.5em;
+                    font-weight: 600;
+                  }
+                  .doc-preview-create h1 { font-size: 18pt; }
+                  .doc-preview-create h2 { font-size: 14pt; }
+                  .doc-preview-create h3 { font-size: 12pt; }
+                  .doc-preview-create p {
+                    margin-bottom: 0.75em;
+                    color: #374151 !important;
+                  }
+                  .doc-preview-create table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 1em 0;
+                    font-size: 10pt;
+                  }
+                  .doc-preview-create th, .doc-preview-create td {
+                    border: 1px solid #d1d5db !important;
+                    padding: 10px 12px;
+                    text-align: left;
+                    vertical-align: top;
+                    color: #1f2937 !important;
+                  }
+                  .doc-preview-create th {
+                    background-color: #f3f4f6 !important;
+                    font-weight: 600;
+                    color: #1f2937 !important;
+                  }
+                  .doc-preview-create tr:nth-child(even) {
+                    background-color: #f9fafb;
+                  }
+                  .doc-preview-create strong, .doc-preview-create b {
+                    font-weight: 600;
+                    color: #1f2937 !important;
+                  }
+                  .doc-preview-create ul, .doc-preview-create ol {
+                    margin: 0.5em 0 0.5em 1.5em;
+                    color: #374151 !important;
+                  }
+                  .doc-preview-create li {
+                    margin-bottom: 0.25em;
+                    color: #374151 !important;
+                  }
+                  .doc-preview-create span, .doc-preview-create div {
+                    color: #1f2937 !important;
+                  }
+                `}} />
+                <div 
+                  className="doc-preview-create"
+                  dangerouslySetInnerHTML={{ __html: previewHtml }}
+                />
+              </div>
             </div>
           )}
         </div>

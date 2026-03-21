@@ -356,8 +356,10 @@ function DocumentItem({
             {/* Document Content */}
             <div className="flex-1 overflow-auto bg-gray-100 p-6">
               <div 
-                className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8"
+                className="mx-auto bg-white rounded-lg shadow-lg p-8"
                 style={{
+                  maxWidth: '210mm',
+                  width: '100%',
                   fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
                   fontSize: '11pt',
                   lineHeight: '1.5',
