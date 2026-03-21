@@ -696,23 +696,35 @@ export default function CreateDocumentModal({
 
           {/* Step 3: Preview */}
           {step === 3 && (
-            <div className="bg-gray-100 rounded-lg overflow-hidden p-4">
+            <div className="bg-gray-100 rounded-lg overflow-hidden p-8">
               <div 
-                className="mx-auto bg-white rounded-lg shadow-lg p-8"
+                className="bg-white rounded-lg shadow-lg"
                 style={{
                   maxWidth: '210mm',
                   width: '100%',
+                  margin: '0 auto',
+                  padding: '20mm',
                   fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
                   fontSize: '11pt',
-                  lineHeight: '1.5',
+                  lineHeight: '1.6',
                   color: '#1a1a1a'
                 }}
               >
                 <style dangerouslySetInnerHTML={{ __html: `
-                  .doc-preview-create h1, .doc-preview-create h2, .doc-preview-create h3, .doc-preview-create h4 {
+                  .doc-preview-create {
+                    text-align: left;
+                  }
+                  .doc-preview-create h1, .doc-preview-create h2 {
                     color: #0f172a !important;
                     margin-bottom: 0.5em;
                     font-weight: 600;
+                    text-align: center;
+                  }
+                  .doc-preview-create h3, .doc-preview-create h4 {
+                    color: #0f172a !important;
+                    margin-bottom: 0.5em;
+                    font-weight: 600;
+                    text-align: left;
                   }
                   .doc-preview-create h1 { font-size: 18pt; }
                   .doc-preview-create h2 { font-size: 14pt; }
@@ -720,11 +732,12 @@ export default function CreateDocumentModal({
                   .doc-preview-create p {
                     margin-bottom: 0.75em;
                     color: #374151 !important;
+                    text-align: justify;
                   }
                   .doc-preview-create table {
                     width: 100%;
                     border-collapse: collapse;
-                    margin: 1em 0;
+                    margin: 1em auto;
                     font-size: 10pt;
                   }
                   .doc-preview-create th, .doc-preview-create td {
@@ -787,7 +800,7 @@ export default function CreateDocumentModal({
             {step === 2 && (
               <button
                 onClick={handleNext}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
               >
                 <Eye size={16} />
                 {t.preview}
@@ -799,7 +812,7 @@ export default function CreateDocumentModal({
               <button
                 onClick={handleCreate}
                 disabled={creating}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium flex items-center gap-2.5 transition-colors disabled:opacity-50"
               >
                 {creating ? (
                   <>

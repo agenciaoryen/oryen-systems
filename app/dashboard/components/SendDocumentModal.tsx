@@ -168,63 +168,68 @@ export default function SendDocumentModal({
       const html2pdf = (await import('html2pdf.js')).default
 
       // Criar container com estilos inline para garantir renderização
+      const containerId = 'pdf-container-' + Date.now()
       const container = window.document.createElement('div')
-      container.id = 'pdf-container-' + Date.now()
+      container.id = containerId
       container.innerHTML = `
         <div style="
-          width: 190mm;
-          min-height: 277mm;
-          padding: 10mm;
-          margin: 0;
+          width: 210mm;
+          min-height: 297mm;
+          padding: 20mm;
+          margin: 0 auto;
           background-color: #ffffff;
           color: #1a1a1a;
           font-family: Helvetica, Arial, sans-serif;
           font-size: 11pt;
-          line-height: 1.5;
+          line-height: 1.6;
           box-sizing: border-box;
+          text-align: left;
         ">
           <style>
-            #${container.id} * {
+            #${containerId} * {
               box-sizing: border-box;
             }
-            #${container.id} h1, #${container.id} h2, #${container.id} h3, #${container.id} h4 {
+            #${containerId} h1, #${containerId} h2, #${containerId} h3, #${containerId} h4 {
               color: #0f172a;
               margin: 0 0 0.5em 0;
               font-weight: 600;
+              text-align: center;
             }
-            #${container.id} h1 { font-size: 18pt; }
-            #${container.id} h2 { font-size: 14pt; }
-            #${container.id} h3 { font-size: 12pt; }
-            #${container.id} p {
+            #${containerId} h1 { font-size: 18pt; }
+            #${containerId} h2 { font-size: 14pt; }
+            #${containerId} h3 { font-size: 12pt; text-align: left; }
+            #${containerId} h4 { font-size: 11pt; text-align: left; }
+            #${containerId} p {
               margin: 0 0 0.75em 0;
               color: #374151;
+              text-align: justify;
             }
-            #${container.id} table {
+            #${containerId} table {
               width: 100%;
               border-collapse: collapse;
-              margin: 1em 0;
+              margin: 1em auto;
               font-size: 10pt;
             }
-            #${container.id} th, #${container.id} td {
+            #${containerId} th, #${containerId} td {
               border: 1px solid #9ca3af;
-              padding: 8px 10px;
+              padding: 10px 12px;
               text-align: left;
               vertical-align: top;
               color: #1f2937;
             }
-            #${container.id} th {
+            #${containerId} th {
               background-color: #e5e7eb;
               font-weight: 600;
             }
-            #${container.id} strong, #${container.id} b {
+            #${containerId} strong, #${containerId} b {
               font-weight: 600;
               color: #1f2937;
             }
-            #${container.id} ul, #${container.id} ol {
+            #${containerId} ul, #${containerId} ol {
               margin: 0.5em 0 0.5em 1.5em;
               padding: 0;
             }
-            #${container.id} li {
+            #${containerId} li {
               margin-bottom: 0.25em;
             }
           </style>
@@ -381,6 +386,9 @@ export default function SendDocumentModal({
 
     setSending(true)
     
+    // Toast de progresso
+    const toastId = toast.loading('Enviando documento...')
+    
     try {
       // Buscar conversation_id do lead
       const { data: conversations, error: convError } = await supabase
@@ -395,6 +403,7 @@ export default function SendDocumentModal({
       const conversation = conversations?.[0]
 
       if (!conversation) {
+        toast.dismiss(toastId)
         toast.error(t.noConversation)
         setSending(false)
         return
@@ -413,21 +422,39 @@ export default function SendDocumentModal({
         file_name: `${document.name}.pdf`
       }
 
+      toast.loading('Conectando ao WhatsApp...', { id: toastId })
+
       const response = await fetch(WEBHOOK_SEND_MESSAGE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(webhookPayload)
       })
 
+      // Verificar resposta do webhook
       if (!response.ok) {
         const errorText = await response.text()
-        throw new Error(`Webhook error: ${errorText}`)
+        throw new Error(`Falha na conexão: ${errorText}`)
       }
+
+      // Tentar parsear resposta para verificar sucesso
+      let webhookResult: any = null
+      try {
+        webhookResult = await response.json()
+      } catch {
+        // Se não for JSON, considerar sucesso pela resposta HTTP OK
+      }
+
+      // Verificar se o n8n retornou erro
+      if (webhookResult?.error || webhookResult?.success === false) {
+        throw new Error(webhookResult?.message || 'Falha ao enviar pelo WhatsApp')
+      }
+
+      toast.loading('Confirmando envio...', { id: toastId })
 
       // Registrar mensagem no banco
       const senderName = user?.name || user?.email?.split('@')[0] || 'Atendente'
       
-      await supabase.rpc('fn_insert_message', {
+      const { error: msgError } = await supabase.rpc('fn_insert_message', {
         p_org_id: activeOrgId,
         p_lead_id: document.lead_id,
         p_channel: 'whatsapp',
@@ -441,8 +468,13 @@ export default function SendDocumentModal({
         p_timestamp: new Date().toISOString()
       })
 
+      if (msgError) {
+        console.error('Erro ao registrar mensagem:', msgError)
+        // Não bloquear o fluxo, só logar
+      }
+
       // Atualizar documento como enviado
-      await supabase
+      const { error: updateError } = await supabase
         .from('lead_documents')
         .update({
           status: 'sent',
@@ -452,7 +484,13 @@ export default function SendDocumentModal({
         })
         .eq('id', document.id)
 
-      toast.success(t.sent)
+      if (updateError) {
+        console.error('Erro ao atualizar status:', updateError)
+      }
+
+      // Sucesso confirmado
+      toast.success('✅ Documento enviado com sucesso!', { id: toastId })
+      
       onSuccess?.()
       onClose()
       
@@ -461,7 +499,7 @@ export default function SendDocumentModal({
 
     } catch (error: any) {
       console.error('Erro ao enviar WhatsApp:', error)
-      toast.error(`${t.errorSending}: ${error.message}`)
+      toast.error(`❌ ${t.errorSending}: ${error.message}`, { id: toastId })
     } finally {
       setSending(false)
     }

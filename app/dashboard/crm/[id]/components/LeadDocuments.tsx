@@ -284,17 +284,17 @@ function DocumentItem({
           onClick={() => setShowPreview(false)}
         >
           <div 
-            className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+            className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <FileText size={20} className="text-blue-600" />
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <FileText size={20} className="text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">{doc.name}</h3>
+                  <h3 className="font-semibold text-white">{doc.name}</h3>
                   <p className="text-sm text-gray-500">Vista previa del documento</p>
                 </div>
               </div>
@@ -339,14 +339,14 @@ function DocumentItem({
                       printWindow.print()
                     }
                   }}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                  className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
                 >
                   <ExternalLink size={16} />
                   Imprimir
                 </button>
                 <button
                   onClick={() => setShowPreview(false)}
-                  className="p-2 rounded-lg hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -354,23 +354,35 @@ function DocumentItem({
             </div>
             
             {/* Document Content */}
-            <div className="flex-1 overflow-auto bg-gray-100 p-6">
+            <div className="flex-1 overflow-auto bg-gray-100 p-8">
               <div 
-                className="mx-auto bg-white rounded-lg shadow-lg p-8"
+                className="bg-white rounded-lg shadow-lg"
                 style={{
                   maxWidth: '210mm',
                   width: '100%',
+                  margin: '0 auto',
+                  padding: '20mm',
                   fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
                   fontSize: '11pt',
-                  lineHeight: '1.5',
+                  lineHeight: '1.6',
                   color: '#1a1a1a'
                 }}
               >
                 <style dangerouslySetInnerHTML={{ __html: `
-                  .doc-preview h1, .doc-preview h2, .doc-preview h3, .doc-preview h4 {
+                  .doc-preview {
+                    text-align: left;
+                  }
+                  .doc-preview h1, .doc-preview h2 {
                     color: #0f172a;
                     margin-bottom: 0.5em;
                     font-weight: 600;
+                    text-align: center;
+                  }
+                  .doc-preview h3, .doc-preview h4 {
+                    color: #0f172a;
+                    margin-bottom: 0.5em;
+                    font-weight: 600;
+                    text-align: left;
                   }
                   .doc-preview h1 { font-size: 18pt; }
                   .doc-preview h2 { font-size: 14pt; }
@@ -378,11 +390,12 @@ function DocumentItem({
                   .doc-preview p {
                     margin-bottom: 0.75em;
                     color: #374151;
+                    text-align: justify;
                   }
                   .doc-preview table {
                     width: 100%;
                     border-collapse: collapse;
-                    margin: 1em 0;
+                    margin: 1em auto;
                     font-size: 10pt;
                   }
                   .doc-preview th, .doc-preview td {
