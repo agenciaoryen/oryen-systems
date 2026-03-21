@@ -1,4 +1,4 @@
-// app/api/agents/run-campaign/route.ts
+// app/api/agents/run-callback/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -10,194 +10,180 @@ const supabase = createClient(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { campaign_id, triggered_by } = body
-
-    if (!campaign_id) {
-      return NextResponse.json(
-        { error: 'campaign_id is required' },
-        { status: 400 }
-      )
-    }
-
-    // 1. Buscar dados da campanha
-    const { data: campaign, error: campaignError } = await supabase
-      .from('agent_campaigns')
-      .select(`
-        *,
-        agents (
-          id,
-          org_id,
-          solution_slug,
-          limits,
-          current_usage
-        )
-      `)
-      .eq('id', campaign_id)
-      .single()
-
-    if (campaignError || !campaign) {
-      return NextResponse.json(
-        { error: 'Campaign not found' },
-        { status: 404 }
-      )
-    }
-
-    // 2. Verificar se campanha está ativa
-    if (campaign.status !== 'active') {
-      return NextResponse.json(
-        { error: 'Campaign is not active' },
-        { status: 400 }
-      )
-    }
-
-    // 3. Verificar limite da org
-    const agent = campaign.agents
-    const limitLeads = agent?.limits?.leads_per_month || 500
-    const usedLeads = agent?.current_usage?.leads_captured || 0
-    const remainingLeads = limitLeads - usedLeads
-
-    if (remainingLeads <= 0) {
-      return NextResponse.json(
-        { error: 'Organization limit reached' },
-        { status: 400 }
-      )
-    }
-
-    // 4. Calcular quantos leads buscar nesta execução
-    // Se campanha tem meta, respeita. Senão, busca até 10 por run
-    const campaignCaptured = campaign.metrics?.leads_captured || 0
-    const campaignTarget = campaign.target_leads
     
-    let leadsToFetch = 10 // default por execução
+    console.log('=== RUN CALLBACK RECEIVED ===')
+    console.log('Body:', JSON.stringify(body, null, 2))
     
-    if (campaignTarget) {
-      const campaignRemaining = campaignTarget - campaignCaptured
-      leadsToFetch = Math.min(leadsToFetch, campaignRemaining)
-    }
-    
-    // Não pode buscar mais do que o limite da org permite
-    leadsToFetch = Math.min(leadsToFetch, remainingLeads)
+    const {
+      run_id,
+      campaign_id,
+      agent_id,
+      org_id,
+      status,           // 'success' | 'error' | 'partial'
+      leads_found,      // total encontrados
+      leads_saved,      // salvos com sucesso
+      leads_duplicated, // duplicados ignorados
+      error_message,
+      duration_ms
+    } = body
 
-    if (leadsToFetch <= 0) {
-      // Campanha atingiu a meta - marcar como completed
-      await supabase
-        .from('agent_campaigns')
-        .update({ 
-          status: 'completed',
-          completed_at: new Date().toISOString()
-        })
-        .eq('id', campaign_id)
-
+    if (!run_id) {
+      console.log('ERROR: run_id is missing')
       return NextResponse.json(
-        { error: 'Campaign target reached', completed: true },
+        { error: 'run_id is required' },
         { status: 400 }
       )
     }
 
-    // 5. Criar registro de run
-    const { data: run, error: runError } = await supabase
+    console.log('Updating run:', run_id)
+
+    // 1. Atualizar o run com os resultados
+    const { data: runData, error: runError } = await supabase
       .from('agent_runs')
-      .insert({
-        campaign_id: campaign.id,
-        agent_id: agent.id,
-        org_id: agent.org_id,
-        status: 'pending',
-        trigger_type: triggered_by ? 'manual' : 'schedule',
-        triggered_by: triggered_by || null
+      .update({
+        status: status || 'success',
+        finished_at: new Date().toISOString(),
+        duration_ms: duration_ms || null,
+        results: {
+          leads_found: leads_found || 0,
+          leads_saved: leads_saved || 0,
+          leads_duplicated: leads_duplicated || 0
+        },
+        error_message: error_message || null
       })
-      .select('id')
-      .single()
+      .eq('id', run_id)
+      .select()
+
+    console.log('Run update result:', { data: runData, error: runError })
 
     if (runError) {
-      console.error('Error creating run:', runError)
-      return NextResponse.json(
-        { error: 'Failed to create run' },
-        { status: 500 }
-      )
+      console.error('Error updating run:', runError)
     }
 
-    // 6. Preparar payload para o N8N
-    const webhookPayload = {
-      // Identificadores
-      run_id: run.id,
-      campaign_id: campaign.id,
-      agent_id: agent.id,
-      org_id: agent.org_id,
+    // 2. Atualizar métricas da campanha
+    if (campaign_id && leads_saved > 0) {
+      console.log('Updating campaign metrics:', campaign_id)
       
-      // Configuração da busca (vem do config da campanha)
-      config: campaign.config,
-      /*
-        Exemplo de config para Hunter B2B:
-        {
-          "business_type": "Barbearias",
-          "locations": ["Lajeado", "Santa Maria"],
-          "keywords": ["premium"],
-          "exclude_keywords": [],
-          "min_rating": "4",
-          "has_website": false,
-          "has_phone": true
-        }
-      */
-      
-      // Controles
-      max_leads: leadsToFetch,
-      
-      // Callback URL para o n8n retornar os resultados
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/agents/run-callback`,
-      
-      // Metadados
-      campaign_name: campaign.name,
-      solution_slug: agent.solution_slug,
-      timestamp: new Date().toISOString()
+      // Buscar métricas atuais
+      const { data: campaign } = await supabase
+        .from('agent_campaigns')
+        .select('metrics, target_leads')
+        .eq('id', campaign_id)
+        .single()
+
+      console.log('Current campaign:', campaign)
+
+      const currentMetrics = campaign?.metrics || {}
+      const newCaptured = (currentMetrics.leads_captured || 0) + leads_saved
+      const newTotalRuns = (currentMetrics.total_runs || 0) + 1
+
+      const updateData: any = {
+        metrics: {
+          ...currentMetrics,
+          leads_captured: newCaptured,
+          total_runs: newTotalRuns,
+          last_run_status: status
+        },
+        updated_at: new Date().toISOString()
+      }
+
+      // Verificar se atingiu a meta
+      if (campaign?.target_leads && newCaptured >= campaign.target_leads) {
+        updateData.status = 'completed'
+        updateData.completed_at = new Date().toISOString()
+      }
+
+      const { data: campaignUpdate, error: campaignError } = await supabase
+        .from('agent_campaigns')
+        .update(updateData)
+        .eq('id', campaign_id)
+        .select()
+
+      console.log('Campaign update result:', { data: campaignUpdate, error: campaignError })
     }
 
-    // 7. Chamar webhook do N8N
-    const n8nWebhookUrl = process.env.N8N_HUNTER_WEBHOOK_URL
-    
-    if (!n8nWebhookUrl) {
-      // Se não tem webhook configurado, apenas marca como pendente
-      console.log('N8N webhook not configured, run created as pending')
-      return NextResponse.json({
-        success: true,
-        run_id: run.id,
-        message: 'Run created, waiting for n8n webhook configuration',
-        payload: webhookPayload
-      })
+    // 3. Atualizar uso do agente (limite da org)
+    if (agent_id && leads_saved > 0) {
+      const { data: agent } = await supabase
+        .from('agents')
+        .select('current_usage')
+        .eq('id', agent_id)
+        .single()
+
+      const currentUsage = agent?.current_usage || {}
+      const newLeadsCaptured = (currentUsage.leads_captured || 0) + leads_saved
+
+      await supabase
+        .from('agents')
+        .update({
+          current_usage: {
+            ...currentUsage,
+            leads_captured: newLeadsCaptured
+          },
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', agent_id)
     }
 
-    // Disparar webhook (não espera resposta - fire and forget)
-    fetch(n8nWebhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(webhookPayload)
-    }).catch(err => {
-      console.error('Error calling n8n webhook:', err)
-    })
+    // 4. Calcular próxima execução da campanha
+    if (campaign_id) {
+      const { data: campaign } = await supabase
+        .from('agent_campaigns')
+        .select('schedule_frequency, schedule_time, status')
+        .eq('id', campaign_id)
+        .single()
 
-    // 8. Atualizar status do run para "running"
-    await supabase
-      .from('agent_runs')
-      .update({ status: 'running', started_at: new Date().toISOString() })
-      .eq('id', run.id)
+      // Só atualiza próxima execução se ainda estiver ativa
+      if (campaign && campaign.status === 'active') {
+        const nextRun = calculateNextRun(
+          campaign.schedule_frequency,
+          campaign.schedule_time
+        )
 
-    // 9. Atualizar última execução da campanha
-    await supabase
-      .from('agent_campaigns')
-      .update({ last_run_at: new Date().toISOString() })
-      .eq('id', campaign_id)
+        await supabase
+          .from('agent_campaigns')
+          .update({ next_run_at: nextRun })
+          .eq('id', campaign_id)
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      run_id: run.id,
-      max_leads: leadsToFetch,
-      message: 'Campaign execution started'
+      message: 'Run results recorded',
+      leads_saved
     })
 
   } catch (error: any) {
-    console.error('Run campaign error:', error)
+    console.error('Run callback error:', error)
     return NextResponse.json(
       { error: error.message || 'Internal server error' },
       { status: 500 }
     )
   }
+}
+
+// Função para calcular próxima execução
+function calculateNextRun(frequency: string, time: string): string {
+  const now = new Date()
+  const [hours, minutes] = (time || '08:00').split(':').map(Number)
+  
+  let next = new Date(now)
+  next.setHours(hours, minutes, 0, 0)
+  
+  // Sempre vai para o próximo período após uma execução
+  switch (frequency) {
+    case 'hourly':
+      next.setHours(next.getHours() + 1)
+      break
+    case 'daily':
+      next.setDate(next.getDate() + 1)
+      break
+    case 'weekly':
+      next.setDate(next.getDate() + 7)
+      break
+    default:
+      next.setDate(next.getDate() + 1)
+  }
+  
+  return next.toISOString()
 }
