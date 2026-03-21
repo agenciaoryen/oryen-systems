@@ -164,22 +164,45 @@ export default function SendDocumentModal({
 
       // Criar elemento temporário com o conteúdo
       const tempDiv = window.document.createElement('div')
-      tempDiv.innerHTML = document.content
-      tempDiv.style.width = '210mm'
-      tempDiv.style.padding = '10mm'
-      tempDiv.style.background = 'white'
-      tempDiv.style.color = 'black'
+      tempDiv.innerHTML = `
+        <div style="
+          width: 190mm;
+          max-width: 190mm;
+          padding: 0;
+          margin: 0 auto;
+          font-family: Arial, sans-serif;
+          font-size: 12pt;
+          line-height: 1.4;
+          color: #000;
+          background: #fff;
+          box-sizing: border-box;
+        ">
+          <style>
+            * { box-sizing: border-box; }
+            table { width: 100% !important; max-width: 100% !important; border-collapse: collapse; }
+            td, th { padding: 8px; word-wrap: break-word; }
+            img { max-width: 100% !important; height: auto !important; }
+            p, div, span { max-width: 100% !important; word-wrap: break-word; }
+          </style>
+          ${document.content}
+        </div>
+      `
+      tempDiv.style.position = 'absolute'
+      tempDiv.style.left = '-9999px'
+      tempDiv.style.top = '0'
       window.document.body.appendChild(tempDiv)
 
-      // Configurações do PDF
+      // Configurações do PDF - A4 com margens adequadas
       const opt = {
-        margin: 10,
+        margin: [10, 10, 10, 10] as [number, number, number, number], // top, left, bottom, right em mm
         filename: `${document.name}.pdf`,
         image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: { 
           scale: 2,
           useCORS: true,
-          letterRendering: true
+          letterRendering: true,
+          width: 794, // A4 width em pixels (210mm * 3.78)
+          windowWidth: 794
         },
         jsPDF: { 
           unit: 'mm', 
@@ -244,11 +267,13 @@ export default function SendDocumentModal({
   // ─── COPIAR LINK ───
   const handleCopyLink = async () => {
     if (!pdfUrl) return
-    await navigator.clipboard.writeText(pdfUrl)
+    // Usar URL amigável
+    const friendlyUrl = `${window.location.origin}/api/documents/download?id=${document.id}`
+    await navigator.clipboard.writeText(friendlyUrl)
     toast.success(t.linkCopied)
   }
 
-  // ─── ENVIAR WHATSAPP ───
+  // ─── ENVIAR WHATSAPP VIA UAZAPI ───
   const handleSendWhatsApp = async () => {
     if (!leadData.phone) {
       toast.error(t.noPhone)
@@ -259,26 +284,88 @@ export default function SendDocumentModal({
       return
     }
 
-    const phone = leadData.phone.replace(/\D/g, '')
-    const message = `${t.whatsappMessage}\n\n📄 *${document.name}*\n\n${pdfUrl}`
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
-    
-    window.open(whatsappUrl, '_blank')
-    
-    // Marcar como enviado
-    await supabase
-      .from('lead_documents')
-      .update({
-        status: 'sent',
-        sent_via: 'whatsapp',
-        sent_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', document.id)
+    setSending(true)
+    try {
+      // Buscar lead_id e conversation_id do lead
+      const { data: leadInfo, error: leadError } = await supabase
+        .from('leads')
+        .select('id, conversations(id)')
+        .eq('id', document.lead_id)
+        .single()
 
-    toast.success(t.sent)
-    onSuccess?.()
-    onClose()
+      if (leadError || !leadInfo) {
+        throw new Error('Lead não encontrado')
+      }
+
+      const conversationId = (leadInfo.conversations as any)?.[0]?.id
+
+      if (!conversationId) {
+        // Se não tem conversa, abre no WhatsApp Web (fallback)
+        const phone = leadData.phone.replace(/\D/g, '')
+        const friendlyUrl = `${window.location.origin}/api/documents/download?id=${document.id}`
+        const message = `${t.whatsappMessage}\n\n📄 *${document.name}*\n\n${friendlyUrl}`
+        const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+        window.open(whatsappUrl, '_blank')
+      } else {
+        // Enviar via UazAPI com o documento
+        const webhookUrl = 'https://webhook2.letierren8n.com/webhook/message_agent_human'
+        
+        const res = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            org_id: activeOrgId,
+            lead_id: document.lead_id,
+            conversation_id: conversationId,
+            user_id: user?.id,
+            message: `📄 ${document.name}`,
+            message_type: 'document',
+            media_url: pdfUrl,
+            media_mime_type: 'application/pdf',
+            file_name: `${document.name}.pdf`
+          }),
+        })
+
+        if (!res.ok) {
+          throw new Error('Falha ao enviar via WhatsApp')
+        }
+
+        // Registrar mensagem no banco
+        await supabase.rpc('fn_insert_message', {
+          p_org_id: activeOrgId,
+          p_lead_id: document.lead_id,
+          p_channel: 'whatsapp',
+          p_direction: 'outbound',
+          p_body: `📄 ${document.name}`,
+          p_sender_type: 'agent_human',
+          p_sender_name: user?.name || user?.email?.split('@')[0] || 'Atendente',
+          p_message_type: 'document',
+          p_media_url: pdfUrl,
+          p_media_mime_type: 'application/pdf',
+          p_timestamp: new Date().toISOString(),
+        })
+      }
+
+      // Atualizar documento como enviado
+      await supabase
+        .from('lead_documents')
+        .update({
+          status: 'sent',
+          sent_via: 'whatsapp',
+          sent_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', document.id)
+
+      toast.success(t.sent)
+      onSuccess?.()
+      onClose()
+    } catch (error: any) {
+      console.error('Erro ao enviar WhatsApp:', error)
+      toast.error(t.errorSending + ': ' + error.message)
+    } finally {
+      setSending(false)
+    }
   }
 
   // ─── ENVIAR EMAIL ───
@@ -452,10 +539,20 @@ export default function SendDocumentModal({
                   ) : (
                     <button
                       onClick={handleSendWhatsApp}
-                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors"
+                      disabled={sending}
+                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                     >
-                      <ExternalLink size={18} />
-                      {t.send} {t.whatsapp}
+                      {sending ? (
+                        <>
+                          <Loader2 size={18} className="animate-spin" />
+                          {t.sending}
+                        </>
+                      ) : (
+                        <>
+                          <Send size={18} />
+                          {t.send} {t.whatsapp}
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
