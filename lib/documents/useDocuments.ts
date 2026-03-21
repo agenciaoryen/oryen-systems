@@ -8,7 +8,6 @@ import type {
   DocumentTemplate, 
   DocumentCategory, 
   LeadDocument, 
-  LeadDocumentHistory,
   CreateDocumentForm,
   DocumentStatus 
 } from './types'
@@ -151,7 +150,6 @@ export function useLeadDocuments(leadId?: string) {
 
 export function useDocument(documentId: string) {
   const [document, setDocument] = useState<LeadDocument | null>(null)
-  const [history, setHistory] = useState<LeadDocumentHistory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -173,17 +171,6 @@ export function useDocument(documentId: string) {
 
         if (docErr) throw docErr
         setDocument(doc)
-
-        // Fetch history
-        const { data: hist, error: histErr } = await supabase
-          .from('lead_document_history')
-          .select('*')
-          .eq('document_id', documentId)
-          .order('created_at', { ascending: false })
-
-        if (!histErr) {
-          setHistory(hist || [])
-        }
       } catch (err: any) {
         setError(err.message)
       } finally {
@@ -196,7 +183,7 @@ export function useDocument(documentId: string) {
     }
   }, [documentId])
 
-  return { document, history, loading, error }
+  return { document, loading, error }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -284,15 +271,6 @@ export async function updateDocument(
 
     if (error) throw error
 
-    // Registrar no histórico
-    if (userId) {
-      await supabase.from('lead_document_history').insert({
-        document_id: documentId,
-        action: 'edited',
-        user_id: userId
-      })
-    }
-
     return { success: true, error: null }
   } catch (err: any) {
     return { success: false, error: err.message }
@@ -309,7 +287,10 @@ export async function updateDocumentStatus(
   details?: Record<string, any>
 ): Promise<{ success: boolean; error: string | null }> {
   try {
-    const updates: Partial<LeadDocument> = { status }
+    const updates: Record<string, any> = { 
+      status,
+      updated_at: new Date().toISOString()
+    }
     
     // Adicionar timestamps baseado no status
     if (status === 'sent') {
@@ -324,14 +305,6 @@ export async function updateDocumentStatus(
       .eq('id', documentId)
 
     if (error) throw error
-
-    // Registrar no histórico
-    await supabase.from('lead_document_history').insert({
-      document_id: documentId,
-      action: status as any,
-      user_id: userId,
-      details
-    })
 
     return { success: true, error: null }
   } catch (err: any) {
@@ -416,12 +389,6 @@ export async function deleteDocument(
         await supabase.storage.from('documents').remove([path])
       }
     }
-
-    // Deletar histórico
-    await supabase
-      .from('lead_document_history')
-      .delete()
-      .eq('document_id', documentId)
 
     // Deletar documento
     const { error } = await supabase
