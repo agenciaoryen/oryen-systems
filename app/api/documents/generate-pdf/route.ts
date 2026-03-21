@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!document.content_html) {
+    if (!document.content) {
       return NextResponse.json(
         { error: 'Documento não tem conteúdo HTML' },
         { status: 400 }
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     const page = await browser.newPage()
     
     // Definir conteúdo HTML
-    await page.setContent(document.content_html, {
+    await page.setContent(document.content, {
       waitUntil: 'networkidle0'
     })
 
@@ -113,10 +113,8 @@ export async function POST(request: NextRequest) {
       .from('lead_documents')
       .update({
         file_url: publicUrl,
-        file_name: `${safeName}.pdf`,
         file_type: 'application/pdf',
-        file_size: pdfBuffer.length,
-        status: 'ready',
+        status: 'draft',
         updated_at: new Date().toISOString()
       })
       .eq('id', documentId)
@@ -124,13 +122,6 @@ export async function POST(request: NextRequest) {
     if (updateError) {
       console.error('Erro ao atualizar documento:', updateError)
     }
-
-    // Registrar no histórico
-    await supabaseAdmin.from('lead_document_history').insert({
-      document_id: documentId,
-      action: 'downloaded',
-      details: { file_name: `${safeName}.pdf`, file_size: pdfBuffer.length }
-    })
 
     return NextResponse.json({
       success: true,

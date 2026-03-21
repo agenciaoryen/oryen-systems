@@ -245,24 +245,19 @@ export async function createDocument(
         org_id: orgId,
         template_id: form.template_id,
         name: form.name || template.name,
-        content_html: contentHtml,
-        source_type: 'generated',
+        content: contentHtml,
         status: 'draft',
-        filled_data: form.filled_data,
+        metadata: {
+          filled_data: form.filled_data,
+          template_name: template.name,
+          source_type: 'generated'
+        },
         created_by: userId
       })
       .select()
       .single()
 
     if (error) throw error
-
-    // Registrar no histórico
-    await supabase.from('lead_document_history').insert({
-      document_id: data.id,
-      action: 'created',
-      user_id: userId,
-      details: { template_name: template.name }
-    })
 
     return { data, error: null }
   } catch (err: any) {
@@ -378,28 +373,21 @@ export async function uploadDocument(
         lead_id: leadId,
         org_id: orgId,
         name,
-        description,
         file_url: urlData.publicUrl,
-        file_name: file.name,
-        file_size: file.size,
         file_type: file.type,
-        source_type: 'uploaded',
-        status: 'ready',
-        filled_data: {},
+        status: 'draft',
+        metadata: {
+          file_name: file.name,
+          file_size: file.size,
+          source_type: 'uploaded',
+          description
+        },
         created_by: userId
       })
       .select()
       .single()
 
     if (error) throw error
-
-    // Registrar no histórico
-    await supabase.from('lead_document_history').insert({
-      document_id: data.id,
-      action: 'created',
-      user_id: userId,
-      details: { file_name: file.name, uploaded: true }
-    })
 
     return { data, error: null }
   } catch (err: any) {

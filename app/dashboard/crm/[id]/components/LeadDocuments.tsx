@@ -278,7 +278,7 @@ function DocumentItem({
       </div>
 
       {/* Preview Modal */}
-      {showPreview && doc.content_html && (
+      {showPreview && doc.content && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
           onClick={() => setShowPreview(false)}
@@ -293,7 +293,7 @@ function DocumentItem({
                 <button
                   onClick={() => {
                     const win = window.open('', '_blank')
-                    win?.document.write(doc.content_html || '')
+                    win?.document.write(doc.content || '')
                     win?.print()
                   }}
                   className="p-2 rounded hover:bg-gray-200 text-gray-600"
@@ -311,7 +311,7 @@ function DocumentItem({
             </div>
             <div 
               className="flex-1 overflow-auto p-4"
-              dangerouslySetInnerHTML={{ __html: doc.content_html }}
+              dangerouslySetInnerHTML={{ __html: doc.content }}
             />
           </div>
         </div>

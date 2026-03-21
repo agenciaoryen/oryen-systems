@@ -87,20 +87,13 @@ export interface LeadDocument {
   org_id: string
   template_id?: string
   name: string
-  description?: string
-  content_html?: string
+  content?: string
   file_url?: string
-  file_name?: string
-  file_size?: number
   file_type?: string
-  source_type: DocumentSourceType
   status: DocumentStatus
   sent_via?: SendVia
   sent_at?: string
-  sent_to?: string
   signed_at?: string
-  signed_by?: string
-  filled_data: Record<string, any>
   metadata?: Record<string, any>
   created_by?: string
   created_at: string
