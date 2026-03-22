@@ -362,14 +362,12 @@ function CreateCampaignModal({
     fields.forEach(field => {
       if (field.required) {
         const value = config[field.name]
-        // Para arrays (tags), verificar se tem pelo menos 1 item
         if (field.type === 'tags') {
           if (!value || !Array.isArray(value) || value.length === 0) {
             newErrors[field.name] = true
           }
         } else {
-          // Para outros tipos, verificar se existe e não está vazio
-          if (!value || (typeof value === 'string' && !value.trim())) {
+          if (value === undefined || value === null || (typeof value === 'string' && !value.trim())) {
             newErrors[field.name] = true
           }
         }
@@ -407,6 +405,156 @@ function CreateCampaignModal({
     setConfig({ ...config, [key]: value })
     if (errors[key]) {
       setErrors({ ...errors, [key]: false })
+    }
+  }
+
+  // Helper: renderizar campo baseado no type
+  const renderField = (field: ConfigField) => {
+    const fieldError = errors[field.name]
+    const borderClass = fieldError ? 'border-red-500' : 'border-white/10'
+    const baseInputClass = `w-full bg-black border rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors ${borderClass}`
+
+    switch (field.type) {
+      case 'text':
+        return (
+          <input
+            type="text"
+            value={config[field.name] || ''}
+            onChange={(e) => updateConfig(field.name, e.target.value)}
+            placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+            className={baseInputClass}
+          />
+        )
+
+      case 'textarea':
+        return (
+          <div>
+            <textarea
+              value={config[field.name] || ''}
+              onChange={(e) => updateConfig(field.name, e.target.value)}
+              placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+              rows={5}
+              className={`${baseInputClass} resize-none font-mono text-xs leading-relaxed`}
+            />
+            {field.description && (
+              <p className="text-[10px] text-gray-500 mt-1.5">
+                {t(field.description, lang)}
+              </p>
+            )}
+          </div>
+        )
+
+      case 'number':
+        return (
+          <div>
+            <input
+              type="number"
+              value={config[field.name] ?? field.default ?? ''}
+              onChange={(e) => updateConfig(field.name, e.target.value ? Number(e.target.value) : '')}
+              placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+              min={field.min}
+              max={field.max}
+              className={baseInputClass}
+            />
+            {field.description && (
+              <p className="text-[10px] text-gray-500 mt-1.5">
+                {t(field.description, lang)}
+              </p>
+            )}
+          </div>
+        )
+
+      case 'tags':
+        return (
+          <div>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+                className={`${baseInputClass} pr-16`}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    const input = e.target as HTMLInputElement
+                    const value = input.value.trim()
+                    if (value) {
+                      const current = config[field.name] || []
+                      updateConfig(field.name, [...current, value])
+                      input.value = ''
+                    }
+                  }
+                }}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
+                Enter ↵
+              </span>
+            </div>
+            {config[field.name]?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {config[field.name].map((tag: string, i: number) => (
+                  <span 
+                    key={i}
+                    className="inline-flex items-center gap-1.5 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-lg"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newTags = config[field.name].filter((_: any, idx: number) => idx !== i)
+                        updateConfig(field.name, newTags)
+                      }}
+                      className="hover:text-red-400 transition-colors"
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+
+      case 'select':
+        return (
+          <select
+            value={config[field.name] || field.default || ''}
+            onChange={(e) => updateConfig(field.name, e.target.value)}
+            className={baseInputClass}
+          >
+            <option value="">Selecione...</option>
+            {field.options?.map(opt => (
+              <option key={opt.value} value={opt.value}>
+                {typeof opt.label === 'string' ? opt.label : t(opt.label, lang)}
+              </option>
+            ))}
+          </select>
+        )
+
+      case 'boolean':
+        return (
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={config[field.name] ?? field.default ?? false}
+              onChange={(e) => updateConfig(field.name, e.target.checked)}
+              className="w-5 h-5 rounded bg-black border-white/10 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+            />
+            <span className="text-sm text-gray-400">
+              {config[field.name] ?? field.default ? 'Sí' : 'No'}
+            </span>
+          </label>
+        )
+
+      default:
+        return (
+          <input
+            type="text"
+            value={config[field.name] || ''}
+            onChange={(e) => updateConfig(field.name, e.target.value)}
+            placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+            className={baseInputClass}
+          />
+        )
     }
   }
 
@@ -459,101 +607,9 @@ function CreateCampaignModal({
                 {t(field.label, lang)}
                 {field.required && <span className="text-red-400">*</span>}
               </label>
-              
-              {field.type === 'text' && (
-                <input
-                  type="text"
-                  value={config[field.name] || ''}
-                  onChange={(e) => updateConfig(field.name, e.target.value)}
-                  placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
-                  className={`w-full bg-black border rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors ${
-                    errors[field.name] ? 'border-red-500' : 'border-white/10'
-                  }`}
-                />
-              )}
-
-              {field.type === 'tags' && (
-                <div>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
-                      className={`w-full bg-black border rounded-xl p-3 pr-16 text-white text-sm focus:border-blue-500 outline-none transition-colors ${
-                        errors[field.name] ? 'border-red-500' : 'border-white/10'
-                      }`}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          const input = e.target as HTMLInputElement
-                          const value = input.value.trim()
-                          if (value) {
-                            const current = config[field.name] || []
-                            updateConfig(field.name, [...current, value])
-                            input.value = ''
-                          }
-                        }
-                      }}
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
-                      Enter ↵
-                    </span>
-                  </div>
-                  {config[field.name]?.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {config[field.name].map((tag: string, i: number) => (
-                        <span 
-                          key={i}
-                          className="inline-flex items-center gap-1.5 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-lg"
-                        >
-                          {tag}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newTags = config[field.name].filter((_: any, idx: number) => idx !== i)
-                              updateConfig(field.name, newTags)
-                            }}
-                            className="hover:text-red-400 transition-colors"
-                          >
-                            <X size={12} />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {field.type === 'select' && field.options && (
-                <select
-                  value={config[field.name] || field.default || ''}
-                  onChange={(e) => updateConfig(field.name, e.target.value)}
-                  className={`w-full bg-black border rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors ${
-                    errors[field.name] ? 'border-red-500' : 'border-white/10'
-                  }`}
-                >
-                  <option value="">Selecione...</option>
-                  {field.options.map(opt => (
-                    <option key={opt.value} value={opt.value}>
-                      {typeof opt.label === 'string' ? opt.label : t(opt.label, lang)}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              {field.type === 'boolean' && (
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={config[field.name] ?? field.default ?? false}
-                    onChange={(e) => updateConfig(field.name, e.target.checked)}
-                    className="w-5 h-5 rounded bg-black border-white/10 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
-                  />
-                  <span className="text-sm text-gray-400">Sim</span>
-                </label>
-              )}
+              {renderField(field)}
             </div>
           ))}
-
 
           {/* Meta de leads */}
           <div>

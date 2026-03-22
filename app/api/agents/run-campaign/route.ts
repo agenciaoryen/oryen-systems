@@ -8,9 +8,21 @@ const supabase = createClient(
 )
 
 /**
+ * Mapa de webhooks N8N por solution_slug.
+ * Cada agente tem seu próprio workflow no n8n.
+ * Para adicionar um novo agente, basta adicionar uma linha aqui
+ * e a variável de ambiente correspondente.
+ */
+const WEBHOOK_MAP: Record<string, string | undefined> = {
+  'hunter-b2b': process.env.N8N_HUNTER_WEBHOOK_URL,
+  'bdr-prospector': process.env.N8N_BDR_WEBHOOK_URL,
+}
+
+/**
  * POST /api/agents/run-campaign
  * 
  * Executa uma campanha específica (manual ou agendada)
+ * Funciona para qualquer agente — resolve o webhook pelo solution_slug.
  * 
  * Body:
  * - campaign_id: string (obrigatório)
@@ -153,8 +165,8 @@ export async function POST(request: NextRequest) {
       // Dados da organização
       org: {
         name: org?.name || '',
-        country: org?.country || 'CL',      // Default Chile
-        language: org?.language || 'es',     // Default Espanhol
+        country: org?.country || 'CL',
+        language: org?.language || 'es',
         timezone: org?.timezone || 'America/Santiago',
         niche: org?.niche || 'general'
       },
@@ -169,13 +181,12 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     }
 
-    // 7. Chamar webhook do N8N
-    const n8nWebhookUrl = process.env.N8N_HUNTER_WEBHOOK_URL
+    // 7. Resolver webhook pelo solution_slug do agente
+    const n8nWebhookUrl = WEBHOOK_MAP[agent.solution_slug]
     let webhookStatus = 'not_configured'
     
     if (n8nWebhookUrl) {
       try {
-        // Disparar webhook com timeout de 5 segundos
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 5000)
         
@@ -188,14 +199,14 @@ export async function POST(request: NextRequest) {
         
         clearTimeout(timeoutId)
         webhookStatus = webhookResponse.ok ? 'success' : `error_${webhookResponse.status}`
-        console.log('Webhook response:', webhookResponse.status)
+        console.log(`[${agent.solution_slug}] Webhook response:`, webhookResponse.status)
       } catch (err: any) {
-        console.error('Error calling n8n webhook:', err.message)
+        console.error(`[${agent.solution_slug}] Error calling n8n webhook:`, err.message)
         webhookStatus = `error_${err.code || 'unknown'}`
-        // Não bloqueia - continua mesmo se webhook falhar
       }
     } else {
-      console.log('N8N webhook not configured. Payload:', webhookPayload)
+      console.warn(`[${agent.solution_slug}] No webhook configured. Check WEBHOOK_MAP and env vars.`)
+      console.log('Payload:', JSON.stringify(webhookPayload, null, 2))
     }
 
     // 8. Atualizar última execução da campanha
@@ -212,6 +223,7 @@ export async function POST(request: NextRequest) {
       run_id: run.id,
       max_leads: leadsToFetch,
       trigger_type: trigger_type,
+      solution_slug: agent.solution_slug,
       message: 'Campaign execution started',
       webhook_configured: !!n8nWebhookUrl,
       webhook_status: webhookStatus

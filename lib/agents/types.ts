@@ -44,6 +44,7 @@ export interface ConfigField {
   required: boolean
   label: Record<string, string>
   placeholder?: Record<string, string>
+  description?: Record<string, string>   // texto de ajuda abaixo do campo
   options?: Array<{ value: string; label: Record<string, string> | string }>
   default?: any
   min?: number
