@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/AuthContext'
 import { useCampaign, useAgent } from '@/lib/agents'
 import type { Language } from '@/lib/agents/types'
 import { Loader2, Target } from 'lucide-react'
-import BDRCampaignDetail from '@/components/agents/bdr/BDRCampaignDetail'
+import BDRCampaignDetail from '@/app/dashboard/components/agents/bdr/BDRCampaignDetail'
 import HunterCampaignDetail from './HunterCampaignDetail'
 
 export default function CampaignDetailPage() {
