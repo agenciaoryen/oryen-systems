@@ -14,8 +14,8 @@ const supabase = createClient(
  * e a variável de ambiente correspondente.
  */
 const WEBHOOK_MAP: Record<string, string | undefined> = {
-  'hunter-b2b': process.env.N8N_HUNTER_WEBHOOK_URL,
-  'bdr-prospector': process.env.N8N_BDR_WEBHOOK_URL,
+  'hunter_b2b': process.env.N8N_HUNTER_WEBHOOK_URL,
+  'bdr_prospector': process.env.N8N_BDR_WEBHOOK_URL,
 }
 
 /**
