@@ -202,7 +202,7 @@ input[type="number"] {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   TEMA CLARO — Camada de Compatibilidade
+   TEMA CLARO — Camada de Compatibilidade v2
    Remapeia automaticamente as classes Tailwind hardcoded (dark) para light
    quando [data-theme="light"] está ativo. Cobre ~950 instâncias em 21 arquivos.
    ═══════════════════════════════════════════════════════════════════════════════ */
@@ -212,18 +212,31 @@ input[type="number"] {
 [data-theme="light"] .bg-\[\#0A0A0A\],
 [data-theme="light"] .bg-\[\#0a0a0a\],
 [data-theme="light"] .bg-\[\#0A0A0F\],
-[data-theme="light"] .bg-\[\#080808\] {
+[data-theme="light"] .bg-\[\#080808\],
+[data-theme="light"] .bg-\[\#08080E\] {
   background-color: var(--color-bg-base) !important;
+}
+
+/* CARDS e PAINÉIS: hex com opacity (bg-[#0A0A0A]/60 etc.) */
+[data-theme="light"] [class*="bg-\[\#0A0A0A\]"],
+[data-theme="light"] [class*="bg-\[\#0a0a0a\]"],
+[data-theme="light"] [class*="bg-\[\#0A0A0F\]"],
+[data-theme="light"] [class*="bg-\[\#08080E\]"] {
+  background-color: var(--color-bg-surface) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 [data-theme="light"] .bg-\[\#111\],
 [data-theme="light"] .bg-\[\#111118\],
-[data-theme="light"] .bg-\[\#0d0d0d\] {
+[data-theme="light"] .bg-\[\#0d0d0d\],
+[data-theme="light"] .bg-\[\#0F0F18\] {
   background-color: var(--color-bg-surface) !important;
 }
 
 [data-theme="light"] .bg-\[\#1a1a1a\],
 [data-theme="light"] .bg-\[\#1A1A24\],
+[data-theme="light"] .bg-\[\#171722\],
 [data-theme="light"] .bg-\[\#1a1a2e\] {
   background-color: var(--color-bg-elevated) !important;
 }
@@ -245,39 +258,39 @@ input[type="number"] {
 }
 
 [data-theme="light"] .bg-gray-700 {
-  background-color: #D1D1DE !important;
+  background-color: var(--color-border-strong) !important;
 }
 
 /* ─── BACKGROUNDS: white-opacity overlays → dark-opacity ─── */
 
 [data-theme="light"] .bg-white\/5 {
-  background-color: rgba(0, 0, 0, 0.03) !important;
+  background-color: rgba(0, 0, 0, 0.025) !important;
 }
 
 [data-theme="light"] .bg-white\/10 {
-  background-color: rgba(0, 0, 0, 0.05) !important;
-}
-
-[data-theme="light"] .bg-white\/20 {
-  background-color: rgba(0, 0, 0, 0.07) !important;
-}
-
-[data-theme="light"] .hover\:bg-white\/5:hover {
-  background-color: rgba(0, 0, 0, 0.05) !important;
-}
-
-[data-theme="light"] .hover\:bg-white\/10:hover {
-  background-color: rgba(0, 0, 0, 0.07) !important;
-}
-
-/* ─── BACKGROUNDS: black-opacity ─── */
-
-[data-theme="light"] .bg-black\/20 {
   background-color: rgba(0, 0, 0, 0.04) !important;
 }
 
-[data-theme="light"] .bg-black\/40 {
+[data-theme="light"] .bg-white\/20 {
   background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .hover\:bg-white\/5:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ─── BACKGROUNDS: black-opacity (inputs, painéis) ─── */
+
+[data-theme="light"] .bg-black\/20 {
+  background-color: var(--color-bg-input, #F7F7FC) !important;
+}
+
+[data-theme="light"] .bg-black\/40 {
+  background-color: var(--color-bg-input, #F7F7FC) !important;
 }
 
 /* Overlays de modal/drawer devem continuar escuros — não sobrescrever bg-black/60, bg-black/80 */
@@ -406,11 +419,15 @@ input[type="number"] {
 /* ─── TEXTO: cores de acento (mais fortes no light) ─── */
 
 [data-theme="light"] .text-blue-400 {
-  color: #1A6AE8 !important;
+  color: #3451DB !important;
 }
 
 [data-theme="light"] .text-blue-300 {
-  color: #2D7EF8 !important;
+  color: #4B6BFB !important;
+}
+
+[data-theme="light"] .text-blue-500 {
+  color: #2940B8 !important;
 }
 
 [data-theme="light"] .text-emerald-400 {
@@ -489,19 +506,40 @@ input[type="number"] {
   box-shadow: none !important;
 }
 
-/* Glow shadows → soft shadow no light */
+/* Glow shadows → subtle on light */
 [data-theme="light"] .shadow-\[0_0_15px_rgba\(37\2c 99\2c 235\2c 0\.5\)\] {
-  box-shadow: 0 2px 8px rgba(26, 106, 232, 0.15) !important;
+  box-shadow: 0 2px 10px rgba(52, 81, 219, 0.12) !important;
 }
 
 [data-theme="light"] .shadow-\[0_0_30px_rgba\(37\2c 99\2c 235\2c 0\.15\)\] {
-  box-shadow: 0 2px 12px rgba(26, 106, 232, 0.10) !important;
+  box-shadow: 0 2px 14px rgba(52, 81, 219, 0.08) !important;
+}
+
+[data-theme="light"] .shadow-\[0_0_8px_rgba\(59\2c 130\2c 246\2c 0\.8\)\] {
+  box-shadow: 0 0 6px rgba(52, 81, 219, 0.3) !important;
+}
+
+[data-theme="light"] .shadow-\[0_0_8px_rgba\(16\2c 185\2c 129\2c 0\.8\)\] {
+  box-shadow: 0 0 6px rgba(22, 163, 74, 0.3) !important;
+}
+
+/* Shadow on cards (shadow-2xl no light → sutil e elegante) */
+[data-theme="light"] .shadow-2xl {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 16px rgba(0,0,0,0.06) !important;
+}
+
+[data-theme="light"] .shadow-xl {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.05) !important;
+}
+
+[data-theme="light"] .shadow-lg {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 3px 8px rgba(0,0,0,0.04) !important;
 }
 
 /* ─── BACKGROUNDS: opacity-based coloridos ─── */
 
 [data-theme="light"] .bg-blue-600\/10 {
-  background-color: rgba(26, 106, 232, 0.08) !important;
+  background-color: rgba(52, 81, 219, 0.07) !important;
 }
 
 [data-theme="light"] .bg-emerald-600\/10 {
@@ -546,6 +584,54 @@ input[type="number"] {
 
 [data-theme="light"] .border-amber-500\/10 {
   border-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+/* ─── CARDS: backdrop-blur containers no light ─── */
+
+[data-theme="light"] [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ─── INPUTS e SELECTS: estilo sólido no light ─── */
+
+[data-theme="light"] input.bg-black,
+[data-theme="light"] textarea.bg-black,
+[data-theme="light"] select.bg-black,
+[data-theme="light"] input[class*="bg-black"],
+[data-theme="light"] textarea[class*="bg-black"],
+[data-theme="light"] select[class*="bg-black"] {
+  background-color: var(--color-bg-input, #F7F7FC) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* ─── HOVER em backgrounds escuros genéricos ─── */
+
+[data-theme="light"] .hover\:bg-\[\#111\]:hover {
+  background-color: var(--color-bg-hover) !important;
+}
+
+/* ─── TABELAS ─── */
+
+[data-theme="light"] thead[class*="bg-black"] {
+  background-color: var(--color-bg-hover) !important;
+}
+
+/* ─── BORDAS adicionais ─── */
+
+[data-theme="light"] .border-\[\#222d34\],
+[data-theme="light"] .border-\[\#111b21\] {
+  border-color: var(--color-border) !important;
+}
+
+/* ─── ACTIVE MENU ITEMS: Sidebar ─── */
+
+[data-theme="light"] .bg-blue-600\/10 {
+  background-color: rgba(52, 81, 219, 0.08) !important;
+}
+
+[data-theme="light"] .border-blue-600\/20 {
+  border-color: rgba(52, 81, 219, 0.18) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════

@@ -1,14 +1,14 @@
 /*
- * Oryen — Design Tokens
- * Sistema de variáveis CSS para implementação no Next.js + Tailwind CSS 4
+ * Oryen — Design Tokens v2
+ * Paleta refinada: Royal Cobalt + Amber/Gold
+ * Comunica confiança, sofisticação e presença
  *
  * Uso:
  *   - Importar este arquivo no globals.css via @import
  *   - O tema escuro é o padrão (:root)
  *   - O tema claro é ativado via [data-theme="light"] no elemento html
- *   - Para ativar: document.documentElement.setAttribute('data-theme', 'light')
  *
- * Versão: 1.0
+ * Versão: 2.0
  */
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -17,44 +17,44 @@
 
 :root {
 
-  /* — Cor primária — */
-  --color-primary:           #2D7EF8;
-  --color-primary-hover:     #1A6AE8;
-  --color-primary-active:    #0F55CC;
-  --color-primary-subtle:    #1A3A6B;
-  --color-primary-subtle-fg: #93BBFD;
+  /* — Cor primária (Royal Cobalt) — */
+  --color-primary:           #4B6BFB;
+  --color-primary-hover:     #3A56E8;
+  --color-primary-active:    #2A42CC;
+  --color-primary-subtle:    #1B2566;
+  --color-primary-subtle-fg: #8DA4FD;
 
   /* — Cor secundária — */
-  --color-secondary:         #7C9EC4;
-  --color-secondary-hover:   #9AB6D4;
+  --color-secondary:         #7889B5;
+  --color-secondary-hover:   #94A3CC;
 
-  /* — Cor de acento — */
-  --color-accent:            #00C9A7;
-  --color-accent-hover:      #00E0BB;
-  --color-accent-subtle:     #003D35;
-  --color-accent-subtle-fg:  #4DDBBB;
+  /* — Cor de acento (Amber Gold) — */
+  --color-accent:            #F0A030;
+  --color-accent-hover:      #F5B550;
+  --color-accent-subtle:     #3D2A0A;
+  --color-accent-subtle-fg:  #FCD078;
 
   /* — Fundos — */
-  --color-bg-base:           #0A0A0F;
-  --color-bg-surface:        #111118;
-  --color-bg-elevated:       #1A1A24;
-  --color-bg-hover:          #1F1F2E;
-  --color-bg-selected:       #1E2D4A;
+  --color-bg-base:           #08080E;
+  --color-bg-surface:        #0F0F18;
+  --color-bg-elevated:       #171722;
+  --color-bg-hover:          #1C1C2E;
+  --color-bg-selected:       #1B2556;
   --color-bg-overlay:        rgba(0, 0, 0, 0.7);
 
   /* — Bordas — */
-  --color-border:            #242435;
-  --color-border-subtle:     #1A1A28;
-  --color-border-strong:     #363650;
-  --color-border-focus:      #2D7EF8;
+  --color-border:            #22223A;
+  --color-border-subtle:     #1A1A2C;
+  --color-border-strong:     #32325A;
+  --color-border-focus:      #4B6BFB;
 
   /* — Textos — */
-  --color-text-primary:      #F0F0F8;
-  --color-text-secondary:    #9494B0;
-  --color-text-tertiary:     #5A5A78;
-  --color-text-disabled:     #3A3A55;
+  --color-text-primary:      #EEEEF6;
+  --color-text-secondary:    #8E8EB0;
+  --color-text-tertiary:     #5A5A7A;
+  --color-text-disabled:     #38384E;
   --color-text-on-primary:   #FFFFFF;
-  --color-text-on-accent:    #FFFFFF;
+  --color-text-on-accent:    #1A1000;
   --color-text-inverse:      #0F0F1A;
 
   /* — Semânticas: Sucesso — */
@@ -86,8 +86,8 @@
   --shadow-md:               0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-lg:               0 8px 24px rgba(0, 0, 0, 0.6);
   --shadow-xl:               0 16px 48px rgba(0, 0, 0, 0.7);
-  --shadow-primary:          0 4px 16px rgba(45, 126, 248, 0.25);
-  --shadow-accent:           0 4px 16px rgba(0, 201, 167, 0.20);
+  --shadow-primary:          0 4px 16px rgba(75, 107, 251, 0.25);
+  --shadow-accent:           0 4px 16px rgba(240, 160, 48, 0.20);
 
   /* — Tipografia — */
   --font-display:            var(--font-plus-jakarta), 'Plus Jakarta Sans', system-ui, sans-serif;
@@ -180,126 +180,80 @@
 
 [data-theme="light"] {
 
-  /* — Cor primária — */
-  --color-primary:           #1A6AE8;
-  --color-primary-hover:     #0F55CC;
-  --color-primary-active:    #0A44A8;
-  --color-primary-subtle:    #EBF2FF;
-  --color-primary-subtle-fg: #1A6AE8;
+  /* — Cor primária (Cobalt profundo) — */
+  --color-primary:           #3451DB;
+  --color-primary-hover:     #2940B8;
+  --color-primary-active:    #1F3299;
+  --color-primary-subtle:    #EEF1FE;
+  --color-primary-subtle-fg: #3451DB;
 
   /* — Cor secundária — */
-  --color-secondary:         #4A6A8A;
-  --color-secondary-hover:   #385571;
+  --color-secondary:         #4D5E85;
+  --color-secondary-hover:   #3A4B6E;
 
-  /* — Cor de acento — */
-  --color-accent:            #00A688;
-  --color-accent-hover:      #008F75;
-  --color-accent-subtle:     #E0FAF5;
-  --color-accent-subtle-fg:  #007A65;
+  /* — Cor de acento (Amber/Gold escurecido p/ contraste) — */
+  --color-accent:            #C48820;
+  --color-accent-hover:      #A87318;
+  --color-accent-subtle:     #FFF8EA;
+  --color-accent-subtle-fg:  #8B5E10;
 
   /* — Fundos — */
-  --color-bg-base:           #F5F5FA;
+  --color-bg-base:           #F4F4FB;
   --color-bg-surface:        #FFFFFF;
   --color-bg-elevated:       #FFFFFF;
-  --color-bg-hover:          #EFF0F7;
-  --color-bg-selected:       #EBF2FF;
+  --color-bg-hover:          #EDEDF6;
+  --color-bg-selected:       #EEF1FE;
   --color-bg-overlay:        rgba(0, 0, 0, 0.45);
 
+  /* — Fundos auxiliares para inputs/cards — */
+  --color-bg-input:          #F7F7FC;
+  --color-bg-card:           #FFFFFF;
+
   /* — Bordas — */
-  --color-border:            #E2E2EE;
-  --color-border-subtle:     #EBEBF5;
-  --color-border-strong:     #C8C8DE;
-  --color-border-focus:      #1A6AE8;
+  --color-border:            #DDDDE8;
+  --color-border-subtle:     #E8E8F2;
+  --color-border-strong:     #C0C0D6;
+  --color-border-focus:      #3451DB;
 
   /* — Textos — */
-  --color-text-primary:      #0F0F1A;
-  --color-text-secondary:    #5A5A78;
-  --color-text-tertiary:     #9494AA;
-  --color-text-disabled:     #C0C0D0;
+  --color-text-primary:      #0E0E20;
+  --color-text-secondary:    #4E4E6E;
+  --color-text-tertiary:     #8888A6;
+  --color-text-disabled:     #BBBBD0;
   --color-text-on-primary:   #FFFFFF;
   --color-text-on-accent:    #FFFFFF;
-  --color-text-inverse:      #F0F0F8;
+  --color-text-inverse:      #EEEEF6;
 
   /* — Semânticas: Sucesso — */
   --color-success:           #16A34A;
   --color-success-hover:     #15803D;
-  --color-success-subtle:    #DCFCE7;
+  --color-success-subtle:    #ECFDF5;
   --color-success-subtle-fg: #15803D;
 
   /* — Semânticas: Alerta — */
   --color-warning:           #D97706;
   --color-warning-hover:     #B45309;
-  --color-warning-subtle:    #FEF3C7;
+  --color-warning-subtle:    #FFFBEB;
   --color-warning-subtle-fg: #92400E;
 
   /* — Semânticas: Erro — */
   --color-error:             #DC2626;
   --color-error-hover:       #B91C1C;
-  --color-error-subtle:      #FEE2E2;
+  --color-error-subtle:      #FEF2F2;
   --color-error-subtle-fg:   #991B1B;
 
   /* — Semânticas: Info — */
-  --color-info:              #0284C7;
-  --color-info-hover:        #0369A1;
-  --color-info-subtle:       #E0F2FE;
-  --color-info-subtle-fg:    #0369A1;
+  --color-info:              #0369A1;
+  --color-info-hover:        #075985;
+  --color-info-subtle:       #F0F9FF;
+  --color-info-subtle-fg:    #075985;
 
-  /* — Sombras (mais sutis no light) — */
-  --shadow-sm:               0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md:               0 4px 12px rgba(0, 0, 0, 0.10);
-  --shadow-lg:               0 8px 24px rgba(0, 0, 0, 0.14);
-  --shadow-xl:               0 16px 48px rgba(0, 0, 0, 0.18);
-  --shadow-primary:          0 4px 16px rgba(26, 106, 232, 0.20);
-  --shadow-accent:           0 4px 16px rgba(0, 166, 136, 0.15);
-
-  /* Fontes, espaçamentos, radius e layout herdados do :root — não precisam ser redefinidos */
+  /* — Sombras (sutis, profissionais) — */
+  --shadow-sm:               0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md:               0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg:               0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --shadow-xl:               0 16px 48px rgba(0, 0, 0, 0.10), 0 8px 16px rgba(0, 0, 0, 0.04);
+  --shadow-primary:          0 4px 16px rgba(52, 81, 219, 0.15);
+  --shadow-accent:           0 4px 16px rgba(196, 136, 32, 0.12);
 
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   UTILITÁRIOS DE TEMA (helpers para transição suave entre temas)
-   ═══════════════════════════════════════════════════════════════════════════════ */
-
-/*
- * Aplicar na tag <html> quando o tema for alterado para
- * evitar flash de conteúdo sem transição:
- *
- * html.theme-transitioning,
- * html.theme-transitioning * {
- *   transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease !important;
- * }
- *
- * Remover a classe após 250ms no JS.
- */
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   NOTAS DE IMPLEMENTAÇÃO NO TAILWIND CSS 4
-   ═══════════════════════════════════════════════════════════════════════════════ */
-
-/*
- * No Tailwind CSS 4, as CSS custom properties são referenciáveis diretamente
- * via utilitários arbitrários: bg-[var(--color-bg-surface)]
- *
- * Para criar utilitários semânticos nativos, adicionar ao tailwind.config.ts:
- *
- * theme: {
- *   extend: {
- *     colors: {
- *       primary: 'var(--color-primary)',
- *       'primary-hover': 'var(--color-primary-hover)',
- *       surface: 'var(--color-bg-surface)',
- *       elevated: 'var(--color-bg-elevated)',
- *       border: 'var(--color-border)',
- *       // ... etc
- *     },
- *     borderRadius: {
- *       sm: 'var(--radius-sm)',
- *       md: 'var(--radius-md)',
- *       lg: 'var(--radius-lg)',
- *       xl: 'var(--radius-xl)',
- *     },
- *   }
- * }
- *
- * Isso permite: className="bg-surface border border-border rounded-lg text-primary"
- */
