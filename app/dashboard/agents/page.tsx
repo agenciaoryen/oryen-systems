@@ -1,7 +1,7 @@
 // app/dashboard/agents/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { 
@@ -37,9 +37,23 @@ const CATEGORY_ICONS: Record<string, any> = {
 const SOLUTION_ICONS: Record<string, any> = {
   hunter_b2b: Target,
   sdr: MessageSquare,
+  sdr_imobiliario: MessageSquare,
   followup: Clock,
+  followup_imobiliario: Clock,
   support: Headphones
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FILTRO DE NICHO — quais soluções cada nicho pode ver
+// Se o slug NÃO está listado, é visível para todos os nichos
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const NICHE_SOLUTIONS: Record<string, string[]> = {
+  real_estate: ['sdr_imobiliario', 'followup_imobiliario'],
+}
+
+// Slugs que são exclusivos de um nicho específico (B2B genérico)
+const B2B_ONLY_SLUGS = ['hunter_b2b', 'sdr', 'bdr_prospector']
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES UI
@@ -411,9 +425,7 @@ export default function AgentsPage() {
   const { agents, loading: loadingAgents, refresh } = useOrgAgents(org?.id)
   
   // UI State
-  const [activeTab, setActiveTab] = useState<'agents' | 'marketplace'>(
-    agents.length > 0 ? 'agents' : 'marketplace'
-  )
+  const [activeTab, setActiveTab] = useState<'agents' | 'marketplace'>('marketplace')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [hiring, setHiring] = useState<string | null>(null)
@@ -423,8 +435,24 @@ export default function AgentsPage() {
   const lang = ((user as any)?.language as Language) || 'es'
   const ui = UI[lang]
 
-  // Filtrar soluções
+  // Nicho da org ativa
+  const activeNiche = org?.niche || null
+
+  // Filtrar soluções por nicho + categoria + busca
   const filteredSolutions = solutions.filter(s => {
+    // Filtro de nicho: se a org é real_estate, mostrar apenas as soluções do nicho
+    if (activeNiche && NICHE_SOLUTIONS[activeNiche]) {
+      if (!NICHE_SOLUTIONS[activeNiche].includes(s.slug)) return false
+    }
+    // Se a org NÃO tem nicho definido OU é B2B, esconder os slugs imobiliários
+    if (!activeNiche || !NICHE_SOLUTIONS[activeNiche]) {
+      if (s.slug.includes('_imobiliario')) return false
+    }
+    // Se a org é de um nicho específico, esconder os B2B genéricos
+    if (activeNiche && NICHE_SOLUTIONS[activeNiche]) {
+      if (B2B_ONLY_SLUGS.includes(s.slug)) return false
+    }
+
     if (categoryFilter !== 'all' && s.category !== categoryFilter) return false
     if (searchQuery) {
       const name = t(s.name, lang).toLowerCase()
@@ -434,6 +462,26 @@ export default function AgentsPage() {
     }
     return true
   })
+
+  // Filtrar agentes contratados pelo mesmo critério de nicho
+  const filteredAgents = agents.filter(a => {
+    if (activeNiche && NICHE_SOLUTIONS[activeNiche]) {
+      if (B2B_ONLY_SLUGS.includes(a.solution_slug)) return false
+    }
+    if (!activeNiche || !NICHE_SOLUTIONS[activeNiche]) {
+      if (a.solution_slug.includes('_imobiliario')) return false
+    }
+    return true
+  })
+
+  // Setar tab inicial baseado nos agentes filtrados
+  const [tabInitialized, setTabInitialized] = useState(false)
+  useEffect(() => {
+    if (!loadingAgents && !tabInitialized) {
+      if (filteredAgents.length > 0) setActiveTab('agents')
+      setTabInitialized(true)
+    }
+  }, [loadingAgents, filteredAgents.length, tabInitialized])
 
   // Handlers
   const handleHire = async (solution: AgentSolution) => {
@@ -510,12 +558,12 @@ export default function AgentsPage() {
           >
             <Activity size={14} />
             {ui.myAgents}
-            {agents.length > 0 && (
+            {filteredAgents.length > 0 && (
               <span className={`
                 px-1.5 py-0.5 rounded text-[10px] font-bold
                 ${activeTab === 'agents' ? 'bg-black/10' : 'bg-white/10'}
               `}>
-                {agents.length}
+                {filteredAgents.length}
               </span>
             )}
           </button>
@@ -538,7 +586,7 @@ export default function AgentsPage() {
       {/* My Agents Tab */}
       {activeTab === 'agents' && (
         <>
-          {agents.length === 0 ? (
+          {filteredAgents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="w-16 h-16 rounded-2xl bg-gray-900 border border-white/10 flex items-center justify-center mb-4">
                 <Bot size={32} className="text-gray-600" />
@@ -555,7 +603,7 @@ export default function AgentsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {agents.map(agent => (
+              {filteredAgents.map(agent => (
                 <AgentCard
                   key={agent.id}
                   agent={agent}
