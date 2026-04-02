@@ -297,6 +297,14 @@ const TAG_COLORS: Record<string, { bg: string; text: string; border: string }> =
 const getStageColor = (color: string) => STAGE_COLORS[color] || STAGE_COLORS.gray
 const getTagColor = (color: string) => TAG_COLORS[color] || TAG_COLORS.gray
 
+const STAGE_HEX: Record<string, string> = {
+  gray: '#6B7280', blue: '#3B82F6', orange: '#F97316', purple: '#A855F7',
+  indigo: '#6366F1', emerald: '#10B981', rose: '#F43F5E', pink: '#EC4899',
+  yellow: '#EAB308', green: '#22C55E', red: '#EF4444',
+}
+
+const getStageHex = (color: string) => STAGE_HEX[color] || STAGE_HEX.gray
+
 const getInitials = (name: string) => {
   if (!name) return '?'
   return name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
@@ -687,14 +695,14 @@ export default function CrmPage() {
 
   // ─── RENDER ───
   return (
-    <div className="flex flex-col h-[calc(100vh-20px)] bg-gray-950 text-gray-200 font-sans">
+    <div className="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-4.5rem)] text-gray-200 font-sans" style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-primary)' }}>
 
       {/* HEADER */}
-      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center px-4 md:px-6 py-4 border-b border-gray-900 bg-gray-950 shrink-0 gap-4">
+      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center px-4 md:px-6 py-4 shrink-0 gap-4" style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-bg-base)' }}>
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-white tracking-tight flex items-center gap-3">
+          <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>
             {t.title}
-            <span className="text-xs font-normal text-gray-500 border border-gray-800 px-2 py-0.5 rounded-full bg-gray-900">
+            <span className="text-xs font-normal px-2 py-0.5 rounded-full" style={{ color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)' }}>
               {filteredLeads.length} {t.leads}
             </span>
           </h1>
@@ -725,7 +733,8 @@ export default function CrmPage() {
               placeholder={t.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-800 text-gray-300 text-sm rounded-lg pl-9 pr-8 py-2 outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500 transition-all hover:bg-gray-800 placeholder:text-gray-600"
+              className="w-full text-sm rounded-lg pl-9 pr-8 py-2 outline-none focus:ring-1 focus:ring-blue-500/50 transition-all"
+              style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
             />
             {searchQuery && (
               <button
@@ -741,11 +750,12 @@ export default function CrmPage() {
           <div className="relative">
             <button
               onClick={() => setIsTagFilterOpen(!isTagFilterOpen)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
                 selectedTags.length > 0
-                  ? 'bg-blue-500/10 border-blue-500/30 text-blue-300'
-                  : 'bg-gray-900 border-gray-800 text-gray-400 hover:bg-gray-800'
+                  ? 'bg-blue-500/10 border border-blue-500/30 text-blue-400'
+                  : ''
               }`}
+              style={selectedTags.length === 0 ? { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' } : undefined}
             >
               <Filter size={14} />
               <span className="hidden sm:inline">{t.filterByTags}</span>
@@ -758,8 +768,8 @@ export default function CrmPage() {
             </button>
 
             {isTagFilterOpen && (
-              <div className="absolute top-full right-0 mt-2 w-56 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl z-50 overflow-hidden">
-                <div className="p-2 border-b border-gray-800 flex justify-between items-center">
+              <div className="absolute top-full right-0 mt-2 w-56 rounded-xl shadow-2xl z-50 overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+                <div className="p-2 flex justify-between items-center" style={{ borderBottom: '1px solid var(--color-border)' }}>
                   <span className="text-xs font-medium text-gray-400">{t.filterByTags}</span>
                   {selectedTags.length > 0 && (
                     <button
@@ -812,7 +822,8 @@ export default function CrmPage() {
             <select
               value={daysFilter}
               onChange={(e) => setDaysFilter(e.target.value)}
-              className="appearance-none bg-gray-900 border border-gray-800 text-gray-300 text-sm rounded-lg pl-3 pr-8 py-2 outline-none focus:ring-1 focus:ring-blue-500/50 transition-all hover:bg-gray-800 cursor-pointer"
+              className="appearance-none text-sm rounded-lg pl-3 pr-8 py-2 outline-none focus:ring-1 focus:ring-blue-500/50 transition-all cursor-pointer"
+              style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
             >
               <option value="7">{t.days7}</option>
               <option value="30">{t.days30}</option>
@@ -826,21 +837,21 @@ export default function CrmPage() {
           <button
             onClick={loadData}
             disabled={loading}
-            className="p-2 bg-gray-900 border border-gray-800 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors disabled:opacity-50"
+            className="p-2 rounded-lg transition-colors disabled:opacity-50"
+            style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
             title={t.refresh}
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
 
           {/* Toggle View */}
-          <div className="flex bg-gray-900 rounded-lg p-1 border border-gray-800">
+          <div className="flex rounded-lg p-1" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}>
             <button
               onClick={() => setViewMode('list')}
               className={`flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                viewMode === 'list'
-                  ? 'bg-gray-800 text-white shadow-sm ring-1 ring-white/10'
-                  : 'text-gray-500 hover:text-gray-300'
+                viewMode === 'list' ? 'shadow-sm' : ''
               }`}
+              style={viewMode === 'list' ? { background: 'var(--color-bg-surface)', color: 'var(--color-text-primary)' } : { color: 'var(--color-text-tertiary)' }}
               title={t.listView}
             >
               <List size={14} />
@@ -849,10 +860,9 @@ export default function CrmPage() {
             <button
               onClick={() => setViewMode('pipeline')}
               className={`flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                viewMode === 'pipeline'
-                  ? 'bg-gray-800 text-white shadow-sm ring-1 ring-white/10'
-                  : 'text-gray-500 hover:text-gray-300'
+                viewMode === 'pipeline' ? 'shadow-sm' : ''
               }`}
+              style={viewMode === 'pipeline' ? { background: 'var(--color-bg-surface)', color: 'var(--color-text-primary)' } : { color: 'var(--color-text-tertiary)' }}
               title={t.pipelineView}
             >
               <LayoutGrid size={14} />
@@ -866,7 +876,7 @@ export default function CrmPage() {
       <main className="flex-1 overflow-hidden relative p-3 md:p-6">
         {/* Loading */}
         {loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950/80 z-50 backdrop-blur-sm">
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-50 backdrop-blur-sm" style={{ background: 'var(--color-bg-overlay)' }}>
             <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
             <p className="mt-4 text-sm text-gray-400 font-medium">{t.loading}</p>
           </div>
@@ -874,9 +884,9 @@ export default function CrmPage() {
 
         {/* VISÃO LISTA */}
         {!loading && viewMode === 'list' && (
-          <div className="h-full overflow-hidden rounded-xl border border-gray-900 bg-gray-900/50 shadow-2xl">
+          <div className="h-full overflow-hidden rounded-xl shadow-sm" style={{ border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)' }}>
             <div className="overflow-auto h-full">
-              <table className="w-full min-w-[900px] text-left text-sm text-gray-400">
+              <table className="w-full min-w-[900px] text-left text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                 <thead className="bg-gray-900 text-gray-400 uppercase font-semibold text-[11px] tracking-wider sticky top-0 z-10 border-b border-gray-800">
                   <tr>
                     <th className="px-4 md:px-6 py-4 font-medium">{t.companyLead}</th>
@@ -994,31 +1004,32 @@ export default function CrmPage() {
                     key={stage.id}
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDrop(e, stage.name)}
-                    className="w-[280px] md:w-[300px] flex-shrink-0 flex flex-col h-full rounded-xl bg-gray-900/30 border border-gray-800/50"
+                    className="w-[280px] md:w-[300px] flex-shrink-0 flex flex-col h-full rounded-xl"
+                    style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}
                   >
                     {/* Header da Coluna */}
-                    <div className="p-3 border-b border-gray-800/50 shrink-0 bg-gray-900/80 rounded-t-xl">
+                    <div className="p-3 shrink-0 rounded-t-xl" style={{ borderBottom: `2px solid ${getStageHex(stage.color)}`, background: 'var(--color-bg-elevated)' }}>
                       <div className="flex justify-between items-center mb-1">
-                        <h3 className={`font-bold text-sm uppercase tracking-tight flex items-center gap-2 ${stageColor.text}`}>
-                          <span className={`w-2 h-2 rounded-full ${stageColor.dot}`} />
+                        <h3 className={`font-bold text-sm uppercase tracking-tight flex items-center gap-2`} style={{ color: 'var(--color-text-primary)' }}>
+                          <span className={`w-2.5 h-2.5 rounded-full ${stageColor.dot}`} />
                           {stage.label}
                         </h3>
-                        <span className="bg-gray-800 text-gray-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-gray-700">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'var(--color-bg-hover)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
                           {count}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1.5 mt-1 text-emerald-400/80">
+                      <div className="flex items-center gap-1.5 mt-1" style={{ color: 'var(--color-success)' }}>
                         <DollarSign size={12} />
                         <span className="text-[11px] font-mono font-bold">
                           {formatPrice(stageTotal, userCurrency, userLang)}
                         </span>
                       </div>
 
-                      <div className="h-0.5 w-full mt-2 rounded-full bg-gray-800 overflow-hidden">
+                      <div className="h-0.5 w-full mt-2 rounded-full overflow-hidden" style={{ background: 'var(--color-border)' }}>
                         <div
-                          className={`h-full ${stageColor.dot} opacity-50`}
-                          style={{ width: `${Math.min(count * 10, 100)}%` }}
+                          className={`h-full ${stageColor.dot}`}
+                          style={{ width: `${Math.min(count * 10, 100)}%`, opacity: 0.7 }}
                         />
                       </div>
                     </div>
@@ -1039,11 +1050,14 @@ export default function CrmPage() {
                             onDragStart={(e) => handleDragStart(e, lead.id)}
                             onDragEnd={handleDragEnd}
                             onClick={() => handleOpenLead(lead.id)}
-                            className={`
-                              group relative bg-gray-900 p-3 rounded-lg border
-                              hover:border-gray-600 hover:shadow-xl transition-all cursor-pointer
-                              ${draggedLeadId === lead.id ? 'opacity-30 scale-95 border-dashed border-blue-500' : isStale ? 'border-amber-500/40' : 'border-gray-800'}
-                            `}
+                            className={`group relative p-3 rounded-lg transition-all cursor-pointer hover:shadow-md ${
+                              draggedLeadId === lead.id ? 'opacity-30 scale-95' : ''
+                            }`}
+                            style={{
+                              background: 'var(--color-bg-surface)',
+                              border: '1px solid var(--color-border)',
+                              borderLeft: `3px solid ${isStale ? '#F59E0B' : getStageHex(stage.color)}`,
+                            }}
                           >
                             {/* Indicadores no canto superior direito */}
                             <div className="absolute -top-1.5 -right-1.5 flex items-center gap-1">
@@ -1061,11 +1075,11 @@ export default function CrmPage() {
 
                             {/* Nome e Empresa */}
                             <div className="flex items-start gap-2 mb-2 pr-6">
-                              <div className="w-7 h-7 flex-shrink-0 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 flex items-center justify-center text-[9px] font-bold text-gray-400">
+                              <div className="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>
                                 {getInitials(leadDisplayName)}
                               </div>
                               <div className="overflow-hidden min-w-0 flex-1">
-                                <h4 className="font-semibold text-gray-200 text-sm leading-tight truncate" title={leadDisplayName}>
+                                <h4 className="font-semibold text-sm leading-tight truncate" style={{ color: 'var(--color-text-primary)' }} title={leadDisplayName}>
                                   {leadDisplayName}
                                 </h4>
                                 {lead.nome_empresa && (
@@ -1141,7 +1155,7 @@ export default function CrmPage() {
                       })}
 
                       {count === 0 && (
-                        <div className="h-full flex flex-col items-center justify-center opacity-30 min-h-[120px] border-2 border-dashed border-gray-800 rounded-lg">
+                        <div className="h-full flex flex-col items-center justify-center opacity-40 min-h-[120px] border-2 border-dashed rounded-lg" style={{ borderColor: 'var(--color-border)' }}>
                           <span className="text-xs text-gray-500 font-medium italic">{t.noLeadsStage}</span>
                         </div>
                       )}
@@ -1155,7 +1169,7 @@ export default function CrmPage() {
       </main>
 
       {/* FOOTER - ESTILO TRELLO */}
-      <footer className="shrink-0 border-t border-gray-800 bg-gray-900/80 backdrop-blur-sm px-4 md:px-6 py-2.5">
+      <footer className="shrink-0 px-4 md:px-6 py-2.5" style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-bg-surface)' }}>
         <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Estatísticas */}
           <div className="flex items-center gap-4 md:gap-6">
@@ -1184,7 +1198,7 @@ export default function CrmPage() {
             </div>
 
             {/* Separador */}
-            <div className="hidden md:block w-px h-8 bg-gray-800" />
+            <div className="hidden md:block w-px h-8" style={{ background: 'var(--color-border)' }} />
 
             {/* IA Ativa */}
             <div className="hidden md:flex items-center gap-2">
@@ -1212,14 +1226,15 @@ export default function CrmPage() {
           {/* Ações do Footer */}
           <div className="flex items-center gap-2">
             {/* Filtro de IA */}
-            <div className="flex bg-gray-800 rounded-lg p-0.5 border border-gray-700">
+            <div className="flex rounded-lg p-0.5" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}>
               <button
                 onClick={() => setAiFilter('all')}
                 className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${
                   aiFilter === 'all'
-                    ? 'bg-gray-700 text-white'
-                    : 'text-gray-500 hover:text-gray-300'
+                    ? 'shadow-sm'
+                    : ''
                 }`}
+                style={aiFilter === 'all' ? { background: 'var(--color-bg-surface)', color: 'var(--color-text-primary)' } : { color: 'var(--color-text-tertiary)' }}
               >
                 {t.allLeads}
               </button>
@@ -1250,7 +1265,8 @@ export default function CrmPage() {
             {/* Tela Cheia */}
             <button
               onClick={toggleFullscreen}
-              className="p-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg transition-colors"
+              style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
               title={isFullscreen ? t.exitFullscreen : t.fullscreen}
             >
               {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
@@ -1260,7 +1276,8 @@ export default function CrmPage() {
             <button
               onClick={loadData}
               disabled={loading}
-              className="p-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors disabled:opacity-50"
+              className="p-2 rounded-lg transition-colors disabled:opacity-50"
+              style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
               title={t.refresh}
             >
               <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
@@ -1272,8 +1289,8 @@ export default function CrmPage() {
       {/* MODAL CRIAR LEAD */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="flex justify-between items-center p-4 border-b border-gray-800 bg-gray-900/50">
+          <div className="rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+            <div className="flex justify-between items-center p-4" style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-bg-elevated)' }}>
               <h2 className="text-lg font-semibold text-white">{t.modalTitle}</h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -1290,7 +1307,8 @@ export default function CrmPage() {
                   type="text"
                   required
                   placeholder={t.namePlaceholder}
-                  className="w-full bg-gray-800 border border-gray-700 text-gray-200 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/50 outline-none"
+                  className="w-full text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/50 outline-none"
+                  style={{ background: 'var(--color-bg-input, var(--color-bg-elevated))', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
                   value={newLeadData.name}
                   onChange={(e) => setNewLeadData({ ...newLeadData, name: e.target.value })}
                 />
@@ -1302,7 +1320,8 @@ export default function CrmPage() {
                   <input
                     type="email"
                     placeholder="email@exemplo.com"
-                    className="w-full bg-gray-800 border border-gray-700 text-gray-200 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/50 outline-none"
+                    className="w-full text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/50 outline-none"
+                  style={{ background: 'var(--color-bg-input, var(--color-bg-elevated))', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
                     value={newLeadData.email}
                     onChange={(e) => setNewLeadData({ ...newLeadData, email: e.target.value })}
                   />
@@ -1312,7 +1331,8 @@ export default function CrmPage() {
                   <input
                     type="text"
                     placeholder="(00) 00000-0000"
-                    className="w-full bg-gray-800 border border-gray-700 text-gray-200 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/50 outline-none"
+                    className="w-full text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/50 outline-none"
+                  style={{ background: 'var(--color-bg-input, var(--color-bg-elevated))', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
                     value={newLeadData.phone}
                     onChange={(e) => setNewLeadData({ ...newLeadData, phone: e.target.value })}
                   />
