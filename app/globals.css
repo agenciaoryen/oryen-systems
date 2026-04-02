@@ -261,6 +261,35 @@ input[type="number"] {
   background-color: var(--color-border-strong) !important;
 }
 
+/* ─── BACKGROUNDS: gray com opacity (CRM pipeline, listas) ─── */
+
+[data-theme="light"] .bg-gray-950\/80,
+[data-theme="light"] .bg-gray-950\/50 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-theme="light"] .bg-gray-900\/80 {
+  background-color: var(--color-bg-surface) !important;
+}
+
+[data-theme="light"] .bg-gray-900\/50,
+[data-theme="light"] .bg-gray-900\/30 {
+  background-color: var(--color-bg-base) !important;
+}
+
+[data-theme="light"] .border-gray-800\/50 {
+  border-color: var(--color-border) !important;
+}
+
+/* Gradientes dark → light */
+[data-theme="light"] .from-gray-800 {
+  --tw-gradient-from: var(--color-bg-hover) !important;
+}
+
+[data-theme="light"] .to-gray-900 {
+  --tw-gradient-to: var(--color-bg-base) !important;
+}
+
 /* ─── BACKGROUNDS: white-opacity overlays → dark-opacity ─── */
 
 [data-theme="light"] .bg-white\/5 {
@@ -325,6 +354,18 @@ input[type="number"] {
 
 [data-theme="light"] .border-gray-900 {
   border-color: var(--color-border-subtle) !important;
+}
+
+[data-theme="light"] .border-gray-600 {
+  border-color: var(--color-border-strong) !important;
+}
+
+[data-theme="light"] .hover\:border-gray-600:hover {
+  border-color: var(--color-border-strong) !important;
+}
+
+[data-theme="light"] .hover\:border-gray-700:hover {
+  border-color: var(--color-border) !important;
 }
 
 /* ─── TEXTO: primário (text-white → escuro) ─── */
@@ -408,6 +449,14 @@ input[type="number"] {
 /* Hover text */
 [data-theme="light"] .hover\:text-white:hover {
   color: var(--color-text-primary) !important;
+}
+
+[data-theme="light"] .hover\:text-gray-300:hover {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="light"] .hover\:bg-gray-700:hover {
+  background-color: var(--color-bg-hover) !important;
 }
 
 /* Placeholder text */
@@ -559,8 +608,33 @@ input[type="number"] {
   background-color: rgba(124, 58, 237, 0.08) !important;
 }
 
-[data-theme="light"] .bg-yellow-500\/10 {
+[data-theme="light"] .bg-yellow-500\/10,
+[data-theme="light"] .bg-amber-500\/20 {
   background-color: rgba(180, 83, 9, 0.08) !important;
+}
+
+[data-theme="light"] .bg-blue-500\/10 {
+  background-color: rgba(52, 81, 219, 0.07) !important;
+}
+
+[data-theme="light"] .bg-emerald-500\/10 {
+  background-color: rgba(5, 150, 105, 0.07) !important;
+}
+
+[data-theme="light"] .bg-emerald-500\/20 {
+  background-color: rgba(5, 150, 105, 0.10) !important;
+}
+
+[data-theme="light"] .bg-blue-500\/20 {
+  background-color: rgba(52, 81, 219, 0.10) !important;
+}
+
+[data-theme="light"] .bg-purple-500\/20 {
+  background-color: rgba(124, 58, 237, 0.08) !important;
+}
+
+[data-theme="light"] .bg-amber-500\/10 {
+  background-color: rgba(180, 83, 9, 0.06) !important;
 }
 
 /* ─── BORDAS: opacity-based coloridas ─── */
