@@ -200,3 +200,472 @@ input[type="number"] {
   outline: 2px solid rgba(45, 126, 248, 0.5);
   outline-offset: 2px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TEMA CLARO — Camada de Compatibilidade
+   Remapeia automaticamente as classes Tailwind hardcoded (dark) para light
+   quando [data-theme="light"] está ativo. Cobre ~950 instâncias em 21 arquivos.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ─── BACKGROUNDS: hex hardcoded ─── */
+
+[data-theme="light"] .bg-\[\#0A0A0A\],
+[data-theme="light"] .bg-\[\#0a0a0a\],
+[data-theme="light"] .bg-\[\#0A0A0F\],
+[data-theme="light"] .bg-\[\#080808\] {
+  background-color: var(--color-bg-base) !important;
+}
+
+[data-theme="light"] .bg-\[\#111\],
+[data-theme="light"] .bg-\[\#111118\],
+[data-theme="light"] .bg-\[\#0d0d0d\] {
+  background-color: var(--color-bg-surface) !important;
+}
+
+[data-theme="light"] .bg-\[\#1a1a1a\],
+[data-theme="light"] .bg-\[\#1A1A24\],
+[data-theme="light"] .bg-\[\#1a1a2e\] {
+  background-color: var(--color-bg-elevated) !important;
+}
+
+[data-theme="light"] .bg-\[\#1a2e1a\] {
+  background-color: #F0FFF4 !important;
+}
+
+/* ─── BACKGROUNDS: Tailwind gray/black ─── */
+
+[data-theme="light"] .bg-gray-950,
+[data-theme="light"] .bg-gray-900,
+[data-theme="light"] .bg-black {
+  background-color: var(--color-bg-surface) !important;
+}
+
+[data-theme="light"] .bg-gray-800 {
+  background-color: var(--color-bg-elevated) !important;
+}
+
+[data-theme="light"] .bg-gray-700 {
+  background-color: #D1D1DE !important;
+}
+
+/* ─── BACKGROUNDS: white-opacity overlays → dark-opacity ─── */
+
+[data-theme="light"] .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme="light"] .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .bg-white\/20 {
+  background-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+[data-theme="light"] .hover\:bg-white\/5:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+/* ─── BACKGROUNDS: black-opacity ─── */
+
+[data-theme="light"] .bg-black\/20 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Overlays de modal/drawer devem continuar escuros — não sobrescrever bg-black/60, bg-black/80 */
+
+/* ─── BORDAS: white-opacity → dark-opacity ─── */
+
+[data-theme="light"] .border-white\/5 {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.10) !important;
+}
+
+[data-theme="light"] .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.14) !important;
+}
+
+[data-theme="light"] .divide-white\/5 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .divide-white\/10 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(0, 0, 0, 0.10) !important;
+}
+
+/* Bordas Tailwind gray */
+[data-theme="light"] .border-gray-800,
+[data-theme="light"] .border-gray-700 {
+  border-color: var(--color-border) !important;
+}
+
+[data-theme="light"] .border-gray-900 {
+  border-color: var(--color-border-subtle) !important;
+}
+
+/* ─── TEXTO: primário (text-white → escuro) ─── */
+
+[data-theme="light"] .text-white {
+  color: var(--color-text-primary) !important;
+}
+
+/* Preservar branco em fundos coloridos — mesmo elemento */
+[data-theme="light"] [class*="bg-blue-5"].text-white,
+[data-theme="light"] [class*="bg-blue-6"].text-white,
+[data-theme="light"] [class*="bg-emerald-5"].text-white,
+[data-theme="light"] [class*="bg-emerald-6"].text-white,
+[data-theme="light"] [class*="bg-green-5"].text-white,
+[data-theme="light"] [class*="bg-green-6"].text-white,
+[data-theme="light"] [class*="bg-red-5"].text-white,
+[data-theme="light"] [class*="bg-red-6"].text-white,
+[data-theme="light"] [class*="bg-rose-5"].text-white,
+[data-theme="light"] [class*="bg-rose-6"].text-white,
+[data-theme="light"] [class*="bg-indigo-5"].text-white,
+[data-theme="light"] [class*="bg-indigo-6"].text-white,
+[data-theme="light"] [class*="bg-purple-5"].text-white,
+[data-theme="light"] [class*="bg-purple-6"].text-white,
+[data-theme="light"] [class*="bg-violet-5"].text-white,
+[data-theme="light"] [class*="bg-violet-6"].text-white,
+[data-theme="light"] [class*="bg-orange-5"].text-white,
+[data-theme="light"] [class*="bg-yellow-5"].text-white,
+[data-theme="light"] .bg-\[\#005c4b\].text-white,
+[data-theme="light"] .bg-\[\#00a884\].text-white,
+[data-theme="light"] .bg-\[\#25d366\].text-white,
+[data-theme="light"] .bg-\[\#6b7b8d\].text-white {
+  color: #FFFFFF !important;
+}
+
+/* Preservar branco — filho de fundo colorido */
+[data-theme="light"] [class*="bg-blue-5"] .text-white,
+[data-theme="light"] [class*="bg-blue-6"] .text-white,
+[data-theme="light"] [class*="bg-emerald-5"] .text-white,
+[data-theme="light"] [class*="bg-emerald-6"] .text-white,
+[data-theme="light"] [class*="bg-green-5"] .text-white,
+[data-theme="light"] [class*="bg-green-6"] .text-white,
+[data-theme="light"] [class*="bg-red-5"] .text-white,
+[data-theme="light"] [class*="bg-red-6"] .text-white,
+[data-theme="light"] [class*="bg-rose-5"] .text-white,
+[data-theme="light"] [class*="bg-rose-6"] .text-white,
+[data-theme="light"] [class*="bg-indigo-5"] .text-white,
+[data-theme="light"] [class*="bg-indigo-6"] .text-white,
+[data-theme="light"] [class*="bg-purple-5"] .text-white,
+[data-theme="light"] [class*="bg-purple-6"] .text-white,
+[data-theme="light"] [class*="bg-violet-5"] .text-white,
+[data-theme="light"] [class*="bg-violet-6"] .text-white,
+[data-theme="light"] .bg-\[\#005c4b\] .text-white,
+[data-theme="light"] .bg-\[\#00a884\] .text-white,
+[data-theme="light"] .bg-\[\#25d366\] .text-white,
+[data-theme="light"] .bg-\[\#6b7b8d\] .text-white {
+  color: #FFFFFF !important;
+}
+
+/* ─── TEXTO: secundário/terciário ─── */
+
+[data-theme="light"] .text-gray-200 {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="light"] .text-gray-300 {
+  color: #2A2A40 !important;
+}
+
+[data-theme="light"] .text-gray-400 {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="light"] .text-gray-500 {
+  color: var(--color-text-tertiary) !important;
+}
+
+[data-theme="light"] .text-gray-600 {
+  color: #8888A0 !important;
+}
+
+/* Hover text */
+[data-theme="light"] .hover\:text-white:hover {
+  color: var(--color-text-primary) !important;
+}
+
+/* Placeholder text */
+[data-theme="light"] .placeholder-gray-500::placeholder,
+[data-theme="light"] .placeholder-gray-600::placeholder {
+  color: #9494AA !important;
+}
+
+/* ─── TEXTO: cores de acento (mais fortes no light) ─── */
+
+[data-theme="light"] .text-blue-400 {
+  color: #1A6AE8 !important;
+}
+
+[data-theme="light"] .text-blue-300 {
+  color: #2D7EF8 !important;
+}
+
+[data-theme="light"] .text-emerald-400 {
+  color: #059669 !important;
+}
+
+[data-theme="light"] .text-green-400 {
+  color: #16A34A !important;
+}
+
+[data-theme="light"] .text-purple-400 {
+  color: #7C3AED !important;
+}
+
+[data-theme="light"] .text-violet-400 {
+  color: #7C3AED !important;
+}
+
+[data-theme="light"] .text-yellow-400,
+[data-theme="light"] .text-yellow-500 {
+  color: #B45309 !important;
+}
+
+[data-theme="light"] .text-rose-400 {
+  color: #E11D48 !important;
+}
+
+[data-theme="light"] .text-red-400 {
+  color: #DC2626 !important;
+}
+
+[data-theme="light"] .text-indigo-400,
+[data-theme="light"] .text-indigo-300 {
+  color: #4F46E5 !important;
+}
+
+[data-theme="light"] .text-orange-400 {
+  color: #C2410C !important;
+}
+
+[data-theme="light"] .text-cyan-400 {
+  color: #0891B2 !important;
+}
+
+/* ─── HOVER: backgrounds Tailwind ─── */
+
+[data-theme="light"] .hover\:bg-gray-800:hover {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .hover\:bg-gray-900:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* ─── RING / OUTLINE ─── */
+
+[data-theme="light"] .ring-white\/10 {
+  --tw-ring-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .ring-white\/20 {
+  --tw-ring-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ─── SOMBRAS: mais sutis no light ─── */
+
+[data-theme="light"] .shadow-black\/50 {
+  --tw-shadow-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] [class*="shadow-\[0_0"] {
+  box-shadow: none !important;
+}
+
+/* Glow shadows → soft shadow no light */
+[data-theme="light"] .shadow-\[0_0_15px_rgba\(37\2c 99\2c 235\2c 0\.5\)\] {
+  box-shadow: 0 2px 8px rgba(26, 106, 232, 0.15) !important;
+}
+
+[data-theme="light"] .shadow-\[0_0_30px_rgba\(37\2c 99\2c 235\2c 0\.15\)\] {
+  box-shadow: 0 2px 12px rgba(26, 106, 232, 0.10) !important;
+}
+
+/* ─── BACKGROUNDS: opacity-based coloridos ─── */
+
+[data-theme="light"] .bg-blue-600\/10 {
+  background-color: rgba(26, 106, 232, 0.08) !important;
+}
+
+[data-theme="light"] .bg-emerald-600\/10 {
+  background-color: rgba(5, 150, 105, 0.08) !important;
+}
+
+[data-theme="light"] .bg-red-500\/10,
+[data-theme="light"] .bg-rose-500\/10 {
+  background-color: rgba(225, 29, 72, 0.08) !important;
+}
+
+[data-theme="light"] .bg-indigo-500\/10 {
+  background-color: rgba(79, 70, 229, 0.08) !important;
+}
+
+[data-theme="light"] .bg-purple-500\/10 {
+  background-color: rgba(124, 58, 237, 0.08) !important;
+}
+
+[data-theme="light"] .bg-yellow-500\/10 {
+  background-color: rgba(180, 83, 9, 0.08) !important;
+}
+
+/* ─── BORDAS: opacity-based coloridas ─── */
+
+[data-theme="light"] .border-blue-600\/20,
+[data-theme="light"] .border-blue-500\/20 {
+  border-color: rgba(26, 106, 232, 0.18) !important;
+}
+
+[data-theme="light"] .border-indigo-500\/20 {
+  border-color: rgba(79, 70, 229, 0.18) !important;
+}
+
+[data-theme="light"] .border-rose-500\/20 {
+  border-color: rgba(225, 29, 72, 0.18) !important;
+}
+
+[data-theme="light"] .border-violet-500\/10 {
+  border-color: rgba(124, 58, 237, 0.15) !important;
+}
+
+[data-theme="light"] .border-amber-500\/10 {
+  border-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TEMA CLARO — Mensagens (WhatsApp-like)
+   Remapeia as cores do dark WhatsApp para light WhatsApp
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Main containers */
+[data-theme="light"] .bg-\[\#111b21\] {
+  background-color: #FFFFFF !important;
+}
+
+[data-theme="light"] .bg-\[\#0b141a\] {
+  background-color: #F0F2F5 !important;
+}
+
+[data-theme="light"] .bg-\[\#202c33\] {
+  background-color: #F0F2F5 !important;
+}
+
+[data-theme="light"] .bg-\[\#2a3942\] {
+  background-color: #E9EDEF !important;
+}
+
+[data-theme="light"] .hover\:bg-\[\#202c33\]:hover {
+  background-color: #E9EDEF !important;
+}
+
+[data-theme="light"] .hover\:bg-\[\#2a3942\]:hover {
+  background-color: #D9DEE0 !important;
+}
+
+[data-theme="light"] .bg-\[\#222e35\] {
+  background-color: #F0F2F5 !important;
+}
+
+[data-theme="light"] .bg-\[\#364147\] {
+  background-color: #D9DEE0 !important;
+}
+
+[data-theme="light"] .bg-\[\#374045\] {
+  background-color: #D9DEE0 !important;
+}
+
+[data-theme="light"] .hover\:bg-\[\#374045\]:hover {
+  background-color: #C8CDD0 !important;
+}
+
+[data-theme="light"] .bg-\[\#182229\]\/90 {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+}
+
+/* WhatsApp borders */
+[data-theme="light"] .border-\[\#222d34\] {
+  border-color: #E2E8EB !important;
+}
+
+[data-theme="light"] .border-\[\#111b21\] {
+  border-color: #E2E8EB !important;
+}
+
+/* WhatsApp text */
+[data-theme="light"] .text-\[\#e9edef\] {
+  color: #111B21 !important;
+}
+
+[data-theme="light"] .text-\[\#8696a0\] {
+  color: #667781 !important;
+}
+
+[data-theme="light"] .text-\[\#aebac1\] {
+  color: #54656F !important;
+}
+
+[data-theme="light"] .placeholder-\[\#8696a0\]::placeholder {
+  color: #8696A0 !important;
+}
+
+/* WhatsApp outgoing bubble — manter verde mas tom mais claro */
+[data-theme="light"] .bg-\[\#005c4b\] {
+  background-color: #D9FDD3 !important;
+  color: #111B21 !important;
+}
+
+[data-theme="light"] .bg-\[\#005c4b\] .text-white,
+[data-theme="light"] .bg-\[\#005c4b\].text-white {
+  color: #111B21 !important;
+}
+
+/* WhatsApp incoming bubble */
+[data-theme="light"] .bg-\[\#202c33\] {
+  background-color: #FFFFFF !important;
+}
+
+/* WhatsApp green accent */
+[data-theme="light"] .bg-\[\#00a884\] {
+  background-color: #00A884 !important;
+}
+
+[data-theme="light"] .hover\:bg-\[\#06cf9c\]:hover {
+  background-color: #06CF9C !important;
+}
+
+/* WhatsApp online indicator — manter verde */
+[data-theme="light"] .bg-\[\#25d366\] {
+  background-color: #25D366 !important;
+}
+
+/* ─── INPUTS dentro do light theme ─── */
+
+[data-theme="light"] .bg-\[\#2a3942\] input,
+[data-theme="light"] .bg-\[\#2a3942\] textarea,
+[data-theme="light"] input.bg-\[\#2a3942\],
+[data-theme="light"] textarea.bg-\[\#2a3942\] {
+  background-color: #F0F2F5 !important;
+  color: #111B21 !important;
+}
+
+[data-theme="light"] input.bg-\[\#202c33\],
+[data-theme="light"] textarea.bg-\[\#202c33\] {
+  background-color: #F0F2F5 !important;
+  color: #111B21 !important;
+}
