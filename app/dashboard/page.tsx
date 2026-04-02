@@ -800,7 +800,7 @@ export default function DashboardPage() {
 
   // ─── RENDER PRINCIPAL ───
   return (
-    <div className="space-y-6 sm:space-y-8 relative max-w-[1600px] mx-auto">
+    <div className="space-y-6 sm:space-y-8 relative max-w-[1600px] mx-auto pb-8">
       
       {/* Modal de Metas */}
       <GoalsModal 
@@ -903,7 +903,7 @@ export default function DashboardPage() {
           <h2 className="text-3xl sm:text-4xl font-black text-white mt-1 sm:mt-2 tracking-tight relative">
             {formatPrice(kpis.totalFaturamento, userCurrency, userLang)}
           </h2>
-          <div className="mt-4 w-full bg-gray-800 rounded-full overflow-hidden h-1.5 sm:h-2 relative">
+          <div className="mt-4 w-full rounded-full overflow-hidden h-1.5 sm:h-2 relative" style={{ background: 'var(--color-border)' }}>
             <div 
               className="h-full bg-blue-500 transition-all duration-1000 shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
               style={{ width: `${Math.min(kpis.metaAtingida, 100)}%` }} 
@@ -921,7 +921,7 @@ export default function DashboardPage() {
           <Card className="p-4 sm:p-6 flex flex-col justify-between hover:border-white/10 transition-colors">
             <div className="flex justify-between items-start">
               <StatBadge value={kpis.leadsTotal} label={t.leadsCaptured} trend={5.2} />
-              <div className="p-2 bg-gray-800/50 rounded-lg text-gray-400">
+              <div className="p-2 bg-orange-500/10 rounded-lg text-orange-400 border border-orange-500/20">
                 <Users size={16} className="sm:w-5 sm:h-5" />
               </div>
             </div>
