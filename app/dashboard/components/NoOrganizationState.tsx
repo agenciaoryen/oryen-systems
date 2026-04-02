@@ -15,10 +15,10 @@ const TRANSLATIONS = {
     orgHighlight: 'Organização',
     subtitlePart2: '.',
     nextSteps: 'Próximos Passos',
-    instructions: 'Para começar a usar os Agentes de IA e gerenciar seus leads, é necessário ativar seu ambiente corporativo.',
-    supportBtn: 'Falar com Suporte Oryen',
-    supportMsg: 'Olá, criei minha conta na Oryen e preciso configurar minha organização.',
-    footerText: 'Já tem uma organização? Peça ao administrador para te enviar um convite por e-mail.'
+    instructions: 'Para começar a usar os Agentes de IA e gerenciar seus contatos, é necessário ativar seu ambiente. Fale com o suporte e te configuramos em minutos.',
+    supportBtn: 'Falar com Suporte',
+    supportMsg: 'Olá, criei minha conta e preciso configurar minha organização.',
+    footerText: 'Já faz parte de uma imobiliária? Peça ao administrador para te enviar um convite por e-mail.'
   },
   en: {
     greeting: 'Welcome, {name}!',
@@ -27,10 +27,10 @@ const TRANSLATIONS = {
     orgHighlight: 'Organization',
     subtitlePart2: ' yet.',
     nextSteps: 'Next Steps',
-    instructions: 'To start using AI Agents and managing your leads, you need to activate your corporate environment.',
-    supportBtn: 'Talk to Oryen Support',
-    supportMsg: 'Hello, I created my account at Oryen and I need to set up my organization.',
-    footerText: 'Already have an organization? Ask your administrator to send you an email invitation.'
+    instructions: 'To start using AI Agents and managing your contacts, you need to activate your account. Talk to support and we will get you set up in minutes.',
+    supportBtn: 'Talk to Support',
+    supportMsg: 'Hello, I created my account and I need to set up my organization.',
+    footerText: 'Part of a real estate agency? Ask your administrator to send you an email invitation.'
   },
   es: {
     greeting: '¡Bienvenido, {name}!',
@@ -39,10 +39,10 @@ const TRANSLATIONS = {
     orgHighlight: 'Organización',
     subtitlePart2: '.',
     nextSteps: 'Próximos Pasos',
-    instructions: 'Para comenzar a usar los Agentes de IA y administrar sus leads, debe activar su entorno corporativo.',
-    supportBtn: 'Hablar con Soporte Oryen',
-    supportMsg: 'Hola, creé mi cuenta en Oryen y necesito configurar mi organización.',
-    footerText: '¿Ya tienes una organización? Pídele a tu administrador que te envíe una invitación por correo electrónico.'
+    instructions: 'Para comenzar a usar los Agentes de IA y administrar sus contactos, debe activar su cuenta. Hable con el soporte y lo configuramos en minutos.',
+    supportBtn: 'Hablar con Soporte',
+    supportMsg: 'Hola, creé mi cuenta y necesito configurar mi organización.',
+    footerText: '¿Perteneces a una inmobiliaria? Pídele a tu administrador que te envíe una invitación por correo electrónico.'
   }
 }
 

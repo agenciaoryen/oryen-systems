@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <!--
+    Oryen — Logo Monocromático (sobre fundo primário ou impressão)
+    Versão: 1.0 — tudo em branco, para uso sobre #1A6AE8 ou fundos escuros sólidos
+  -->
+
+  <path
+    d="M 38.73 15.5 A 17 17 0 1 1 9.27 15.5"
+    stroke="#FFFFFF"
+    stroke-width="7"
+    stroke-linecap="round"
+    fill="none"
+  />
+
+  <path
+    d="M 6.68 34 A 20 20 0 0 1 36.86 39.32"
+    stroke="#FFFFFF"
+    stroke-width="4.5"
+    stroke-linecap="round"
+    stroke-opacity="0.7"
+    fill="none"
+  />
+
+  <text
+    x="58"
+    y="31"
+    font-family="'Plus Jakarta Sans', 'Inter', Arial, sans-serif"
+    font-size="26"
+    font-weight="600"
+    letter-spacing="-0.01em"
+    fill="#FFFFFF"
+  >oryen</text>
+
+</svg>

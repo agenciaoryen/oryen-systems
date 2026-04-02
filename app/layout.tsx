@@ -1,22 +1,32 @@
 import type { Metadata, Viewport } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 
 import { AuthProvider } from "@/lib/AuthContext"
+import { ThemeProvider } from "@/lib/ThemeContext"
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // FONTES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 })
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  weight: ["400"],
   display: "swap",
 })
 
@@ -26,11 +36,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Oryen - Plataforma de Vendas com IA",
+    default: "Oryen - IA para Corretores de Imóveis",
     template: "%s | Oryen"
   },
-  description: "Gerencie leads, automatize conversas e aumente suas vendas com inteligência artificial.",
-  keywords: ["CRM", "vendas", "leads", "inteligência artificial", "automação", "WhatsApp"],
+  description: "Automatize o atendimento, qualifique contatos e feche mais negócios com agentes de IA para imobiliárias.",
+  keywords: ["CRM imobiliário", "corretor de imóveis", "automação WhatsApp", "inteligência artificial", "imobiliária", "agentes de IA"],
   authors: [{ name: "Oryen" }],
   creator: "Oryen",
   icons: {
@@ -42,7 +52,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#0A0A0A",
+  themeColor: "#0A0A0F",
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -56,12 +66,27 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        {/* Anti-flash: lê preferência de tema antes da hidratação */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var t = localStorage.getItem('oryen-theme');
+                if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+              } catch(e) {}
+            `,
+          }}
+        />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0A0A0A] text-gray-200`}
+        className={`${plusJakarta.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

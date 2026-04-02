@@ -49,9 +49,9 @@ const TRANSLATIONS = {
     cancel: 'Cancelar',
     errorGenerating: 'Erro ao gerar PDF',
     errorSending: 'Erro ao enviar',
-    noPhone: 'Lead não tem telefone cadastrado',
-    noEmail: 'Lead não tem email cadastrado',
-    noConversation: 'Lead não tem conversa ativa. Inicie uma conversa primeiro.',
+    noPhone: 'Contato não tem telefone cadastrado',
+    noEmail: 'Contato não tem email cadastrado',
+    noConversation: 'Contato não tem conversa ativa. Inicie uma conversa primeiro.',
   },
   en: {
     title: 'Send Document',
@@ -75,9 +75,9 @@ const TRANSLATIONS = {
     cancel: 'Cancel',
     errorGenerating: 'Error generating PDF',
     errorSending: 'Error sending',
-    noPhone: 'Lead has no phone registered',
-    noEmail: 'Lead has no email registered',
-    noConversation: 'Lead has no active conversation. Start a conversation first.',
+    noPhone: 'Contact has no phone registered',
+    noEmail: 'Contact has no email registered',
+    noConversation: 'Contact has no active conversation. Start a conversation first.',
   },
   es: {
     title: 'Enviar Documento',
@@ -101,9 +101,9 @@ const TRANSLATIONS = {
     cancel: 'Cancelar',
     errorGenerating: 'Error al generar PDF',
     errorSending: 'Error al enviar',
-    noPhone: 'Lead no tiene teléfono registrado',
-    noEmail: 'Lead no tiene email registrado',
-    noConversation: 'Lead no tiene conversación activa. Inicie una conversación primero.',
+    noPhone: 'Contacto no tiene teléfono registrado',
+    noEmail: 'Contacto no tiene email registrado',
+    noConversation: 'Contacto no tiene conversación activa. Inicie una conversación primero.',
   }
 } as const
 

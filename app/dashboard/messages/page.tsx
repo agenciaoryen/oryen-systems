@@ -68,7 +68,7 @@ const TRANSLATIONS = {
     searchPlaceholder: 'Buscar por nome ou telefone...',
     startConversation: 'Iniciar conversa...',
     openWhatsapp: 'Abrir no WhatsApp',
-    openLeadProfile: 'Ver perfil do lead',
+    openLeadProfile: 'Ver perfil do contato',
     closeChat: 'Fechar conversa',
     emptyState: 'Selecione uma conversa ao lado para ver o histórico de mensagens',
     noConversations: 'Nenhuma conversa encontrada',
@@ -76,7 +76,7 @@ const TRANSLATIONS = {
     yesterday: 'Ontem',
     agentBot: 'Agente IA',
     agentHuman: 'Atendente',
-    lead: 'Lead',
+    lead: 'Contato',
     audio: 'Áudio',
     image: 'Imagem',
     video: 'Vídeo',
@@ -91,7 +91,7 @@ const TRANSLATIONS = {
     searchPlaceholder: 'Search by name or phone...',
     startConversation: 'Start conversation...',
     openWhatsapp: 'Open in WhatsApp',
-    openLeadProfile: 'View lead profile',
+    openLeadProfile: 'View contact profile',
     closeChat: 'Close chat',
     emptyState: 'Select a conversation to view message history',
     noConversations: 'No conversations found',
@@ -99,7 +99,7 @@ const TRANSLATIONS = {
     yesterday: 'Yesterday',
     agentBot: 'AI Agent',
     agentHuman: 'Attendant',
-    lead: 'Lead',
+    lead: 'Contact',
     audio: 'Audio',
     image: 'Image',
     video: 'Video',
@@ -114,7 +114,7 @@ const TRANSLATIONS = {
     searchPlaceholder: 'Buscar por nombre o teléfono...',
     startConversation: 'Iniciar conversación...',
     openWhatsapp: 'Abrir en WhatsApp',
-    openLeadProfile: 'Ver perfil del lead',
+    openLeadProfile: 'Ver perfil del contacto',
     closeChat: 'Cerrar chat',
     emptyState: 'Seleccione una conversación para ver el historial',
     noConversations: 'No se encontraron conversaciones',
@@ -122,7 +122,7 @@ const TRANSLATIONS = {
     yesterday: 'Ayer',
     agentBot: 'Agente IA',
     agentHuman: 'Atendente',
-    lead: 'Lead',
+    lead: 'Contacto',
     audio: 'Audio',
     image: 'Imagen',
     video: 'Video',
@@ -247,14 +247,12 @@ function formatPhone(phone: string | null): string {
 
 function getDisplayName(conv: Conversation): string {
   if (conv.lead_name && conv.lead_name !== 'null') return conv.lead_name
-  if (conv.lead_nome_empresa && conv.lead_nome_empresa !== 'null') return conv.lead_nome_empresa
   if (conv.lead_phone) return formatPhone(conv.lead_phone)
   return 'Sem identificação'
 }
 
 function getInitial(conv: Conversation): string {
   if (conv.lead_name && conv.lead_name !== 'null') return conv.lead_name[0].toUpperCase()
-  if (conv.lead_nome_empresa && conv.lead_nome_empresa !== 'null') return conv.lead_nome_empresa[0].toUpperCase()
   return '#'
 }
 

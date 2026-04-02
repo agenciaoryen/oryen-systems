@@ -81,9 +81,9 @@ interface LeadTag {
 
 const TRANSLATIONS = {
   pt: {
-    title: 'Pipeline de Vendas',
+    title: 'Pipeline de Negócios',
     synced: 'Sincronizado em tempo real',
-    newLead: 'Novo Lead',
+    newLead: 'Novo Contato',
     searchPlaceholder: 'Buscar por nome, email ou celular...',
     days7: '7 dias',
     days30: '30 dias',
@@ -92,18 +92,18 @@ const TRANSLATIONS = {
     listView: 'Lista',
     pipelineView: 'Kanban',
     loading: 'Carregando dados...',
-    leadsFound: 'leads encontrados',
-    companyLead: 'Empresa / Lead',
+    leadsFound: 'contatos encontrados',
+    companyLead: 'Contato',
     value: 'Valor',
     stage: 'Etapa',
     source: 'Origem',
     niche: 'Nicho',
     contact: 'Contato',
     entryDate: 'Entrada',
-    noLeadsStage: 'Sem leads nesta etapa',
-    noLeadsFound: 'Nenhum lead encontrado',
+    noLeadsStage: 'Sem contatos nesta etapa',
+    noLeadsFound: 'Nenhum contato encontrado',
     noLeadsHint: 'Tente ajustar os filtros ou busca',
-    modalTitle: 'Novo Lead',
+    modalTitle: 'Novo Contato',
     nameLabel: 'Nome do Contato*',
     namePlaceholder: 'Ex: João da Silva',
     companyLabel: 'Nome da Empresa',
@@ -112,7 +112,7 @@ const TRANSLATIONS = {
     phoneLabel: 'Celular / WhatsApp',
     tagsLabel: 'Tags',
     cancel: 'Cancelar',
-    save: 'Criar Lead',
+    save: 'Criar Contato',
     saving: 'Salvando...',
     priority: 'Prioridade',
     stale: 'dias parado',
@@ -121,12 +121,12 @@ const TRANSLATIONS = {
     allTags: 'Todas as tags',
     clearFilters: 'Limpar filtros',
     refresh: 'Atualizar',
-    managePipeline: 'Gerenciar funil',
+    managePipeline: 'Gerenciar pipeline',
     errorLoading: 'Erro ao carregar dados',
     errorSaving: 'Erro ao salvar',
-    leads: 'Leads',
+    leads: 'Contatos',
     // Footer
-    totalLeads: 'Total de Leads',
+    totalLeads: 'Total de Contatos',
     totalValue: 'Valor Total',
     aiActive: 'IA Ativa',
     aiPaused: 'IA Pausada',
@@ -139,9 +139,9 @@ const TRANSLATIONS = {
     aiStatus: 'Status IA'
   },
   en: {
-    title: 'Sales Pipeline',
+    title: 'Business Pipeline',
     synced: 'Synced in real-time',
-    newLead: 'New Lead',
+    newLead: 'New Contact',
     searchPlaceholder: 'Search by name, email or phone...',
     days7: '7 days',
     days30: '30 days',
@@ -150,18 +150,18 @@ const TRANSLATIONS = {
     listView: 'List',
     pipelineView: 'Kanban',
     loading: 'Loading data...',
-    leadsFound: 'leads found',
-    companyLead: 'Company / Lead',
+    leadsFound: 'contacts found',
+    companyLead: 'Contact',
     value: 'Value',
     stage: 'Stage',
     source: 'Source',
     niche: 'Niche',
     contact: 'Contact',
     entryDate: 'Entry Date',
-    noLeadsStage: 'No leads in this stage',
-    noLeadsFound: 'No leads found',
+    noLeadsStage: 'No contacts in this stage',
+    noLeadsFound: 'No contacts found',
     noLeadsHint: 'Try adjusting filters or search',
-    modalTitle: 'New Lead',
+    modalTitle: 'New Contact',
     nameLabel: 'Contact Name*',
     namePlaceholder: 'Ex: John Doe',
     companyLabel: 'Company Name',
@@ -170,7 +170,7 @@ const TRANSLATIONS = {
     phoneLabel: 'Phone / WhatsApp',
     tagsLabel: 'Tags',
     cancel: 'Cancel',
-    save: 'Create Lead',
+    save: 'Create Contact',
     saving: 'Saving...',
     priority: 'Priority',
     stale: 'days stale',
@@ -182,9 +182,9 @@ const TRANSLATIONS = {
     managePipeline: 'Manage pipeline',
     errorLoading: 'Error loading data',
     errorSaving: 'Error saving',
-    leads: 'Leads',
+    leads: 'Contacts',
     // Footer
-    totalLeads: 'Total Leads',
+    totalLeads: 'Total Contacts',
     totalValue: 'Total Value',
     aiActive: 'AI Active',
     aiPaused: 'AI Paused',
@@ -197,9 +197,9 @@ const TRANSLATIONS = {
     aiStatus: 'AI Status'
   },
   es: {
-    title: 'Pipeline de Ventas',
+    title: 'Pipeline de Negocios',
     synced: 'Sincronizado en tiempo real',
-    newLead: 'Nuevo Lead',
+    newLead: 'Nuevo Contacto',
     searchPlaceholder: 'Buscar por nombre, email o teléfono...',
     days7: '7 días',
     days30: '30 días',
@@ -208,18 +208,18 @@ const TRANSLATIONS = {
     listView: 'Lista',
     pipelineView: 'Kanban',
     loading: 'Cargando datos...',
-    leadsFound: 'leads encontrados',
-    companyLead: 'Empresa / Lead',
+    leadsFound: 'contactos encontrados',
+    companyLead: 'Contacto',
     value: 'Valor',
     stage: 'Etapa',
     source: 'Origen',
     niche: 'Nicho',
     contact: 'Contacto',
     entryDate: 'Fecha Entrada',
-    noLeadsStage: 'Sin leads en esta etapa',
-    noLeadsFound: 'No se encontraron leads',
+    noLeadsStage: 'Sin contactos en esta etapa',
+    noLeadsFound: 'No se encontraron contactos',
     noLeadsHint: 'Intenta ajustar los filtros',
-    modalTitle: 'Nuevo Lead',
+    modalTitle: 'Nuevo Contacto',
     nameLabel: 'Nombre del Contacto*',
     namePlaceholder: 'Ej: Juan Pérez',
     companyLabel: 'Nombre de la Empresa',
@@ -228,7 +228,7 @@ const TRANSLATIONS = {
     phoneLabel: 'Celular / WhatsApp',
     tagsLabel: 'Tags',
     cancel: 'Cancelar',
-    save: 'Crear Lead',
+    save: 'Crear Contacto',
     saving: 'Guardando...',
     priority: 'Prioridad',
     stale: 'días sin actualización',
@@ -240,9 +240,9 @@ const TRANSLATIONS = {
     managePipeline: 'Gestionar pipeline',
     errorLoading: 'Error al cargar datos',
     errorSaving: 'Error al guardar',
-    leads: 'Leads',
+    leads: 'Contactos',
     // Footer
-    totalLeads: 'Total de Leads',
+    totalLeads: 'Total de Contactos',
     totalValue: 'Valor Total',
     aiActive: 'IA Activa',
     aiPaused: 'IA Pausada',
@@ -893,7 +893,7 @@ export default function CrmPage() {
                   {filteredLeads.map((lead) => {
                     const stage = pipelineStages.find(s => s.name === lead.stage) || pipelineStages[0]
                     const stageColor = stage ? getStageColor(stage.color) : getStageColor('gray')
-                    const leadDisplayName = lead.nome_empresa || lead.name || 'Sem Nome'
+                    const leadDisplayName = lead.name || 'Sem Nome'
                     const daysSinceUpdate = getDaysSinceUpdate(lead.updated_at)
                     const isStale = daysSinceUpdate > 5
                     const leadTagsList = getLeadTags(lead.id)
@@ -912,7 +912,6 @@ export default function CrmPage() {
                             </div>
                             <div className="flex flex-col min-w-0">
                               <span className="font-medium text-gray-200 group-hover:text-white truncate">{leadDisplayName}</span>
-                              {lead.nome_empresa && <span className="text-[10px] text-gray-500 truncate">{t.contactLabel} {lead.name}</span>}
                             </div>
                           </div>
                         </td>
@@ -1027,7 +1026,7 @@ export default function CrmPage() {
                     {/* Cards */}
                     <div className="flex-1 overflow-y-auto p-2 space-y-2">
                       {pipelineData[stage.name]?.map((lead, index) => {
-                        const leadDisplayName = lead.nome_empresa || lead.name || 'Sem Nome'
+                        const leadDisplayName = lead.name || 'Sem Nome'
                         const daysSinceUpdate = getDaysSinceUpdate(lead.updated_at)
                         const isStale = daysSinceUpdate > 5
                         const leadTagsList = getLeadTags(lead.id)
@@ -1294,17 +1293,6 @@ export default function CrmPage() {
                   className="w-full bg-gray-800 border border-gray-700 text-gray-200 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/50 outline-none"
                   value={newLeadData.name}
                   onChange={(e) => setNewLeadData({ ...newLeadData, name: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">{t.companyLabel}</label>
-                <input
-                  type="text"
-                  placeholder={t.companyPlaceholder}
-                  className="w-full bg-gray-800 border border-gray-700 text-gray-200 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/50 outline-none"
-                  value={newLeadData.nome_empresa}
-                  onChange={(e) => setNewLeadData({ ...newLeadData, nome_empresa: e.target.value })}
                 />
               </div>
 

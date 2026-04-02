@@ -1,20 +1,5 @@
 @import "tailwindcss";
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   VARIÁVEIS CSS
-   ═══════════════════════════════════════════════════════════════════════════════ */
-
-:root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  --font-mono: var(--font-geist-mono), monospace;
-}
+@import "../outputs/design-tokens.css";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    ESTILOS BASE
@@ -29,19 +14,27 @@ html {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+   TRANSIÇÃO DE TEMA (evita flash)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+html.theme-transitioning,
+html.theme-transitioning * {
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
    SCROLLBAR CUSTOMIZADO
    ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* Scrollbar padrão para todo o site */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -52,30 +45,28 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-border-strong);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--color-text-tertiary);
 }
 
-/* Scrollbar fino para elementos específicos */
 .scrollbar-thin::-webkit-scrollbar {
   width: 4px;
   height: 4px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--color-border);
   border-radius: 2px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--color-border-strong);
 }
 
-/* Esconder scrollbar mas manter funcionalidade */
 .scrollbar-hidden {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -88,7 +79,7 @@ body {
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: var(--color-border) transparent;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -96,8 +87,8 @@ body {
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 ::selection {
-  background: rgba(59, 130, 246, 0.3);
-  color: white;
+  background: rgba(45, 126, 248, 0.3);
+  color: var(--color-text-primary);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -117,8 +108,8 @@ textarea:-webkit-autofill:focus,
 select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
-  -webkit-text-fill-color: #ededed;
-  -webkit-box-shadow: 0 0 0px 1000px #111 inset;
+  -webkit-text-fill-color: var(--color-text-primary);
+  -webkit-box-shadow: 0 0 0px 1000px var(--color-bg-elevated) inset;
   transition: background-color 5000s ease-in-out 0s;
 }
 
@@ -140,66 +131,34 @@ input[type="number"] {
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulse-soft {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out;
-}
-
-.animate-slide-down {
-  animation: slideDown 0.3s ease-out;
-}
-
-.animate-pulse-soft {
-  animation: pulse-soft 2s ease-in-out infinite;
-}
+.animate-fade-in   { animation: fadeIn 0.3s ease-out; }
+.animate-slide-up  { animation: slideUp 0.3s ease-out; }
+.animate-slide-down { animation: slideDown 0.3s ease-out; }
+.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    UTILITÁRIOS
    ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* Truncate com múltiplas linhas */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -216,27 +175,28 @@ input[type="number"] {
   overflow: hidden;
 }
 
-/* Glass effect */
 .glass {
-  background: rgba(17, 17, 17, 0.8);
+  background: rgba(17, 17, 23, 0.8);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
 
-/* Gradient text */
+[data-theme="light"] .glass {
+  background: rgba(255, 255, 255, 0.8);
+}
+
 .gradient-text {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #8b5cf6 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* Focus ring consistente */
 .focus-ring {
   outline: none;
 }
 
 .focus-ring:focus-visible {
-  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline: 2px solid rgba(45, 126, 248, 0.5);
   outline-offset: 2px;
 }

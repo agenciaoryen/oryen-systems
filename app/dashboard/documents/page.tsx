@@ -43,7 +43,7 @@ import { toast } from 'sonner'
 const TRANSLATIONS = {
   pt: {
     title: 'Documentos',
-    subtitle: 'Gerencie todos os documentos dos seus leads',
+    subtitle: 'Gerencie todos os documentos dos seus contatos',
     newDocument: 'Novo Documento',
     upload: 'Upload',
     search: 'Buscar documentos...',
@@ -56,7 +56,7 @@ const TRANSLATIONS = {
     createdAt: 'Criado em',
     sentAt: 'Enviado em',
     signedAt: 'Assinado em',
-    lead: 'Lead',
+    lead: 'Contato',
     category: 'Categoria',
     actions: 'Ações',
     view: 'Visualizar',
@@ -67,7 +67,7 @@ const TRANSLATIONS = {
   },
   en: {
     title: 'Documents',
-    subtitle: 'Manage all your lead documents',
+    subtitle: 'Manage all your contact documents',
     newDocument: 'New Document',
     upload: 'Upload',
     search: 'Search documents...',
@@ -80,7 +80,7 @@ const TRANSLATIONS = {
     createdAt: 'Created at',
     sentAt: 'Sent at',
     signedAt: 'Signed at',
-    lead: 'Lead',
+    lead: 'Contact',
     category: 'Category',
     actions: 'Actions',
     view: 'View',
@@ -91,7 +91,7 @@ const TRANSLATIONS = {
   },
   es: {
     title: 'Documentos',
-    subtitle: 'Gestiona todos los documentos de tus leads',
+    subtitle: 'Gestiona todos los documentos de tus contactos',
     newDocument: 'Nuevo Documento',
     upload: 'Subir',
     search: 'Buscar documentos...',
@@ -104,7 +104,7 @@ const TRANSLATIONS = {
     createdAt: 'Creado el',
     sentAt: 'Enviado el',
     signedAt: 'Firmado el',
-    lead: 'Lead',
+    lead: 'Contacto',
     category: 'Categoría',
     actions: 'Acciones',
     view: 'Ver',
@@ -449,11 +449,11 @@ export default function DocumentsPage() {
               {lang === 'pt' ? 'Criar Documento' : lang === 'es' ? 'Crear Documento' : 'Create Document'}
             </h3>
             <p className="text-gray-400 text-sm mb-6">
-              {lang === 'pt' 
-                ? 'Para criar um documento, acesse o perfil de um lead e clique em "Novo Documento" na seção de documentos.' 
+              {lang === 'pt'
+                ? 'Para criar um documento, acesse o perfil de um contato e clique em "Novo Documento" na seção de documentos.'
                 : lang === 'es'
-                ? 'Para crear un documento, acceda al perfil de un lead y haga clic en "Nuevo Documento" en la sección de documentos.'
-                : 'To create a document, go to a lead profile and click "New Document" in the documents section.'}
+                ? 'Para crear un documento, acceda al perfil de un contacto y haga clic en "Nuevo Documento" en la sección de documentos.'
+                : 'To create a document, go to a contact profile and click "New Document" in the documents section.'}
             </p>
             <div className="flex gap-3 justify-center">
               <button

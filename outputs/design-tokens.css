@@ -1,0 +1,305 @@
+/*
+ * Oryen — Design Tokens
+ * Sistema de variáveis CSS para implementação no Next.js + Tailwind CSS 4
+ *
+ * Uso:
+ *   - Importar este arquivo no globals.css via @import
+ *   - O tema escuro é o padrão (:root)
+ *   - O tema claro é ativado via [data-theme="light"] no elemento html
+ *   - Para ativar: document.documentElement.setAttribute('data-theme', 'light')
+ *
+ * Versão: 1.0
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TEMA ESCURO — padrão
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+
+  /* — Cor primária — */
+  --color-primary:           #2D7EF8;
+  --color-primary-hover:     #1A6AE8;
+  --color-primary-active:    #0F55CC;
+  --color-primary-subtle:    #1A3A6B;
+  --color-primary-subtle-fg: #93BBFD;
+
+  /* — Cor secundária — */
+  --color-secondary:         #7C9EC4;
+  --color-secondary-hover:   #9AB6D4;
+
+  /* — Cor de acento — */
+  --color-accent:            #00C9A7;
+  --color-accent-hover:      #00E0BB;
+  --color-accent-subtle:     #003D35;
+  --color-accent-subtle-fg:  #4DDBBB;
+
+  /* — Fundos — */
+  --color-bg-base:           #0A0A0F;
+  --color-bg-surface:        #111118;
+  --color-bg-elevated:       #1A1A24;
+  --color-bg-hover:          #1F1F2E;
+  --color-bg-selected:       #1E2D4A;
+  --color-bg-overlay:        rgba(0, 0, 0, 0.7);
+
+  /* — Bordas — */
+  --color-border:            #242435;
+  --color-border-subtle:     #1A1A28;
+  --color-border-strong:     #363650;
+  --color-border-focus:      #2D7EF8;
+
+  /* — Textos — */
+  --color-text-primary:      #F0F0F8;
+  --color-text-secondary:    #9494B0;
+  --color-text-tertiary:     #5A5A78;
+  --color-text-disabled:     #3A3A55;
+  --color-text-on-primary:   #FFFFFF;
+  --color-text-on-accent:    #FFFFFF;
+  --color-text-inverse:      #0F0F1A;
+
+  /* — Semânticas: Sucesso — */
+  --color-success:           #22C55E;
+  --color-success-hover:     #16A34A;
+  --color-success-subtle:    #052E16;
+  --color-success-subtle-fg: #4ADE80;
+
+  /* — Semânticas: Alerta — */
+  --color-warning:           #F59E0B;
+  --color-warning-hover:     #D97706;
+  --color-warning-subtle:    #2D1F00;
+  --color-warning-subtle-fg: #FCD34D;
+
+  /* — Semânticas: Erro — */
+  --color-error:             #EF4444;
+  --color-error-hover:       #DC2626;
+  --color-error-subtle:      #2D0A0A;
+  --color-error-subtle-fg:   #FCA5A5;
+
+  /* — Semânticas: Info — */
+  --color-info:              #38BDF8;
+  --color-info-hover:        #0284C7;
+  --color-info-subtle:       #0A1F2D;
+  --color-info-subtle-fg:    #7DD3FC;
+
+  /* — Sombras — */
+  --shadow-sm:               0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md:               0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg:               0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-xl:               0 16px 48px rgba(0, 0, 0, 0.7);
+  --shadow-primary:          0 4px 16px rgba(45, 126, 248, 0.25);
+  --shadow-accent:           0 4px 16px rgba(0, 201, 167, 0.20);
+
+  /* — Tipografia — */
+  --font-display:            var(--font-plus-jakarta), 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body:               var(--font-inter), 'Inter', system-ui, sans-serif;
+  --font-mono:               var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+
+  /* — Escala de tamanhos — */
+  --text-display:            3rem;       /* 48px */
+  --text-h1:                 2.25rem;    /* 36px */
+  --text-h2:                 1.75rem;    /* 28px */
+  --text-h3:                 1.375rem;   /* 22px */
+  --text-h4:                 1.125rem;   /* 18px */
+  --text-h5:                 0.9375rem;  /* 15px */
+  --text-h6:                 0.8125rem;  /* 13px */
+  --text-body-lg:            1rem;       /* 16px */
+  --text-body:               0.875rem;   /* 14px */
+  --text-body-sm:            0.8125rem;  /* 13px */
+  --text-small:              0.75rem;    /* 12px */
+  --text-caption:            0.6875rem;  /* 11px */
+  --text-mono:               0.8125rem;  /* 13px */
+
+  /* — Line heights — */
+  --leading-tight:           1.1;
+  --leading-snug:            1.25;
+  --leading-normal:          1.5;
+  --leading-relaxed:         1.6;
+  --leading-loose:           1.75;
+
+  /* — Pesos tipográficos — */
+  --font-regular:            400;
+  --font-medium:             500;
+  --font-semibold:           600;
+  --font-bold:               700;
+
+  /* — Espaçamento (base 4px) — */
+  --space-1:                 0.25rem;    /* 4px */
+  --space-2:                 0.5rem;     /* 8px */
+  --space-3:                 0.75rem;    /* 12px */
+  --space-4:                 1rem;       /* 16px */
+  --space-5:                 1.25rem;    /* 20px */
+  --space-6:                 1.5rem;     /* 24px */
+  --space-8:                 2rem;       /* 32px */
+  --space-10:                2.5rem;     /* 40px */
+  --space-12:                3rem;       /* 48px */
+  --space-16:                4rem;       /* 64px */
+  --space-20:                5rem;       /* 80px */
+  --space-24:                6rem;       /* 96px */
+
+  /* — Border radius — */
+  --radius-sm:               0.25rem;    /* 4px */
+  --radius-md:               0.5rem;     /* 8px */
+  --radius-lg:               0.75rem;    /* 12px */
+  --radius-xl:               1rem;       /* 16px */
+  --radius-2xl:              1.5rem;     /* 24px */
+  --radius-full:             9999px;
+
+  /* — Transições — */
+  --transition-fast:         100ms ease;
+  --transition-base:         150ms ease;
+  --transition-slow:         250ms ease;
+  --transition-spring:       200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* — Z-index — */
+  --z-base:                  0;
+  --z-raised:                10;
+  --z-dropdown:              100;
+  --z-sticky:                200;
+  --z-overlay:               300;
+  --z-modal:                 400;
+  --z-toast:                 500;
+  --z-tooltip:               600;
+
+  /* — Larguras do layout — */
+  --sidebar-width:           240px;
+  --sidebar-collapsed:       64px;
+  --content-max-width:       1440px;
+  --page-padding-x:          2rem;       /* 32px */
+  --page-padding-x-mobile:   1.5rem;     /* 24px */
+
+  /* — Grid — */
+  --grid-gap:                1rem;       /* 16px */
+  --grid-gap-lg:             1.5rem;     /* 24px */
+
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TEMA CLARO
+   Ativado via data-theme="light" no elemento <html>
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="light"] {
+
+  /* — Cor primária — */
+  --color-primary:           #1A6AE8;
+  --color-primary-hover:     #0F55CC;
+  --color-primary-active:    #0A44A8;
+  --color-primary-subtle:    #EBF2FF;
+  --color-primary-subtle-fg: #1A6AE8;
+
+  /* — Cor secundária — */
+  --color-secondary:         #4A6A8A;
+  --color-secondary-hover:   #385571;
+
+  /* — Cor de acento — */
+  --color-accent:            #00A688;
+  --color-accent-hover:      #008F75;
+  --color-accent-subtle:     #E0FAF5;
+  --color-accent-subtle-fg:  #007A65;
+
+  /* — Fundos — */
+  --color-bg-base:           #F5F5FA;
+  --color-bg-surface:        #FFFFFF;
+  --color-bg-elevated:       #FFFFFF;
+  --color-bg-hover:          #EFF0F7;
+  --color-bg-selected:       #EBF2FF;
+  --color-bg-overlay:        rgba(0, 0, 0, 0.45);
+
+  /* — Bordas — */
+  --color-border:            #E2E2EE;
+  --color-border-subtle:     #EBEBF5;
+  --color-border-strong:     #C8C8DE;
+  --color-border-focus:      #1A6AE8;
+
+  /* — Textos — */
+  --color-text-primary:      #0F0F1A;
+  --color-text-secondary:    #5A5A78;
+  --color-text-tertiary:     #9494AA;
+  --color-text-disabled:     #C0C0D0;
+  --color-text-on-primary:   #FFFFFF;
+  --color-text-on-accent:    #FFFFFF;
+  --color-text-inverse:      #F0F0F8;
+
+  /* — Semânticas: Sucesso — */
+  --color-success:           #16A34A;
+  --color-success-hover:     #15803D;
+  --color-success-subtle:    #DCFCE7;
+  --color-success-subtle-fg: #15803D;
+
+  /* — Semânticas: Alerta — */
+  --color-warning:           #D97706;
+  --color-warning-hover:     #B45309;
+  --color-warning-subtle:    #FEF3C7;
+  --color-warning-subtle-fg: #92400E;
+
+  /* — Semânticas: Erro — */
+  --color-error:             #DC2626;
+  --color-error-hover:       #B91C1C;
+  --color-error-subtle:      #FEE2E2;
+  --color-error-subtle-fg:   #991B1B;
+
+  /* — Semânticas: Info — */
+  --color-info:              #0284C7;
+  --color-info-hover:        #0369A1;
+  --color-info-subtle:       #E0F2FE;
+  --color-info-subtle-fg:    #0369A1;
+
+  /* — Sombras (mais sutis no light) — */
+  --shadow-sm:               0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md:               0 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-lg:               0 8px 24px rgba(0, 0, 0, 0.14);
+  --shadow-xl:               0 16px 48px rgba(0, 0, 0, 0.18);
+  --shadow-primary:          0 4px 16px rgba(26, 106, 232, 0.20);
+  --shadow-accent:           0 4px 16px rgba(0, 166, 136, 0.15);
+
+  /* Fontes, espaçamentos, radius e layout herdados do :root — não precisam ser redefinidos */
+
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   UTILITÁRIOS DE TEMA (helpers para transição suave entre temas)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/*
+ * Aplicar na tag <html> quando o tema for alterado para
+ * evitar flash de conteúdo sem transição:
+ *
+ * html.theme-transitioning,
+ * html.theme-transitioning * {
+ *   transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease !important;
+ * }
+ *
+ * Remover a classe após 250ms no JS.
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   NOTAS DE IMPLEMENTAÇÃO NO TAILWIND CSS 4
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/*
+ * No Tailwind CSS 4, as CSS custom properties são referenciáveis diretamente
+ * via utilitários arbitrários: bg-[var(--color-bg-surface)]
+ *
+ * Para criar utilitários semânticos nativos, adicionar ao tailwind.config.ts:
+ *
+ * theme: {
+ *   extend: {
+ *     colors: {
+ *       primary: 'var(--color-primary)',
+ *       'primary-hover': 'var(--color-primary-hover)',
+ *       surface: 'var(--color-bg-surface)',
+ *       elevated: 'var(--color-bg-elevated)',
+ *       border: 'var(--color-border)',
+ *       // ... etc
+ *     },
+ *     borderRadius: {
+ *       sm: 'var(--radius-sm)',
+ *       md: 'var(--radius-md)',
+ *       lg: 'var(--radius-lg)',
+ *       xl: 'var(--radius-xl)',
+ *     },
+ *   }
+ * }
+ *
+ * Isso permite: className="bg-surface border border-border rounded-lg text-primary"
+ */

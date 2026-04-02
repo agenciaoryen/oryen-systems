@@ -6,8 +6,10 @@ import { supabase } from '@/lib/supabase'
 import {
   User, Shield, Building, Globe, Bell, Save, UserPlus, Trash2,
   X, Loader2, AlertCircle, Lock, Mail, Smartphone, MapPin, Copy, Check,
-  Tag, Plus, GripVertical, Pencil, LayoutGrid, ChevronUp, ChevronDown
+  Tag, Plus, GripVertical, Pencil, LayoutGrid, ChevronUp, ChevronDown,
+  Sun, Moon
 } from 'lucide-react'
+import { useTheme } from '@/lib/ThemeContext'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -60,7 +62,7 @@ const TRANSLATIONS = {
       notifications: 'Preferências',
       company: 'Empresa',
       team: 'Equipe',
-      pipeline: 'Funil de Vendas',
+      pipeline: 'Pipeline',
       tags: 'Tags',
       integrations: 'Integrações'
     },
@@ -85,7 +87,13 @@ const TRANSLATIONS = {
       emailLeads: { title: 'E-mail para Novos Leads', desc: 'Receba um e-mail sempre que um novo lead entrar.' },
       whatsappLeads: { title: 'Alerta no WhatsApp', desc: 'Receba um "zap" da IA com o resumo do lead.' },
       browserPush: { title: 'Notificações no Navegador', desc: 'Pop-up no canto da tela quando a Oryen estiver aberta.' },
-      comingSoon: '(Em Breve)'
+      comingSoon: '(Em Breve)',
+      themeTitle: 'Aparência',
+      themeSubtitle: 'Escolha entre o tema escuro (padrão) ou claro.',
+      themeDark: 'Escuro',
+      themeLight: 'Claro',
+      themeDarkDesc: 'Fundo escuro, ideal para uso prolongado.',
+      themeLightDesc: 'Fundo branco, melhor em ambientes iluminados.',
     },
     company: {
       title: 'Dados da Organização',
@@ -102,22 +110,22 @@ const TRANSLATIONS = {
       actions: { deactivate: 'Desativar', reactivate: 'Reativar' }
     },
     pipeline: {
-      title: 'Funil de Vendas',
-      subtitle: 'Personalize as etapas do seu pipeline de vendas.',
+      title: 'Pipeline de Negócios',
+      subtitle: 'Personalize as etapas do seu pipeline de negócios imobiliários.',
       stageName: 'ID do Estágio',
       stageLabel: 'Nome Exibido',
       stageColor: 'Cor',
       addStage: 'Adicionar Etapa',
       save: 'Salvar Alterações',
-      isWon: 'Etapa de Ganho',
+      isWon: 'Etapa de Fechamento',
       isLost: 'Etapa de Perda',
       confirmDelete: 'Tem certeza que deseja excluir esta etapa?',
-      cannotDelete: 'Não é possível excluir etapas com leads associados.',
+      cannotDelete: 'Não é possível excluir etapas com contatos associados.',
       stageUpdated: 'Pipeline atualizado com sucesso!'
     },
     tags: {
       title: 'Gerenciar Tags',
-      subtitle: 'Crie tags para categorizar seus leads.',
+      subtitle: 'Crie tags para categorizar seus contatos.',
       tagName: 'Nome da Tag',
       tagColor: 'Cor',
       addTag: 'Adicionar Tag',
@@ -161,7 +169,7 @@ const TRANSLATIONS = {
       notifications: 'Preferences',
       company: 'Company',
       team: 'Team',
-      pipeline: 'Sales Pipeline',
+      pipeline: 'Pipeline',
       tags: 'Tags',
       integrations: 'Integrations'
     },
@@ -186,7 +194,13 @@ const TRANSLATIONS = {
       emailLeads: { title: 'Email for New Leads', desc: 'Receive an email whenever a new lead arrives.' },
       whatsappLeads: { title: 'WhatsApp Alert', desc: 'Receive a message from AI with the lead summary.' },
       browserPush: { title: 'Browser Notifications', desc: 'Pop-up on screen corner when Oryen is open.' },
-      comingSoon: '(Coming Soon)'
+      comingSoon: '(Coming Soon)',
+      themeTitle: 'Appearance',
+      themeSubtitle: 'Choose between dark (default) or light theme.',
+      themeDark: 'Dark',
+      themeLight: 'Light',
+      themeDarkDesc: 'Dark background, ideal for extended use.',
+      themeLightDesc: 'White background, best in bright environments.',
     },
     company: {
       title: 'Organization Data',
@@ -203,22 +217,22 @@ const TRANSLATIONS = {
       actions: { deactivate: 'Deactivate', reactivate: 'Reactivate' }
     },
     pipeline: {
-      title: 'Sales Pipeline',
-      subtitle: 'Customize your sales pipeline stages.',
+      title: 'Business Pipeline',
+      subtitle: 'Customize your real estate business pipeline stages.',
       stageName: 'Stage ID',
       stageLabel: 'Display Name',
       stageColor: 'Color',
       addStage: 'Add Stage',
       save: 'Save Changes',
-      isWon: 'Won Stage',
+      isWon: 'Closing Stage',
       isLost: 'Lost Stage',
       confirmDelete: 'Are you sure you want to delete this stage?',
-      cannotDelete: 'Cannot delete stages with associated leads.',
+      cannotDelete: 'Cannot delete stages with associated contacts.',
       stageUpdated: 'Pipeline updated successfully!'
     },
     tags: {
       title: 'Manage Tags',
-      subtitle: 'Create tags to categorize your leads.',
+      subtitle: 'Create tags to categorize your contacts.',
       tagName: 'Tag Name',
       tagColor: 'Color',
       addTag: 'Add Tag',
@@ -262,7 +276,7 @@ const TRANSLATIONS = {
       notifications: 'Preferencias',
       company: 'Empresa',
       team: 'Equipo',
-      pipeline: 'Pipeline de Ventas',
+      pipeline: 'Pipeline',
       tags: 'Tags',
       integrations: 'Integraciones'
     },
@@ -287,7 +301,13 @@ const TRANSLATIONS = {
       emailLeads: { title: 'Email para Nuevos Leads', desc: 'Reciba un correo cada vez que ingrese un nuevo lead.' },
       whatsappLeads: { title: 'Alerta de WhatsApp', desc: 'Reciba un mensaje de la IA con el resumen del lead.' },
       browserPush: { title: 'Notificaciones del Navegador', desc: 'Pop-up en la esquina cuando Oryen esté abierto.' },
-      comingSoon: '(Próximamente)'
+      comingSoon: '(Próximamente)',
+      themeTitle: 'Apariencia',
+      themeSubtitle: 'Elige entre el tema oscuro (predeterminado) o claro.',
+      themeDark: 'Oscuro',
+      themeLight: 'Claro',
+      themeDarkDesc: 'Fondo oscuro, ideal para uso prolongado.',
+      themeLightDesc: 'Fondo blanco, mejor en entornos iluminados.',
     },
     company: {
       title: 'Datos de la Organización',
@@ -304,22 +324,22 @@ const TRANSLATIONS = {
       actions: { deactivate: 'Desactivar', reactivate: 'Reactivar' }
     },
     pipeline: {
-      title: 'Pipeline de Ventas',
-      subtitle: 'Personalice las etapas de su pipeline de ventas.',
+      title: 'Pipeline de Negocios',
+      subtitle: 'Personalice las etapas de su pipeline inmobiliario.',
       stageName: 'ID de Etapa',
       stageLabel: 'Nombre Mostrado',
       stageColor: 'Color',
       addStage: 'Añadir Etapa',
       save: 'Guardar Cambios',
-      isWon: 'Etapa Ganada',
+      isWon: 'Etapa de Cierre',
       isLost: 'Etapa Perdida',
       confirmDelete: '¿Está seguro de que desea eliminar esta etapa?',
-      cannotDelete: 'No se pueden eliminar etapas con leads asociados.',
+      cannotDelete: 'No se pueden eliminar etapas con contactos asociados.',
       stageUpdated: '¡Pipeline actualizado con éxito!'
     },
     tags: {
       title: 'Gestionar Tags',
-      subtitle: 'Cree tags para categorizar sus leads.',
+      subtitle: 'Cree tags para categorizar sus contactos.',
       tagName: 'Nombre del Tag',
       tagColor: 'Color',
       addTag: 'Añadir Tag',
@@ -386,6 +406,7 @@ export default function SettingsPage() {
   const { user, org } = useAuth()
   const orgId = useActiveOrgId()
   const isStaff = useIsStaff()
+  const { theme, setTheme } = useTheme()
 
   const [activeTab, setActiveTab] = useState('profile')
   const [loading, setLoading] = useState(false)
@@ -1043,6 +1064,45 @@ export default function SettingsPage() {
                     className={`w-12 h-6 rounded-full p-1 transition-colors ${notifSettings.browser_push ? 'bg-purple-600' : 'bg-gray-700'}`}
                   >
                     <div className={`w-4 h-4 rounded-full bg-white transition-transform ${notifSettings.browser_push ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Aparência / Tema */}
+              <div className="mt-8">
+                <h3 className="text-sm font-bold text-white mb-1">{t.notifications.themeTitle}</h3>
+                <p className="text-xs text-gray-500 mb-4">{t.notifications.themeSubtitle}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setTheme('dark')}
+                    className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
+                      theme === 'dark'
+                        ? 'border-blue-500/50 bg-blue-600/10'
+                        : 'border-white/10 bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <Moon size={20} className={theme === 'dark' ? 'text-blue-400' : 'text-gray-500'} />
+                    <div className="text-left">
+                      <p className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-400'}`}>{t.notifications.themeDark}</p>
+                      <p className="text-xs text-gray-600">{t.notifications.themeDarkDesc}</p>
+                    </div>
+                    {theme === 'dark' && <div className="ml-auto w-2 h-2 rounded-full bg-blue-400" />}
+                  </button>
+
+                  <button
+                    onClick={() => setTheme('light')}
+                    className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
+                      theme === 'light'
+                        ? 'border-blue-500/50 bg-blue-600/10'
+                        : 'border-white/10 bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <Sun size={20} className={theme === 'light' ? 'text-blue-400' : 'text-gray-500'} />
+                    <div className="text-left">
+                      <p className={`text-sm font-semibold ${theme === 'light' ? 'text-white' : 'text-gray-400'}`}>{t.notifications.themeLight}</p>
+                      <p className="text-xs text-gray-600">{t.notifications.themeLightDesc}</p>
+                    </div>
+                    {theme === 'light' && <div className="ml-auto w-2 h-2 rounded-full bg-blue-400" />}
                   </button>
                 </div>
               </div>

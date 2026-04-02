@@ -3,6 +3,7 @@
 import React from 'react'
 import Sidebar from './Sidebar'
 import { Toaster } from 'sonner'
+import { useTheme } from '@/lib/ThemeContext'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DASHBOARD LAYOUT
@@ -15,9 +16,11 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const { theme } = useTheme()
+
   return (
-    <div className="flex h-screen w-full bg-[#0A0A0A] overflow-hidden">
-      
+    <div className="flex h-screen w-full overflow-hidden" style={{ background: 'var(--color-bg-base)' }}>
+
       {/* Sidebar - Fixa no desktop, gaveta no mobile */}
       <Sidebar />
 
@@ -30,18 +33,19 @@ export default function DashboardLayout({
       </main>
 
       {/* Toast notifications */}
-      <Toaster 
-        position="bottom-right" 
-        theme="dark" 
-        richColors 
+      <Toaster
+        position="bottom-right"
+        theme={theme}
+        richColors
         toastOptions={{
           style: {
-            background: '#111',
-            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'var(--color-bg-elevated)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text-primary)',
           },
         }}
       />
-      
+
     </div>
   )
 }

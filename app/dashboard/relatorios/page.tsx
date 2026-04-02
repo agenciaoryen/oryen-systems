@@ -57,13 +57,13 @@ const TRANSLATIONS = {
     // Metrics
     metricsTitle: 'Métricas Operacionais',
     metricsDesc: 'Selecione os dados de esforço e tração',
-    pipelineTitle: 'Métricas do Funil',
+    pipelineTitle: 'Métricas do Pipeline',
     pipelineDesc: 'Selecione as etapas que deseja rastrear',
-    m_leads_captados: 'Leads Captados',
+    m_leads_captados: 'Contatos Recebidos',
     m_canais_origem: 'Canais de Origem',
     m_mensagens_enviadas: 'Disparos de Mensagens',
     m_ligacoes_feitas: 'Ligações Realizadas',
-    m_leads_responderam: 'Leads que Responderam',
+    m_leads_responderam: 'Contatos que Responderam',
     // Next send
     today: 'Hoje',
     tomorrow: 'Amanhã'
@@ -106,11 +106,11 @@ const TRANSLATIONS = {
     metricsDesc: 'Select effort and traction data',
     pipelineTitle: 'Pipeline Metrics',
     pipelineDesc: 'Select the stages you want to track',
-    m_leads_captados: 'Captured Leads',
+    m_leads_captados: 'Contacts Received',
     m_canais_origem: 'Source Channels',
     m_mensagens_enviadas: 'Messages Sent',
     m_ligacoes_feitas: 'Calls Made',
-    m_leads_responderam: 'Leads Responded',
+    m_leads_responderam: 'Contacts Responded',
     today: 'Today',
     tomorrow: 'Tomorrow'
   },
@@ -150,13 +150,13 @@ const TRANSLATIONS = {
     sunday: 'Domingo',
     metricsTitle: 'Métricas Operativas',
     metricsDesc: 'Selecciona los datos de esfuerzo y tracción',
-    pipelineTitle: 'Métricas del Embudo',
+    pipelineTitle: 'Métricas del Pipeline',
     pipelineDesc: 'Selecciona las etapas que deseas rastrear',
-    m_leads_captados: 'Leads Captados',
+    m_leads_captados: 'Contactos Recibidos',
     m_canais_origem: 'Canales de Origen',
     m_mensagens_enviadas: 'Mensajes Enviados',
     m_ligacoes_feitas: 'Llamadas Realizadas',
-    m_leads_responderam: 'Leads Respondieron',
+    m_leads_responderam: 'Contactos Respondieron',
     today: 'Hoy',
     tomorrow: 'Mañana'
   }

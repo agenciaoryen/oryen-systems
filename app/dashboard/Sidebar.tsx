@@ -7,11 +7,11 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/AuthContext'
 import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'sonner' 
-import { 
-  LayoutDashboard, 
-  Users, 
-  Bot, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  Users,
+  Bot,
+  LogOut,
   MessageSquare,
   Settings,
   Bell,
@@ -22,8 +22,11 @@ import {
   ChevronDown,
   BarChart3,
   FileText,
-  type LucideIcon 
+  Sun,
+  Moon,
+  type LucideIcon
 } from 'lucide-react'
+import { useTheme } from '@/lib/ThemeContext'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -35,7 +38,7 @@ const TRANSLATIONS = {
     menu: {
       overview: 'Visão Geral',
       alerts: 'Alertas',
-      crm: 'CRM & Leads',
+      crm: 'CRM & Contatos',
       conversations: 'Conversas',
       agents: 'Agentes IA',
       reports: 'Relatórios',
@@ -48,14 +51,16 @@ const TRANSLATIONS = {
     staffMode: 'Modo Staff',
     globalAccess: 'Acesso Global',
     selectOrg: 'Selecione um cliente',
-    viewingAs: 'Visualizando como'
+    viewingAs: 'Visualizando como',
+    themeLight: 'Tema Claro',
+    themeDark: 'Tema Escuro',
   },
   en: {
     sectionTitle: 'Platform',
     menu: {
       overview: 'Overview',
       alerts: 'Alerts',
-      crm: 'CRM & Leads',
+      crm: 'CRM & Contacts',
       conversations: 'Conversations',
       agents: 'AI Agents',
       reports: 'Reports',
@@ -68,14 +73,16 @@ const TRANSLATIONS = {
     staffMode: 'Staff Mode',
     globalAccess: 'Global Access',
     selectOrg: 'Select a client',
-    viewingAs: 'Viewing as'
+    viewingAs: 'Viewing as',
+    themeLight: 'Light Theme',
+    themeDark: 'Dark Theme',
   },
   es: {
     sectionTitle: 'Plataforma',
     menu: {
       overview: 'Visión General',
       alerts: 'Alertas',
-      crm: 'CRM & Leads',
+      crm: 'CRM & Contactos',
       conversations: 'Conversaciones',
       agents: 'Agentes IA',
       reports: 'Reportes',
@@ -88,7 +95,9 @@ const TRANSLATIONS = {
     staffMode: 'Modo Staff',
     globalAccess: 'Acceso Global',
     selectOrg: 'Seleccione un cliente',
-    viewingAs: 'Viendo como'
+    viewingAs: 'Viendo como',
+    themeLight: 'Tema Claro',
+    themeDark: 'Tema Oscuro',
   }
 }
 
@@ -145,6 +154,8 @@ export default function Sidebar() {
   const t = TRANSLATIONS[userLang]
 
   // Estados
+  const { theme, toggleTheme } = useTheme()
+
   const [hasUnreadAlerts, setHasUnreadAlerts] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false)
@@ -271,7 +282,7 @@ export default function Sidebar() {
       {/* ═══════════════════════════════════════════════════════════════════════
           BARRA SUPERIOR MOBILE
           ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="md:hidden fixed top-0 left-0 w-full h-16 bg-[#0A0A0A] border-b border-white/10 flex items-center justify-between px-4 z-40">
+      <div className="md:hidden fixed top-0 left-0 w-full h-16 border-b flex items-center justify-between px-4 z-40" style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border)' }}>
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)]">
             <Bot className="text-white" size={20} />
@@ -297,13 +308,16 @@ export default function Sidebar() {
       {/* ═══════════════════════════════════════════════════════════════════════
           SIDEBAR PRINCIPAL
           ═══════════════════════════════════════════════════════════════════════ */}
-      <aside className={cn(
-        "fixed left-0 top-0 h-full w-64 flex-col bg-[#0A0A0A] border-r border-white/10 z-50 transition-transform duration-300 ease-in-out md:translate-x-0 flex",
-        isMobileOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      <aside
+        className={cn(
+          "fixed left-0 top-0 h-full w-64 flex-col border-r z-50 transition-transform duration-300 ease-in-out md:translate-x-0 flex",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+        style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border)' }}
+      >
         
         {/* LOGO */}
-        <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b border-white/5">
+        <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b" style={{ borderColor: 'var(--color-border-subtle)' }}>
           <div className="flex items-center">
             <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)]">
               <Bot className="text-white" size={20} />
@@ -356,7 +370,7 @@ export default function Sidebar() {
 
               {/* Dropdown Menu */}
               {isOrgDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-[#111] border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50">
+                <div className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl overflow-hidden z-50" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
                   <div className="max-h-[240px] overflow-y-auto">
                     {availableOrgs.map((org) => (
                       <button
@@ -446,9 +460,22 @@ export default function Sidebar() {
           </div>
         )}
 
-        {/* RODAPÉ - LOGOUT */}
-        <div className="border-t border-white/5 p-4 bg-black/20 shrink-0">
-          <button 
+        {/* RODAPÉ - THEME TOGGLE + LOGOUT */}
+        <div className="border-t p-4 shrink-0" style={{ borderColor: 'var(--color-border-subtle)', background: 'var(--color-bg-surface)' }}>
+          {/* Toggle de tema */}
+          <button
+            onClick={toggleTheme}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all mb-1 border border-transparent"
+            style={{ color: 'var(--color-text-secondary)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-secondary)' }}
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            {theme === 'dark' ? t.themeLight : t.themeDark}
+          </button>
+
+          {/* Logout */}
+          <button
             onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 transition-all hover:bg-rose-500/10 hover:text-rose-400 hover:border hover:border-rose-500/20 border border-transparent"
           >

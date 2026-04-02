@@ -47,6 +47,8 @@ interface LeadDetails {
   total_em_vendas?: number
   source?: string
   nicho?: string
+  tipo_contato?: string
+  interesse?: string
   org_id: string
 }
 
@@ -84,8 +86,8 @@ interface LeadTag {
 const TRANSLATIONS = {
   pt: {
     back: 'Voltar',
-    loading: 'Carregando dados do Lead...',
-    notFoundTitle: 'Ops! Lead não encontrado.',
+    loading: 'Carregando dados do Contato...',
+    notFoundTitle: 'Ops! Contato não encontrado.',
     notFoundDesc: 'Verifique se o ID na URL está correto ou se você tem permissão.',
     notFoundId: 'ID procurado:',
     backToCrm: 'Voltar para o CRM',
@@ -97,14 +99,14 @@ const TRANSLATIONS = {
     instagram: 'Instagram',
     city: 'Cidade',
     website: 'Site/URL',
-    value: 'Valor',
+    value: 'Valor do Negócio',
     source: 'Origem',
     niche: 'Nicho',
     stage: 'Etapa',
     timelineTitle: 'Linha do Tempo',
     emptyHistory: 'Nenhum histórico registrado.',
     quickNoteTitle: 'Anotação Rápida',
-    notePlaceholder: 'Escreva algo sobre este lead...',
+    notePlaceholder: 'Escreva algo sobre este contato...',
     addNote: 'Adicionar ao Histórico',
     errorUpdate: 'Erro ao salvar alteração.',
     errorNote: 'Erro ao salvar anotação.',
@@ -114,22 +116,32 @@ const TRANSLATIONS = {
     selectStage: 'Selecionar etapa',
     createdAt: 'Criado em',
     updatedAt: 'Atualizado em',
-    leadInfo: 'Informações do Lead',
+    leadInfo: 'Informações do Contato',
     quickActions: 'Ações Rápidas',
     stageChanged: 'Etapa alterada para',
     tagAdded: 'Tag adicionada:',
     tagRemoved: 'Tag removida:',
     noName: 'Sem nome',
     editName: 'Editar nome',
-    namePlaceholder: 'Nome do lead',
-    companyPlaceholder: 'Nome da empresa',
+    namePlaceholder: 'Nome do contato',
     noTagsAvailable: 'Nenhuma tag disponível',
-    createTagsInSettings: 'Criar tags em Configurações'
+    createTagsInSettings: 'Criar tags em Configurações',
+    contactType: 'Tipo de Contato',
+    contactTypePlaceholder: 'Selecione...',
+    interest: 'Interesse',
+    interestPlaceholder: 'Selecione...',
+    typeBuyer: 'Comprador',
+    typeSeller: 'Vendedor',
+    typeTenant: 'Locatário',
+    typeLandlord: 'Proprietário',
+    intPurchase: 'Compra',
+    intRental: 'Locação',
+    intBoth: 'Compra e Locação'
   },
   en: {
     back: 'Back',
-    loading: 'Loading Lead data...',
-    notFoundTitle: 'Oops! Lead not found.',
+    loading: 'Loading Contact data...',
+    notFoundTitle: 'Oops! Contact not found.',
     notFoundDesc: 'Check if the URL ID is correct or if you have permission.',
     notFoundId: 'Searched ID:',
     backToCrm: 'Back to CRM',
@@ -141,14 +153,14 @@ const TRANSLATIONS = {
     instagram: 'Instagram',
     city: 'City',
     website: 'Website/URL',
-    value: 'Value',
+    value: 'Deal Value',
     source: 'Source',
     niche: 'Niche',
     stage: 'Stage',
     timelineTitle: 'Timeline',
     emptyHistory: 'No history recorded.',
     quickNoteTitle: 'Quick Note',
-    notePlaceholder: 'Write something about this lead...',
+    notePlaceholder: 'Write something about this contact...',
     addNote: 'Add to History',
     errorUpdate: 'Error saving changes.',
     errorNote: 'Error saving note.',
@@ -158,22 +170,32 @@ const TRANSLATIONS = {
     selectStage: 'Select stage',
     createdAt: 'Created at',
     updatedAt: 'Updated at',
-    leadInfo: 'Lead Information',
+    leadInfo: 'Contact Information',
     quickActions: 'Quick Actions',
     stageChanged: 'Stage changed to',
     tagAdded: 'Tag added:',
     tagRemoved: 'Tag removed:',
     noName: 'No name',
     editName: 'Edit name',
-    namePlaceholder: 'Lead name',
-    companyPlaceholder: 'Company name',
+    namePlaceholder: 'Contact name',
     noTagsAvailable: 'No tags available',
-    createTagsInSettings: 'Create tags in Settings'
+    createTagsInSettings: 'Create tags in Settings',
+    contactType: 'Contact Type',
+    contactTypePlaceholder: 'Select...',
+    interest: 'Interest',
+    interestPlaceholder: 'Select...',
+    typeBuyer: 'Buyer',
+    typeSeller: 'Seller',
+    typeTenant: 'Tenant',
+    typeLandlord: 'Landlord',
+    intPurchase: 'Purchase',
+    intRental: 'Rental',
+    intBoth: 'Purchase & Rental'
   },
   es: {
     back: 'Volver',
-    loading: 'Cargando datos del Lead...',
-    notFoundTitle: '¡Ops! Lead no encontrado.',
+    loading: 'Cargando datos del Contacto...',
+    notFoundTitle: '¡Ops! Contacto no encontrado.',
     notFoundDesc: 'Verifica si el ID en la URL es correcto o si tienes permiso.',
     notFoundId: 'ID buscado:',
     backToCrm: 'Volver al CRM',
@@ -185,14 +207,14 @@ const TRANSLATIONS = {
     instagram: 'Instagram',
     city: 'Ciudad',
     website: 'Sitio Web/URL',
-    value: 'Valor',
+    value: 'Valor del Negocio',
     source: 'Origen',
     niche: 'Nicho',
     stage: 'Etapa',
     timelineTitle: 'Línea de Tiempo',
     emptyHistory: 'Ningún historial registrado.',
     quickNoteTitle: 'Nota Rápida',
-    notePlaceholder: 'Escribe algo sobre este lead...',
+    notePlaceholder: 'Escribe algo sobre este contacto...',
     addNote: 'Añadir al Historial',
     errorUpdate: 'Error al guardar cambios.',
     errorNote: 'Error al guardar nota.',
@@ -202,17 +224,27 @@ const TRANSLATIONS = {
     selectStage: 'Seleccionar etapa',
     createdAt: 'Creado el',
     updatedAt: 'Actualizado el',
-    leadInfo: 'Información del Lead',
+    leadInfo: 'Información del Contacto',
     quickActions: 'Acciones Rápidas',
     stageChanged: 'Etapa cambiada a',
     tagAdded: 'Tag añadida:',
     tagRemoved: 'Tag eliminada:',
     noName: 'Sin nombre',
     editName: 'Editar nombre',
-    namePlaceholder: 'Nombre del lead',
-    companyPlaceholder: 'Nombre de la empresa',
+    namePlaceholder: 'Nombre del contacto',
     noTagsAvailable: 'Ninguna tag disponible',
-    createTagsInSettings: 'Crear tags en Configuración'
+    createTagsInSettings: 'Crear tags en Configuración',
+    contactType: 'Tipo de Contacto',
+    contactTypePlaceholder: 'Seleccionar...',
+    interest: 'Interés',
+    interestPlaceholder: 'Seleccionar...',
+    typeBuyer: 'Comprador',
+    typeSeller: 'Vendedor',
+    typeTenant: 'Arrendatario',
+    typeLandlord: 'Propietario',
+    intPurchase: 'Compra',
+    intRental: 'Alquiler',
+    intBoth: 'Compra y Alquiler'
   }
 }
 
@@ -629,7 +661,7 @@ export default function LeadProfilePage() {
     )
   }
 
-  const displayName = lead.nome_empresa || lead.name || t.noName
+  const displayName = lead.name || t.noName
   const currentStage = pipelineStages.find(s => s.name === lead.stage)
   const stageColor = currentStage ? getStageColor(currentStage.color) : getStageColor('gray')
   const availableTags = allTags.filter(tag => !leadTags.some(lt => lt.id === tag.id))
@@ -694,18 +726,6 @@ export default function LeadProfilePage() {
                         autoFocus
                       />
                     </div>
-                    <div>
-                      <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">
-                        {t.companyPlaceholder}
-                      </label>
-                      <input
-                        type="text"
-                        value={editCompany}
-                        onChange={(e) => setEditCompany(e.target.value)}
-                        placeholder={t.companyPlaceholder}
-                        className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-lg text-white outline-none focus:border-blue-500 transition-all"
-                      />
-                    </div>
                     <div className="flex gap-2">
                       <button
                         onClick={handleSaveName}
@@ -739,9 +759,6 @@ export default function LeadProfilePage() {
                         <Pencil size={14} />
                       </button>
                     </div>
-                    {lead.nome_empresa && lead.name && (
-                      <p className="text-gray-400 text-sm mt-1">{t.contact}: {lead.name}</p>
-                    )}
                   </div>
                 )}
 
@@ -895,18 +912,43 @@ export default function LeadProfilePage() {
             </div>
 
             {/* CAMPOS DE EDIÇÃO */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-6 border-t border-white/5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/5">
+              {/* Tipo de Contato */}
               <div className="space-y-1.5">
-                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
-                  <Instagram size={10} /> {t.instagram}
+                <label className="text-[10px] text-blue-400 font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
+                  <Tag size={10} /> {t.contactType}
                 </label>
-                <input
-                  defaultValue={lead.instagram || ''}
-                  onBlur={(e) => handleUpdateField('instagram', e.target.value)}
-                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-300 outline-none focus:border-blue-500 transition-all placeholder-gray-700"
-                  placeholder="@instagram"
-                />
+                <select
+                  value={lead.tipo_contato || ''}
+                  onChange={(e) => handleUpdateField('tipo_contato', e.target.value)}
+                  className="w-full bg-[#0A0A0A] border border-blue-900/40 rounded-xl p-3 text-sm text-gray-300 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                >
+                  <option value="">{t.contactTypePlaceholder}</option>
+                  <option value="comprador">{t.typeBuyer}</option>
+                  <option value="vendedor">{t.typeSeller}</option>
+                  <option value="locatario">{t.typeTenant}</option>
+                  <option value="proprietario">{t.typeLandlord}</option>
+                </select>
               </div>
+
+              {/* Interesse */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-purple-400 font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
+                  <Globe size={10} /> {t.interest}
+                </label>
+                <select
+                  value={lead.interesse || ''}
+                  onChange={(e) => handleUpdateField('interesse', e.target.value)}
+                  className="w-full bg-[#0A0A0A] border border-purple-900/40 rounded-xl p-3 text-sm text-gray-300 outline-none focus:border-purple-500 transition-all cursor-pointer"
+                >
+                  <option value="">{t.interestPlaceholder}</option>
+                  <option value="compra">{t.intPurchase}</option>
+                  <option value="locacao">{t.intRental}</option>
+                  <option value="ambos">{t.intBoth}</option>
+                </select>
+              </div>
+
+              {/* Cidade */}
               <div className="space-y-1.5">
                 <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
                   <MapPin size={10} /> {t.city}
@@ -918,6 +960,21 @@ export default function LeadProfilePage() {
                   placeholder={t.city}
                 />
               </div>
+
+              {/* Instagram */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
+                  <Instagram size={10} /> {t.instagram}
+                </label>
+                <input
+                  defaultValue={lead.instagram || ''}
+                  onBlur={(e) => handleUpdateField('instagram', e.target.value)}
+                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-300 outline-none focus:border-blue-500 transition-all placeholder-gray-700"
+                  placeholder="@instagram"
+                />
+              </div>
+
+              {/* Site */}
               <div className="space-y-1.5">
                 <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
                   <Globe size={10} /> {t.website}
@@ -929,6 +986,8 @@ export default function LeadProfilePage() {
                   placeholder="https://..."
                 />
               </div>
+
+              {/* Valor */}
               <div className="space-y-1.5">
                 <label className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
                   <DollarSign size={10} /> {t.value} ({userCurrency})
@@ -1031,7 +1090,7 @@ export default function LeadProfilePage() {
             </button>
           </div>
 
-          {/* Valor do Lead */}
+          {/* Valor do Negócio */}
           <div className="bg-[#111] border border-white/5 rounded-2xl p-5 md:p-6 shadow-xl">
             <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-3">{t.value}</h3>
             <p className="text-3xl font-black text-emerald-400">
