@@ -43,32 +43,23 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    const payload: UazapiWebhookPayload = await request.json()
+    const rawPayload = await request.json()
 
-    // Log do payload para debug — suporta formato v1 e v2 da UAZAPI
-    const instName = payload.instanceName || payload.instance || '(sem nome)'
-    const v2msg = (payload as any).message || {}
-    const msgText = payload.body || payload.text || payload.caption || v2msg.body || v2msg.text || v2msg.conversation || ''
-    const eventType = (payload as any).EventType || payload.type || 'unknown'
-    console.log(`[SDR] Webhook recebido | instance: ${instName} | fromMe: ${payload.fromMe ?? v2msg.fromMe} | type: ${eventType} | text: "${msgText.slice(0, 60)}"`)
+    // ─── Normalizar payload UAZAPI v2 para formato plano ───
+    const payload = normalizeV2Payload(rawPayload)
+
+    const instName = payload.instanceName || '(sem nome)'
+    const msgText = payload.body || ''
+    console.log(`[SDR] Webhook recebido | instance: ${instName} | fromMe: ${payload.fromMe} | type: ${payload.type} | text: "${msgText.slice(0, 60)}" | phone: ${payload.chatId || '?'}`)
 
     // ─── 1. Filtros rápidos (antes de qualquer query ao banco) ───
     const filterResult = applyFilters(payload)
     if (filterResult) {
       console.log(`[SDR] Filtrado: ${filterResult} | instance: ${instName}`)
-      // Caso especial: atendente humano → setar tag STOP antes de ignorar
-      if ((payload as any)._isAttendant) {
-        const inst = instName !== '(sem nome)' ? await resolveInstance(instName) : null
-        if (inst) {
-          const { phone: attPhone } = extractPhone(payload)
-          if (isValidPhone(attPhone)) {
-            await stopSet(inst.org_id, attPhone)
-            console.log(`[SDR] STOP setado por atendente humano | phone: ${attPhone}`)
-          }
-        }
-      }
       return NextResponse.json({ skipped: true, reason: filterResult }, { status: 200 })
     }
+
+    const isAttendant = (payload as any)._isAttendant === true
 
     // ─── 2. Resolver instância → org_id ───
     const instanceName = payload.instanceName || payload.instance || ''
@@ -85,14 +76,6 @@ export async function POST(request: NextRequest) {
 
     console.log(`[SDR] Instância resolvida: ${instance.instance_name} | org: ${instance.org_id} | agent: ${instance.agent_id || 'NENHUM'}`)
 
-    // Log detalhado do payload v2 para debug
-    const msg = (payload as any).message || {}
-    const chat = (payload as any).chat || {}
-    console.log(`[SDR] Payload keys: ${Object.keys(payload).join(', ')}`)
-    console.log(`[SDR] message: ${JSON.stringify(msg).slice(0, 500)}`)
-    console.log(`[SDR] chat: ${JSON.stringify(chat).slice(0, 500)}`)
-    console.log(`[SDR] EventType: ${(payload as any).EventType} | owner: ${(payload as any).owner}`)
-    console.log(`[SDR] chatSource: ${JSON.stringify((payload as any).chatSource).slice(0, 300)}`)
 
     // Verificar se o agente está ativo
     if (!instance.agent_id) {
@@ -110,32 +93,63 @@ export async function POST(request: NextRequest) {
 
     // ─── 4. Buscar lead no CRM (dupla busca para BR) ───
     const lead = await findOrCreateLead(phone, phoneFallback, instance.org_id, payload)
+    const messageText = payload.body || payload.text || payload.caption || ''
 
-    // ─── 5. Verificar tag STOP (atendente humano) ───
-    const isStopped = await stopCheck(instance.org_id, phone)
-    if (isStopped) {
-      console.log(`[SDR] STOP ativo para ${phone} — atendente humano no controle`)
+    // ─── 5. Salvar mensagem no histórico (tanto lead quanto atendente) ───
+    const messageRole = isAttendant ? 'assistant' : 'user' // atendente humano = role assistant (resposta)
+    await supabase.from('sdr_messages').insert({
+      org_id: instance.org_id,
+      lead_id: lead.id,
+      campaign_id: instance.campaign_id || null,
+      instance_name: instanceName,
+      phone,
+      role: messageRole,
+      body: messageText,
+      type: isAttendant ? 'attendant' : 'text',
+      source: isAttendant ? 'human' : 'lead'
+    })
+
+    console.log(`[SDR] ✓ Histórico salvo | role: ${messageRole} | lead: ${lead.id} | phone: ${phone} | text: "${messageText.slice(0, 50)}"`)
+
+    // ─── 6. Se é atendente humano → setar STOP e parar ───
+    if (isAttendant) {
+      await stopSet(instance.org_id, phone)
+      console.log(`[SDR] STOP setado por atendente humano | lead: ${lead.id} | phone: ${phone}`)
       return NextResponse.json({
         success: true,
+        saved: true,
+        stop_set: true,
+        lead_id: lead.id,
+        reason: 'attendant_message_saved'
+      })
+    }
+
+    // ─── 7. Verificar tag STOP (atendente humano ativo) ───
+    const isStopped = await stopCheck(instance.org_id, phone)
+    if (isStopped) {
+      console.log(`[SDR] STOP ativo para ${phone} — mensagem salva, IA pausada`)
+      return NextResponse.json({
+        success: true,
+        saved: true,
         skipped: true,
         reason: 'attendant_active',
         lead_id: lead.id
       })
     }
 
-    // ─── 6. Verificar conversa_finalizada no lead (IA pausada pelo CRM) ───
+    // ─── 8. Verificar conversa_finalizada no lead (IA pausada pelo CRM) ───
     if (lead.conversa_finalizada === true) {
-      console.log(`[SDR] conversa_finalizada=true para lead ${lead.id} — IA pausada`)
+      console.log(`[SDR] conversa_finalizada=true para lead ${lead.id} — mensagem salva, IA pausada`)
       return NextResponse.json({
         success: true,
+        saved: true,
         skipped: true,
         reason: 'conversation_ended',
         lead_id: lead.id
       })
     }
 
-    // ─── 7. Adicionar mensagem ao buffer Redis ───
-    const messageText = payload.body || payload.text || payload.caption || ''
+    // ─── 9. Adicionar mensagem ao buffer Redis (anti-fragmentação) ───
     const bufferTotal = await bufferPush(instance.org_id, phone, messageText)
     const bufferSeconds = calculateBufferSeconds(messageText)
 
@@ -144,9 +158,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`[SDR] ✓ Buffer: ${bufferTotal} msg(s) | espera: ${bufferSeconds}s | lead: ${lead.id} | phone: ${phone}`)
 
-    // ─── 8. Agendar processamento após buffer time ───
-    // Usa fetch fire-and-forget para chamar /api/sdr/process após delay
-    // O endpoint process verifica se o buffer cresceu (novas mensagens)
+    // ─── 10. Agendar processamento após buffer time ───
     const processUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/sdr/process`
     const processPayload = {
       org_id: instance.org_id,
@@ -158,13 +170,11 @@ export async function POST(request: NextRequest) {
       secret: process.env.SDR_PROCESS_SECRET || 'sdr-internal-token'
     }
 
-    // setTimeout + fetch: dispara após bufferSeconds
-    // Em serverless, isso funciona se a função ainda estiver viva.
-    // Para garantia, usamos também o AbortController com timeout generoso.
     scheduleProcess(processUrl, processPayload, bufferSeconds)
 
     return NextResponse.json({
       success: true,
+      saved: true,
       buffered: true,
       buffer_count: bufferTotal,
       buffer_seconds: bufferSeconds,
@@ -184,6 +194,70 @@ export async function POST(request: NextRequest) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// NORMALIZAR PAYLOAD UAZAPI V2
+// Converte o formato aninhado (message, chat, EventType) para formato plano
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function normalizeV2Payload(raw: any): UazapiWebhookPayload {
+  // Se já tem campos v1 (body, from, etc.), retornar como está
+  if (raw.body || raw.senderPn || raw.from) {
+    return raw as UazapiWebhookPayload
+  }
+
+  // Formato v2: { EventType, instanceName, message: {...}, chat: {...}, owner, token }
+  const msg = raw.message || {}
+  const chat = raw.chat || {}
+  const eventType = raw.EventType || ''
+
+  return {
+    // Identificadores
+    messageId: msg.messageid || msg.id || '',
+    id: msg.messageid || '',
+
+    // Remetente — chatid é o número do contato (remoto)
+    chatId: msg.chatid || '',
+    senderPn: msg.sender_pn || '',
+    lid: msg.chatlid || msg.sender_lid || msg.sender || '',
+    from: msg.chatid || '',
+    remoteJidAlt: msg.sender_pn || '',
+
+    // Grupo
+    isGroup: msg.isGroup === true,
+
+    // Direção
+    fromMe: msg.fromMe === true,
+
+    // Conteúdo
+    body: msg.content || msg.body || msg.text || msg.conversation || '',
+    text: msg.content || '',
+    type: eventType || msg.messageType || 'text',
+    caption: msg.caption || '',
+
+    // Mídia
+    mediaUrl: msg.mediaUrl || '',
+    mimetype: msg.mimetype || '',
+
+    // Metadados
+    timestamp: msg.messageTimestamp || Date.now(),
+    pushName: msg.senderName || '',
+    status: msg.status || '',
+
+    // Instância
+    instanceName: raw.instanceName || '',
+    instance: raw.instanceName || '',
+    token: raw.token || '',
+
+    // API detection
+    fromApi: msg.fromApi === true || msg.source === 'api',
+    isApi: msg.fromApi === true,
+    source: msg.source || '',
+
+    // Owner (número do chip)
+    owner: raw.owner || msg.owner || '',
+  } as UazapiWebhookPayload
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // FILTROS
 // Retorna motivo do skip, ou null se deve processar
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -193,17 +267,16 @@ function applyFilters(payload: UazapiWebhookPayload): string | null {
   if (payload.isGroup) return 'group_message'
 
   // 2. Mensagens enviadas pelo próprio chip (fromMe)
+  // NÃO filtrar — precisa salvar no histórico e setar STOP se atendente humano
+  // Apenas mensagens enviadas pela API (agente IA) são ignoradas
   if (payload.fromMe === true) {
-    // Detectar se é mensagem do atendente humano (não da API/agente)
-    // UAZAPI marca mensagens enviadas via API com campo específico
     const isFromApi = payload.fromApi === true || payload.isApi === true || payload.source === 'api'
-    if (!isFromApi) {
-      // Atendente humano digitou no celular → marcar como STOP
-      // Isso será tratado fora do filtro para ter acesso ao phone e org_id
-      // Guardamos no payload para processar depois
-      ;(payload as any)._isAttendant = true
+    if (isFromApi) {
+      return 'from_api' // IA enviou — ignorar para não criar loop
     }
-    return 'from_me'
+    // Atendente humano → marcar para processar (salvar + STOP)
+    ;(payload as any)._isAttendant = true
+    // NÃO retorna — continua para salvar no histórico
   }
 
   // 3. Ignorar notificações de status (delivered, read, etc.)
@@ -219,7 +292,7 @@ function applyFilters(payload: UazapiWebhookPayload): string | null {
   if (payload.type === 'protocol') return 'protocol'
 
   // 6. Ignorar tipos não-mensagem da UAZAPI (ReadReceipt, presence, etc.)
-  const nonMessageTypes = ['ReadReceipt', 'receipt', 'presence', 'call', 'notification', 'revoked']
+  const nonMessageTypes = ['ReadReceipt', 'receipt', 'presence', 'call', 'notification', 'revoked', 'messages_update', 'connection']
   if (payload.type && nonMessageTypes.includes(payload.type)) return `non_message_type:${payload.type}`
 
   return null

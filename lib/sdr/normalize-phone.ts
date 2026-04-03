@@ -24,18 +24,26 @@ interface PhoneExtraction {
  * - Gera ambas versões para busca dupla no CRM
  */
 export function extractPhone(payload: UazapiWebhookPayload): PhoneExtraction {
-  // 1. Detectar formato lid
-  const rawFrom = payload.lid || payload.from || payload.chatId || ''
-  const isLid = rawFrom.includes('@lid')
+  // 1. Melhor campo: chatId (no v2 normalizado, contém "555198706224@s.whatsapp.net")
+  // Se chatId contém @s.whatsapp.net, é o campo mais confiável
+  const chatId = payload.chatId || ''
+  const hasChatIdPhone = chatId.includes('@s.whatsapp.net') || chatId.includes('@c.us')
+
+  // 2. Detectar formato lid
+  const rawFrom = payload.lid || payload.from || chatId || ''
+  const isLid = rawFrom.includes('@lid') && !hasChatIdPhone
 
   let rawPhone = ''
 
-  if (isLid) {
+  if (hasChatIdPhone) {
+    // chatId tem o número real — usar direto
+    rawPhone = chatId
+  } else if (isLid) {
     // lid nao tem numero real — usar senderPn ou remoteJidAlt
     rawPhone = payload.senderPn || payload.remoteJidAlt || ''
   } else {
     // Prioridade: senderPn > from > chatId > remoteJidAlt
-    rawPhone = payload.senderPn || payload.from || payload.chatId || payload.remoteJidAlt || ''
+    rawPhone = payload.senderPn || payload.from || chatId || payload.remoteJidAlt || ''
   }
 
   // 2. Limpar: remover @s.whatsapp.net, @c.us, @lid, espaços, traços, parênteses

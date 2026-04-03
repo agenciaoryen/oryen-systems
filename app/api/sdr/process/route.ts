@@ -117,21 +117,9 @@ export async function POST(request: NextRequest) {
       campaignConfig = campaign?.config || null
     }
 
-    // ─── 7. Salvar mensagem do lead na tabela sdr_messages ───
-    await supabase
-      .from('sdr_messages')
-      .insert({
-        org_id,
-        lead_id,
-        campaign_id: campaign_id || null,
-        instance_name,
-        phone,
-        role: 'user',
-        body: fullMessage,
-        type: 'text'
-      })
+    // Mensagem do lead já foi salva no webhook — não duplicar aqui
 
-    // ─── 8. Buscar dados da org para contexto do prompt ───
+    // ─── 7. Buscar dados da org para contexto do prompt ───
     let orgData = null
     const { data: orgRow } = await supabase
       .from('orgs')
