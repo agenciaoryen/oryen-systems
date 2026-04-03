@@ -135,12 +135,12 @@ const TRANSLATIONS = {
       tagDeleted: 'Tag excluída.'
     },
     integrations: {
-      title: 'Webhooks & Automação',
-      desc: 'Configure as URLs de saída para o n8n ou outras ferramentas.',
-      webhookLabel: 'Webhook de Envio (WhatsApp)',
+      title: 'Webhooks & Integrações',
+      desc: 'Copie a URL abaixo e cole no campo de Webhook da sua instância UAZAPI para ativar o agente SDR.',
+      webhookLabel: 'Webhook de Recebimento (SDR Agent)',
+      webhookHint: 'Cole esta URL no campo "Webhook" da sua instância UAZAPI.',
       copy: 'Copiar',
-      copied: 'Copiado',
-      comingSoon: '(Em Breve)'
+      copied: 'Copiado'
     },
     modal: {
       title: 'Convidar Membro',
@@ -242,12 +242,12 @@ const TRANSLATIONS = {
       tagDeleted: 'Tag deleted.'
     },
     integrations: {
-      title: 'Webhooks & Automation',
-      desc: 'Configure output URLs for n8n or other tools here.',
-      webhookLabel: 'Sending Webhook (WhatsApp)',
+      title: 'Webhooks & Integrations',
+      desc: 'Copy the URL below and paste it in the Webhook field of your UAZAPI instance to activate the SDR agent.',
+      webhookLabel: 'Receiving Webhook (SDR Agent)',
+      webhookHint: 'Paste this URL in the "Webhook" field of your UAZAPI instance.',
       copy: 'Copy',
-      copied: 'Copied',
-      comingSoon: '(Coming Soon)'
+      copied: 'Copied'
     },
     modal: {
       title: 'Invite Member',
@@ -349,12 +349,12 @@ const TRANSLATIONS = {
       tagDeleted: 'Tag eliminado.'
     },
     integrations: {
-      title: 'Webhooks y Automatización',
-      desc: 'Configure aquí las URL de salida para n8n u otras herramientas.',
-      webhookLabel: 'Webhook de Envío (WhatsApp)',
+      title: 'Webhooks e Integraciones',
+      desc: 'Copia la URL abajo y pégala en el campo Webhook de tu instancia UAZAPI para activar el agente SDR.',
+      webhookLabel: 'Webhook de Recepción (SDR Agent)',
+      webhookHint: 'Pega esta URL en el campo "Webhook" de tu instancia UAZAPI.',
       copy: 'Copiar',
-      copied: 'Copiado',
-      comingSoon: '(Próximamente)'
+      copied: 'Copiado'
     },
     modal: {
       title: 'Invitar Miembro',
@@ -766,8 +766,12 @@ export default function SettingsPage() {
     setNotifSettings(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
+  const webhookUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/api/sdr/webhook`
+    : `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/sdr/webhook`
+
   const handleCopyWebhook = () => {
-    navigator.clipboard.writeText('https://webhook2.letierren8n.com/webhook/envia-mensagem')
+    navigator.clipboard.writeText(webhookUrl)
     setCopiedWebhook(true)
     setTimeout(() => setCopiedWebhook(false), 2000)
   }
@@ -1446,7 +1450,7 @@ export default function SettingsPage() {
           {activeTab === 'integrations' && isAdmin && (
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Globe size={20} className="text-purple-500" /> {t.integrations.title} <span className="text-xs text-gray-500">{t.integrations.comingSoon}</span>
+                <Globe size={20} className="text-purple-500" /> {t.integrations.title}
               </h2>
               <div className="bg-purple-500/5 border border-purple-500/20 p-4 rounded-xl">
                 <p className="text-sm text-purple-200">{t.integrations.desc}</p>
@@ -1458,7 +1462,7 @@ export default function SettingsPage() {
                     <input
                       type="text"
                       readOnly
-                      value="https://webhook2.letierren8n.com/webhook/envia-mensagem"
+                      value={webhookUrl}
                       className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-gray-400 text-xs font-mono"
                     />
                     <button
@@ -1470,6 +1474,7 @@ export default function SettingsPage() {
                       {copiedWebhook ? <><Check size={14} /> {t.integrations.copied}</> : <><Copy size={14} /> {t.integrations.copy}</>}
                     </button>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">{t.integrations.webhookHint}</p>
                 </div>
               </div>
             </div>

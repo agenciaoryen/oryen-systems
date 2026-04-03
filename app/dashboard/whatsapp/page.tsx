@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import {
   Smartphone,
@@ -63,6 +64,8 @@ const T = {
     apiUrlPlaceholder: 'Ex: https://suainstancia.uazapi.com',
     apiUrlHelp: 'Deixe em branco para usar a URL padrão.',
     tokenRequired: 'O token da instância é obrigatório.',
+    webhookHint: 'Configure o webhook da UAZAPI em',
+    webhookHintLink: 'Configurações → Integrações',
     limitReached: 'Limite do plano atingido',
     limitReachedDesc: (max: number) => `Seu plano permite no máximo ${max} número${max > 1 ? 's' : ''}. Exclua um existente ou faça upgrade.`,
     instancesCount: (count: number, max: number) => `${count}/${max === -1 ? '∞' : max} números`,
@@ -97,6 +100,8 @@ const T = {
     apiUrlPlaceholder: 'Ex: https://yourinstance.uazapi.com',
     apiUrlHelp: 'Leave blank to use the default URL.',
     tokenRequired: 'Instance token is required.',
+    webhookHint: 'Set up the UAZAPI webhook in',
+    webhookHintLink: 'Settings → Integrations',
     limitReached: 'Plan limit reached',
     limitReachedDesc: (max: number) => `Your plan allows up to ${max} number${max > 1 ? 's' : ''}. Delete an existing one or upgrade.`,
     instancesCount: (count: number, max: number) => `${count}/${max === -1 ? '∞' : max} numbers`,
@@ -131,6 +136,8 @@ const T = {
     apiUrlPlaceholder: 'Ej: https://tuinstancia.uazapi.com',
     apiUrlHelp: 'Deja en blanco para usar la URL predeterminada.',
     tokenRequired: 'El token de la instancia es obligatorio.',
+    webhookHint: 'Configura el webhook de UAZAPI en',
+    webhookHintLink: 'Configuración → Integraciones',
     limitReached: 'Límite del plan alcanzado',
     limitReachedDesc: (max: number) => `Tu plan permite máximo ${max} número${max > 1 ? 's' : ''}. Elimina uno existente o haz upgrade.`,
     instancesCount: (count: number, max: number) => `${count}/${max === -1 ? '∞' : max} números`,
@@ -373,6 +380,19 @@ export default function WhatsAppPage() {
               {t.limitReachedDesc(maxInstances)}
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Dica do webhook */}
+      {instances.length > 0 && (
+        <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl" style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)' }}>
+          <Wifi size={16} className="text-indigo-400 shrink-0" />
+          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            {t.webhookHint}{' '}
+            <Link href="/dashboard/settings" className="text-indigo-400 hover:underline font-medium">
+              {t.webhookHintLink}
+            </Link>
+          </p>
         </div>
       )}
 
