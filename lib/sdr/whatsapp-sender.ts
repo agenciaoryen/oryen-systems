@@ -125,14 +125,11 @@ async function sendText(
   chatId: string,
   text: string
 ): Promise<void> {
-  const url = `${apiUrl}/sendText`
+  const url = `${apiUrl}/${token}/sendText`
 
   const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'token': token
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chatId,
       text
@@ -156,15 +153,12 @@ async function sendPresence(
   chatId: string,
   state: 'composing' | 'available'
 ): Promise<void> {
-  const url = `${apiUrl}/sendPresence`
+  const url = `${apiUrl}/${token}/sendPresence`
 
   // Fire-and-forget: não precisa esperar resposta
   await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'token': token
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chatId,
       state

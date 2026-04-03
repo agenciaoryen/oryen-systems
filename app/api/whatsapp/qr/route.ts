@@ -1,5 +1,6 @@
 // app/api/whatsapp/qr/route.ts
-// Busca QR code da UAZAPI para uma instância específica
+// UAZAPI auth: token vai na URL como path segment
+// URL: https://{subdomain}.uazapi.com/{token}/instance/connect
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
@@ -8,51 +9,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
-/**
- * Tenta chamar UAZAPI com diferentes formatos de auth até funcionar.
- * A UAZAPI aceita o token de formas diferentes dependendo da versão.
- */
-async function uazapiFetch(
-  url: string,
-  token: string,
-  method: 'GET' | 'POST' = 'POST',
-  body?: any
-): Promise<Response> {
-  const attempts = [
-    // 1. Token na URL como query param
-    { url: `${url}${url.includes('?') ? '&' : '?'}token=${token}`, headers: { 'Content-Type': 'application/json' } },
-    // 2. Header 'token'
-    { url, headers: { 'Content-Type': 'application/json', 'token': token } },
-    // 3. Header 'apikey'
-    { url, headers: { 'Content-Type': 'application/json', 'apikey': token } },
-    // 4. Authorization Bearer
-    { url, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } },
-    // 5. Authorization sem Bearer
-    { url, headers: { 'Content-Type': 'application/json', 'Authorization': token } },
-  ]
-
-  for (let i = 0; i < attempts.length; i++) {
-    const attempt = attempts[i]
-    const res = await fetch(attempt.url, {
-      method,
-      headers: attempt.headers,
-      ...(method === 'POST' && body ? { body: JSON.stringify(body) } : {})
-    })
-
-    if (res.status !== 401) {
-      if (i > 0) console.log(`[UAZAPI] Auth method ${i + 1} worked for ${url}`)
-      return res
-    }
-
-    // Consumir body para evitar leak
-    await res.text().catch(() => {})
-  }
-
-  // Todos falharam — retornar último resultado
-  console.error(`[UAZAPI] All auth methods failed for ${url}`)
-  return new Response(JSON.stringify({ error: 'All auth methods failed' }), { status: 401 })
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -78,33 +34,51 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ status: 'not_configured', error: 'UAZAPI not configured' }, { status: 400 })
     }
 
+    // Base URL com token no path: https://oryen.uazapi.com/{token}
+    const baseUrl = `${apiUrl}/${token}`
+
     // ─── 1. Verificar status atual ───
-    const statusRes = await uazapiFetch(`${apiUrl}/instance/status`, token, 'GET')
+    try {
+      const statusRes = await fetch(`${baseUrl}/instance/status`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      })
 
-    if (statusRes.ok) {
-      const statusData = await statusRes.json()
-      const currentStatus = statusData.status || statusData.state || ''
+      if (statusRes.ok) {
+        const statusData = await statusRes.json()
+        console.log('[WhatsApp:QR] Status response:', JSON.stringify(statusData).slice(0, 300))
+        const currentStatus = statusData.status || statusData.state || ''
 
-      if (currentStatus === 'connected' || currentStatus === 'open') {
-        if (instance.status !== 'connected') {
-          await supabase
-            .from('whatsapp_instances')
-            .update({
-              status: 'connected',
-              connected_at: new Date().toISOString(),
-              phone_number: statusData.phone || statusData.number || instance.phone_number
-            })
-            .eq('id', instanceId)
+        if (currentStatus === 'connected' || currentStatus === 'open') {
+          if (instance.status !== 'connected') {
+            await supabase
+              .from('whatsapp_instances')
+              .update({
+                status: 'connected',
+                connected_at: new Date().toISOString(),
+                phone_number: statusData.phone || statusData.number || instance.phone_number
+              })
+              .eq('id', instanceId)
+          }
+          return NextResponse.json({
+            status: 'connected',
+            phone_number: statusData.phone || statusData.number || instance.phone_number
+          })
         }
-        return NextResponse.json({
-          status: 'connected',
-          phone_number: statusData.phone || statusData.number || instance.phone_number
-        })
       }
+    } catch (err: any) {
+      console.warn('[WhatsApp:QR] Status check error:', err.message)
     }
 
     // ─── 2. Chamar /instance/connect para gerar QR ───
-    const connectRes = await uazapiFetch(`${apiUrl}/instance/connect`, token, 'POST', {})
+    const connectRes = await fetch(`${baseUrl}/instance/connect`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({})
+    })
 
     if (!connectRes.ok) {
       const errText = await connectRes.text().catch(() => '')
@@ -115,14 +89,13 @@ export async function GET(request: NextRequest) {
     const connectData = await connectRes.json()
     console.log('[WhatsApp:QR] Connect response:', JSON.stringify(connectData).slice(0, 500))
 
-    // Extrair QR code — testar todos os campos possíveis
+    // Extrair QR code
     const qrCode = connectData.qrcode
       || connectData.qr
       || connectData.base64
       || connectData.data?.qrcode
       || connectData.data?.qr
       || connectData.data?.base64
-      || connectData.data?.code
       || null
 
     const pairingCode = connectData.pairingCode || connectData.code || connectData.data?.pairingCode || null
