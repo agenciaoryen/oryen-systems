@@ -83,6 +83,10 @@ export async function POST(request: NextRequest) {
 
     console.log(`[SDR] Instância resolvida: ${instance.instance_name} | org: ${instance.org_id} | agent: ${instance.agent_id || 'NENHUM'}`)
 
+    // Log detalhado do payload para debug de extração de telefone
+    console.log(`[SDR] Payload keys: ${Object.keys(payload).join(', ')}`)
+    console.log(`[SDR] Phone fields: from=${payload.from || ''} | chatId=${payload.chatId || ''} | senderPn=${payload.senderPn || ''} | remoteJidAlt=${payload.remoteJidAlt || ''} | lid=${payload.lid || ''} | key.remoteJid=${(payload as any).key?.remoteJid || ''} | data.key.remoteJid=${(payload as any).data?.key?.remoteJid || ''}`)
+
     // Verificar se o agente está ativo
     if (!instance.agent_id) {
       console.warn(`[SDR] Instância ${instance.instance_name} sem agente vinculado — mensagem ignorada`)
@@ -206,6 +210,10 @@ function applyFilters(payload: UazapiWebhookPayload): string | null {
   // 5. Ignorar reações e protocolos internos
   if (payload.type === 'reaction') return 'reaction'
   if (payload.type === 'protocol') return 'protocol'
+
+  // 6. Ignorar tipos não-mensagem da UAZAPI (ReadReceipt, presence, etc.)
+  const nonMessageTypes = ['ReadReceipt', 'receipt', 'presence', 'call', 'notification', 'revoked']
+  if (payload.type && nonMessageTypes.includes(payload.type)) return `non_message_type:${payload.type}`
 
   return null
 }

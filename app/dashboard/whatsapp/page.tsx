@@ -77,7 +77,10 @@ const T = {
     deleteConfirm: 'Tem certeza que deseja excluir esta instância? Isso irá desconectar o WhatsApp.',
     agent: 'Agente IA',
     noAgent: 'Sem agente (inativo)',
-    agentLinked: 'SDR ativo'
+    agentLinked: 'SDR ativo',
+    setupWebhook: 'Ativar SDR',
+    webhookOk: 'SDR Ativado!',
+    webhookFail: 'Erro ao ativar'
   },
   en: {
     title: 'WhatsApp',
@@ -109,7 +112,10 @@ const T = {
     deleteConfirm: 'Are you sure you want to delete this instance? This will disconnect WhatsApp.',
     agent: 'AI Agent',
     noAgent: 'No agent (inactive)',
-    agentLinked: 'SDR active'
+    agentLinked: 'SDR active',
+    setupWebhook: 'Activate SDR',
+    webhookOk: 'SDR Activated!',
+    webhookFail: 'Activation error'
   },
   es: {
     title: 'WhatsApp',
@@ -141,7 +147,10 @@ const T = {
     deleteConfirm: '¿Estás seguro de que deseas eliminar esta instancia? Esto desconectará WhatsApp.',
     agent: 'Agente IA',
     noAgent: 'Sin agente (inactivo)',
-    agentLinked: 'SDR activo'
+    agentLinked: 'SDR activo',
+    setupWebhook: 'Activar SDR',
+    webhookOk: 'SDR Activado!',
+    webhookFail: 'Error al activar'
   }
 }
 
@@ -167,6 +176,8 @@ export default function WhatsAppPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [webhookStatus, setWebhookStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [agents, setAgents] = useState<Agent[]>([])
+  const [configuringWebhook, setConfiguringWebhook] = useState<string | null>(null)
+  const [webhookResult, setWebhookResult] = useState<Record<string, 'success' | 'error'>>({})
 
   // QR state
   const [qrInstanceId, setQrInstanceId] = useState<string | null>(null)
@@ -216,6 +227,26 @@ export default function WhatsAppPage() {
       }
     } catch (err) {
       console.error('Error linking agent:', err)
+    }
+  }
+
+  // ─── Setup webhook ───
+  const handleSetupWebhook = async (instanceId: string) => {
+    setConfiguringWebhook(instanceId)
+    try {
+      const res = await fetch('/api/whatsapp/webhook-setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instance_id: instanceId })
+      })
+      const data = await res.json()
+      setWebhookResult(prev => ({ ...prev, [instanceId]: data.success ? 'success' : 'error' }))
+      setTimeout(() => setWebhookResult(prev => { const n = { ...prev }; delete n[instanceId]; return n }), 3000)
+    } catch (err) {
+      console.error('Error setting up webhook:', err)
+      setWebhookResult(prev => ({ ...prev, [instanceId]: 'error' }))
+    } finally {
+      setConfiguringWebhook(null)
     }
   }
 
@@ -651,6 +682,29 @@ export default function WhatsAppPage() {
                       ))}
                     </select>
                   </div>
+
+                  {/* Webhook setup button */}
+                  {instance.status === 'connected' && (
+                    <button
+                      onClick={() => handleSetupWebhook(instance.id)}
+                      disabled={configuringWebhook === instance.id}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+                      style={{
+                        background: webhookResult[instance.id] === 'success' ? 'rgba(16,185,129,0.15)' : webhookResult[instance.id] === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(99,102,241,0.1)',
+                        color: webhookResult[instance.id] === 'success' ? 'rgb(16,185,129)' : webhookResult[instance.id] === 'error' ? 'rgb(239,68,68)' : 'rgb(99,102,241)',
+                        border: `1px solid ${webhookResult[instance.id] === 'success' ? 'rgba(16,185,129,0.3)' : webhookResult[instance.id] === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(99,102,241,0.2)'}`
+                      }}
+                    >
+                      {configuringWebhook === instance.id ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : webhookResult[instance.id] === 'success' ? (
+                        <CheckCircle2 size={13} />
+                      ) : (
+                        <Wifi size={13} />
+                      )}
+                      {webhookResult[instance.id] === 'success' ? t.webhookOk : webhookResult[instance.id] === 'error' ? t.webhookFail : t.setupWebhook}
+                    </button>
+                  )}
 
                   {/* Actions */}
                   <div className="flex items-center gap-2">
