@@ -1,5 +1,5 @@
 // app/api/whatsapp/instances/route.ts
-// CRUD de instâncias WhatsApp — lista, registra e exclui instâncias para a org
+// CRUD de instâncias WhatsApp — cria na UAZAPI automaticamente com admintoken
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
@@ -9,6 +9,9 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+const UAZAPI_URL = process.env.UAZAPI_API_URL!
+const UAZAPI_ADMIN_TOKEN = process.env.UAZAPI_ADMIN_TOKEN!
 
 /**
  * GET /api/whatsapp/instances?org_id=xxx
@@ -50,20 +53,16 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/whatsapp/instances
- * Registra uma instância UAZAPI no banco (mapeia org → instância)
- * Body: { org_id, agent_id?, display_name?, instance_token, api_url? }
+ * Cria instância na UAZAPI via admintoken e salva no banco
+ * Body: { org_id, display_name? }
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { org_id, agent_id, campaign_id, display_name, instance_token, api_url } = body
+    const { org_id, agent_id, campaign_id, display_name } = body
 
     if (!org_id) {
       return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-    }
-
-    if (!instance_token) {
-      return NextResponse.json({ error: 'instance_token required' }, { status: 400 })
     }
 
     // Verificar limite do plano
@@ -91,10 +90,51 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Gerar nome único para referência interna
+    // Gerar nome único para a instância UAZAPI
     const instanceName = `oryen_${org_id.slice(0, 8)}_${Date.now().toString(36)}`
 
-    // Salvar no banco — token e api_url vêm do input do usuário
+    // ─── 1. Criar instância na UAZAPI ───
+    console.log(`[WhatsApp:Create] Creating instance "${instanceName}" on UAZAPI`)
+
+    const uazRes = await fetch(`${UAZAPI_URL}/instance/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'admintoken': UAZAPI_ADMIN_TOKEN
+      },
+      body: JSON.stringify({
+        name: instanceName,
+        systemName: 'oryen',
+        adminField01: org_id
+      })
+    })
+
+    if (!uazRes.ok) {
+      const errBody = await uazRes.text().catch(() => '')
+      console.error(`[WhatsApp:Create] UAZAPI error ${uazRes.status}: ${errBody}`)
+      return NextResponse.json({
+        error: 'uazapi_create_failed',
+        detail: `UAZAPI returned ${uazRes.status}: ${errBody}`
+      }, { status: 502 })
+    }
+
+    const uazData = await uazRes.json()
+    console.log('[WhatsApp:Create] UAZAPI response:', JSON.stringify(uazData).slice(0, 500))
+
+    // Extrair token retornado pela UAZAPI
+    const instanceToken = uazData.token || uazData.instance?.token
+    const uazInstanceId = uazData.id || uazData.instance?.id
+
+    if (!instanceToken) {
+      console.error('[WhatsApp:Create] No token in UAZAPI response:', uazData)
+      return NextResponse.json({
+        error: 'uazapi_no_token',
+        detail: 'UAZAPI did not return an instance token'
+      }, { status: 502 })
+    }
+
+    // ─── 2. Salvar no banco ───
     const { data: instance, error } = await supabase
       .from('whatsapp_instances')
       .insert({
@@ -102,8 +142,8 @@ export async function POST(request: NextRequest) {
         agent_id: agent_id || null,
         campaign_id: campaign_id || null,
         instance_name: instanceName,
-        instance_token: instance_token,
-        api_url: api_url || process.env.UAZAPI_API_URL || null,
+        instance_token: instanceToken,
+        api_url: UAZAPI_URL,
         display_name: display_name || null,
         status: 'disconnected'
       })
@@ -112,8 +152,11 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error
 
+    console.log(`[WhatsApp:Create] Instance created: ${instanceName} | UAZAPI ID: ${uazInstanceId}`)
+
     return NextResponse.json({ instance })
   } catch (error: any) {
+    console.error('[WhatsApp:Create] Error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

@@ -15,15 +15,18 @@ async function setupWebhook(apiUrl: string, token: string): Promise<boolean> {
   const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/sdr/webhook`
 
   try {
-    const res = await fetch(`${apiUrl}/instance/setWebhook`, {
+    // Modo simples da UAZAPI: sem action/id → cria ou atualiza automaticamente
+    const res = await fetch(`${apiUrl}/webhook`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'token': token
       },
       body: JSON.stringify({
+        enabled: true,
         url: webhookUrl,
-        enabled: true
+        events: ['messages', 'messages_update', 'connection'],
+        excludeMessages: ['wasSentByApi', 'isGroupYes']
       })
     })
 
@@ -33,7 +36,7 @@ async function setupWebhook(apiUrl: string, token: string): Promise<boolean> {
     }
 
     const body = await res.text().catch(() => '')
-    console.warn(`[WhatsApp:Webhook] setWebhook returned ${res.status}: ${body}`)
+    console.warn(`[WhatsApp:Webhook] POST /webhook returned ${res.status}: ${body}`)
     return false
   } catch (err: any) {
     console.warn(`[WhatsApp:Webhook] Error setting webhook: ${err.message}`)

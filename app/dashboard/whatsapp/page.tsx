@@ -57,13 +57,6 @@ const T = {
     cancel: 'Cancelar',
     displayName: 'Nome do chip (opcional)',
     displayNamePlaceholder: 'Ex: Atendimento Imóveis SP',
-    tokenLabel: 'Token da Instância UAZAPI',
-    tokenPlaceholder: 'Cole o token da sua instância UAZAPI',
-    tokenHelp: 'Encontre no painel UAZAPI da sua instância.',
-    apiUrlLabel: 'URL da API (opcional)',
-    apiUrlPlaceholder: 'Ex: https://suainstancia.uazapi.com',
-    apiUrlHelp: 'Deixe em branco para usar a URL padrão.',
-    tokenRequired: 'O token da instância é obrigatório.',
     webhookHint: 'Configure o webhook da UAZAPI em',
     webhookHintLink: 'Configurações → Integrações',
     limitReached: 'Limite do plano atingido',
@@ -93,13 +86,6 @@ const T = {
     cancel: 'Cancel',
     displayName: 'Chip name (optional)',
     displayNamePlaceholder: 'Ex: RE Sales Team',
-    tokenLabel: 'UAZAPI Instance Token',
-    tokenPlaceholder: 'Paste your UAZAPI instance token',
-    tokenHelp: 'Find it in your UAZAPI instance panel.',
-    apiUrlLabel: 'API URL (optional)',
-    apiUrlPlaceholder: 'Ex: https://yourinstance.uazapi.com',
-    apiUrlHelp: 'Leave blank to use the default URL.',
-    tokenRequired: 'Instance token is required.',
     webhookHint: 'Set up the UAZAPI webhook in',
     webhookHintLink: 'Settings → Integrations',
     limitReached: 'Plan limit reached',
@@ -129,13 +115,6 @@ const T = {
     cancel: 'Cancelar',
     displayName: 'Nombre del chip (opcional)',
     displayNamePlaceholder: 'Ej: Atención Inmuebles Santiago',
-    tokenLabel: 'Token de la Instancia UAZAPI',
-    tokenPlaceholder: 'Pega el token de tu instancia UAZAPI',
-    tokenHelp: 'Encuéntralo en el panel UAZAPI de tu instancia.',
-    apiUrlLabel: 'URL de la API (opcional)',
-    apiUrlPlaceholder: 'Ej: https://tuinstancia.uazapi.com',
-    apiUrlHelp: 'Deja en blanco para usar la URL predeterminada.',
-    tokenRequired: 'El token de la instancia es obligatorio.',
     webhookHint: 'Configura el webhook de UAZAPI en',
     webhookHintLink: 'Configuración → Integraciones',
     limitReached: 'Límite del plan alcanzado',
@@ -166,8 +145,6 @@ export default function WhatsAppPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
   const [displayName, setDisplayName] = useState('')
-  const [instanceToken, setInstanceToken] = useState('')
-  const [instanceApiUrl, setInstanceApiUrl] = useState('')
   const [createError, setCreateError] = useState('')
   const [maxInstances, setMaxInstances] = useState(1)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -220,12 +197,6 @@ export default function WhatsAppPage() {
   const handleCreate = async () => {
     if (!orgId) return
     setCreateError('')
-
-    if (!instanceToken.trim()) {
-      setCreateError(t.tokenRequired)
-      return
-    }
-
     setCreating(true)
     try {
       const res = await fetch('/api/whatsapp/instances', {
@@ -233,18 +204,18 @@ export default function WhatsAppPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           org_id: orgId,
-          display_name: displayName || null,
-          instance_token: instanceToken.trim(),
-          api_url: instanceApiUrl.trim() || null
+          display_name: displayName || null
         })
       })
       const data = await res.json()
+      if (data.error) {
+        setCreateError(data.detail || data.error)
+        return
+      }
       if (data.instance) {
         setInstances(prev => [data.instance, ...prev])
         setShowCreate(false)
         setDisplayName('')
-        setInstanceToken('')
-        setInstanceApiUrl('')
         // Auto-abrir QR
         setQrInstanceId(data.instance.id)
         fetchQR(data.instance.id)
@@ -423,49 +394,11 @@ export default function WhatsAppPage() {
             </div>
 
             <div className="space-y-4">
-              {/* Token da instância (obrigatório) */}
-              <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
-                  {t.tokenLabel} *
-                </label>
-                <input
-                  type="text"
-                  value={instanceToken}
-                  onChange={e => { setInstanceToken(e.target.value); setCreateError('') }}
-                  placeholder={t.tokenPlaceholder}
-                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition-all font-mono"
-                  style={{
-                    background: 'var(--color-bg-input)',
-                    border: createError ? '1px solid rgb(239,68,68)' : '1px solid var(--color-border)',
-                    color: 'var(--color-text-primary)'
-                  }}
-                />
-                {createError ? (
-                  <p className="text-xs mt-1 text-red-400">{createError}</p>
-                ) : (
-                  <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>{t.tokenHelp}</p>
-                )}
-              </div>
-
-              {/* URL da API (opcional) */}
-              <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
-                  {t.apiUrlLabel}
-                </label>
-                <input
-                  type="text"
-                  value={instanceApiUrl}
-                  onChange={e => setInstanceApiUrl(e.target.value)}
-                  placeholder={t.apiUrlPlaceholder}
-                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition-all font-mono"
-                  style={{
-                    background: 'var(--color-bg-input)',
-                    border: '1px solid var(--color-border)',
-                    color: 'var(--color-text-primary)'
-                  }}
-                />
-                <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>{t.apiUrlHelp}</p>
-              </div>
+              {createError && (
+                <div className="px-3 py-2 rounded-lg text-xs text-red-400" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                  {createError}
+                </div>
+              )}
 
               {/* Nome do chip (opcional) */}
               <div>
