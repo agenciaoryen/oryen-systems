@@ -71,14 +71,21 @@ export async function GET(request: NextRequest) {
     }
 
     // ─── 2. Chamar /instance/connect para gerar QR ───
-    const connectRes = await fetch(`${baseUrl}/instance/connect`, {
+    // Sem body = gera QR code (com body phone = gera pairing code)
+    let connectRes = await fetch(`${baseUrl}/instance/connect`, {
       method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({})
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
     })
+
+    // Se POST deu 405, tentar GET
+    if (connectRes.status === 405) {
+      console.log('[WhatsApp:QR] POST /instance/connect deu 405, tentando GET...')
+      await connectRes.text().catch(() => {})
+      connectRes = await fetch(`${baseUrl}/instance/connect`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      })
+    }
 
     if (!connectRes.ok) {
       const errText = await connectRes.text().catch(() => '')
