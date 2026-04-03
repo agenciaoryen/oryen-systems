@@ -220,6 +220,19 @@ export async function POST(request: NextRequest) {
 // Converte o formato aninhado (message, chat, EventType) para formato plano
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Extrai texto do campo content/body do UAZAPI v2.
+ * msg.content pode ser string ou objeto (ex: { text: "..." } em extendedTextMessage).
+ */
+function extractTextContent(msg: any): string {
+  const candidates = [msg.content, msg.body, msg.text, msg.conversation]
+  for (const c of candidates) {
+    if (typeof c === 'string' && c.trim()) return c
+    if (c && typeof c === 'object' && typeof c.text === 'string') return c.text
+  }
+  return ''
+}
+
 function normalizeV2Payload(raw: any): UazapiWebhookPayload {
   // Se já tem campos v1 (body, from, etc.), retornar como está
   if (raw.body || raw.senderPn || raw.from) {
@@ -249,11 +262,11 @@ function normalizeV2Payload(raw: any): UazapiWebhookPayload {
     // Direção
     fromMe: msg.fromMe === true,
 
-    // Conteúdo
-    body: msg.content || msg.body || msg.text || msg.conversation || '',
-    text: msg.content || '',
+    // Conteúdo — msg.content pode ser objeto em certos tipos (extendedText, etc.)
+    body: extractTextContent(msg),
+    text: extractTextContent(msg),
     type: eventType || msg.messageType || 'text',
-    caption: msg.caption || '',
+    caption: typeof msg.caption === 'string' ? msg.caption : '',
 
     // Mídia
     mediaUrl: msg.mediaUrl || '',
