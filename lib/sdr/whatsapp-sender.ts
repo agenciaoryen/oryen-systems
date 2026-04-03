@@ -131,7 +131,7 @@ async function sendText(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'token': token
     },
     body: JSON.stringify({
       chatId,
@@ -163,7 +163,7 @@ async function sendPresence(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'token': token
     },
     body: JSON.stringify({
       chatId,

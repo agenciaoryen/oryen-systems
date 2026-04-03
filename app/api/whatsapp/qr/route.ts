@@ -1,5 +1,10 @@
 // app/api/whatsapp/qr/route.ts
 // Busca QR code da UAZAPI para uma instância específica
+//
+// UAZAPI API:
+//   POST /instance/connect (sem body) → retorna QR code
+//   GET  /instance/status → retorna status da conexão
+//   Auth: header "token: <admin_token>"
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
@@ -20,7 +25,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'instance_id required' }, { status: 400 })
     }
 
-    // Buscar instância
+    // Buscar instância no banco
     const { data: instance, error } = await supabase
       .from('whatsapp_instances')
       .select('*')
@@ -31,62 +36,95 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Instance not found' }, { status: 404 })
     }
 
-    // Se já está conectada, retornar status
-    if (instance.status === 'connected') {
-      return NextResponse.json({
-        status: 'connected',
-        phone_number: instance.phone_number,
-        display_name: instance.display_name
-      })
-    }
-
-    // Buscar QR code da UAZAPI
     const apiUrl = instance.api_url || process.env.UAZAPI_API_URL
     const token = instance.instance_token || process.env.UAZAPI_ADMIN_TOKEN
 
     if (!apiUrl || !token) {
       return NextResponse.json({
         status: 'not_configured',
-        error: 'UAZAPI not configured for this instance'
+        error: 'UAZAPI not configured'
       }, { status: 400 })
     }
 
-    const qrResponse = await fetch(`${apiUrl}/instance/qrcode?instanceName=${instance.instance_name}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
+    // ─── 1. Verificar status atual primeiro ───
+    const statusRes = await fetch(`${apiUrl}/instance/status`, {
+      method: 'GET',
+      headers: { 'token': token }
     })
 
-    if (!qrResponse.ok) {
-      const text = await qrResponse.text().catch(() => '')
-      // Se retorna que já está conectado
-      if (text.includes('connected') || text.includes('open')) {
-        // Atualizar status no banco
-        await supabase
-          .from('whatsapp_instances')
-          .update({ status: 'connected', connected_at: new Date().toISOString() })
-          .eq('id', instanceId)
+    if (statusRes.ok) {
+      const statusData = await statusRes.json()
+      const currentStatus = statusData.status || statusData.state || ''
 
-        return NextResponse.json({ status: 'connected' })
+      // Já conectado
+      if (currentStatus === 'connected' || currentStatus === 'open') {
+        if (instance.status !== 'connected') {
+          await supabase
+            .from('whatsapp_instances')
+            .update({
+              status: 'connected',
+              connected_at: new Date().toISOString(),
+              phone_number: statusData.phone || statusData.number || instance.phone_number
+            })
+            .eq('id', instanceId)
+        }
+
+        return NextResponse.json({
+          status: 'connected',
+          phone_number: statusData.phone || statusData.number || instance.phone_number
+        })
       }
-      return NextResponse.json({ status: 'error', error: `QR fetch failed: ${qrResponse.status}` })
     }
 
-    const qrData = await qrResponse.json()
+    // ─── 2. Se não conectado, chamar /instance/connect para gerar QR ───
+    const connectRes = await fetch(`${apiUrl}/instance/connect`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'token': token
+      },
+      body: JSON.stringify({}) // sem phone = gera QR code
+    })
 
-    // UAZAPI pode retornar { qrcode: "base64..." } ou { base64: "..." }
-    const qrCode = qrData.qrcode || qrData.base64 || qrData.qr || null
+    if (!connectRes.ok) {
+      const errText = await connectRes.text().catch(() => '')
+      console.error(`[WhatsApp:QR] Connect failed ${connectRes.status}:`, errText)
+      return NextResponse.json({
+        status: 'error',
+        error: `UAZAPI connect failed: ${connectRes.status}`
+      })
+    }
 
-    if (!qrCode) {
-      // Pode significar que já está conectado ou aguardando
-      if (qrData.status === 'open' || qrData.connected) {
+    const connectData = await connectRes.json()
+
+    // Extrair QR code da resposta — testar vários campos possíveis
+    const qrCode = connectData.qrcode
+      || connectData.qr
+      || connectData.base64
+      || connectData.data?.qrcode
+      || connectData.data?.qr
+      || connectData.data?.base64
+      || null
+
+    // Se veio pairing code ao invés de QR
+    const pairingCode = connectData.pairingCode || connectData.code || null
+
+    if (!qrCode && !pairingCode) {
+      // Pode ser que já está conectado ou em processo
+      console.log('[WhatsApp:QR] Connect response (no QR found):', JSON.stringify(connectData).slice(0, 500))
+
+      if (connectData.status === 'connected') {
         await supabase
           .from('whatsapp_instances')
           .update({ status: 'connected', connected_at: new Date().toISOString() })
           .eq('id', instanceId)
-
         return NextResponse.json({ status: 'connected' })
       }
 
-      return NextResponse.json({ status: 'waiting', message: 'QR not ready yet' })
+      return NextResponse.json({
+        status: 'waiting',
+        raw: connectData // incluir resposta raw para debug
+      })
     }
 
     // Atualizar status para qr_pending
@@ -99,10 +137,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       status: 'qr_ready',
-      qr_code: qrCode
+      qr_code: qrCode,
+      pairing_code: pairingCode
     })
 
   } catch (error: any) {
+    console.error('[WhatsApp:QR] Error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
