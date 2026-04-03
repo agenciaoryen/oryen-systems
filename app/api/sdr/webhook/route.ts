@@ -45,10 +45,12 @@ export async function POST(request: NextRequest) {
   try {
     const payload: UazapiWebhookPayload = await request.json()
 
-    // Log do payload para debug
+    // Log do payload para debug — suporta formato v1 e v2 da UAZAPI
     const instName = payload.instanceName || payload.instance || '(sem nome)'
-    const msgText = payload.body || payload.text || payload.caption || ''
-    console.log(`[SDR] Webhook recebido | instance: ${instName} | fromMe: ${payload.fromMe} | type: ${payload.type || 'unknown'} | text: "${msgText.slice(0, 60)}"`)
+    const v2msg = (payload as any).message || {}
+    const msgText = payload.body || payload.text || payload.caption || v2msg.body || v2msg.text || v2msg.conversation || ''
+    const eventType = (payload as any).EventType || payload.type || 'unknown'
+    console.log(`[SDR] Webhook recebido | instance: ${instName} | fromMe: ${payload.fromMe ?? v2msg.fromMe} | type: ${eventType} | text: "${msgText.slice(0, 60)}"`)
 
     // ─── 1. Filtros rápidos (antes de qualquer query ao banco) ───
     const filterResult = applyFilters(payload)
@@ -83,9 +85,14 @@ export async function POST(request: NextRequest) {
 
     console.log(`[SDR] Instância resolvida: ${instance.instance_name} | org: ${instance.org_id} | agent: ${instance.agent_id || 'NENHUM'}`)
 
-    // Log detalhado do payload para debug de extração de telefone
+    // Log detalhado do payload v2 para debug
+    const msg = (payload as any).message || {}
+    const chat = (payload as any).chat || {}
     console.log(`[SDR] Payload keys: ${Object.keys(payload).join(', ')}`)
-    console.log(`[SDR] Phone fields: from=${payload.from || ''} | chatId=${payload.chatId || ''} | senderPn=${payload.senderPn || ''} | remoteJidAlt=${payload.remoteJidAlt || ''} | lid=${payload.lid || ''} | key.remoteJid=${(payload as any).key?.remoteJid || ''} | data.key.remoteJid=${(payload as any).data?.key?.remoteJid || ''}`)
+    console.log(`[SDR] message: ${JSON.stringify(msg).slice(0, 500)}`)
+    console.log(`[SDR] chat: ${JSON.stringify(chat).slice(0, 500)}`)
+    console.log(`[SDR] EventType: ${(payload as any).EventType} | owner: ${(payload as any).owner}`)
+    console.log(`[SDR] chatSource: ${JSON.stringify((payload as any).chatSource).slice(0, 300)}`)
 
     // Verificar se o agente está ativo
     if (!instance.agent_id) {
