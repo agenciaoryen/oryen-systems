@@ -125,15 +125,13 @@ async function sendText(
   chatId: string,
   text: string
 ): Promise<void> {
-  const url = `${apiUrl}/${token}/sendText`
-
-  const response = await fetch(url, {
+  const response = await fetch(`${apiUrl}/sendText`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chatId,
-      text
-    })
+    headers: {
+      'Content-Type': 'application/json',
+      'token': token
+    },
+    body: JSON.stringify({ chatId, text })
   })
 
   if (!response.ok) {
@@ -153,16 +151,14 @@ async function sendPresence(
   chatId: string,
   state: 'composing' | 'available'
 ): Promise<void> {
-  const url = `${apiUrl}/${token}/sendPresence`
-
   // Fire-and-forget: não precisa esperar resposta
-  await fetch(url, {
+  await fetch(`${apiUrl}/sendPresence`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chatId,
-      state
-    })
+    headers: {
+      'Content-Type': 'application/json',
+      'token': token
+    },
+    body: JSON.stringify({ chatId, state })
   }).catch(() => {
     // Presença não é crítica — ignorar erros silenciosamente
   })

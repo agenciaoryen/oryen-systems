@@ -37,9 +37,12 @@ export async function POST(request: NextRequest) {
 
     if (apiUrl && token) {
       try {
-        await fetch(`${apiUrl}/${token}/instance/disconnect`, {
+        await fetch(`${apiUrl}/instance/disconnect`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers: {
+            'Content-Type': 'application/json',
+            'token': token
+          }
         })
       } catch (err: any) {
         console.warn('[WhatsApp] Logout UAZAPI error:', err.message)

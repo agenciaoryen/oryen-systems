@@ -8,70 +8,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-/**
- * Tenta chamar UAZAPI testando diferentes formatos de auth.
- * Loga cada tentativa para debug.
- */
-async function tryUazapi(
-  baseUrl: string,
-  path: string,
-  token: string,
-  method: 'GET' | 'POST' = 'POST',
-  body?: any
-): Promise<{ res: Response; method_used: string } | null> {
-
-  const attempts: Array<{ label: string; url: string; init: RequestInit }> = [
-    // 1. Header 'token'
-    {
-      label: 'header token',
-      url: `${baseUrl}${path}`,
-      init: { method, headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'token': token }, ...(body ? { body: JSON.stringify(body) } : {}) }
-    },
-    // 2. Query param ?token=
-    {
-      label: 'query ?token=',
-      url: `${baseUrl}${path}?token=${token}`,
-      init: { method, headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) }
-    },
-    // 3. Token no body
-    {
-      label: 'body token',
-      url: `${baseUrl}${path}`,
-      init: { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ token, ...(body || {}) }) }
-    },
-    // 4. Token no path
-    {
-      label: 'path /{token}/',
-      url: `${baseUrl}/${token}${path}`,
-      init: { method, headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) }
-    },
-    // 5. Authorization Bearer
-    {
-      label: 'Authorization Bearer',
-      url: `${baseUrl}${path}`,
-      init: { method, headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${token}` }, ...(body ? { body: JSON.stringify(body) } : {}) }
-    },
-  ]
-
-  for (const attempt of attempts) {
-    try {
-      const res = await fetch(attempt.url, attempt.init)
-      console.log(`[UAZAPI] ${attempt.label} → ${res.status}`)
-
-      if (res.status !== 401 && res.status !== 403 && res.status !== 404 && res.status !== 405) {
-        return { res, method_used: attempt.label }
-      }
-
-      // Consumir body
-      await res.text().catch(() => {})
-    } catch (err: any) {
-      console.log(`[UAZAPI] ${attempt.label} → ERROR: ${err.message}`)
-    }
-  }
-
-  return null
-}
-
 export async function GET(request: NextRequest) {
   try {
     const instanceId = request.nextUrl.searchParams.get('instance_id')
@@ -90,26 +26,34 @@ export async function GET(request: NextRequest) {
     }
 
     const apiUrl = instance.api_url || process.env.UAZAPI_API_URL
-    const token = instance.instance_token || process.env.UAZAPI_ADMIN_TOKEN
+    const token = instance.instance_token
 
     if (!apiUrl || !token) {
-      return NextResponse.json({ status: 'not_configured' }, { status: 400 })
+      return NextResponse.json({ status: 'not_configured', error: 'Missing api_url or instance_token' }, { status: 400 })
     }
 
-    console.log(`[WhatsApp:QR] Testing auth for ${apiUrl} | token length: ${token.length}`)
+    console.log(`[WhatsApp:QR] Connecting ${apiUrl} | token length: ${token.length}`)
 
-    // ─── 1. Tentar connect (gera QR) ───
-    const result = await tryUazapi(apiUrl, '/instance/connect', token, 'POST')
+    // Chamar POST /instance/connect com token no header
+    const res = await fetch(`${apiUrl}/instance/connect`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'token': token
+      }
+    })
 
-    if (!result) {
+    if (!res.ok) {
+      const body = await res.text().catch(() => '')
+      console.error(`[WhatsApp:QR] UAZAPI error ${res.status}: ${body}`)
       return NextResponse.json({
         status: 'error',
-        error: 'All UAZAPI auth methods failed. Check token and API URL.'
+        error: `UAZAPI returned ${res.status}: ${body}`
       })
     }
 
-    console.log(`[WhatsApp:QR] Auth worked with: ${result.method_used}`)
-    const connectData = await result.res.json()
+    const connectData = await res.json()
     console.log('[WhatsApp:QR] Response:', JSON.stringify(connectData).slice(0, 500))
 
     // Extrair QR

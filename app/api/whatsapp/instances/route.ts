@@ -45,16 +45,20 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { org_id, agent_id, campaign_id, display_name } = body
+    const { org_id, agent_id, campaign_id, display_name, instance_token, api_url } = body
 
     if (!org_id) {
       return NextResponse.json({ error: 'org_id required' }, { status: 400 })
     }
 
+    if (!instance_token) {
+      return NextResponse.json({ error: 'instance_token required' }, { status: 400 })
+    }
+
     // Gerar nome único para referência interna
     const instanceName = `oryen_${org_id.slice(0, 8)}_${Date.now().toString(36)}`
 
-    // Salvar no banco — api_url e token vêm das env vars globais
+    // Salvar no banco — token e api_url vêm do input do usuário
     const { data: instance, error } = await supabase
       .from('whatsapp_instances')
       .insert({
@@ -62,8 +66,8 @@ export async function POST(request: NextRequest) {
         agent_id: agent_id || null,
         campaign_id: campaign_id || null,
         instance_name: instanceName,
-        instance_token: process.env.UAZAPI_ADMIN_TOKEN || null,
-        api_url: process.env.UAZAPI_API_URL || null,
+        instance_token: instance_token,
+        api_url: api_url || process.env.UAZAPI_API_URL || null,
         display_name: display_name || null,
         status: 'disconnected'
       })
