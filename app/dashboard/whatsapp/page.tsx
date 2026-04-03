@@ -171,6 +171,7 @@ export default function WhatsAppPage() {
   const [createError, setCreateError] = useState('')
   const [maxInstances, setMaxInstances] = useState(1)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [webhookStatus, setWebhookStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
   // QR state
   const [qrInstanceId, setQrInstanceId] = useState<string | null>(null)
@@ -266,7 +267,12 @@ export default function WhatsAppPage() {
 
       if (data.status === 'connected') {
         setQrStatus('connected')
-        setQrInstanceId(null)
+        setWebhookStatus(data.webhook_configured ? 'success' : 'error')
+        // Fecha o modal após 2.5s
+        setTimeout(() => {
+          setQrInstanceId(null)
+          setWebhookStatus('idle')
+        }, 2500)
         fetchInstances() // refresh list
       } else if (data.status === 'qr_ready') {
         setQrCode(data.qr_code)
@@ -383,12 +389,12 @@ export default function WhatsAppPage() {
         </div>
       )}
 
-      {/* Dica do webhook */}
+      {/* Dica do webhook — só mostra como fallback informativo */}
       {instances.length > 0 && (
         <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl" style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)' }}>
           <Wifi size={16} className="text-indigo-400 shrink-0" />
           <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            {t.webhookHint}{' '}
+            O webhook do SDR é configurado automaticamente ao conectar. Caso precise da URL manualmente:{' '}
             <Link href="/dashboard/settings" className="text-indigo-400 hover:underline font-medium">
               {t.webhookHintLink}
             </Link>
@@ -532,6 +538,12 @@ export default function WhatsAppPage() {
                 <div className="flex flex-col items-center gap-2">
                   <CheckCircle2 size={48} className="text-emerald-500" />
                   <span className="text-emerald-600 font-medium text-sm">Conectado!</span>
+                  {webhookStatus === 'success' && (
+                    <span className="text-emerald-500 text-xs">Webhook configurado automaticamente</span>
+                  )}
+                  {webhookStatus === 'error' && (
+                    <span className="text-amber-500 text-xs">Webhook: configure manualmente nas Integrações</span>
+                  )}
                 </div>
               ) : qrCode ? (
                 <img

@@ -8,6 +8,39 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+/**
+ * Configura o webhook na UAZAPI automaticamente após conexão
+ */
+async function setupWebhook(apiUrl: string, token: string): Promise<boolean> {
+  const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/sdr/webhook`
+
+  try {
+    const res = await fetch(`${apiUrl}/instance/setWebhook`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'token': token
+      },
+      body: JSON.stringify({
+        url: webhookUrl,
+        enabled: true
+      })
+    })
+
+    if (res.ok) {
+      console.log(`[WhatsApp:Webhook] Configured successfully: ${webhookUrl}`)
+      return true
+    }
+
+    const body = await res.text().catch(() => '')
+    console.warn(`[WhatsApp:Webhook] setWebhook returned ${res.status}: ${body}`)
+    return false
+  } catch (err: any) {
+    console.warn(`[WhatsApp:Webhook] Error setting webhook: ${err.message}`)
+    return false
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const instanceId = request.nextUrl.searchParams.get('instance_id')
@@ -81,10 +114,17 @@ export async function GET(request: NextRequest) {
 
     // Sem QR — pode estar conectado
     if (connectData.connected === true || connectData.status === 'connected' || connectData.state === 'connected' || connectData.instance?.status === 'connected') {
+      // Configurar webhook automaticamente na UAZAPI
+      const webhookOk = await setupWebhook(apiUrl, token)
+
       await supabase.from('whatsapp_instances')
-        .update({ status: 'connected', connected_at: new Date().toISOString() })
+        .update({
+          status: 'connected',
+          connected_at: new Date().toISOString()
+        })
         .eq('id', instanceId)
-      return NextResponse.json({ status: 'connected' })
+
+      return NextResponse.json({ status: 'connected', webhook_configured: webhookOk })
     }
 
     return NextResponse.json({ status: 'waiting', raw: connectData })
