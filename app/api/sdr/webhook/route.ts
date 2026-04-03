@@ -45,13 +45,18 @@ export async function POST(request: NextRequest) {
   try {
     const payload: UazapiWebhookPayload = await request.json()
 
+    // Log do payload para debug
+    const instName = payload.instanceName || payload.instance || '(sem nome)'
+    const msgText = payload.body || payload.text || payload.caption || ''
+    console.log(`[SDR] Webhook recebido | instance: ${instName} | fromMe: ${payload.fromMe} | type: ${payload.type || 'unknown'} | text: "${msgText.slice(0, 60)}"`)
+
     // ─── 1. Filtros rápidos (antes de qualquer query ao banco) ───
     const filterResult = applyFilters(payload)
     if (filterResult) {
+      console.log(`[SDR] Filtrado: ${filterResult} | instance: ${instName}`)
       // Caso especial: atendente humano → setar tag STOP antes de ignorar
       if ((payload as any)._isAttendant) {
-        const instName = payload.instanceName || payload.instance || ''
-        const inst = instName ? await resolveInstance(instName) : null
+        const inst = instName !== '(sem nome)' ? await resolveInstance(instName) : null
         if (inst) {
           const { phone: attPhone } = extractPhone(payload)
           if (isValidPhone(attPhone)) {
@@ -76,8 +81,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ skipped: true, reason: 'unknown_instance' }, { status: 200 })
     }
 
+    console.log(`[SDR] Instância resolvida: ${instance.instance_name} | org: ${instance.org_id} | agent: ${instance.agent_id || 'NENHUM'}`)
+
     // Verificar se o agente está ativo
     if (!instance.agent_id) {
+      console.warn(`[SDR] Instância ${instance.instance_name} sem agente vinculado — mensagem ignorada`)
       return NextResponse.json({ skipped: true, reason: 'no_agent_linked' }, { status: 200 })
     }
 
@@ -217,19 +225,46 @@ async function resolveInstance(instanceName: string): Promise<WhatsAppInstance |
     return cached.data
   }
 
-  const { data, error } = await supabase
+  // Busca 1: pelo instance_name exato
+  const { data: data1 } = await supabase
     .from('whatsapp_instances')
     .select('*')
     .eq('instance_name', instanceName)
     .eq('status', 'connected')
     .single()
 
-  if (error || !data) return null
+  if (data1) {
+    instanceCache.set(instanceName, { data: data1, cachedAt: Date.now() })
+    return data1
+  }
 
-  // Salvar no cache
-  instanceCache.set(instanceName, { data, cachedAt: Date.now() })
+  // Busca 2: pelo display_name (instâncias criadas manualmente podem ter nome diferente)
+  const { data: data2 } = await supabase
+    .from('whatsapp_instances')
+    .select('*')
+    .ilike('display_name', instanceName)
+    .eq('status', 'connected')
+    .single()
 
-  return data
+  if (data2) {
+    instanceCache.set(instanceName, { data: data2, cachedAt: Date.now() })
+    return data2
+  }
+
+  // Busca 3: só tem uma instância conectada nessa API? (fallback para single-instance)
+  const { data: allConnected } = await supabase
+    .from('whatsapp_instances')
+    .select('*')
+    .eq('status', 'connected')
+
+  if (allConnected && allConnected.length === 1) {
+    const single = allConnected[0]
+    console.log(`[SDR] Fallback: única instância conectada ${single.instance_name} para "${instanceName}"`)
+    instanceCache.set(instanceName, { data: single, cachedAt: Date.now() })
+    return single
+  }
+
+  return null
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
