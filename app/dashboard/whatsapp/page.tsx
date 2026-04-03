@@ -13,6 +13,7 @@ import {
   RefreshCw,
   CheckCircle2,
   AlertCircle,
+  Trash2,
   X
 } from 'lucide-react'
 
@@ -62,10 +63,14 @@ const T = {
     apiUrlPlaceholder: 'Ex: https://suainstancia.uazapi.com',
     apiUrlHelp: 'Deixe em branco para usar a URL padrão.',
     tokenRequired: 'O token da instância é obrigatório.',
+    limitReached: 'Limite do plano atingido',
+    limitReachedDesc: (max: number) => `Seu plano permite no máximo ${max} número${max > 1 ? 's' : ''}. Exclua um existente ou faça upgrade.`,
+    instancesCount: (count: number, max: number) => `${count}/${max === -1 ? '∞' : max} números`,
     confirm: 'Criar e Conectar',
     creating: 'Criando...',
     delete: 'Excluir',
-    deleteConfirm: 'Tem certeza que deseja excluir esta instância?'
+    deleting: 'Excluindo...',
+    deleteConfirm: 'Tem certeza que deseja excluir esta instância? Isso irá desconectar o WhatsApp.'
   },
   en: {
     title: 'WhatsApp',
@@ -92,10 +97,14 @@ const T = {
     apiUrlPlaceholder: 'Ex: https://yourinstance.uazapi.com',
     apiUrlHelp: 'Leave blank to use the default URL.',
     tokenRequired: 'Instance token is required.',
+    limitReached: 'Plan limit reached',
+    limitReachedDesc: (max: number) => `Your plan allows up to ${max} number${max > 1 ? 's' : ''}. Delete an existing one or upgrade.`,
+    instancesCount: (count: number, max: number) => `${count}/${max === -1 ? '∞' : max} numbers`,
     confirm: 'Create & Connect',
     creating: 'Creating...',
     delete: 'Delete',
-    deleteConfirm: 'Are you sure you want to delete this instance?'
+    deleting: 'Deleting...',
+    deleteConfirm: 'Are you sure you want to delete this instance? This will disconnect WhatsApp.'
   },
   es: {
     title: 'WhatsApp',
@@ -122,10 +131,14 @@ const T = {
     apiUrlPlaceholder: 'Ej: https://tuinstancia.uazapi.com',
     apiUrlHelp: 'Deja en blanco para usar la URL predeterminada.',
     tokenRequired: 'El token de la instancia es obligatorio.',
+    limitReached: 'Límite del plan alcanzado',
+    limitReachedDesc: (max: number) => `Tu plan permite máximo ${max} número${max > 1 ? 's' : ''}. Elimina uno existente o haz upgrade.`,
+    instancesCount: (count: number, max: number) => `${count}/${max === -1 ? '∞' : max} números`,
     confirm: 'Crear y Conectar',
     creating: 'Creando...',
     delete: 'Eliminar',
-    deleteConfirm: '¿Estás seguro de que deseas eliminar esta instancia?'
+    deleting: 'Eliminando...',
+    deleteConfirm: '¿Estás seguro de que deseas eliminar esta instancia? Esto desconectará WhatsApp.'
   }
 }
 
@@ -149,6 +162,8 @@ export default function WhatsAppPage() {
   const [instanceToken, setInstanceToken] = useState('')
   const [instanceApiUrl, setInstanceApiUrl] = useState('')
   const [createError, setCreateError] = useState('')
+  const [maxInstances, setMaxInstances] = useState(1)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // QR state
   const [qrInstanceId, setQrInstanceId] = useState<string | null>(null)
@@ -163,6 +178,7 @@ export default function WhatsAppPage() {
       const res = await fetch(`/api/whatsapp/instances?org_id=${orgId}`)
       const data = await res.json()
       setInstances(data.instances || [])
+      if (data.limit !== undefined) setMaxInstances(data.limit)
     } catch (err) {
       console.error('Error fetching instances:', err)
     } finally {
@@ -171,6 +187,26 @@ export default function WhatsAppPage() {
   }, [orgId])
 
   useEffect(() => { fetchInstances() }, [fetchInstances])
+
+  // ─── Delete instance ───
+  const handleDelete = async (instanceId: string) => {
+    if (!confirm(t.deleteConfirm)) return
+    setDeletingId(instanceId)
+    try {
+      await fetch('/api/whatsapp/instances', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instance_id: instanceId })
+      })
+      setInstances(prev => prev.filter(i => i.id !== instanceId))
+    } catch (err) {
+      console.error('Error deleting instance:', err)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const canCreateMore = maxInstances === -1 || instances.length < maxInstances
 
   // ─── Create instance ───
   const handleCreate = async () => {
@@ -310,15 +346,35 @@ export default function WhatsAppPage() {
             {t.subtitle}
           </p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90"
-          style={{ background: 'var(--color-primary)' }}
-        >
-          <Plus size={16} />
-          {t.addNew}
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
+            {t.instancesCount(instances.length, maxInstances)}
+          </span>
+          <button
+            onClick={() => canCreateMore ? setShowCreate(true) : null}
+            disabled={!canCreateMore}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: 'var(--color-primary)' }}
+            title={!canCreateMore ? t.limitReached : ''}
+          >
+            <Plus size={16} />
+            {t.addNew}
+          </button>
+        </div>
       </div>
+
+      {/* Aviso de limite atingido */}
+      {!canCreateMore && instances.length > 0 && (
+        <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl" style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)' }}>
+          <AlertCircle size={16} className="text-amber-400 shrink-0" />
+          <div>
+            <span className="text-sm font-medium text-amber-400">{t.limitReached}</span>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+              {t.limitReachedDesc(maxInstances)}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
           MODAL CRIAR INSTÂNCIA
@@ -583,6 +639,19 @@ export default function WhatsAppPage() {
                       {t.disconnect}
                     </button>
                   )}
+                  <button
+                    onClick={() => handleDelete(instance.id)}
+                    disabled={deletingId === instance.id}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
+                    style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+                  >
+                    {deletingId === instance.id ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={13} />
+                    )}
+                    {deletingId === instance.id ? t.deleting : t.delete}
+                  </button>
                 </div>
               </div>
             </div>
