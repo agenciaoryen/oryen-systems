@@ -1,17 +1,18 @@
 // app/api/sdr/process/route.ts
 // ═══════════════════════════════════════════════════════════════════════════════
-// PARTE 2: Processador de mensagens bufferizadas
+// Pipeline completo: Buffer → IA → Humanização → Envio
 //
-// Chamado após o buffer time (6-12s) para verificar se o lead parou de digitar.
-// Se parou → concatena mensagens e encaminha para a IA (Parte 3).
-// Se não → ignora (o próximo trigger vai cuidar).
+// Chamado após buffer time (6-12s) para verificar se lead parou de digitar.
+// Se parou → flush buffer → Claude + tools → humanizar → enviar via UAZAPI.
 //
 // Fluxo:
-// 1. Recebe org_id + phone + expected_count
-// 2. Verifica tag STOP (atendente humano)
-// 3. Compara count atual do buffer com expected_count
-// 4. Se igual → flush buffer, carregar contexto, chamar IA
-// 5. Se diferente → skip (novas mensagens chegaram)
+// 1. Verificar STOP tag (atendente humano)
+// 2. Verificar se buffer cresceu (novas msgs)
+// 3. Flush buffer → concatenar mensagens
+// 4. Carregar contexto (histórico + lead + org + config)
+// 5. Chamar agente IA (Claude Sonnet + 8 tools)
+// 6. Salvar resposta em sdr_messages
+// 7. Humanizar (typing delay 55ms/char) + enviar via UAZAPI
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -22,6 +23,8 @@ import {
   bufferGetScheduledCount,
   stopCheck
 } from '@/lib/sdr/redis'
+import { runAgent } from '@/lib/sdr/ai-agent'
+import { sendWithHumanization } from '@/lib/sdr/whatsapp-sender'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -128,40 +131,88 @@ export async function POST(request: NextRequest) {
         type: 'text'
       })
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // PARTE 3 vai ser plugada aqui:
-    // - Montar prompt com contexto + config + lead data
-    // - Chamar Claude API
-    // - Parsear resposta em mensagens WhatsApp-friendly
-    // - Salvar resposta do agente em sdr_messages
-    //
-    // PARTE 4 vai ser plugada aqui:
-    // - Humanizar (split messages + typing delay)
-    // - Enviar via UAZAPI
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ─── 8. Buscar dados da org para contexto do prompt ───
+    let orgData = null
+    const { data: orgRow } = await supabase
+      .from('orgs')
+      .select('name, country, language, niche')
+      .eq('id', org_id)
+      .single()
+    if (orgRow) orgData = orgRow
+
+    // ─── 9. Chamar agente IA (Claude + tools) ───
+    console.log(`[SDR:Process] Chamando agente IA para lead ${lead_id}...`)
+
+    const agentResponse = await runAgent({
+      org_id,
+      phone,
+      lead_id,
+      agent_id,
+      campaign_id,
+      instance_name,
+      user_message: fullMessage,
+      history: conversationHistory,
+      config: campaignConfig,
+      lead,
+      org: orgData ? {
+        name: orgData.name,
+        country: orgData.country,
+        language: orgData.language,
+        niche: orgData.niche
+      } : undefined
+    })
+
+    console.log(`[SDR:Process] IA respondeu: ${agentResponse.messages.length} msg(s) | tools: [${agentResponse.toolsExecuted.join(', ')}] | tokens: ${agentResponse.tokensUsed}`)
+
+    // ─── 10. Salvar resposta do agente em sdr_messages ───
+    if (agentResponse.messages.length > 0) {
+      const fullResponse = agentResponse.messages.join('\n\n')
+      await supabase
+        .from('sdr_messages')
+        .insert({
+          org_id,
+          lead_id,
+          campaign_id: campaign_id || null,
+          instance_name,
+          phone,
+          role: 'assistant',
+          body: fullResponse,
+          type: 'text',
+          processed_at: new Date().toISOString()
+        })
+    }
+
+    // ─── 11. Enviar mensagens via WhatsApp com humanização ───
+    let sendResult = null
+
+    if (agentResponse.messages.length > 0) {
+      console.log(`[SDR:Process] Enviando ${agentResponse.messages.length} msg(s) via UAZAPI...`)
+
+      sendResult = await sendWithHumanization({
+        org_id,
+        phone,
+        instance_name,
+        messages: agentResponse.messages
+      })
+
+      console.log(`[SDR:Process] Envio completo: ${sendResult.sent} ok, ${sendResult.failed} falha | ${Math.round(sendResult.total_time_ms / 1000)}s`)
+    }
 
     return NextResponse.json({
       success: true,
       processed: true,
       messages_count: messages.length,
-      full_message: fullMessage,
       lead_id,
       lead_name: lead?.name || 'unknown',
-      conversation_history_length: conversationHistory.length,
-      campaign_config: campaignConfig,
-      // Dados prontos para Parte 3
-      _ready_for_ai: {
-        org_id,
-        phone,
-        lead_id,
-        lead,
-        agent_id,
-        campaign_id,
-        instance_name,
-        user_message: fullMessage,
-        history: conversationHistory,
-        config: campaignConfig
-      }
+      agent_messages: agentResponse.messages,
+      tools_executed: agentResponse.toolsExecuted,
+      tokens_used: agentResponse.tokensUsed,
+      model: agentResponse.model,
+      send_result: sendResult ? {
+        sent: sendResult.sent,
+        failed: sendResult.failed,
+        total_time_ms: sendResult.total_time_ms
+      } : null
     })
 
   } catch (error: any) {

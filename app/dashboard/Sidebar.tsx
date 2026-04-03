@@ -22,6 +22,7 @@ import {
   ChevronDown,
   BarChart3,
   FileText,
+  Smartphone,
   Sun,
   Moon,
   type LucideIcon
@@ -43,6 +44,7 @@ const TRANSLATIONS = {
       agents: 'Agentes IA',
       reports: 'Relatórios',
       documents: 'Documentos',
+      whatsapp: 'WhatsApp',
       settings: 'Configurações'
     },
     comingSoon: '(Em Breve)',
@@ -65,6 +67,7 @@ const TRANSLATIONS = {
       agents: 'AI Agents',
       reports: 'Reports',
       documents: 'Documents',
+      whatsapp: 'WhatsApp',
       settings: 'Settings'
     },
     comingSoon: '(Coming Soon)',
@@ -87,6 +90,7 @@ const TRANSLATIONS = {
       agents: 'Agentes IA',
       reports: 'Reportes',
       documents: 'Documentos',
+      whatsapp: 'WhatsApp',
       settings: 'Configuración'
     },
     comingSoon: '(Próximamente)',
@@ -262,6 +266,7 @@ export default function Sidebar() {
     { href: '/dashboard/crm', label: t.menu.crm, icon: Users },
     { href: '/dashboard/messages', label: t.menu.conversations, icon: MessageSquare },
     { href: '/dashboard/documents', label: t.menu.documents, icon: FileText, requiredNiche: NICHES_WITH_DOCUMENTS },
+    { href: '/dashboard/whatsapp', label: t.menu.whatsapp, icon: Smartphone, requiredNiche: NICHES_WITH_DOCUMENTS },
     { href: '/dashboard/relatorios', label: t.menu.reports, icon: BarChart3 },
     { href: '/dashboard/agents', label: t.menu.agents, icon: Bot, isComingSoon: true },
     { href: '/dashboard/settings', label: t.menu.settings, icon: Settings },
