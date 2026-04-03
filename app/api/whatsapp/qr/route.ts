@@ -56,8 +56,9 @@ export async function GET(request: NextRequest) {
     const connectData = await res.json()
     console.log('[WhatsApp:QR] Response:', JSON.stringify(connectData).slice(0, 500))
 
-    // Extrair QR
+    // Extrair QR — UAZAPI retorna em connectData.instance.qrcode
     const qrCode = connectData.qrcode
+      || connectData.instance?.qrcode
       || connectData.qr
       || connectData.base64
       || connectData.data?.qrcode
@@ -65,7 +66,11 @@ export async function GET(request: NextRequest) {
       || connectData.data?.base64
       || null
 
-    const pairingCode = connectData.pairingCode || connectData.code || connectData.data?.pairingCode || null
+    const pairingCode = connectData.pairingCode
+      || connectData.instance?.paircode
+      || connectData.code
+      || connectData.data?.pairingCode
+      || null
 
     if (qrCode || pairingCode) {
       if (instance.status !== 'qr_pending') {
@@ -75,7 +80,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Sem QR — pode estar conectado
-    if (connectData.status === 'connected' || connectData.state === 'connected') {
+    if (connectData.connected === true || connectData.status === 'connected' || connectData.state === 'connected' || connectData.instance?.status === 'connected') {
       await supabase.from('whatsapp_instances')
         .update({ status: 'connected', connected_at: new Date().toISOString() })
         .eq('id', instanceId)
