@@ -100,7 +100,7 @@ export async function bufferGetScheduledCount(orgId: string, phone: string): Pro
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const STOP_KEY_PREFIX = 'sdr:stop:'
-const STOP_TTL_SECONDS = 300 // 5 minutos (mesmo do n8n)
+const STOP_TTL_SECONDS = 900 // 15 minutos — cada msg do atendente renova o timer
 
 /**
  * Ativa a tag STOP para um lead.
@@ -122,6 +122,17 @@ export async function stopCheck(orgId: string, phone: string): Promise<boolean> 
   const key = `${STOP_KEY_PREFIX}${orgId}:${phone}`
   const val = await r.get(key)
   return val !== null
+}
+
+/**
+ * Retorna os segundos restantes da tag STOP.
+ * Retorna 0 se não existe ou expirou.
+ */
+export async function stopTTL(orgId: string, phone: string): Promise<number> {
+  const r = getRedis()
+  const key = `${STOP_KEY_PREFIX}${orgId}:${phone}`
+  const ttl = await r.ttl(key)
+  return ttl > 0 ? ttl : 0
 }
 
 /**

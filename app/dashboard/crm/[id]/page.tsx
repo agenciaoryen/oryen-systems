@@ -24,7 +24,8 @@ import {
   Clock,
   Check,
   ExternalLink,
-  Pencil
+  Pencil,
+  Timer
 } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -136,7 +137,9 @@ const TRANSLATIONS = {
     typeLandlord: 'Proprietário',
     intPurchase: 'Compra',
     intRental: 'Locação',
-    intBoth: 'Compra e Locação'
+    intBoth: 'Compra e Locação',
+    attendantPause: 'Pausa do atendente',
+    agentReturnsIn: 'Agente retorna em',
   },
   en: {
     back: 'Back',
@@ -190,7 +193,9 @@ const TRANSLATIONS = {
     typeLandlord: 'Landlord',
     intPurchase: 'Purchase',
     intRental: 'Rental',
-    intBoth: 'Purchase & Rental'
+    intBoth: 'Purchase & Rental',
+    attendantPause: 'Attendant pause',
+    agentReturnsIn: 'Agent returns in',
   },
   es: {
     back: 'Volver',
@@ -244,7 +249,9 @@ const TRANSLATIONS = {
     typeLandlord: 'Propietario',
     intPurchase: 'Compra',
     intRental: 'Alquiler',
-    intBoth: 'Compra y Alquiler'
+    intBoth: 'Compra y Alquiler',
+    attendantPause: 'Pausa del atendente',
+    agentReturnsIn: 'Agente regresa en',
   }
 }
 
@@ -344,6 +351,9 @@ export default function LeadProfilePage() {
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false)
   const [savingStage, setSavingStage] = useState(false)
 
+  // Estado da pausa temporária (STOP do atendente)
+  const [stopRemaining, setStopRemaining] = useState(0)
+
   // Estados de edição de nome
   const [isEditingName, setIsEditingName] = useState(false)
   const [editName, setEditName] = useState('')
@@ -417,6 +427,45 @@ export default function LeadProfilePage() {
       console.error('Erro ao atualizar IA:', error)
     }
   }
+
+  // ─── STOP TTL (pausa temporária do atendente) ───
+  useEffect(() => {
+    if (!lead?.phone || !orgId) return
+    let interval: ReturnType<typeof setInterval> | null = null
+
+    const fetchStopTTL = async () => {
+      try {
+        const res = await fetch(`/api/sdr/stop-status?org_id=${orgId}&phone=${lead.phone}`)
+        const data = await res.json()
+        if (data.active && data.remaining_seconds > 0) {
+          setStopRemaining(data.remaining_seconds)
+          // Countdown local a cada segundo
+          interval = setInterval(() => {
+            setStopRemaining(prev => {
+              if (prev <= 1) {
+                if (interval) clearInterval(interval)
+                return 0
+              }
+              return prev - 1
+            })
+          }, 1000)
+        } else {
+          setStopRemaining(0)
+        }
+      } catch {
+        setStopRemaining(0)
+      }
+    }
+
+    fetchStopTTL()
+    // Re-check a cada 60s para sincronizar (caso atendente mande outra msg e renove o timer)
+    const sync = setInterval(fetchStopTTL, 60000)
+
+    return () => {
+      if (interval) clearInterval(interval)
+      clearInterval(sync)
+    }
+  }, [lead?.phone, orgId])
 
   // ─── ATUALIZAR CAMPO ───
   const handleUpdateField = async (field: keyof LeadDetails, value: unknown) => {
@@ -693,6 +742,16 @@ export default function LeadProfilePage() {
             {lead.conversa_finalizada ? t.agentPaused : t.agentActive}
           </span>
         </button>
+
+        {/* Cronômetro de pausa temporária do atendente */}
+        {stopRemaining > 0 && !lead.conversa_finalizada && (
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 w-full sm:w-auto justify-center">
+            <Timer size={14} className="animate-pulse" />
+            <span className="text-xs font-medium">
+              {t.attendantPause} — {t.agentReturnsIn} {Math.floor(stopRemaining / 60)}:{String(stopRemaining % 60).padStart(2, '0')}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 max-w-6xl mx-auto">
