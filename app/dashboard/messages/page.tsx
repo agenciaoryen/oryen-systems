@@ -38,11 +38,11 @@ const scrollbarStyles = `
     background: transparent;
   }
   .chat-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.08);
+    background: var(--color-border);
     border-radius: 3px;
   }
   .chat-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255,255,255,0.15);
+    background: var(--color-border);
   }
   .sidebar-scrollbar::-webkit-scrollbar {
     width: 4px;
@@ -51,11 +51,11 @@ const scrollbarStyles = `
     background: transparent;
   }
   .sidebar-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.06);
+    background: var(--color-border);
     border-radius: 2px;
   }
   .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255,255,255,0.12);
+    background: var(--color-border);
   }
 `
 
@@ -398,18 +398,18 @@ function MessageBubble({
   const isSameSender = prevMsg?.sender_type === msg.sender_type && !showDateHeader
   const isSequence = prevMsg?.direction === msg.direction && !showDateHeader
 
-  const bubbleBg = (): string => {
-    if (!isOutbound) return 'bg-[#202c33]'
-    if (msg.sender_type === 'agent_bot') return 'bg-[#1a1a2e] border border-violet-500/10'
-    if (msg.sender_type === 'agent_human') return 'bg-[#1a2e1a] border border-amber-500/10'
-    return 'bg-[#005c4b]'
+  const getBubbleStyle = (): React.CSSProperties => {
+    if (!isOutbound) return { backgroundColor: 'var(--color-bg-elevated)' }
+    if (msg.sender_type === 'agent_bot') return { backgroundColor: 'rgba(99,102,241,0.08)', border: '1px solid rgba(139,92,246,0.1)' }
+    if (msg.sender_type === 'agent_human') return { backgroundColor: 'rgba(251,191,36,0.08)', border: '1px solid rgba(245,158,11,0.1)' }
+    return { backgroundColor: 'rgba(75,107,251,0.12)' }
   }
 
   return (
     <div className={`flex flex-col ${showDateHeader ? 'mt-5' : ''}`}>
       {showDateHeader && (
         <div className="flex justify-center mb-4 sticky top-2 z-20">
-          <span className="bg-[#182229]/90 backdrop-blur-sm text-[#8696a0] text-[11px] font-medium px-3 py-1 rounded-lg shadow">
+          <span className="backdrop-blur-sm text-[11px] font-medium px-3 py-1 rounded-lg shadow" style={{ backgroundColor: 'var(--color-bg-elevated)', color: 'var(--color-text-secondary)' }}>
             {formatDateLabel(msg.created_at, userLang, t)}
           </span>
         </div>
@@ -417,9 +417,9 @@ function MessageBubble({
       <div className={`flex ${isOutbound ? 'justify-end' : 'justify-start'} ${isSequence ? 'mt-[2px]' : 'mt-2'}`}>
         <div
           className={`max-w-[85%] sm:max-w-[65%] py-1.5 px-2.5 rounded-lg text-[13.5px] leading-[19px] shadow-sm relative
-            ${bubbleBg()} text-[#e9edef]
             ${!isSequence && isOutbound ? 'rounded-tr-none' : ''}
             ${!isSequence && !isOutbound ? 'rounded-tl-none' : ''}`}
+          style={{ color: 'var(--color-text-primary)', ...getBubbleStyle() }}
         >
           {!isSameSender && (
             <div className={`flex items-center gap-1.5 mb-0.5 ${getSenderColor(msg.sender_type)}`}>
@@ -470,8 +470,10 @@ function ConversationItem({
   return (
     <div
       onClick={onClick}
-      className={`px-3 py-[10px] flex items-center gap-3 cursor-pointer transition-colors relative
-        ${isActive ? 'bg-[#2a3942]' : 'hover:bg-[#202c33]'}`}
+      className="px-3 py-[10px] flex items-center gap-3 cursor-pointer transition-colors relative"
+      style={{ backgroundColor: isActive ? 'var(--color-bg-elevated)' : undefined }}
+      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = 'var(--color-bg-surface)' }}
+      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = '' }}
     >
       {/* Avatar */}
       <div className="relative shrink-0">
@@ -479,7 +481,7 @@ function ConversationItem({
           {getInitial(c)}
         </div>
         {c.channel === 'whatsapp' && (
-          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-[#25d366] rounded-full flex items-center justify-center border-2 border-[#111b21]">
+          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center border-2" style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-bg-base)' }}>
             <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 text-white fill-current">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
             </svg>
@@ -488,23 +490,23 @@ function ConversationItem({
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0 border-b border-[#222d34] pb-[10px]">
+      <div className="flex-1 min-w-0 pb-[10px]" style={{ borderBottom: '1px solid var(--color-border)' }}>
         <div className="flex justify-between items-baseline mb-[2px]">
-          <h4 className="text-[16px] font-normal text-[#e9edef] truncate pr-2">
+          <h4 className="text-[16px] font-normal truncate pr-2" style={{ color: 'var(--color-text-primary)' }}>
             {getDisplayName(c)}
           </h4>
-          <span className={`text-[11px] shrink-0 ${c.unread_count > 0 ? 'text-[#25d366]' : 'text-[#8696a0]'}`}>
+          <span className="text-[11px] shrink-0" style={{ color: c.unread_count > 0 ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}>
             {formatLastMessageTime(c.last_message_at, userLang)}
           </span>
         </div>
         <div className="flex justify-between items-center">
-          <p className="text-[13px] text-[#8696a0] truncate pr-2">
+          <p className="text-[13px] truncate pr-2" style={{ color: 'var(--color-text-secondary)' }}>
             {c.last_message_body || t.startConversation}
           </p>
           <div className="flex items-center gap-1.5 shrink-0">
             {c.lead_emotion && <span className="text-xs">{getEmotionEmoji(c.lead_emotion)}</span>}
             {c.unread_count > 0 && (
-              <span className="bg-[#25d366] text-[#111b21] text-[11px] font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center px-1">
+              <span className="text-[11px] font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center px-1" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-bg-base)' }}>
                 {c.unread_count > 99 ? '99+' : c.unread_count}
               </span>
             )}
@@ -549,7 +551,7 @@ function MessageInput({
   }
 
   return (
-    <div className="bg-[#202c33] border-t border-[#222d34]">
+    <div style={{ backgroundColor: 'var(--color-bg-surface)', borderTop: '1px solid var(--color-border)' }}>
       {sendError && (
         <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 flex items-center gap-2">
           <AlertCircle size={14} className="text-red-400 shrink-0" />
@@ -565,16 +567,16 @@ function MessageInput({
           placeholder={t.inputPlaceholder}
           disabled={isSending}
           rows={1}
-          className="flex-1 bg-[#2a3942] rounded-lg px-3 py-2 text-[14px] text-[#e9edef] placeholder-[#8696a0] focus:outline-none resize-none disabled:opacity-50"
-          style={{ maxHeight: '120px' }}
+          className="flex-1 rounded-lg px-3 py-2 text-[14px] focus:outline-none resize-none disabled:opacity-50"
+          style={{ maxHeight: '120px', backgroundColor: 'var(--color-bg-elevated)', color: 'var(--color-text-primary)' }}
         />
         <button
           onClick={handleSend}
           disabled={!text.trim() || isSending}
-          className={`p-2 rounded-full transition-all shrink-0
-            ${text.trim() && !isSending
-              ? 'bg-[#00a884] hover:bg-[#06cf9c] text-white'
-              : 'bg-transparent text-[#8696a0] cursor-not-allowed'}`}
+          className="p-2 rounded-full transition-all shrink-0"
+          style={text.trim() && !isSending
+            ? { backgroundColor: 'var(--color-primary)', color: 'white' }
+            : { backgroundColor: 'transparent', color: 'var(--color-text-secondary)', cursor: 'not-allowed' }}
         >
           {isSending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
         </button>
@@ -607,6 +609,12 @@ function MessagesContent() {
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const activeConversationRef = useRef<Conversation | null>(null)
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    activeConversationRef.current = activeConversation
+  }, [activeConversation])
 
   const userLang = ((user as any)?.language as Language) || 'pt'
   const t = TRANSLATIONS[userLang]
@@ -817,19 +825,23 @@ function MessagesContent() {
     if (!orgId) return
     const ch = supabase
       .channel('messages-rt')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `org_id=eq.${orgId}` }, (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const m = payload.new as Message
-        if (activeConversation && m.conversation_id === activeConversation.id) {
+        const currentConv = activeConversationRef.current
+        if (currentConv && m.conversation_id === currentConv.id) {
           setMessages(prev => prev.some(x => x.id === m.id) ? prev : [...prev, m])
         }
         setConversations(prev => {
+          // Only update conversations that exist in our list (already filtered by org)
+          const exists = prev.some(c => c.id === m.conversation_id)
+          if (!exists) return prev
           const up = prev.map(c =>
             c.id === m.conversation_id
               ? {
                   ...c,
                   last_message_body: m.body || c.last_message_body,
                   last_message_at: m.created_at,
-                  unread_count: activeConversation?.id === m.conversation_id ? c.unread_count : c.unread_count + (m.direction === 'inbound' ? 1 : 0),
+                  unread_count: currentConv?.id === m.conversation_id ? c.unread_count : c.unread_count + (m.direction === 'inbound' ? 1 : 0),
                 }
               : c
           )
@@ -838,7 +850,7 @@ function MessagesContent() {
       })
       .subscribe()
     return () => { supabase.removeChannel(ch) }
-  }, [orgId, activeConversation?.id])
+  }, [orgId])
 
   // ---- Realtime: new conversations ----
   useEffect(() => {
@@ -898,18 +910,18 @@ function MessagesContent() {
   return (
     <>
       <style>{scrollbarStyles}</style>
-      <div className="flex h-[calc(100vh-120px)] bg-[#111b21] rounded-2xl border border-[#222d34] overflow-hidden shadow-2xl">
+      <div className="flex h-[calc(100vh-120px)] rounded-2xl overflow-hidden shadow-2xl" style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border)' }}>
 
         {/* COL 1: PIPELINE FILTERS (DINÂMICO) */}
-        <div className={`hidden lg:flex w-52 border-r border-[#222d34] bg-[#0b141a] p-4 flex-col gap-1 transition-opacity duration-300
-          ${activeConversation ? 'opacity-40 hover:opacity-100' : ''}`}>
+        <div className={`hidden lg:flex w-52 p-4 flex-col gap-1 transition-opacity duration-300
+          ${activeConversation ? 'opacity-40 hover:opacity-100' : ''}`} style={{ borderRight: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-base)' }}>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[10px] font-bold text-[#8696a0] uppercase tracking-widest px-2">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest px-2" style={{ color: 'var(--color-text-secondary)' }}>
               {t.activePipeline}
             </h3>
             <button
               onClick={() => { fetchPipelineStages(); fetchConversations() }}
-              className="p-1.5 text-[#8696a0] hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+              className="p-1.5 hover:text-white hover:bg-white/5 rounded-lg transition-colors" style={{ color: 'var(--color-text-secondary)' }}
               title={t.refresh}
             >
               <RefreshCw size={14} />
@@ -919,10 +931,10 @@ function MessagesContent() {
           {/* Botão "Todas" */}
           <button
             onClick={() => setFilterStage('todos')}
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all
-              ${filterStage === 'todos'
-                ? 'bg-[#00a884] text-white font-medium'
-                : 'text-[#8696a0] hover:bg-[#202c33]'}`}
+            className="w-full text-left px-3 py-2 rounded-lg text-sm transition-all"
+            style={filterStage === 'todos'
+              ? { backgroundColor: 'var(--color-primary)', color: 'white', fontWeight: 500 }
+              : { color: 'var(--color-text-secondary)' }}
           >
             {t.allStages}
           </button>
@@ -932,10 +944,10 @@ function MessagesContent() {
             <button
               key={stage.id}
               onClick={() => setFilterStage(stage.name)}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all
-                ${filterStage === stage.name
-                  ? 'bg-[#00a884] text-white font-medium'
-                  : 'text-[#8696a0] hover:bg-[#202c33]'}`}
+              className="w-full text-left px-3 py-2 rounded-lg text-sm transition-all"
+              style={filterStage === stage.name
+                ? { backgroundColor: 'var(--color-primary)', color: 'white', fontWeight: 500 }
+                : { color: 'var(--color-text-secondary)' }}
             >
               {stage.label}
             </button>
@@ -943,18 +955,19 @@ function MessagesContent() {
         </div>
 
         {/* COL 2: CONVERSATION LIST */}
-        <div className={`w-full sm:w-[340px] border-r border-[#222d34] flex flex-col bg-[#111b21] transition-opacity duration-300
-          ${activeConversation ? 'hidden sm:flex sm:opacity-40 sm:hover:opacity-100' : ''}`}>
+        <div className={`w-full sm:w-[340px] flex flex-col transition-opacity duration-300
+          ${activeConversation ? 'hidden sm:flex sm:opacity-40 sm:hover:opacity-100' : ''}`} style={{ borderRight: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-base)' }}>
           {/* Search */}
-          <div className="p-2 bg-[#111b21]">
+          <div className="p-2" style={{ backgroundColor: 'var(--color-bg-base)' }}>
             <div className="relative">
-              <Search className="absolute left-3 top-[9px] text-[#8696a0]" size={16} />
+              <Search className="absolute left-3 top-[9px]" size={16} style={{ color: 'var(--color-text-secondary)' }} />
               <input
                 type="text"
                 placeholder={t.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-[#202c33] rounded-lg pl-10 pr-4 py-[6px] text-[14px] text-[#e9edef] placeholder-[#8696a0] focus:outline-none border-none"
+                className="w-full rounded-lg pl-10 pr-4 py-[6px] text-[14px] focus:outline-none border-none"
+                style={{ backgroundColor: 'var(--color-bg-surface)', color: 'var(--color-text-primary)' }}
               />
             </div>
           </div>
@@ -963,11 +976,11 @@ function MessagesContent() {
           <div className="flex-1 overflow-y-auto sidebar-scrollbar">
             {loadingConversations ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-5 h-5 text-[#8696a0] animate-spin" />
+                <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'var(--color-text-secondary)' }} />
               </div>
             ) : filteredConversations.length === 0 ? (
               <div className="flex items-center justify-center py-12 px-4">
-                <p className="text-xs text-[#8696a0] text-center">{t.noConversations}</p>
+                <p className="text-xs text-center" style={{ color: 'var(--color-text-secondary)' }}>{t.noConversations}</p>
               </div>
             ) : (
               filteredConversations.map(conv => (
@@ -985,11 +998,11 @@ function MessagesContent() {
         </div>
 
         {/* COL 3: CHAT */}
-        <div className={`flex-1 flex flex-col bg-[#0b141a] relative ${!activeConversation ? 'hidden sm:flex' : ''}`}>
+        <div className={`flex-1 flex flex-col relative ${!activeConversation ? 'hidden sm:flex' : ''}`} style={{ backgroundColor: 'var(--color-bg-base)' }}>
           {activeConversation ? (
             <>
               {/* Header */}
-              <div className="px-4 py-[10px] bg-[#202c33] flex items-center gap-3 z-20">
+              <div className="px-4 py-[10px] flex items-center gap-3 z-20" style={{ backgroundColor: 'var(--color-bg-surface)' }}>
                 {/* Botão voltar no mobile */}
                 <button
                   onClick={() => setActiveConversation(null)}
@@ -1002,12 +1015,12 @@ function MessagesContent() {
                   {getInitial(activeConversation)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-[#e9edef] font-normal text-[15px] truncate">
+                  <h3 className="font-normal text-[15px] truncate" style={{ color: 'var(--color-text-primary)' }}>
                     {getDisplayName(activeConversation)}
                   </h3>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[11px] text-[#8696a0] uppercase tracking-wide flex items-center gap-1">
-                      <Circle size={6} className="fill-[#25d366] text-[#25d366]" />
+                    <span className="text-[11px] uppercase tracking-wide flex items-center gap-1" style={{ color: 'var(--color-text-secondary)' }}>
+                      <Circle size={6} style={{ fill: 'var(--color-primary)', color: 'var(--color-primary)' }} />
                       {pipelineStages.find(s => s.name === activeConversation.lead_stage)?.label || activeConversation.lead_stage}
                     </span>
                     {activeConversation.is_bot_active && (
@@ -1016,7 +1029,7 @@ function MessagesContent() {
                       </span>
                     )}
                     {activeConversation.lead_phone && (
-                      <span className="text-[11px] text-[#8696a0] hidden sm:inline">
+                      <span className="text-[11px] hidden sm:inline" style={{ color: 'var(--color-text-secondary)' }}>
                         {formatPhone(activeConversation.lead_phone)}
                       </span>
                     )}
@@ -1058,13 +1071,13 @@ function MessagesContent() {
                 onScroll={handleScroll}
                 className="flex-1 overflow-y-auto px-[5%] py-4 chat-scrollbar"
                 style={{
-                  backgroundColor: '#0b141a',
+                  backgroundColor: 'var(--color-bg-base)',
                   backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'200\' height=\'200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.02\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'1\'/%3E%3Ccircle cx=\'103\' cy=\'53\' r=\'1\'/%3E%3Ccircle cx=\'53\' cy=\'103\' r=\'1\'/%3E%3Ccircle cx=\'153\' cy=\'153\' r=\'1\'/%3E%3C/g%3E%3C/svg%3E")',
                 }}
               >
                 {loadingMessages ? (
                   <div className="flex items-center justify-center h-full">
-                    <Loader2 className="w-6 h-6 text-[#8696a0] animate-spin" />
+                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-text-secondary)' }} />
                   </div>
                 ) : (
                   <div className="flex flex-col">
@@ -1080,9 +1093,10 @@ function MessagesContent() {
               {showScrollDown && (
                 <button
                   onClick={() => scrollToBottom(true)}
-                  className="absolute bottom-20 right-4 z-30 w-10 h-10 bg-[#202c33] rounded-full flex items-center justify-center shadow-lg hover:bg-[#2a3942] transition-colors"
+                  className="absolute bottom-20 right-4 z-30 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-colors"
+                  style={{ backgroundColor: 'var(--color-bg-surface)' }}
                 >
-                  <ArrowDown size={18} className="text-[#8696a0]" />
+                  <ArrowDown size={18} style={{ color: 'var(--color-text-secondary)' }} />
                 </button>
               )}
 
@@ -1090,13 +1104,13 @@ function MessagesContent() {
               <MessageInput onSend={handleSendMessage} isSending={isSending} sendError={sendError} t={t} />
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center bg-[#222e35]">
+            <div className="flex-1 flex flex-col items-center justify-center" style={{ backgroundColor: 'var(--color-bg-surface)' }}>
               <div className="w-[320px] text-center space-y-4">
-                <div className="w-20 h-20 mx-auto bg-[#364147] rounded-full flex items-center justify-center">
-                  <MessageCircle size={36} className="text-[#8696a0]" />
+                <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-elevated)' }}>
+                  <MessageCircle size={36} style={{ color: 'var(--color-text-secondary)' }} />
                 </div>
-                <h2 className="text-[#e9edef] text-xl font-light">Oryen Conversas</h2>
-                <p className="text-[14px] text-[#8696a0]">{t.emptyState}</p>
+                <h2 className="text-xl font-light" style={{ color: 'var(--color-text-primary)' }}>Oryen Conversas</h2>
+                <p className="text-[14px]" style={{ color: 'var(--color-text-secondary)' }}>{t.emptyState}</p>
               </div>
             </div>
           )}
@@ -1112,8 +1126,8 @@ function MessagesContent() {
 export default function MessagesPage() {
   return (
     <Suspense fallback={
-      <div className="flex h-[calc(100vh-120px)] items-center justify-center bg-[#111b21] rounded-2xl border border-[#222d34]">
-        <Loader2 className="w-8 h-8 text-[#00a884] animate-spin" />
+      <div className="flex h-[calc(100vh-120px)] items-center justify-center rounded-2xl" style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
       </div>
     }>
       <MessagesContent />
