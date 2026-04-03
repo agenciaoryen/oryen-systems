@@ -46,10 +46,12 @@ export async function GET(request: NextRequest) {
       }, { status: 400 })
     }
 
+    console.log(`[WhatsApp:QR] apiUrl: ${apiUrl} | token: ${token?.slice(0, 8)}...${token?.slice(-4)} | length: ${token?.length}`)
+
     // ─── 1. Verificar status atual primeiro ───
     const statusRes = await fetch(`${apiUrl}/instance/status`, {
       method: 'GET',
-      headers: { 'token': token }
+      headers: { 'token': token, 'apikey': token }
     })
 
     if (statusRes.ok) {
@@ -77,14 +79,41 @@ export async function GET(request: NextRequest) {
     }
 
     // ─── 2. Se não conectado, chamar /instance/connect para gerar QR ───
-    const connectRes = await fetch(`${apiUrl}/instance/connect`, {
+    // Tentar com múltiplos formatos de auth (UAZAPI varia por versão)
+    let connectRes = await fetch(`${apiUrl}/instance/connect`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'token': token
       },
-      body: JSON.stringify({}) // sem phone = gera QR code
+      body: JSON.stringify({})
     })
+
+    // Se 401 com header 'token', tentar com 'apikey'
+    if (connectRes.status === 401) {
+      console.log('[WhatsApp:QR] Tentando com header apikey...')
+      connectRes = await fetch(`${apiUrl}/instance/connect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': token
+        },
+        body: JSON.stringify({})
+      })
+    }
+
+    // Se ainda 401, tentar com Authorization Bearer
+    if (connectRes.status === 401) {
+      console.log('[WhatsApp:QR] Tentando com Authorization Bearer...')
+      connectRes = await fetch(`${apiUrl}/instance/connect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({})
+      })
+    }
 
     if (!connectRes.ok) {
       const errText = await connectRes.text().catch(() => '')
