@@ -162,6 +162,39 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * PATCH /api/whatsapp/instances
+ * Atualiza agent_id ou campaign_id da instância
+ * Body: { instance_id, agent_id?, campaign_id? }
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { instance_id, agent_id, campaign_id } = body
+
+    if (!instance_id) {
+      return NextResponse.json({ error: 'instance_id required' }, { status: 400 })
+    }
+
+    const updates: Record<string, any> = {}
+    if (agent_id !== undefined) updates.agent_id = agent_id || null
+    if (campaign_id !== undefined) updates.campaign_id = campaign_id || null
+
+    const { data, error } = await supabase
+      .from('whatsapp_instances')
+      .update(updates)
+      .eq('id', instance_id)
+      .select('*')
+      .single()
+
+    if (error) throw error
+
+    return NextResponse.json({ instance: data })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
+/**
  * DELETE /api/whatsapp/instances
  * Body: { instance_id }
  */

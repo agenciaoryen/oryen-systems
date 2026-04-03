@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
+import { supabase } from '@/lib/supabase'
 import {
   Smartphone,
   QrCode,
@@ -15,6 +16,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Trash2,
+  Bot,
   X
 } from 'lucide-react'
 
@@ -32,6 +34,12 @@ interface WhatsAppInstance {
   status: 'connected' | 'disconnected' | 'qr_pending' | 'banned'
   connected_at: string | null
   created_at: string
+}
+
+interface Agent {
+  id: string
+  solution_slug: string
+  status: string
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -66,7 +74,10 @@ const T = {
     creating: 'Criando...',
     delete: 'Excluir',
     deleting: 'Excluindo...',
-    deleteConfirm: 'Tem certeza que deseja excluir esta instância? Isso irá desconectar o WhatsApp.'
+    deleteConfirm: 'Tem certeza que deseja excluir esta instância? Isso irá desconectar o WhatsApp.',
+    agent: 'Agente IA',
+    noAgent: 'Sem agente (inativo)',
+    agentLinked: 'SDR ativo'
   },
   en: {
     title: 'WhatsApp',
@@ -95,7 +106,10 @@ const T = {
     creating: 'Creating...',
     delete: 'Delete',
     deleting: 'Deleting...',
-    deleteConfirm: 'Are you sure you want to delete this instance? This will disconnect WhatsApp.'
+    deleteConfirm: 'Are you sure you want to delete this instance? This will disconnect WhatsApp.',
+    agent: 'AI Agent',
+    noAgent: 'No agent (inactive)',
+    agentLinked: 'SDR active'
   },
   es: {
     title: 'WhatsApp',
@@ -124,7 +138,10 @@ const T = {
     creating: 'Creando...',
     delete: 'Eliminar',
     deleting: 'Eliminando...',
-    deleteConfirm: '¿Estás seguro de que deseas eliminar esta instancia? Esto desconectará WhatsApp.'
+    deleteConfirm: '¿Estás seguro de que deseas eliminar esta instancia? Esto desconectará WhatsApp.',
+    agent: 'Agente IA',
+    noAgent: 'Sin agente (inactivo)',
+    agentLinked: 'SDR activo'
   }
 }
 
@@ -149,6 +166,7 @@ export default function WhatsAppPage() {
   const [maxInstances, setMaxInstances] = useState(1)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [webhookStatus, setWebhookStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [agents, setAgents] = useState<Agent[]>([])
 
   // QR state
   const [qrInstanceId, setQrInstanceId] = useState<string | null>(null)
@@ -172,6 +190,34 @@ export default function WhatsAppPage() {
   }, [orgId])
 
   useEffect(() => { fetchInstances() }, [fetchInstances])
+
+  // ─── Fetch agents ───
+  useEffect(() => {
+    if (!orgId) return
+    supabase
+      .from('agents')
+      .select('id, solution_slug, status')
+      .eq('org_id', orgId)
+      .eq('status', 'active')
+      .then(({ data }) => setAgents(data || []))
+  }, [orgId])
+
+  // ─── Link agent to instance ───
+  const handleLinkAgent = async (instanceId: string, agentId: string) => {
+    try {
+      const res = await fetch('/api/whatsapp/instances', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instance_id: instanceId, agent_id: agentId || null })
+      })
+      const data = await res.json()
+      if (data.instance) {
+        setInstances(prev => prev.map(i => i.id === instanceId ? data.instance : i))
+      }
+    } catch (err) {
+      console.error('Error linking agent:', err)
+    }
+  }
 
   // ─── Delete instance ───
   const handleDelete = async (instanceId: string) => {
@@ -582,8 +628,32 @@ export default function WhatsAppPage() {
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2">
+                {/* Agent select + Actions */}
+                <div className="flex items-center gap-3">
+                  {/* Agent select */}
+                  <div className="flex items-center gap-1.5">
+                    <Bot size={13} style={{ color: instance.agent_id ? 'rgb(16,185,129)' : 'var(--color-text-secondary)' }} />
+                    <select
+                      value={instance.agent_id || ''}
+                      onChange={e => handleLinkAgent(instance.id, e.target.value)}
+                      className="text-xs rounded-lg px-2 py-1.5 outline-none cursor-pointer"
+                      style={{
+                        background: 'var(--color-bg-input)',
+                        border: '1px solid var(--color-border)',
+                        color: instance.agent_id ? 'rgb(16,185,129)' : 'var(--color-text-secondary)'
+                      }}
+                    >
+                      <option value="">{t.noAgent}</option>
+                      {agents.map(ag => (
+                        <option key={ag.id} value={ag.id}>
+                          {ag.solution_slug.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
                   {instance.status !== 'connected' && (
                     <button
                       onClick={() => { setQrInstanceId(instance.id); fetchQR(instance.id) }}
@@ -617,6 +687,7 @@ export default function WhatsAppPage() {
                     )}
                     {deletingId === instance.id ? t.deleting : t.delete}
                   </button>
+                  </div>
                 </div>
               </div>
             </div>
