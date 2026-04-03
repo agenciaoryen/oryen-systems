@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`[SDR:Process] IA respondeu: ${agentResponse.messages.length} msg(s) | tools: [${agentResponse.toolsExecuted.join(', ')}] | tokens: ${agentResponse.tokensUsed}`)
 
-    // ─── 10. Salvar resposta do agente em sdr_messages ───
+    // ─── 10. Salvar resposta do agente em sdr_messages + conversations ───
     if (agentResponse.messages.length > 0) {
       const fullResponse = agentResponse.messages.join('\n\n')
       await supabase
@@ -168,6 +168,23 @@ export async function POST(request: NextRequest) {
           type: 'text',
           processed_at: new Date().toISOString()
         })
+
+      // Salvar no módulo de conversas do dashboard
+      try {
+        await supabase.rpc('fn_insert_message', {
+          p_org_id: org_id,
+          p_lead_id: lead_id,
+          p_channel: 'whatsapp',
+          p_direction: 'outbound',
+          p_body: fullResponse,
+          p_sender_type: 'agent_bot',
+          p_sender_name: 'SDR Agent',
+          p_message_type: 'text',
+          p_timestamp: new Date().toISOString()
+        })
+      } catch (rpcErr: any) {
+        console.warn(`[SDR:Process] fn_insert_message error (non-fatal): ${rpcErr.message}`)
+      }
     }
 
     // ─── 11. Enviar mensagens via WhatsApp com humanização ───

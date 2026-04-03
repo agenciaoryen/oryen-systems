@@ -95,8 +95,13 @@ export async function POST(request: NextRequest) {
     const lead = await findOrCreateLead(phone, phoneFallback, instance.org_id, payload)
     const messageText = payload.body || payload.text || payload.caption || ''
 
-    // ─── 5. Salvar mensagem no histórico (tanto lead quanto atendente) ───
-    const messageRole = isAttendant ? 'assistant' : 'user' // atendente humano = role assistant (resposta)
+    // ─── 5. Salvar mensagem no histórico (sdr_messages + conversations/messages) ───
+    const messageRole = isAttendant ? 'assistant' : 'user'
+    const direction = isAttendant ? 'outbound' : 'inbound'
+    const senderType = isAttendant ? 'agent_human' : 'lead'
+    const senderName = isAttendant ? 'Atendente' : (payload.pushName || lead.name || `Lead ${phone.slice(-4)}`)
+
+    // Salvar em sdr_messages (histórico para IA)
     await supabase.from('sdr_messages').insert({
       org_id: instance.org_id,
       lead_id: lead.id,
@@ -108,6 +113,23 @@ export async function POST(request: NextRequest) {
       type: isAttendant ? 'attendant' : 'text',
       source: isAttendant ? 'human' : 'lead'
     })
+
+    // Salvar em conversations/messages (módulo de conversas do dashboard)
+    try {
+      await supabase.rpc('fn_insert_message', {
+        p_org_id: instance.org_id,
+        p_lead_id: lead.id,
+        p_channel: 'whatsapp',
+        p_direction: direction,
+        p_body: messageText,
+        p_sender_type: senderType,
+        p_sender_name: senderName,
+        p_message_type: 'text',
+        p_timestamp: new Date().toISOString()
+      })
+    } catch (rpcErr: any) {
+      console.warn(`[SDR] fn_insert_message error (non-fatal): ${rpcErr.message}`)
+    }
 
     console.log(`[SDR] ✓ Histórico salvo | role: ${messageRole} | lead: ${lead.id} | phone: ${phone} | text: "${messageText.slice(0, 50)}"`)
 
