@@ -5,14 +5,15 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useIsStaff } from '@/lib/AuthContext'
-import { 
-  LayoutDashboard, 
-  Users, 
-  MessageSquare, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Users,
+  MessageSquare,
+  Settings,
   LogOut,
   Hexagon,
   Bell,
+  CalendarDays,
   ChevronDown,
   Building2,
   Check,
@@ -30,6 +31,7 @@ const TRANSLATIONS = {
     crm: 'CRM / Leads',
     messages: 'Conversas',
     alerts: 'Alertas',
+    calendar: 'Agenda',
     settings: 'Configurações',
     logout: 'Sair do Sistema',
     staff: 'Staff',
@@ -42,6 +44,7 @@ const TRANSLATIONS = {
     crm: 'CRM / Leads',
     messages: 'Messages',
     alerts: 'Alerts',
+    calendar: 'Calendar',
     settings: 'Settings',
     logout: 'Log Out',
     staff: 'Staff',
@@ -54,6 +57,7 @@ const TRANSLATIONS = {
     crm: 'CRM / Leads',
     messages: 'Conversaciones',
     alerts: 'Alertas',
+    calendar: 'Agenda',
     settings: 'Configuración',
     logout: 'Cerrar Sesión',
     staff: 'Staff',
@@ -102,6 +106,7 @@ export function Sidebar() {
     { name: t.crm, href: '/dashboard/crm', icon: Users },
     { name: t.messages, href: '/dashboard/messages', icon: MessageSquare },
     { name: t.alerts, href: '/dashboard/alerts', icon: Bell },
+    { name: t.calendar, href: '/dashboard/calendar', icon: CalendarDays },
     { name: t.settings, href: '/dashboard/settings', icon: Settings },
   ]
 

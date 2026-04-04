@@ -330,6 +330,26 @@ async function executeScheduleVisit(
   // Salvar info da visita
   await saveMeta(ctx, 'visit_scheduled', visitData)
 
+  // Criar evento real no calendário
+  const [h, m] = input.time.split(':').map(Number)
+  const endH = Math.min(h + 1, 23)
+  const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+
+  await supabase.from('calendar_events').insert({
+    org_id: ctx.org_id,
+    lead_id: ctx.lead_id,
+    title: `Visita: ${input.property_description}`,
+    description: input.notes || null,
+    event_type: 'visit',
+    event_date: input.date,
+    start_time: input.time,
+    end_time: endTime,
+    address: input.address || null,
+    status: 'scheduled',
+    created_by: 'sdr_agent',
+    notes: input.notes || null
+  })
+
   // Buscar nome do lead para o alerta
   const { data: lead } = await supabase
     .from('leads')
@@ -369,19 +389,42 @@ async function executeScheduleVisit(
   }
 }
 
-// ─── Check Availability: sem integração com calendário por enquanto ───
+// ─── Check Availability: consulta real na tabela calendar_events ───
 async function executeCheckAvailability(
   input: { date_from: string; date_to?: string },
   ctx: ToolContext
 ): Promise<ToolResult> {
-  // Sem integração com Google Calendar — o agente deve propor horários
-  // comerciais padrão e o corretor confirmará depois
+  const dateTo = input.date_to || input.date_from
+
+  const { data: events, error } = await supabase
+    .from('calendar_events')
+    .select('event_date, start_time, end_time, title, event_type')
+    .eq('org_id', ctx.org_id)
+    .eq('status', 'scheduled')
+    .gte('event_date', input.date_from)
+    .lte('event_date', dateTo)
+    .order('event_date', { ascending: true })
+    .order('start_time', { ascending: true })
+
+  if (error) return { success: false, error: error.message }
+
+  const busySlots = (events || []).map(e => ({
+    date: e.event_date,
+    from: e.start_time,
+    to: e.end_time || '(sem fim definido)',
+    what: e.title
+  }))
+
   return {
     success: true,
     data: {
-      calendar_integrated: false,
-      suggested_hours: 'Segunda a sexta: 9h às 18h | Sábado: 9h às 12h',
-      instruction: 'Não há calendário integrado. Proponha horários em horário comercial e informe que o corretor confirmará a disponibilidade. NÃO garanta que o horário está disponível — diga que vai verificar e confirmar.'
+      calendar_integrated: true,
+      busy_slots: busySlots,
+      total_events: busySlots.length,
+      suggested_hours: 'Horário comercial: seg-sex 9h às 18h | sáb 9h às 12h',
+      instruction: busySlots.length === 0
+        ? `Não há compromissos agendados entre ${input.date_from} e ${dateTo}. Pode sugerir horários em horário comercial.`
+        : `Há ${busySlots.length} compromisso(s) no período. Evite os horários ocupados ao sugerir ao lead.`
     }
   }
 }
