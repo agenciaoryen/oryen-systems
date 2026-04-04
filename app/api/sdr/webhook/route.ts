@@ -15,7 +15,7 @@
 // 9. Agendar processamento após buffer_seconds
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { extractPhone, isValidPhone } from '@/lib/sdr/normalize-phone'
 import {
@@ -396,18 +396,27 @@ async function resolveInstance(instanceName: string): Promise<WhatsAppInstance |
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function scheduleProcess(url: string, payload: any, delaySeconds: number): void {
-  // Usar setTimeout para delay, depois fetch fire-and-forget
-  // O .catch silencia erros de rede (se a função serverless morrer antes, o buffer
-  // será processado pelo próximo webhook que chegar — design resiliente)
-  setTimeout(() => {
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).catch(err => {
-      console.error('[SDR] Erro ao chamar /process:', err.message)
-    })
-  }, delaySeconds * 1000)
+  // Usar after() do Next.js para manter a função serverless viva após enviar a response.
+  // Dentro do after(), fazemos sleep + fetch para o /process.
+  after(async () => {
+    try {
+      // Esperar o buffer time (anti-fragmentação)
+      await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000))
+
+      console.log(`[SDR] Disparando /process após ${delaySeconds}s de buffer para phone: ${payload.phone}`)
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      const data = await res.json().catch(() => ({}))
+      console.log(`[SDR] /process respondeu: ${res.status} | ${JSON.stringify(data).slice(0, 200)}`)
+    } catch (err: any) {
+      console.error(`[SDR] Erro ao chamar /process: ${err.message}`)
+    }
+  })
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
