@@ -68,7 +68,7 @@ export interface AgentResponse {
 
 // ─── Modelo e limites ───
 const MODEL = 'claude-sonnet-4-20250514'
-const MAX_TOKENS = 1024
+const MAX_TOKENS = 2048
 const MAX_TOOL_LOOPS = 8 // máximo de loops de tool_use (segurança contra loop infinito)
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -154,12 +154,14 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
 
     // Executar cada tool e montar tool_result
     const toolResults: any[] = []
+    let conversationEnded = false
 
     for (const toolBlock of toolUseBlocks) {
-      toolsExecuted.push((toolBlock as any).name)
+      const toolName = (toolBlock as any).name
+      toolsExecuted.push(toolName)
 
       const result = await executeTool(
-        (toolBlock as any).name,
+        toolName,
         (toolBlock as any).input,
         toolCtx
       )
@@ -169,10 +171,29 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
         tool_use_id: (toolBlock as any).id,
         content: JSON.stringify(result)
       })
+
+      if (toolName === 'end_conversation') {
+        conversationEnded = true
+      }
     }
 
     // Adicionar tool_results como mensagem do user
     messages.push({ role: 'user', content: toolResults })
+
+    // Se a conversa foi encerrada, extrair qualquer texto de despedida já presente
+    // e parar o loop — o agente NÃO deve enviar mais nada depois
+    if (conversationEnded) {
+      const textBlocks = response.content.filter((block: any) => block.type === 'text')
+      const farewell = textBlocks.map(b => b.text).join('\n').trim()
+      const whatsappMessages = farewell ? splitForWhatsApp(farewell) : []
+
+      return {
+        messages: whatsappMessages,
+        toolsExecuted,
+        tokensUsed: totalTokens,
+        model: MODEL
+      }
+    }
   }
 
   // Fallback: se atingiu MAX_TOOL_LOOPS, forçar resposta

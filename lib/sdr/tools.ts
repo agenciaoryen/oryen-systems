@@ -190,7 +190,23 @@ export const agentTools: Anthropic.Messages.Tool[] = [
     }
   },
 
-  // 8. Salvar informação do lead — dados coletados durante qualificação
+  // 8. Buscar informações do lead — dados já coletados, histórico, notas
+  {
+    name: 'buscar_info_lead',
+    description: 'Consulta informações já coletadas sobre o lead: dados do CRM (nome, estágio, origem, cidade, interesse, tipo de contato) e informações salvas em conversas anteriores (orçamento, tipo de imóvel, região, etc). Use SEMPRE no início da conversa para ter contexto.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        include_saved_info: {
+          type: 'boolean',
+          description: 'Se true, inclui informações salvas via save_lead_info (orçamento, tipo, etc)'
+        }
+      },
+      required: []
+    }
+  },
+
+  // 9. Salvar informação do lead — dados coletados durante qualificação
   {
     name: 'save_lead_info',
     description: 'Salva informações coletadas do lead durante a conversa (tipo de imóvel, orçamento, região, urgência, etc). Estes dados ficam disponíveis para o corretor.',
@@ -247,6 +263,9 @@ export async function executeTool(
     case 'end_conversation':
       return executeEndConversation(input, ctx)
 
+    case 'buscar_info_lead':
+      return executeBuscarInfoLead(input, ctx)
+
     case 'save_lead_info':
       return executeSaveLeadInfo(input, ctx)
 
@@ -281,13 +300,11 @@ async function executeQualifyLead(
   return { success: true, data: { stage: input.stage, reason: input.reason } }
 }
 
-// ─── Schedule Visit: salvar evento + atualizar lead ───
+// ─── Schedule Visit: salvar evento + atualizar lead + alertar corretor ───
 async function executeScheduleVisit(
   input: { date: string; time: string; property_description: string; address?: string; notes?: string },
   ctx: ToolContext
 ): Promise<ToolResult> {
-  // Salvar evento na tabela de visitas (ou calendar_events se existir)
-  // Por enquanto, salva como metadata no lead e notifica
   const visitData = {
     date: input.date,
     time: input.time,
@@ -298,7 +315,7 @@ async function executeScheduleVisit(
     scheduled_by: 'sdr_agent'
   }
 
-  // Atualizar lead com dados da visita e estágio
+  // Atualizar lead com estágio
   const { error } = await supabase
     .from('leads')
     .update({
@@ -313,61 +330,164 @@ async function executeScheduleVisit(
   // Salvar info da visita
   await saveMeta(ctx, 'visit_scheduled', visitData)
 
-  console.log(`[SDR:Schedule] Visita agendada: ${input.date} ${input.time} | Lead ${ctx.lead_id}`)
+  // Buscar nome do lead para o alerta
+  const { data: lead } = await supabase
+    .from('leads')
+    .select('name, phone')
+    .eq('id', ctx.lead_id)
+    .single()
+
+  // Criar alerta para o corretor (owner da org)
+  const { data: owner } = await supabase
+    .from('users')
+    .select('id')
+    .eq('org_id', ctx.org_id)
+    .eq('role', 'owner')
+    .limit(1)
+    .single()
+
+  if (owner) {
+    await supabase.from('alerts').insert({
+      user_id: owner.id,
+      type: 'urgent',
+      title: `Visita agendada: ${input.date} às ${input.time}`,
+      description: `Lead: ${lead?.name || 'N/A'} (${lead?.phone || ctx.phone})\nImóvel: ${input.property_description}\n${input.address ? 'Endereço: ' + input.address + '\n' : ''}${input.notes ? 'Obs: ' + input.notes : ''}`,
+      action_link: `/dashboard/crm/${ctx.lead_id}`,
+      action_label: 'Ver lead',
+      is_read: false
+    })
+  }
+
+  console.log(`[SDR:Schedule] Visita agendada: ${input.date} ${input.time} | Lead ${ctx.lead_id} | alerta: ${!!owner}`)
   return {
     success: true,
     data: {
-      message: `Visita agendada para ${input.date} às ${input.time}`,
-      ...visitData
+      message: `Visita agendada para ${input.date} às ${input.time}. O corretor receberá uma notificação.`,
+      ...visitData,
+      alert_created: !!owner
     }
   }
 }
 
-// ─── Check Availability: placeholder para integração com Google Calendar ───
+// ─── Check Availability: sem integração com calendário por enquanto ───
 async function executeCheckAvailability(
   input: { date_from: string; date_to?: string },
   ctx: ToolContext
 ): Promise<ToolResult> {
-  // TODO: Integrar com Google Calendar API ou tabela de disponibilidade
-  // Por enquanto, retorna disponibilidade simulada para não travar o fluxo
-  const from = new Date(input.date_from)
-  const slots = []
-
-  for (let i = 0; i < 5; i++) {
-    const date = new Date(from)
-    date.setDate(date.getDate() + i)
-    if (date.getDay() !== 0) { // excluir domingos
-      slots.push({
-        date: date.toISOString().split('T')[0],
-        available_times: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
-      })
-    }
-  }
-
+  // Sem integração com Google Calendar — o agente deve propor horários
+  // comerciais padrão e o corretor confirmará depois
   return {
     success: true,
     data: {
-      slots,
-      note: 'Horários disponíveis nos próximos dias (confirme com o cliente)'
+      calendar_integrated: false,
+      suggested_hours: 'Segunda a sexta: 9h às 18h | Sábado: 9h às 12h',
+      instruction: 'Não há calendário integrado. Proponha horários em horário comercial e informe que o corretor confirmará a disponibilidade. NÃO garanta que o horário está disponível — diga que vai verificar e confirmar.'
     }
   }
 }
 
-// ─── Notify Agent: salvar notificação (Parte 4 vai enviar via WhatsApp) ───
+// ─── Notify Agent: criar alerta real no dashboard + salvar metadata ───
 async function executeNotifyAgent(
   input: { message: string; priority: string; type: string },
   ctx: ToolContext
 ): Promise<ToolResult> {
-  // Salvar notificação para o corretor
+  // 1. Buscar owner da org para criar alerta visível no dashboard
+  const { data: owner } = await supabase
+    .from('users')
+    .select('id')
+    .eq('org_id', ctx.org_id)
+    .eq('role', 'owner')
+    .limit(1)
+    .single()
+
+  // Mapear tipo para tipo de alerta do dashboard
+  const alertType = input.priority === 'urgent' ? 'urgent' : input.type === 'info' ? 'info' : 'suggestion'
+
+  const titleMap: Record<string, string> = {
+    hot_lead: 'Lead quente pronto para contato',
+    visit_scheduled: 'Visita agendada',
+    human_requested: 'Lead pediu para falar com humano',
+    info: 'Informação do agente SDR'
+  }
+
+  if (owner) {
+    await supabase.from('alerts').insert({
+      user_id: owner.id,
+      type: alertType,
+      title: titleMap[input.type] || 'Notificação do agente SDR',
+      description: input.message,
+      action_link: `/dashboard/crm/${ctx.lead_id}`,
+      action_label: 'Ver lead',
+      is_read: false
+    })
+  }
+
+  // 2. Salvar metadata no histórico
   await saveMeta(ctx, 'agent_notification', {
     message: input.message,
     priority: input.priority,
     type: input.type,
+    alert_created: !!owner,
     created_at: new Date().toISOString()
   })
 
-  console.log(`[SDR:Notify] [${input.priority}] ${input.type}: ${input.message.slice(0, 100)}`)
-  return { success: true, data: { notified: true, priority: input.priority } }
+  console.log(`[SDR:Notify] [${input.priority}] ${input.type}: ${input.message.slice(0, 100)} | alert: ${!!owner}`)
+  return { success: true, data: { notified: true, priority: input.priority, alert_created: !!owner } }
+}
+
+// ─── Buscar Info Lead: dados do CRM + metadata salva ───
+async function executeBuscarInfoLead(
+  input: { include_saved_info?: boolean },
+  ctx: ToolContext
+): Promise<ToolResult> {
+  // 1. Dados do CRM
+  const { data: lead } = await supabase
+    .from('leads')
+    .select('id, name, phone, email, stage, source, city, nicho, tipo_contato, interesse, instagram, url_site, total_em_vendas, created_at, updated_at, conversa_finalizada')
+    .eq('id', ctx.lead_id)
+    .eq('org_id', ctx.org_id)
+    .single()
+
+  // 2. Informações salvas via save_lead_info (metadata em sdr_messages role=system)
+  let savedInfo: Record<string, any>[] = []
+  if (input.include_saved_info !== false) {
+    const { data: metaMessages } = await supabase
+      .from('sdr_messages')
+      .select('body, created_at')
+      .eq('lead_id', ctx.lead_id)
+      .eq('org_id', ctx.org_id)
+      .eq('role', 'system')
+      .eq('type', 'tool_result')
+      .order('created_at', { ascending: false })
+      .limit(30)
+
+    if (metaMessages) {
+      savedInfo = metaMessages
+        .map(m => { try { return JSON.parse(m.body) } catch { return null } })
+        .filter(m => m && (m.action?.startsWith('lead_info_') || m.action === 'conversation_ended' || m.action === 'visit_scheduled' || m.action === 'agent_notification'))
+    }
+  }
+
+  // 3. Notas do timeline (lead_events)
+  const { data: notes } = await supabase
+    .from('lead_events')
+    .select('type, content, created_at')
+    .eq('lead_id', ctx.lead_id)
+    .eq('type', 'note')
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  console.log(`[SDR:BuscarInfo] Lead ${ctx.lead_id} | CRM: ${!!lead} | saved_info: ${savedInfo.length} | notes: ${notes?.length || 0}`)
+
+  return {
+    success: true,
+    data: {
+      crm: lead || {},
+      saved_info: savedInfo,
+      notes: notes || [],
+      tip: 'Use estas informações para dar continuidade à conversa sem repetir perguntas já respondidas.'
+    }
+  }
 }
 
 // ─── Update Lead Name ───

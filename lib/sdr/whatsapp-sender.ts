@@ -69,8 +69,8 @@ export async function sendWithHumanization(ctx: SendContext): Promise<SendResult
   const estimatedTime = totalSendTimeMs(scheduled)
   console.log(`[SDR:Send] Enviando ${scheduled.length} msg(s) | tempo estimado: ${Math.round(estimatedTime / 1000)}s`)
 
-  // Formatar número para UAZAPI (com @s.whatsapp.net)
-  const chatId = formatChatId(ctx.phone)
+  // Formatar número para UAZAPI v2 (apenas dígitos)
+  const number = formatNumber(ctx.phone)
 
   const details: SendResult['details'] = []
   let sent = 0
@@ -82,16 +82,16 @@ export async function sendWithHumanization(ctx: SendContext): Promise<SendResult
       await sleep(msg.delayMs)
 
       // 2. Enviar "digitando..."
-      await sendPresence(instance.api_url, instance.instance_token, chatId, 'composing')
+      await sendPresence(instance.api_url, instance.instance_token, number, 'composing')
 
       // 3. Espera tempo de digitação
       await sleep(msg.typingDurationMs)
 
       // 4. Enviar mensagem
-      await sendText(instance.api_url, instance.instance_token, chatId, msg.text)
+      await sendText(instance.api_url, instance.instance_token, number, msg.text)
 
       // 5. Limpar status de digitação
-      await sendPresence(instance.api_url, instance.instance_token, chatId, 'available')
+      await sendPresence(instance.api_url, instance.instance_token, number, 'available')
 
       details.push({ text: msg.text, status: 'sent' })
       sent++
@@ -122,16 +122,17 @@ export async function sendWithHumanization(ctx: SendContext): Promise<SendResult
 async function sendText(
   apiUrl: string,
   token: string,
-  chatId: string,
+  number: string,
   text: string
 ): Promise<void> {
-  const response = await fetch(`${apiUrl}/sendText`, {
+  // UAZAPI v2 usa endpoint /send/text com campo "number" (não chatId)
+  const response = await fetch(`${apiUrl}/send/text`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'token': token
     },
-    body: JSON.stringify({ chatId, text })
+    body: JSON.stringify({ number, text })
   })
 
   if (!response.ok) {
@@ -148,17 +149,17 @@ async function sendText(
 async function sendPresence(
   apiUrl: string,
   token: string,
-  chatId: string,
+  number: string,
   state: 'composing' | 'available'
 ): Promise<void> {
   // Fire-and-forget: não precisa esperar resposta
-  await fetch(`${apiUrl}/sendPresence`, {
+  await fetch(`${apiUrl}/send/presence`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'token': token
     },
-    body: JSON.stringify({ chatId, state })
+    body: JSON.stringify({ number, state })
   }).catch(() => {
     // Presença não é crítica — ignorar erros silenciosamente
   })
@@ -186,12 +187,11 @@ async function getInstanceCredentials(instanceName: string): Promise<{
 }
 
 /**
- * Formata número para o chatId da UAZAPI
- * Ex: "5511999887766" → "5511999887766@s.whatsapp.net"
+ * Formata número para a UAZAPI v2
+ * Ex: "5511999887766" → "5511999887766" (apenas dígitos)
  */
-function formatChatId(phone: string): string {
-  const clean = phone.replace(/[^0-9]/g, '')
-  return `${clean}@s.whatsapp.net`
+function formatNumber(phone: string): string {
+  return phone.replace(/[^0-9]/g, '')
 }
 
 /**

@@ -140,6 +140,7 @@ const TRANSLATIONS = {
     intBoth: 'Compra e Locação',
     attendantPause: 'Pausa do atendente',
     agentReturnsIn: 'Agente retorna em',
+    reactivateAI: 'Reativar IA',
   },
   en: {
     back: 'Back',
@@ -196,6 +197,7 @@ const TRANSLATIONS = {
     intBoth: 'Purchase & Rental',
     attendantPause: 'Attendant pause',
     agentReturnsIn: 'Agent returns in',
+    reactivateAI: 'Reactivate AI',
   },
   es: {
     back: 'Volver',
@@ -252,6 +254,7 @@ const TRANSLATIONS = {
     intBoth: 'Compra y Alquiler',
     attendantPause: 'Pausa del atendente',
     agentReturnsIn: 'Agente regresa en',
+    reactivateAI: 'Reactivar IA',
   }
 }
 
@@ -466,6 +469,21 @@ export default function LeadProfilePage() {
       clearInterval(sync)
     }
   }, [lead?.phone, orgId])
+
+  // ─── LIMPAR STOP (reativar IA imediatamente) ───
+  const handleClearStop = async () => {
+    if (!lead?.phone || !orgId) return
+    try {
+      await fetch('/api/sdr/stop-clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ org_id: orgId, phone: lead.phone })
+      })
+      setStopRemaining(0)
+    } catch (err) {
+      console.error('Erro ao limpar STOP:', err)
+    }
+  }
 
   // ─── ATUALIZAR CAMPO ───
   const handleUpdateField = async (field: keyof LeadDetails, value: unknown) => {
@@ -745,11 +763,20 @@ export default function LeadProfilePage() {
 
         {/* Cronômetro de pausa temporária do atendente */}
         {stopRemaining > 0 && !lead.conversa_finalizada && (
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 w-full sm:w-auto justify-center">
-            <Timer size={14} className="animate-pulse" />
-            <span className="text-xs font-medium">
-              {t.attendantPause} — {t.agentReturnsIn} {Math.floor(stopRemaining / 60)}:{String(stopRemaining % 60).padStart(2, '0')}
-            </span>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400">
+              <Timer size={14} className="animate-pulse" />
+              <span className="text-xs font-medium">
+                {t.attendantPause} — {t.agentReturnsIn} {Math.floor(stopRemaining / 60)}:{String(stopRemaining % 60).padStart(2, '0')}
+              </span>
+            </div>
+            <button
+              onClick={handleClearStop}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all text-xs font-bold uppercase tracking-wider"
+            >
+              <Bot size={12} />
+              {t.reactivateAI}
+            </button>
           </div>
         )}
       </div>
