@@ -38,8 +38,10 @@ export function buildSystemPrompt(config: PromptConfig): string {
   const name = config.assistant_name || 'Assistente'
   const tone = mapTone(config.tone)
   const lang = mapLanguage(config.org_language)
-  const today = config.current_date || new Date().toISOString().split('T')[0]
+  const now = new Date()
+  const today = config.current_date || now.toISOString().split('T')[0]
   const dayOfWeek = config.current_day || getDayOfWeek(config.org_language)
+  const upcomingDays = getUpcomingDaysReference(now, config.org_language)
   const orgName = config.org_name || 'a imobiliária'
 
   return `# Identidade
@@ -52,9 +54,13 @@ ${config.company_context || orgName + ' — empresa do setor imobiliário que at
 
 # Data e Hora
 Hoje é ${dayOfWeek}, ${today}.
+Referência dos próximos dias:
+${upcomingDays}
+IMPORTANTE: Use esta referência ao sugerir datas. NÃO calcule dias da semana de cabeça — use a tabela acima.
 
 # Idioma
 ${lang}
+REGRA ABSOLUTA: Mantenha SEMPRE o mesmo idioma durante toda a conversa. Mesmo que o lead use uma palavra de outro idioma, continue respondendo no idioma principal definido acima. NUNCA troque de idioma no meio da conversa.
 
 # Tom de Comunicação
 ${tone}
@@ -289,6 +295,29 @@ function mapLanguage(lang?: string): string {
     default:
       return 'Responda no mesmo idioma que o lead usar. Se não souber, use português.'
   }
+}
+
+/**
+ * Gera tabela dos próximos 10 dias com dia da semana correto.
+ * Evita que o Claude calcule errado.
+ */
+function getUpcomingDaysReference(now: Date, lang?: string): string {
+  const dayNames: Record<string, string[]> = {
+    pt: ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'],
+    es: ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'],
+    en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  }
+  const locale = dayNames[lang || 'pt'] || dayNames.pt
+  const lines: string[] = []
+
+  for (let i = 0; i <= 10; i++) {
+    const d = new Date(now)
+    d.setDate(d.getDate() + i)
+    const dateStr = d.toISOString().split('T')[0]
+    const dayName = locale[d.getDay()]
+    lines.push(`${dateStr} = ${dayName}`)
+  }
+  return lines.join('\n')
 }
 
 function getDayOfWeek(lang?: string): string {

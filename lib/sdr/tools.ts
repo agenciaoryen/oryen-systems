@@ -329,10 +329,63 @@ async function executeQualifyLead(
   input: { stage: string; reason: string },
   ctx: ToolContext
 ): Promise<ToolResult> {
+  // Buscar stages do pipeline ativo da org para mapear corretamente
+  const { data: stages } = await supabase
+    .from('pipeline_stages')
+    .select('name, label, position')
+    .eq('org_id', ctx.org_id)
+    .eq('is_active', true)
+    .order('position')
+
+  // Mapear stage do agente para stage real do pipeline
+  let targetStage = input.stage
+  if (stages && stages.length > 0) {
+    // Tentar match direto
+    const directMatch = stages.find(s => s.name === input.stage)
+    if (!directMatch) {
+      // Mapear stages semânticos do agente para stages do pipeline
+      const stageMap: Record<string, string[]> = {
+        'new':              ['new', 'novo', 'captado', 'lead'],
+        'qualifying':       ['qualifying', 'qualificacao', 'contatado', 'contacted'],
+        'qualified':        ['qualified', 'qualificado', 'lead_respondeu', 'responded'],
+        'visit_scheduled':  ['visit_scheduled', 'visita_agendada', 'agendado', 'scheduled'],
+        'negotiation':      ['negotiation', 'negociacao', 'proposta_enviada', 'proposal'],
+        'won':              ['won', 'fechamento', 'ganho', 'closed_won'],
+        'lost':             ['lost', 'perdido', 'closed_lost'],
+      }
+      const aliases = stageMap[input.stage] || [input.stage]
+      const mapped = stages.find(s => aliases.some(a =>
+        s.name.toLowerCase().includes(a) || s.label.toLowerCase().includes(a)
+      ))
+      if (mapped) {
+        targetStage = mapped.name
+      } else {
+        // Fallback: usar posição relativa
+        const positionMap: Record<string, number> = {
+          'new': 0, 'qualifying': 1, 'qualified': 2,
+          'visit_scheduled': 3, 'negotiation': 4, 'won': 5, 'lost': 6
+        }
+        const pos = positionMap[input.stage]
+        if (pos !== undefined && pos < stages.length) {
+          targetStage = stages[Math.min(pos, stages.length - 1)].name
+        }
+      }
+    }
+  }
+
+  // Buscar stage anterior para o evento
+  const { data: currentLead } = await supabase
+    .from('leads')
+    .select('stage')
+    .eq('id', ctx.lead_id)
+    .single()
+
+  const previousStage = currentLead?.stage || 'new'
+
   const { error } = await supabase
     .from('leads')
     .update({
-      stage: input.stage,
+      stage: targetStage,
       updated_at: new Date().toISOString()
     })
     .eq('id', ctx.lead_id)
@@ -340,8 +393,15 @@ async function executeQualifyLead(
 
   if (error) return { success: false, error: error.message }
 
-  console.log(`[SDR:Qualify] Lead ${ctx.lead_id} → ${input.stage} | ${input.reason}`)
-  return { success: true, data: { stage: input.stage, reason: input.reason } }
+  // Registrar na linha do tempo
+  await supabase.from('lead_events').insert({
+    lead_id: ctx.lead_id,
+    type: 'stage_change',
+    content: `Agente IA alterou etapa de ${previousStage} para ${targetStage}. Motivo: ${input.reason}`
+  }).then(() => {}).catch(() => {})
+
+  console.log(`[SDR:Qualify] Lead ${ctx.lead_id} → ${targetStage} (solicitado: ${input.stage}) | ${input.reason}`)
+  return { success: true, data: { stage: targetStage, original_stage: input.stage, reason: input.reason } }
 }
 
 // ─── Schedule Visit: salvar evento + atualizar lead + alertar corretor ───
@@ -421,6 +481,13 @@ async function executeScheduleVisit(
       is_read: false
     })
   }
+
+  // Registrar na linha do tempo
+  await supabase.from('lead_events').insert({
+    lead_id: ctx.lead_id,
+    type: 'visit_scheduled',
+    content: `Agente IA agendou visita: ${input.date} às ${input.time} — ${input.property_description}${input.address ? ' | ' + input.address : ''}`
+  }).then(() => {}).catch(() => {})
 
   console.log(`[SDR:Schedule] Visita agendada: ${input.date} ${input.time} | Lead ${ctx.lead_id} | alerta: ${!!owner}`)
   return {
@@ -539,6 +606,12 @@ async function executeRescheduleVisit(
     })
   }
 
+  await supabase.from('lead_events').insert({
+    lead_id: ctx.lead_id,
+    type: 'visit_rescheduled',
+    content: `Visita reagendada: ${event.event_date} ${event.start_time} → ${input.new_date} ${input.new_time}${input.reason ? ' | Motivo: ' + input.reason : ''}`
+  }).then(() => {}).catch(() => {})
+
   console.log(`[SDR:Reschedule] ${event.event_date} ${event.start_time} → ${input.new_date} ${input.new_time} | Lead ${ctx.lead_id}`)
   return {
     success: true,
@@ -610,6 +683,12 @@ async function executeCancelEvent(
       is_read: false
     })
   }
+
+  await supabase.from('lead_events').insert({
+    lead_id: ctx.lead_id,
+    type: 'visit_cancelled',
+    content: `Visita cancelada: ${event.event_date} ${event.start_time} | Motivo: ${input.reason}`
+  }).then(() => {}).catch(() => {})
 
   console.log(`[SDR:Cancel] Evento cancelado: ${event.event_date} ${event.start_time} | Lead ${ctx.lead_id} | Motivo: ${input.reason}`)
   return {
@@ -782,6 +861,40 @@ async function executeSaveLeadInfo(
     value: input.value,
     collected_at: new Date().toISOString()
   })
+
+  // Atualizar campos diretos do lead quando aplicável
+  const leadFieldMap: Record<string, string> = {
+    'property_type': 'interesse',       // tipo de imóvel → interesse
+    'region': 'city',                   // região/cidade → city
+    'budget': 'total_em_vendas',        // orçamento → valor
+    'current_situation': 'tipo_contato', // situação → tipo_contato
+  }
+
+  const leadColumn = leadFieldMap[fieldKey]
+  if (leadColumn) {
+    const updateData: Record<string, any> = { updated_at: new Date().toISOString() }
+    if (leadColumn === 'total_em_vendas') {
+      // Extrair número do orçamento
+      const numStr = input.value.replace(/[^\d.,]/g, '').replace(',', '.')
+      const num = parseFloat(numStr)
+      if (!isNaN(num)) updateData[leadColumn] = num
+    } else {
+      updateData[leadColumn] = input.value
+    }
+    await supabase
+      .from('leads')
+      .update(updateData)
+      .eq('id', ctx.lead_id)
+      .eq('org_id', ctx.org_id)
+      .then(() => {}).catch(() => {})
+  }
+
+  // Registrar na linha do tempo
+  await supabase.from('lead_events').insert({
+    lead_id: ctx.lead_id,
+    type: 'info_collected',
+    content: `Agente IA coletou: ${fieldKey} = ${input.value}`
+  }).then(() => {}).catch(() => {})
 
   console.log(`[SDR:Info] Lead ${ctx.lead_id} | ${fieldKey}: ${input.value}`)
   return { success: true, data: { field: fieldKey, value: input.value } }

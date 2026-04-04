@@ -267,7 +267,7 @@ export default function CalendarPage() {
       .channel('calendar_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_events', filter: `org_id=eq.${orgId}` }, (payload) => {
         if (payload.eventType === 'INSERT') {
-          setEvents(prev => [...prev, payload.new as CalendarEvent])
+          setEvents(prev => prev.some(e => e.id === (payload.new as any).id) ? prev : [...prev, payload.new as CalendarEvent])
         } else if (payload.eventType === 'UPDATE') {
           setEvents(prev => prev.map(e => e.id === (payload.new as any).id ? { ...e, ...payload.new } : e))
         } else if (payload.eventType === 'DELETE') {
@@ -341,12 +341,10 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-4 pb-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{t.title}</h1>
-        </div>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h1 className="text-2xl font-bold text-white">{t.title}</h1>
         <button
           onClick={() => { setShowCreateModal(true) }}
           className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors text-sm"
@@ -356,9 +354,9 @@ export default function CalendarPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* ═══ Month Grid ═══ */}
-        <div className="lg:col-span-2 bg-[#111] border border-white/5 rounded-2xl p-5">
+        <div className="lg:col-span-2 bg-[#111] border border-white/5 rounded-2xl p-4">
           {/* Month nav */}
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-lg font-bold text-white">
@@ -575,28 +573,28 @@ function CreateEventModal({
     }
   }
 
-  const selectClass = "w-full mt-1 bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500/50 focus:outline-none appearance-none [&>option]:bg-[#1a1a1a] [&>option]:text-white"
-  const inputClass = "w-full mt-1 bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:border-blue-500/50 focus:outline-none [color-scheme:dark]"
+  const selectClass = "w-full mt-1 bg-[#1a1a1a] border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:border-blue-500/50 focus:outline-none appearance-none [&>option]:bg-[#1a1a1a] [&>option]:text-white"
+  const inputClass = "w-full mt-1 bg-[#1a1a1a] border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500/50 focus:outline-none [color-scheme:dark]"
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b border-white/5">
-          <h2 className="text-lg font-bold text-white">{t.newEvent}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={20} /></button>
+      <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+          <h2 className="text-base font-bold text-white">{t.newEvent}</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={18} /></button>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="px-5 py-3 space-y-3">
           {/* Title */}
           <div>
-            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t.eventTitle}</label>
+            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.eventTitle}</label>
             <input value={title} onChange={e => setTitle(e.target.value)} className={inputClass} placeholder="Ex: Visita apartamento 2 quartos" />
           </div>
 
-          {/* Type + Date */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Type + Date + Times em uma linha */}
+          <div className="grid grid-cols-4 gap-2">
             <div>
-              <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t.eventType}</label>
+              <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.eventType}</label>
               <select value={eventType} onChange={e => setEventType(e.target.value)} className={selectClass}>
                 <option value="visit">{t.typeVisit}</option>
                 <option value="meeting">{t.typeMeeting}</option>
@@ -605,32 +603,28 @@ function CreateEventModal({
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t.date}</label>
+              <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.date}</label>
               <input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} className={inputClass} />
             </div>
-          </div>
-
-          {/* Time */}
-          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t.startTime}</label>
+              <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.startTime}</label>
               <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t.endTime}</label>
+              <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.endTime}</label>
               <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className={inputClass} />
             </div>
           </div>
 
           {/* Address */}
           <div>
-            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t.address}</label>
-            <input value={address} onChange={e => setAddress(e.target.value)} className={inputClass} placeholder="Rua, número, bairro..." />
+            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.address}</label>
+            <input value={address} onChange={e => setAddress(e.target.value)} className={inputClass} placeholder="Rua, numero, bairro..." />
           </div>
 
           {/* Lead search */}
           <div>
-            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t.lead}</label>
+            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.lead}</label>
             {selectedLead ? (
               <div className="flex items-center gap-2 mt-1 bg-blue-500/10 border border-blue-500/30 rounded-lg px-3 py-2">
                 <User size={14} className="text-blue-400" />
@@ -658,13 +652,13 @@ function CreateEventModal({
 
           {/* Notes */}
           <div>
-            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t.notes}</label>
-            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full mt-1 bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:border-blue-500/50 focus:outline-none resize-none" placeholder="Observações..." />
+            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.notes}</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={1} className="w-full mt-1 bg-[#1a1a1a] border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500/50 focus:outline-none resize-none" placeholder="Observacoes..." />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-5 border-t border-white/5">
+        <div className="flex justify-end gap-3 px-5 py-3 border-t border-white/5">
           <button onClick={onClose} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">{t.cancel}</button>
           <button onClick={handleSave} disabled={saving || !title.trim()} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-medium text-sm transition-colors flex items-center gap-2">
             {saving && <Loader2 size={14} className="animate-spin" />}

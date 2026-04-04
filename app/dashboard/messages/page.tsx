@@ -83,6 +83,8 @@ const TRANSLATIONS = {
     document: 'Documento',
     inputPlaceholder: 'Digite uma mensagem...',
     sendError: 'Erro ao enviar. Tente novamente.',
+    sendErrorDisconnected: 'WhatsApp desconectado. Conecte uma instancia em Configuracoes > WhatsApp.',
+    sendErrorUazapi: 'Falha ao enviar pelo WhatsApp. Verifique se a instancia esta ativa.',
     refresh: 'Atualizar',
     allStages: 'Todas',
   },
@@ -106,6 +108,8 @@ const TRANSLATIONS = {
     document: 'Document',
     inputPlaceholder: 'Type a message...',
     sendError: 'Failed to send. Try again.',
+    sendErrorDisconnected: 'WhatsApp disconnected. Connect an instance in Settings > WhatsApp.',
+    sendErrorUazapi: 'Failed to send via WhatsApp. Check if the instance is active.',
     refresh: 'Refresh',
     allStages: 'All',
   },
@@ -129,6 +133,8 @@ const TRANSLATIONS = {
     document: 'Documento',
     inputPlaceholder: 'Escribe un mensaje...',
     sendError: 'Error al enviar. Inténtalo de nuevo.',
+    sendErrorDisconnected: 'WhatsApp desconectado. Conecta una instancia en Configuraciones > WhatsApp.',
+    sendErrorUazapi: 'Fallo al enviar por WhatsApp. Verifica si la instancia esta activa.',
     refresh: 'Actualizar',
     allStages: 'Todas',
   },
@@ -768,7 +774,12 @@ function MessagesContent() {
           message: text,
         }),
       })
-      if (!res.ok) throw new Error('Send failed')
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        if (res.status === 404) throw new Error('whatsapp_disconnected')
+        if (res.status === 502) throw new Error('whatsapp_send_error')
+        throw new Error(errData.error || 'send_failed')
+      }
 
       // Salvar no módulo de conversas (dashboard)
       const { data: result } = await supabase.rpc('fn_insert_message', {
@@ -814,8 +825,14 @@ function MessagesContent() {
           return bt - at
         })
       })
-    } catch {
-      setSendError(t.sendError)
+    } catch (err: any) {
+      if (err.message === 'whatsapp_disconnected') {
+        setSendError(t.sendErrorDisconnected)
+      } else if (err.message === 'whatsapp_send_error') {
+        setSendError(t.sendErrorUazapi)
+      } else {
+        setSendError(t.sendError)
+      }
     } finally {
       setIsSending(false)
     }

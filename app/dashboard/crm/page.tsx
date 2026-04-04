@@ -450,44 +450,25 @@ export default function CrmPage() {
           .select('lead_id, tag_id')
       ])
 
-      // Buscar leads com paginação
-      let allLeads: Lead[] = []
-      let hasMore = true
-      let page = 0
-      const pageSize = 1000
+      // Buscar leads — sem paginação infinita, query direta com filtro de data
+      let query = supabase
+        .from('leads')
+        .select('*, conversa_finalizada')
+        .eq('org_id', orgId)
+        .order('updated_at', { ascending: false })
+        .limit(500)
 
-      while (hasMore) {
-        const from = page * pageSize
-        const to = (page + 1) * pageSize - 1
-
-        let query = supabase
-          .from('leads')
-          .select('*, conversa_finalizada')
-          .eq('org_id', orgId)
-          .order('created_at', { ascending: false })
-          .range(from, to)
-
-        if (filterDate) {
-          query = query.or(`created_at.gte.${filterDate},updated_at.gte.${filterDate}`)
-        }
-
-        const { data, error } = await query
-
-        if (error) throw error
-
-        if (data && data.length > 0) {
-          allLeads = [...allLeads, ...data]
-          hasMore = data.length === pageSize
-          page++
-        } else {
-          hasMore = false
-        }
+      if (filterDate) {
+        query = query.or(`created_at.gte.${filterDate},updated_at.gte.${filterDate}`)
       }
+
+      const { data: allLeads, error: leadsErr } = await query
+      if (leadsErr) throw leadsErr
 
       setPipelineStages(stagesRes.data || [])
       setTags(tagsRes.data || [])
       setLeadTags(leadTagsRes.data || [])
-      setLeads(allLeads)
+      setLeads(allLeads || [])
 
     } catch (err) {
       console.error('Erro ao carregar dados:', err)
@@ -1009,27 +990,29 @@ export default function CrmPage() {
                   >
                     {/* Header da Coluna */}
                     <div className="p-3 shrink-0 rounded-t-xl" style={{ borderBottom: `2px solid ${getStageHex(stage.color)}`, background: 'var(--color-bg-elevated)' }}>
-                      <div className="flex justify-between items-center mb-1">
-                        <h3 className={`font-bold text-sm uppercase tracking-tight flex items-center gap-2`} style={{ color: 'var(--color-text-primary)' }}>
-                          <span className={`w-2.5 h-2.5 rounded-full ${stageColor.dot}`} />
+                      <div className="flex justify-between items-center">
+                        <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                          <span className={`w-2 h-2 rounded-full ${stageColor.dot}`} />
                           {stage.label}
                         </h3>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'var(--color-bg-hover)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${stageColor.bg} ${stageColor.text}`}>
                           {count}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1.5 mt-1" style={{ color: 'var(--color-success)' }}>
-                        <DollarSign size={12} />
-                        <span className="text-[11px] font-mono font-bold">
-                          {formatPrice(stageTotal, userCurrency, userLang)}
-                        </span>
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center gap-1" style={{ color: 'var(--color-success)' }}>
+                          <DollarSign size={11} />
+                          <span className="text-[11px] font-mono font-bold">
+                            {formatPrice(stageTotal, userCurrency, userLang)}
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="h-0.5 w-full mt-2 rounded-full overflow-hidden" style={{ background: 'var(--color-border)' }}>
+                      <div className="h-1 w-full mt-2.5 rounded-full overflow-hidden" style={{ background: 'var(--color-border)' }}>
                         <div
-                          className={`h-full ${stageColor.dot}`}
-                          style={{ width: `${Math.min(count * 10, 100)}%`, opacity: 0.7 }}
+                          className={`h-full rounded-full ${stageColor.dot}`}
+                          style={{ width: `${Math.min(count * 10, 100)}%`, opacity: 0.8, transition: 'width 0.5s ease' }}
                         />
                       </div>
                     </div>

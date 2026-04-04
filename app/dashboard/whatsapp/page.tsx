@@ -17,7 +17,8 @@ import {
   AlertCircle,
   Trash2,
   Bot,
-  X
+  X,
+  AlertTriangle
 } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -180,6 +181,7 @@ export default function WhatsAppPage() {
   const [webhookResult, setWebhookResult] = useState<Record<string, 'success' | 'error'>>({})
 
   // QR state
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [qrInstanceId, setQrInstanceId] = useState<string | null>(null)
   const [qrCode, setQrCode] = useState<string | null>(null)
   const [qrLoading, setQrLoading] = useState(false)
@@ -252,7 +254,7 @@ export default function WhatsAppPage() {
 
   // ─── Delete instance ───
   const handleDelete = async (instanceId: string) => {
-    if (!confirm(t.deleteConfirm)) return
+    setConfirmDeleteId(null)
     setDeletingId(instanceId)
     try {
       await fetch('/api/whatsapp/instances', {
@@ -667,11 +669,12 @@ export default function WhatsAppPage() {
                     <select
                       value={instance.agent_id || ''}
                       onChange={e => handleLinkAgent(instance.id, e.target.value)}
-                      className="text-xs rounded-lg px-2 py-1.5 outline-none cursor-pointer"
+                      className="text-xs rounded-lg px-2 py-1.5 outline-none cursor-pointer appearance-none [&>option]:bg-[#1a1a1a] [&>option]:text-white"
                       style={{
-                        background: 'var(--color-bg-input)',
-                        border: '1px solid var(--color-border)',
-                        color: instance.agent_id ? 'rgb(16,185,129)' : 'var(--color-text-secondary)'
+                        background: '#1a1a1a',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: instance.agent_id ? 'rgb(16,185,129)' : 'var(--color-text-secondary)',
+                        colorScheme: 'dark'
                       }}
                     >
                       <option value="">{t.noAgent}</option>
@@ -729,7 +732,7 @@ export default function WhatsAppPage() {
                     </button>
                   )}
                   <button
-                    onClick={() => handleDelete(instance.id)}
+                    onClick={() => setConfirmDeleteId(instance.id)}
                     disabled={deletingId === instance.id}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
                     style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
@@ -746,6 +749,38 @@ export default function WhatsAppPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal de confirmação de exclusão */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setConfirmDeleteId(null)}>
+          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 bg-rose-500/10 rounded-xl shrink-0">
+                <AlertTriangle size={20} className="text-rose-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white">{t.delete}</h3>
+                <p className="text-sm text-gray-400 mt-1">{t.deleteConfirm}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors"
+              >
+                {t.cancel || 'Cancelar'}
+              </button>
+              <button
+                onClick={() => handleDelete(confirmDeleteId)}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors"
+              >
+                <Trash2 size={14} />
+                {t.delete}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
