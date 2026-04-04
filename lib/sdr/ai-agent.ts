@@ -132,8 +132,8 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
       (block: any) => block.type === 'tool_use'
     )
 
-    if (toolUseBlocks.length === 0 || response.stop_reason === 'end_turn') {
-      // Sem tool calls → extrair texto final
+    if (toolUseBlocks.length === 0) {
+      // Sem tool calls → extrair texto final e retornar
       const textBlocks = response.content.filter(
         (block: any) => block.type === 'text'
       )
@@ -147,6 +147,11 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
         model: MODEL
       }
     }
+
+    // Se tem tool_use, processar tools mesmo com stop_reason 'end_turn'
+    // O Claude frequentemente chama tools e marca end_turn — precisamos
+    // executar as tools, devolver os resultados, e continuar o loop
+    // para que ele gere a resposta de texto ao lead.
 
     // Executar tools e alimentar resultados
     // Adicionar a resposta do assistant (com tool_use) ao histórico
