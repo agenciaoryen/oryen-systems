@@ -41,15 +41,14 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await audioFile.arrayBuffer()
     const base64 = Buffer.from(arrayBuffer).toString('base64')
 
-    // 3. Enviar áudio via UAZAPI /send/audio
-    const sendRes = await fetch(`${instance.api_url}/send/audio`, {
+    // 3. Enviar áudio via UAZAPI /send/media com type ptt (push-to-talk)
+    const sendRes = await fetch(`${instance.api_url}/send/media`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'token': instance.instance_token },
       body: JSON.stringify({
         number,
-        audio: base64,
-        encoding: 'base64',
-        ptt: true // push-to-talk (aparece como mensagem de voz)
+        type: 'ptt',
+        file: `data:audio/ogg;base64,${base64}`
       })
     })
 
