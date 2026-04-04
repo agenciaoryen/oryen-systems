@@ -17,6 +17,7 @@
 
 import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { transcribeAudio, isTranscriptionAvailable } from '@/lib/sdr/transcribe'
 import { extractPhone, isValidPhone } from '@/lib/sdr/normalize-phone'
 import {
   bufferPush,
@@ -93,13 +94,37 @@ export async function POST(request: NextRequest) {
 
     // ─── 4. Buscar lead no CRM (dupla busca para BR) ───
     const lead = await findOrCreateLead(phone, phoneFallback, instance.org_id, payload)
-    const messageText = payload.body || payload.text || payload.caption || ''
+    let messageText = payload.body || payload.text || payload.caption || ''
+
+    // ─── 4.5. Transcrever áudio se for mensagem de voz ───
+    const isAudioMessage = ['audio', 'ptt', 'voice'].includes(payload.type?.toLowerCase() || '') ||
+      (payload.mimetype && payload.mimetype.startsWith('audio/'))
+    let wasTranscribed = false
+
+    if (isAudioMessage && !messageText.trim()) {
+      const audioUrl = payload.mediaUrl || ''
+      if (audioUrl && isTranscriptionAvailable()) {
+        try {
+          console.log(`[SDR] Áudio detectado para ${phone} — transcrevendo...`)
+          const result = await transcribeAudio(audioUrl)
+          messageText = result.text
+          wasTranscribed = true
+          console.log(`[SDR] ✓ Transcrição (${result.provider}, ${result.duration_ms}ms): "${messageText.slice(0, 80)}"`)
+        } catch (err: any) {
+          console.error(`[SDR] ✗ Falha na transcrição: ${err.message}`)
+          // Continua sem texto — será filtrado adiante se vazio
+        }
+      } else if (audioUrl && !isTranscriptionAvailable()) {
+        console.warn(`[SDR] Áudio recebido mas transcrição não configurada (GROQ_API_KEY ou OPENAI_API_KEY)`)
+      }
+    }
 
     // ─── 5. Salvar mensagem no histórico (sdr_messages + conversations/messages) ───
     const messageRole = isAttendant ? 'assistant' : 'user'
     const direction = isAttendant ? 'outbound' : 'inbound'
     const senderType = isAttendant ? 'agent_human' : 'lead'
     const senderName = isAttendant ? 'Atendente' : (payload.pushName || lead.name || `Lead ${phone.slice(-4)}`)
+    const messageType = isAudioMessage ? 'audio' : 'text'
 
     // Salvar em sdr_messages (histórico para IA)
     await supabase.from('sdr_messages').insert({
@@ -109,8 +134,8 @@ export async function POST(request: NextRequest) {
       instance_name: instanceName,
       phone,
       role: messageRole,
-      body: messageText,
-      type: isAttendant ? 'attendant' : 'text',
+      body: wasTranscribed ? `[Áudio transcrito]: ${messageText}` : messageText,
+      type: isAttendant ? 'attendant' : messageType,
       source: isAttendant ? 'human' : 'lead'
     })
 
@@ -121,10 +146,10 @@ export async function POST(request: NextRequest) {
         p_lead_id: lead.id,
         p_channel: 'whatsapp',
         p_direction: direction,
-        p_body: messageText,
+        p_body: wasTranscribed ? `[Áudio transcrito]: ${messageText}` : messageText,
         p_sender_type: senderType,
         p_sender_name: senderName,
-        p_message_type: 'text',
+        p_message_type: messageType,
         p_timestamp: new Date().toISOString()
       })
     } catch (rpcErr: any) {
@@ -169,6 +194,18 @@ export async function POST(request: NextRequest) {
         .update({ conversa_finalizada: false, updated_at: new Date().toISOString() })
         .eq('id', lead.id)
         .eq('org_id', instance.org_id)
+    }
+
+    // ─── 8.5. Se áudio sem transcrição, notificar mas não processar pela IA ───
+    if (isAudioMessage && !messageText.trim()) {
+      console.log(`[SDR] Áudio sem transcrição para ${phone} — salvo no histórico, IA não processa`)
+      return NextResponse.json({
+        success: true,
+        saved: true,
+        skipped: true,
+        reason: 'audio_no_transcription',
+        lead_id: lead.id
+      })
     }
 
     // ─── 9. Adicionar mensagem ao buffer Redis (anti-fragmentação) ───

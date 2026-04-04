@@ -444,7 +444,15 @@ function MessageBubble({
           {msg.body && msg.message_type === 'text' && (
             <span className="whitespace-pre-wrap break-words">{msg.body}</span>
           )}
-          {msg.body && msg.message_type !== 'text' && (
+          {msg.body && msg.message_type === 'audio' && (
+            <div className="flex items-start gap-2">
+              <Mic size={14} className="text-blue-400 mt-0.5 shrink-0" />
+              <p className="whitespace-pre-wrap break-words text-sm">
+                {msg.body.replace('[Áudio transcrito]: ', '').replace('[Audio enviado]', 'Audio enviado')}
+              </p>
+            </div>
+          )}
+          {msg.body && msg.message_type !== 'text' && msg.message_type !== 'audio' && (
             <p className="whitespace-pre-wrap break-words text-xs mt-1 text-gray-300">{msg.body}</p>
           )}
 
@@ -527,15 +535,21 @@ function ConversationItem({
    MESSAGE INPUT
    ============================================= */
 function MessageInput({
-  onSend, isSending, sendError, t,
+  onSend, onSendAudio, isSending, sendError, t,
 }: {
   onSend: (text: string) => void
+  onSendAudio: (blob: Blob) => void
   isSending: boolean
   sendError: string | null
   t: TranslationType
 }) {
   const [text, setText] = useState('')
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingTime, setRecordingTime] = useState(0)
   const taRef = useRef<HTMLTextAreaElement>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const handleSend = () => {
     const trimmed = text.trim()
@@ -556,6 +570,54 @@ function MessageInput({
     el.style.height = Math.min(el.scrollHeight, 120) + 'px'
   }
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' })
+      mediaRecorderRef.current = mediaRecorder
+      chunksRef.current = []
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data)
+      }
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm;codecs=opus' })
+        stream.getTracks().forEach(t => t.stop())
+        if (blob.size > 0) onSendAudio(blob)
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+      setRecordingTime(0)
+      timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000)
+    } catch (err) {
+      console.error('Erro ao acessar microfone:', err)
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop()
+    }
+    setIsRecording(false)
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+  }
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.ondataavailable = null
+      mediaRecorderRef.current.onstop = null
+      mediaRecorderRef.current.stop()
+      mediaRecorderRef.current.stream?.getTracks().forEach(t => t.stop())
+    }
+    chunksRef.current = []
+    setIsRecording(false)
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+  }
+
+  const formatRecordingTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+
   return (
     <div style={{ backgroundColor: 'var(--color-bg-surface)', borderTop: '1px solid var(--color-border)' }}>
       {sendError && (
@@ -565,27 +627,68 @@ function MessageInput({
         </div>
       )}
       <div className="flex items-end gap-2 px-4 py-2">
-        <textarea
-          ref={taRef}
-          value={text}
-          onChange={handleInput}
-          onKeyDown={handleKeyDown}
-          placeholder={t.inputPlaceholder}
-          disabled={isSending}
-          rows={1}
-          className="flex-1 rounded-lg px-3 py-2 text-[14px] focus:outline-none resize-none disabled:opacity-50"
-          style={{ maxHeight: '120px', backgroundColor: 'var(--color-bg-elevated)', color: 'var(--color-text-primary)' }}
-        />
-        <button
-          onClick={handleSend}
-          disabled={!text.trim() || isSending}
-          className="p-2 rounded-full transition-all shrink-0"
-          style={text.trim() && !isSending
-            ? { backgroundColor: 'var(--color-primary)', color: 'white' }
-            : { backgroundColor: 'transparent', color: 'var(--color-text-secondary)', cursor: 'not-allowed' }}
-        >
-          {isSending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
-        </button>
+        {isRecording ? (
+          <>
+            {/* Cancel */}
+            <button
+              onClick={cancelRecording}
+              className="p-2 rounded-full transition-all shrink-0 hover:bg-red-500/10"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              <X size={20} />
+            </button>
+            {/* Recording indicator */}
+            <div className="flex-1 flex items-center gap-3 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--color-bg-elevated)' }}>
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-sm font-mono text-red-400">{formatRecordingTime(recordingTime)}</span>
+              <span className="text-xs text-gray-500">Gravando...</span>
+            </div>
+            {/* Send audio */}
+            <button
+              onClick={stopRecording}
+              className="p-2 rounded-full transition-all shrink-0"
+              style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+            >
+              <Send size={20} />
+            </button>
+          </>
+        ) : (
+          <>
+            {/* Mic button */}
+            <button
+              onClick={startRecording}
+              disabled={isSending}
+              className="p-2 rounded-full transition-all shrink-0 hover:bg-white/10"
+              style={{ color: 'var(--color-text-secondary)' }}
+              title="Gravar audio"
+            >
+              <Mic size={20} />
+            </button>
+            {/* Text input */}
+            <textarea
+              ref={taRef}
+              value={text}
+              onChange={handleInput}
+              onKeyDown={handleKeyDown}
+              placeholder={t.inputPlaceholder}
+              disabled={isSending}
+              rows={1}
+              className="flex-1 rounded-lg px-3 py-2 text-[14px] focus:outline-none resize-none disabled:opacity-50"
+              style={{ maxHeight: '120px', backgroundColor: 'var(--color-bg-elevated)', color: 'var(--color-text-primary)' }}
+            />
+            {/* Send text */}
+            <button
+              onClick={handleSend}
+              disabled={!text.trim() || isSending}
+              className="p-2 rounded-full transition-all shrink-0"
+              style={text.trim() && !isSending
+                ? { backgroundColor: 'var(--color-primary)', color: 'white' }
+                : { backgroundColor: 'transparent', color: 'var(--color-text-secondary)', cursor: 'not-allowed' }}
+            >
+              {isSending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
@@ -825,6 +928,76 @@ function MessagesContent() {
           return bt - at
         })
       })
+    } catch (err: any) {
+      if (err.message === 'whatsapp_disconnected') {
+        setSendError(t.sendErrorDisconnected)
+      } else if (err.message === 'whatsapp_send_error') {
+        setSendError(t.sendErrorUazapi)
+      } else {
+        setSendError(t.sendError)
+      }
+    } finally {
+      setIsSending(false)
+    }
+  }, [activeConversation, user, t])
+
+  // ---- Send audio ----
+  const handleSendAudio = useCallback(async (blob: Blob) => {
+    if (!activeConversation || !user) return
+    setIsSending(true)
+    setSendError(null)
+
+    const senderName = (user as any)?.email?.split('@')[0] || 'Atendente'
+
+    try {
+      const formData = new FormData()
+      formData.append('org_id', activeConversation.org_id)
+      formData.append('lead_id', activeConversation.lead_id)
+      formData.append('phone', activeConversation.lead_phone || '')
+      formData.append('audio', blob, 'audio.webm')
+
+      const res = await fetch('/api/messages/send-audio', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!res.ok) {
+        if (res.status === 404) throw new Error('whatsapp_disconnected')
+        if (res.status === 502) throw new Error('whatsapp_send_error')
+        throw new Error('send_failed')
+      }
+
+      // Salvar no módulo de conversas
+      const { data: result } = await supabase.rpc('fn_insert_message', {
+        p_org_id: activeConversation.org_id,
+        p_lead_id: activeConversation.lead_id,
+        p_channel: activeConversation.channel || 'whatsapp',
+        p_direction: 'outbound',
+        p_body: '[Audio enviado]',
+        p_sender_type: 'agent_human',
+        p_sender_name: senderName,
+        p_message_type: 'audio',
+        p_timestamp: new Date().toISOString(),
+      })
+
+      const rpcResult = result as { message_id?: string } | null
+
+      const newMsg: Message = {
+        id: rpcResult?.message_id || crypto.randomUUID(),
+        lead_id: activeConversation.lead_id,
+        conversation_id: activeConversation.id,
+        body: '[Audio enviado]',
+        direction: 'outbound',
+        sender_type: 'agent_human',
+        sender_name: senderName,
+        message_type: 'audio',
+        media_url: null,
+        media_mime_type: 'audio/webm',
+        emotion: null,
+        external_message_id: null,
+        created_at: new Date().toISOString(),
+      }
+      setMessages(prev => [...prev, newMsg])
     } catch (err: any) {
       if (err.message === 'whatsapp_disconnected') {
         setSendError(t.sendErrorDisconnected)
@@ -1119,7 +1292,7 @@ function MessagesContent() {
               )}
 
               {/* Input */}
-              <MessageInput onSend={handleSendMessage} isSending={isSending} sendError={sendError} t={t} />
+              <MessageInput onSend={handleSendMessage} onSendAudio={handleSendAudio} isSending={isSending} sendError={sendError} t={t} />
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center" style={{ backgroundColor: 'var(--color-bg-surface)' }}>
