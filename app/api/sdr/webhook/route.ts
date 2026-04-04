@@ -159,16 +159,16 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // ─── 8. Verificar conversa_finalizada no lead (IA pausada pelo CRM) ───
+    // ─── 8. Verificar conversa_finalizada no lead ───
+    // Se o lead manda mensagem novamente, reabrir conversa automaticamente
+    // (mostra que ele quer continuar falando)
     if (lead.conversa_finalizada === true) {
-      console.log(`[SDR] conversa_finalizada=true para lead ${lead.id} — mensagem salva, IA pausada`)
-      return NextResponse.json({
-        success: true,
-        saved: true,
-        skipped: true,
-        reason: 'conversation_ended',
-        lead_id: lead.id
-      })
+      console.log(`[SDR] conversa_finalizada=true para lead ${lead.id} — reabrindo conversa (lead enviou nova msg)`)
+      await supabase
+        .from('leads')
+        .update({ conversa_finalizada: false, updated_at: new Date().toISOString() })
+        .eq('id', lead.id)
+        .eq('org_id', instance.org_id)
     }
 
     // ─── 9. Adicionar mensagem ao buffer Redis (anti-fragmentação) ───

@@ -173,7 +173,7 @@ ${config.scheduling_instructions || `1. Entenda o que o lead busca (tipo, regiã
 - **notify_agent**: Notifique o corretor (lead quente, visita marcada, lead quer falar com humano)
 - **update_lead_name**: Salve o nome do lead quando ele se apresentar
 - **save_lead_info**: Salve cada informação coletada (tipo, região, orçamento, quartos, etc)
-- **end_conversation**: Encerre quando objetivo alcançado ou lead sem interesse
+- **end_conversation**: Use APENAS quando o lead claramente encerrar (ex: "ok, obrigado, tchau")
 
 # Regras de Uso das Ferramentas
 1. SEMPRE use "think" antes de responder para analisar o contexto
@@ -184,7 +184,7 @@ ${config.scheduling_instructions || `1. Entenda o que o lead busca (tipo, regiã
 6. Use "notify_agent" com priority "urgent" quando: lead quer visitar, visita agendada, lead quer falar com corretor
 7. Use "reschedule_visit" quando o lead pedir para mudar data/horário de visita já agendada
 8. Use "cancel_event" quando o lead desistir de uma visita agendada (sempre pergunte o motivo antes)
-9. Use "end_conversation" quando: visita agendada + confirmada, desinteresse claro, lead pediu para parar
+9. Use "end_conversation" APENAS quando: lead se despediu explicitamente ("obrigado, tchau", "ok, valeu"), desinteresse claro ("não quero mais"), ou lead pediu para parar. NUNCA encerre logo após agendar visita — o lead pode ter perguntas adicionais. Aguarde ele encerrar naturalmente.
 
 # Estágios do Lead no Funil Imobiliário
 - new: Lead novo, ainda não qualificado
