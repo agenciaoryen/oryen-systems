@@ -197,7 +197,7 @@ interface Lead {
 /* =============================================
    CONSTANTS & SAFETY FUNCTIONS
    ============================================= */
-const WEBHOOK_SEND_MESSAGE = 'https://webhook2.letierren8n.com/webhook/message_agent_human'
+const SEND_MESSAGE_API = '/api/messages/send'
 
 const parseDateSafe = (dateValue: unknown): Date => {
   try {
@@ -757,19 +757,20 @@ function MessagesContent() {
     const senderName = (user as any)?.email?.split('@')[0] || 'Atendente'
 
     try {
-      const res = await fetch(WEBHOOK_SEND_MESSAGE, {
+      // Enviar via UAZAPI (API interna que envia + seta STOP)
+      const res = await fetch(SEND_MESSAGE_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           org_id: activeConversation.org_id,
           lead_id: activeConversation.lead_id,
-          conversation_id: activeConversation.id,
-          user_id: user.id,
+          phone: activeConversation.lead_phone,
           message: text,
         }),
       })
-      if (!res.ok) throw new Error('Webhook failed')
+      if (!res.ok) throw new Error('Send failed')
 
+      // Salvar no módulo de conversas (dashboard)
       const { data: result } = await supabase.rpc('fn_insert_message', {
         p_org_id: activeConversation.org_id,
         p_lead_id: activeConversation.lead_id,

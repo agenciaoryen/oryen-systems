@@ -415,6 +415,45 @@ function scheduleProcess(url: string, payload: any, delaySeconds: number): void 
 // Busca dupla (com e sem dígito 9) como no workflow n8n validado
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Busca nome do contato via UAZAPI /chat/details
+ * Usado quando fromMe=true (atendente iniciou conversa) para pegar o nome real do contato
+ */
+async function fetchContactName(phone: string, orgId: string): Promise<string | null> {
+  try {
+    const { data: instance } = await supabase
+      .from('whatsapp_instances')
+      .select('api_url, instance_token')
+      .eq('org_id', orgId)
+      .eq('status', 'connected')
+      .limit(1)
+      .single()
+
+    if (!instance?.api_url || !instance?.instance_token) return null
+
+    const number = phone.replace(/[^0-9]/g, '')
+    const res = await fetch(`${instance.api_url}/chat/details`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'token': instance.instance_token },
+      body: JSON.stringify({ number })
+    })
+
+    if (!res.ok) return null
+    const data = await res.json()
+
+    // UAZAPI retorna vários campos de nome — pegar o mais relevante
+    const name = data.name || data.wa_name || data.wa_contactName || data.lead_name || null
+    if (name && typeof name === 'string' && name.trim()) {
+      console.log(`[SDR] Nome do contato obtido via UAZAPI: "${name}" para ${number}`)
+      return name.trim()
+    }
+    return null
+  } catch (err: any) {
+    console.warn(`[SDR] Erro ao buscar nome do contato: ${err.message}`)
+    return null
+  }
+}
+
 async function findOrCreateLead(
   phone: string,
   phoneFallback: string | null,
@@ -444,7 +483,17 @@ async function findOrCreateLead(
   }
 
   // Lead não encontrado → criar novo
-  const newLeadName = payload.pushName || `Lead ${phone.slice(-4)}`
+  // Se fromMe=true, pushName é do dono do chip (não do contato).
+  // Nesse caso, tentar buscar nome real via UAZAPI /chat/details
+  const isFromMe = (payload as any)._isAttendant === true || payload.fromMe === true
+  let newLeadName = isFromMe ? null : (payload.pushName || null)
+
+  if (!newLeadName) {
+    newLeadName = await fetchContactName(phone, orgId)
+  }
+  if (!newLeadName) {
+    newLeadName = `Lead ${phone.slice(-4)}`
+  }
 
   const { data: newLead, error } = await supabase
     .from('leads')
@@ -452,7 +501,7 @@ async function findOrCreateLead(
       org_id: orgId,
       name: newLeadName,
       phone: phone,
-      source: 'whatsapp_inbound',
+      source: isFromMe ? 'whatsapp_outbound' : 'whatsapp_inbound',
       stage: 'new',
       created_at: new Date().toISOString()
     })
