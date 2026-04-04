@@ -208,6 +208,44 @@ export const agentTools: Anthropic.Messages.Tool[] = [
 
   // 9. Salvar informação do lead — dados coletados durante qualificação
   {
+    name: 'reschedule_visit',
+    description: 'Reagenda uma visita ou compromisso existente para nova data/horário. Use quando o lead pedir para mudar a data ou horário de uma visita já agendada.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        new_date: {
+          type: 'string',
+          description: 'Nova data no formato YYYY-MM-DD'
+        },
+        new_time: {
+          type: 'string',
+          description: 'Novo horário no formato HH:MM'
+        },
+        reason: {
+          type: 'string',
+          description: 'Motivo do reagendamento (opcional)'
+        }
+      },
+      required: ['new_date', 'new_time']
+    }
+  },
+
+  {
+    name: 'cancel_event',
+    description: 'Cancela uma visita ou compromisso agendado. Use quando o lead desistir da visita ou pedir para cancelar.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        reason: {
+          type: 'string',
+          description: 'Motivo do cancelamento'
+        }
+      },
+      required: ['reason']
+    }
+  },
+
+  {
     name: 'save_lead_info',
     description: 'Salva informações coletadas do lead durante a conversa (tipo de imóvel, orçamento, região, urgência, etc). Estes dados ficam disponíveis para o corretor.',
     input_schema: {
@@ -265,6 +303,12 @@ export async function executeTool(
 
     case 'buscar_info_lead':
       return executeBuscarInfoLead(input, ctx)
+
+    case 'reschedule_visit':
+      return executeRescheduleVisit(input, ctx)
+
+    case 'cancel_event':
+      return executeCancelEvent(input, ctx)
 
     case 'save_lead_info':
       return executeSaveLeadInfo(input, ctx)
@@ -425,6 +469,156 @@ async function executeCheckAvailability(
       instruction: busySlots.length === 0
         ? `Não há compromissos agendados entre ${input.date_from} e ${dateTo}. Pode sugerir horários em horário comercial.`
         : `Há ${busySlots.length} compromisso(s) no período. Evite os horários ocupados ao sugerir ao lead.`
+    }
+  }
+}
+
+// ─── Reschedule Visit: reagendar evento existente ───
+async function executeRescheduleVisit(
+  input: { new_date: string; new_time: string; reason?: string },
+  ctx: ToolContext
+): Promise<ToolResult> {
+  // Buscar evento agendado mais recente do lead
+  const { data: event, error: findErr } = await supabase
+    .from('calendar_events')
+    .select('id, title, event_date, start_time')
+    .eq('org_id', ctx.org_id)
+    .eq('lead_id', ctx.lead_id)
+    .eq('status', 'scheduled')
+    .order('event_date', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (findErr || !event) {
+    return { success: false, error: 'Nenhum evento agendado encontrado para este lead.' }
+  }
+
+  // Calcular end_time (1h depois)
+  const [h, m] = input.new_time.split(':').map(Number)
+  const endH = Math.min(h + 1, 23)
+  const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+
+  // Atualizar evento
+  const { error: updateErr } = await supabase
+    .from('calendar_events')
+    .update({
+      event_date: input.new_date,
+      start_time: input.new_time,
+      end_time: endTime,
+      notes: input.reason ? `Reagendado: ${input.reason}` : 'Reagendado pelo lead',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', event.id)
+
+  if (updateErr) return { success: false, error: updateErr.message }
+
+  // Criar alerta para o corretor
+  const { data: owner } = await supabase
+    .from('users')
+    .select('id')
+    .eq('org_id', ctx.org_id)
+    .eq('role', 'owner')
+    .limit(1)
+    .single()
+
+  const { data: lead } = await supabase
+    .from('leads')
+    .select('name')
+    .eq('id', ctx.lead_id)
+    .single()
+
+  if (owner) {
+    await supabase.from('alerts').insert({
+      user_id: owner.id,
+      type: 'urgent',
+      title: `Visita reagendada: ${input.new_date} às ${input.new_time}`,
+      description: `Lead: ${lead?.name || ctx.phone}\nAnterior: ${event.event_date} às ${event.start_time}\n${input.reason ? 'Motivo: ' + input.reason : ''}`,
+      action_link: `/dashboard/crm/${ctx.lead_id}`,
+      action_label: 'Ver lead',
+      is_read: false
+    })
+  }
+
+  console.log(`[SDR:Reschedule] ${event.event_date} ${event.start_time} → ${input.new_date} ${input.new_time} | Lead ${ctx.lead_id}`)
+  return {
+    success: true,
+    data: {
+      message: `Visita reagendada de ${event.event_date} para ${input.new_date} às ${input.new_time}. O corretor foi notificado.`,
+      previous_date: event.event_date,
+      previous_time: event.start_time,
+      new_date: input.new_date,
+      new_time: input.new_time
+    }
+  }
+}
+
+// ─── Cancel Event: cancelar evento agendado ───
+async function executeCancelEvent(
+  input: { reason: string },
+  ctx: ToolContext
+): Promise<ToolResult> {
+  // Buscar evento agendado mais recente do lead
+  const { data: event, error: findErr } = await supabase
+    .from('calendar_events')
+    .select('id, title, event_date, start_time')
+    .eq('org_id', ctx.org_id)
+    .eq('lead_id', ctx.lead_id)
+    .eq('status', 'scheduled')
+    .order('event_date', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (findErr || !event) {
+    return { success: false, error: 'Nenhum evento agendado encontrado para este lead.' }
+  }
+
+  // Cancelar evento
+  const { error: updateErr } = await supabase
+    .from('calendar_events')
+    .update({
+      status: 'cancelled',
+      notes: `Cancelado pelo lead: ${input.reason}`,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', event.id)
+
+  if (updateErr) return { success: false, error: updateErr.message }
+
+  // Criar alerta para o corretor
+  const { data: owner } = await supabase
+    .from('users')
+    .select('id')
+    .eq('org_id', ctx.org_id)
+    .eq('role', 'owner')
+    .limit(1)
+    .single()
+
+  const { data: lead } = await supabase
+    .from('leads')
+    .select('name')
+    .eq('id', ctx.lead_id)
+    .single()
+
+  if (owner) {
+    await supabase.from('alerts').insert({
+      user_id: owner.id,
+      type: 'urgent',
+      title: `Visita cancelada: ${event.event_date} às ${event.start_time}`,
+      description: `Lead: ${lead?.name || ctx.phone}\nMotivo: ${input.reason}`,
+      action_link: `/dashboard/crm/${ctx.lead_id}`,
+      action_label: 'Ver lead',
+      is_read: false
+    })
+  }
+
+  console.log(`[SDR:Cancel] Evento cancelado: ${event.event_date} ${event.start_time} | Lead ${ctx.lead_id} | Motivo: ${input.reason}`)
+  return {
+    success: true,
+    data: {
+      message: `Visita de ${event.event_date} às ${event.start_time} foi cancelada. O corretor foi notificado.`,
+      cancelled_date: event.event_date,
+      cancelled_time: event.start_time,
+      reason: input.reason
     }
   }
 }

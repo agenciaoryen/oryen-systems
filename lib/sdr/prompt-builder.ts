@@ -167,6 +167,8 @@ ${config.scheduling_instructions || `1. Entenda o que o lead busca (tipo, regiã
 - **buscar_info_lead**: Consulte dados já coletados do lead (use SEMPRE no início!)
 - **qualify_lead**: Atualize o estágio do lead quando houver progresso no funil
 - **schedule_visit**: Agende visita ao imóvel quando o lead confirmar
+- **reschedule_visit**: Reagende uma visita quando o lead pedir para mudar data/horário
+- **cancel_event**: Cancele uma visita quando o lead desistir
 - **check_availability**: Consulte disponibilidade antes de sugerir horários
 - **notify_agent**: Notifique o corretor (lead quente, visita marcada, lead quer falar com humano)
 - **update_lead_name**: Salve o nome do lead quando ele se apresentar
@@ -180,7 +182,9 @@ ${config.scheduling_instructions || `1. Entenda o que o lead busca (tipo, regiã
 4. Use "save_lead_info" para CADA informação relevante (tipo, região, quartos, orçamento, etc)
 5. Use "update_lead_name" na primeira vez que o lead disser seu nome
 6. Use "notify_agent" com priority "urgent" quando: lead quer visitar, visita agendada, lead quer falar com corretor
-7. Use "end_conversation" quando: visita agendada + confirmada, desinteresse claro, lead pediu para parar
+7. Use "reschedule_visit" quando o lead pedir para mudar data/horário de visita já agendada
+8. Use "cancel_event" quando o lead desistir de uma visita agendada (sempre pergunte o motivo antes)
+9. Use "end_conversation" quando: visita agendada + confirmada, desinteresse claro, lead pediu para parar
 
 # Estágios do Lead no Funil Imobiliário
 - new: Lead novo, ainda não qualificado
