@@ -267,8 +267,17 @@ function AgentCard({
         onClick={onManage}
         className="w-full flex items-center justify-center gap-2 py-2.5 bg-white text-black hover:bg-gray-200 rounded-xl text-sm font-bold transition-colors"
       >
-        <Layers size={14} />
-        {ui.viewCampaigns}
+        {agent.solution_slug.includes('followup') ? (
+          <>
+            <Activity size={14} />
+            {ui.manage}
+          </>
+        ) : (
+          <>
+            <Layers size={14} />
+            {ui.viewCampaigns}
+          </>
+        )}
       </button>
     </div>
   )
@@ -432,7 +441,7 @@ export default function AgentsPage() {
   const [confirmModal, setConfirmModal] = useState<AgentSolution | null>(null)
 
   // Language
-  const lang = ((user as any)?.language as Language) || 'es'
+  const lang = ((user as any)?.language as Language) || 'pt'
   const ui = UI[lang]
 
   // Nicho da org ativa
@@ -609,7 +618,16 @@ export default function AgentsPage() {
                   agent={agent}
                   lang={lang}
                   ui={ui}
-                  onManage={() => router.push(`/dashboard/agents/${agent.id}`)}
+                  onManage={() => {
+                    // Redirecionar para a página correta baseado no tipo de agente
+                    if (agent.solution_slug.includes('followup')) {
+                      router.push('/dashboard/follow-up')
+                    } else if (agent.solution_slug.includes('sdr')) {
+                      router.push(`/dashboard/agents/${agent.id}`)
+                    } else {
+                      router.push(`/dashboard/agents/${agent.id}`)
+                    }
+                  }}
                 />
               ))}
             </div>

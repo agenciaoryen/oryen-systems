@@ -24,6 +24,7 @@ import {
   FileText,
   Smartphone,
   CalendarDays,
+  RefreshCw,
   Sun,
   Moon,
   type LucideIcon
@@ -47,6 +48,7 @@ const TRANSLATIONS = {
       documents: 'Documentos',
       whatsapp: 'WhatsApp',
       calendar: 'Agenda',
+      followUp: 'Follow-up',
       settings: 'Configurações'
     },
     comingSoon: '(Em Breve)',
@@ -71,6 +73,7 @@ const TRANSLATIONS = {
       documents: 'Documents',
       whatsapp: 'WhatsApp',
       calendar: 'Calendar',
+      followUp: 'Follow-up',
       settings: 'Settings'
     },
     comingSoon: '(Coming Soon)',
@@ -95,6 +98,7 @@ const TRANSLATIONS = {
       documents: 'Documentos',
       whatsapp: 'WhatsApp',
       calendar: 'Agenda',
+      followUp: 'Follow-up',
       settings: 'Configuración'
     },
     comingSoon: '(Próximamente)',
@@ -272,8 +276,9 @@ export default function Sidebar() {
     { href: '/dashboard/documents', label: t.menu.documents, icon: FileText, requiredNiche: NICHES_WITH_DOCUMENTS },
     { href: '/dashboard/whatsapp', label: t.menu.whatsapp, icon: Smartphone, requiredNiche: NICHES_WITH_DOCUMENTS },
     { href: '/dashboard/calendar', label: t.menu.calendar, icon: CalendarDays },
+    { href: '/dashboard/follow-up', label: t.menu.followUp, icon: RefreshCw },
     { href: '/dashboard/relatorios', label: t.menu.reports, icon: BarChart3 },
-    { href: '/dashboard/agents', label: t.menu.agents, icon: Bot, isComingSoon: true },
+    { href: '/dashboard/agents', label: t.menu.agents, icon: Bot },
     { href: '/dashboard/settings', label: t.menu.settings, icon: Settings },
   ]
 
