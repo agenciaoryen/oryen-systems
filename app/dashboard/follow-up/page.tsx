@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
-import { usePlan } from '@/lib/usePlan'
-import { FeatureLock } from '@/app/dashboard/components/FeatureLock'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import {
@@ -200,7 +198,6 @@ type FilterStatus = 'all' | 'pending' | 'active' | 'responded' | 'exhausted'
 export default function FollowUpPage() {
   const { user } = useAuth()
   const orgId = useActiveOrgId()
-  const { plan } = usePlan()
 
   const lang = (user?.language as Language) || 'pt'
   const t = TRANSLATIONS[lang]
@@ -285,8 +282,7 @@ export default function FollowUpPage() {
   if (!orgId) return null
 
   return (
-    <FeatureLock plan={plan} feature="follow_up" description={t.lockedDesc}>
-      <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
 
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -388,8 +384,7 @@ export default function FollowUpPage() {
             ))}
           </div>
         )}
-      </div>
-    </FeatureLock>
+    </div>
   )
 }
 
