@@ -4,6 +4,7 @@ import React from 'react'
 import Sidebar from './Sidebar'
 import { Toaster } from 'sonner'
 import { useTheme } from '@/lib/ThemeContext'
+import { MessageCircle } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DASHBOARD LAYOUT
@@ -31,6 +32,17 @@ export default function DashboardLayout({
           {children}
         </div>
       </main>
+
+      {/* Botão flutuante de suporte */}
+      <a
+        href="https://wa.me/5551998388409"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-emerald-500 hover:bg-emerald-400 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all hover:scale-105 active:scale-95"
+        title="Suporte via WhatsApp"
+      >
+        <MessageCircle size={24} />
+      </a>
 
       {/* Toast notifications */}
       <Toaster
