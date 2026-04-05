@@ -3,8 +3,9 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useActiveOrgId } from '@/lib/AuthContext'
-import { PROPERTY_TYPES, TRANSACTION_TYPES, PROPERTY_STATUSES, formatPrice, formatArea } from '@/lib/properties/constants'
+import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
+import { PROPERTY_TYPES, TRANSACTION_TYPES, PROPERTY_STATUSES, formatArea } from '@/lib/properties/constants'
+import { formatPrice } from '@/lib/format'
 import {
   Plus,
   Search,
@@ -122,6 +123,8 @@ const STATUS_COLORS: Record<string, string> = {
 export default function PortfolioPage() {
   const router = useRouter()
   const orgId = useActiveOrgId()
+  const { user } = useAuth()
+  const currency = (user as any)?.currency || 'BRL'
   const lang: Lang = 'pt'
   const t = T[lang]
 
@@ -365,7 +368,7 @@ export default function PortfolioPage() {
                   {/* Price overlay */}
                   {prop.price && (
                     <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-black/70 backdrop-blur-sm text-white text-sm font-bold">
-                      {formatPrice(prop.price, lang)}
+                      {formatPrice(prop.price, currency)}
                     </div>
                   )}
                 </div>
@@ -471,7 +474,7 @@ export default function PortfolioPage() {
 
                 {/* Price */}
                 <div className="text-sm font-bold shrink-0" style={{ color: 'var(--color-text-primary)' }}>
-                  {formatPrice(prop.price, lang)}
+                  {formatPrice(prop.price, currency)}
                 </div>
 
                 {/* Status */}

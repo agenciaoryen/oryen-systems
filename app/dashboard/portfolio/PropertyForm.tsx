@@ -3,8 +3,8 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useActiveOrgId } from '@/lib/AuthContext'
-import { PROPERTY_TYPES, TRANSACTION_TYPES, AMENITIES, BR_STATES, formatPrice } from '@/lib/properties/constants'
+import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
+import { PROPERTY_TYPES, TRANSACTION_TYPES, PROPERTY_STATUSES, AMENITIES, BR_STATES } from '@/lib/properties/constants'
 import { toast } from 'sonner'
 import {
   Save,
@@ -40,9 +40,9 @@ const T = {
     descriptionPlaceholder: 'Descreva o imóvel detalhadamente...',
     propertyType: 'Tipo de imóvel',
     transactionType: 'Tipo de transação',
-    price: 'Preço (R$)',
-    condoFee: 'Condomínio (R$)',
-    iptu: 'IPTU (R$)',
+    price: 'Preço',
+    condoFee: 'Condomínio',
+    iptu: 'IPTU',
     // Localização
     street: 'Rua',
     number: 'Número',
@@ -100,6 +100,9 @@ interface PropertyFormProps {
 export default function PropertyForm({ propertyId, initialData }: PropertyFormProps) {
   const router = useRouter()
   const orgId = useActiveOrgId()
+  const { user } = useAuth()
+  const currency = (user as any)?.currency || 'BRL'
+  const currencySymbol = currency === 'BRL' ? 'R$' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency
   const lang: Lang = 'pt'
   const t = T[lang]
   const isEditing = !!propertyId
@@ -439,15 +442,15 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className={labelClass} style={labelStyle}>{t.price}</label>
+              <label className={labelClass} style={labelStyle}>{t.price} ({currencySymbol})</label>
               <input type="number" value={form.price} onChange={(e) => updateField('price', e.target.value)} className={inputClass} style={inputStyle} min="0" step="0.01" />
             </div>
             <div>
-              <label className={labelClass} style={labelStyle}>{t.condoFee}</label>
+              <label className={labelClass} style={labelStyle}>{t.condoFee} ({currencySymbol})</label>
               <input type="number" value={form.condo_fee} onChange={(e) => updateField('condo_fee', e.target.value)} className={inputClass} style={inputStyle} min="0" step="0.01" />
             </div>
             <div>
-              <label className={labelClass} style={labelStyle}>{t.iptu}</label>
+              <label className={labelClass} style={labelStyle}>{t.iptu} ({currencySymbol})</label>
               <input type="number" value={form.iptu} onChange={(e) => updateField('iptu', e.target.value)} className={inputClass} style={inputStyle} min="0" step="0.01" />
             </div>
           </div>

@@ -39,7 +39,6 @@ import { useTheme } from '@/lib/ThemeContext'
 
 const TRANSLATIONS = {
   pt: {
-    sectionTitle: 'Plataforma',
     menu: {
       overview: 'Visão Geral',
       alerts: 'Alertas',
@@ -55,6 +54,11 @@ const TRANSLATIONS = {
       mySite: 'Meu Site',
       settings: 'Configurações'
     },
+    sections: {
+      commercial: 'Comercial',
+      properties: 'Imóveis',
+      tools: 'Ferramentas',
+    },
     comingSoon: '(Em Breve)',
     logout: 'Sair da Conta',
     toastAction: 'Ver',
@@ -66,7 +70,6 @@ const TRANSLATIONS = {
     themeDark: 'Tema Escuro',
   },
   en: {
-    sectionTitle: 'Platform',
     menu: {
       overview: 'Overview',
       alerts: 'Alerts',
@@ -82,6 +85,11 @@ const TRANSLATIONS = {
       mySite: 'My Site',
       settings: 'Settings'
     },
+    sections: {
+      commercial: 'Commercial',
+      properties: 'Properties',
+      tools: 'Tools',
+    },
     comingSoon: '(Coming Soon)',
     logout: 'Logout',
     toastAction: 'View',
@@ -93,7 +101,6 @@ const TRANSLATIONS = {
     themeDark: 'Dark Theme',
   },
   es: {
-    sectionTitle: 'Plataforma',
     menu: {
       overview: 'Visión General',
       alerts: 'Alertas',
@@ -108,6 +115,11 @@ const TRANSLATIONS = {
       portfolio: 'Portafolio',
       mySite: 'Mi Sitio',
       settings: 'Configuración'
+    },
+    sections: {
+      commercial: 'Comercial',
+      properties: 'Inmuebles',
+      tools: 'Herramientas',
     },
     comingSoon: '(Próximamente)',
     logout: 'Cerrar Sesión',
@@ -145,9 +157,16 @@ interface SidebarItem {
   href: string
   label: string
   icon: LucideIcon
-  badge?: boolean 
+  badge?: boolean
   isComingSoon?: boolean
-  requiredNiche?: string[] // Nichos que têm acesso a este item
+  requiredNiche?: string[]
+}
+
+interface SidebarGroup {
+  key: string
+  title?: string // undefined = sem título (grupo principal)
+  collapsible?: boolean
+  items: SidebarItem[]
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -275,32 +294,82 @@ export default function Sidebar() {
     }
   }, [isOrgDropdownOpen])
 
-  // ─── LINKS DO MENU ───
-  const allLinks: SidebarItem[] = [
-    { href: '/dashboard', label: t.menu.overview, icon: LayoutDashboard },
-    { href: '/dashboard/alerts', label: t.menu.alerts, icon: Bell, badge: hasUnreadAlerts },
-    { href: '/dashboard/crm', label: t.menu.crm, icon: Users },
-    { href: '/dashboard/portfolio', label: t.menu.portfolio, icon: Home, requiredNiche: NICHES_WITH_DOCUMENTS },
-    { href: '/dashboard/site', label: t.menu.mySite, icon: Globe, requiredNiche: NICHES_WITH_DOCUMENTS },
-    { href: '/dashboard/messages', label: t.menu.conversations, icon: MessageSquare },
-    { href: '/dashboard/documents', label: t.menu.documents, icon: FileText, requiredNiche: NICHES_WITH_DOCUMENTS },
-    { href: '/dashboard/whatsapp', label: t.menu.whatsapp, icon: Smartphone, requiredNiche: NICHES_WITH_DOCUMENTS },
-    { href: '/dashboard/calendar', label: t.menu.calendar, icon: CalendarDays },
-    { href: '/dashboard/follow-up', label: t.menu.followUp, icon: RefreshCw },
-    { href: '/dashboard/relatorios', label: t.menu.reports, icon: BarChart3 },
-    { href: '/dashboard/agents', label: t.menu.agents, icon: Bot },
-    { href: '/dashboard/settings', label: t.menu.settings, icon: Settings },
+  // ─── COLLAPSED STATE ───
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({})
+
+  const toggleSection = (key: string) => {
+    setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  // ─── GRUPOS DO MENU ───
+  const allGroups: SidebarGroup[] = [
+    {
+      key: 'main',
+      items: [
+        { href: '/dashboard', label: t.menu.overview, icon: LayoutDashboard },
+        { href: '/dashboard/alerts', label: t.menu.alerts, icon: Bell, badge: hasUnreadAlerts },
+      ],
+    },
+    {
+      key: 'commercial',
+      title: t.sections.commercial,
+      collapsible: true,
+      items: [
+        { href: '/dashboard/crm', label: t.menu.crm, icon: Users },
+        { href: '/dashboard/messages', label: t.menu.conversations, icon: MessageSquare },
+        { href: '/dashboard/calendar', label: t.menu.calendar, icon: CalendarDays },
+        { href: '/dashboard/follow-up', label: t.menu.followUp, icon: RefreshCw },
+      ],
+    },
+    {
+      key: 'properties',
+      title: t.sections.properties,
+      collapsible: true,
+      items: [
+        { href: '/dashboard/portfolio', label: t.menu.portfolio, icon: Home, requiredNiche: NICHES_WITH_DOCUMENTS },
+        { href: '/dashboard/site', label: t.menu.mySite, icon: Globe, requiredNiche: NICHES_WITH_DOCUMENTS },
+      ],
+    },
+    {
+      key: 'tools',
+      title: t.sections.tools,
+      collapsible: true,
+      items: [
+        { href: '/dashboard/agents', label: t.menu.agents, icon: Bot },
+        { href: '/dashboard/whatsapp', label: t.menu.whatsapp, icon: Smartphone, requiredNiche: NICHES_WITH_DOCUMENTS },
+        { href: '/dashboard/documents', label: t.menu.documents, icon: FileText, requiredNiche: NICHES_WITH_DOCUMENTS },
+        { href: '/dashboard/relatorios', label: t.menu.reports, icon: BarChart3 },
+      ],
+    },
+    {
+      key: 'config',
+      items: [
+        { href: '/dashboard/settings', label: t.menu.settings, icon: Settings },
+      ],
+    },
   ]
 
-  // Filtrar links baseado no nicho da org
-  const links = useMemo(() => {
-    return allLinks.filter(link => {
-      // Se não tem requiredNiche, mostra para todos
-      if (!link.requiredNiche) return true
-      // Se tem requiredNiche, verifica se o nicho da org está na lista
-      return activeNiche && link.requiredNiche.includes(activeNiche)
-    })
-  }, [allLinks, activeNiche])
+  // Filtrar links baseado no nicho da org e remover grupos vazios
+  const groups = useMemo(() => {
+    return allGroups
+      .map(group => ({
+        ...group,
+        items: group.items.filter(link => {
+          if (!link.requiredNiche) return true
+          return activeNiche && link.requiredNiche.includes(activeNiche)
+        }),
+      }))
+      .filter(group => group.items.length > 0)
+  }, [allGroups, activeNiche])
+
+  // Auto-expand section if active page is inside it
+  useEffect(() => {
+    for (const group of groups) {
+      if (group.collapsible && group.items.some(item => pathname === item.href)) {
+        setCollapsedSections(prev => ({ ...prev, [group.key]: false }))
+      }
+    }
+  }, [pathname])
 
   return (
     <>
@@ -422,48 +491,81 @@ export default function Sidebar() {
         )}
 
         {/* MENU DE NAVEGAÇÃO */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-6">
-          <div>
-            <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-              {t.sectionTitle}
-            </p>
-            <ul className="flex flex-col gap-1">
-              {links.map((link) => {
-                const isActive = pathname === link.href
-                const Icon = link.icon
+        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+          {groups.map((group) => {
+            const isCollapsed = collapsedSections[group.key] ?? false
+            const hasActiveItem = group.items.some(item => pathname === item.href)
 
-                return (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      onClick={() => setIsMobileOpen(false)}
-                      className={cn(
-                        'flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group',
-                        isActive
-                          ? 'bg-blue-600/10 text-blue-400 border border-blue-600/20 shadow-sm'
-                          : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'
-                      )}
-                    >
-                      <div className="flex items-center gap-3 truncate">
-                        <Icon size={18} className={isActive ? 'text-blue-400' : 'text-gray-500 group-hover:text-white'} />
-                        <span className="truncate">
-                          {link.label}
-                          {link.isComingSoon && (
-                            <span className="text-[10px] opacity-60 ml-1">{t.comingSoon}</span>
-                          )}
-                        </span>
-                      </div>
-                      
-                      {/* Badge de notificação */}
-                      {link.badge && !isActive && (
-                        <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse shrink-0" />
-                      )}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
+            return (
+              <div key={group.key}>
+                {/* Título do grupo */}
+                {group.title && (
+                  <button
+                    onClick={() => group.collapsible && toggleSection(group.key)}
+                    className={cn(
+                      'w-full flex items-center justify-between px-2 pt-4 pb-1.5',
+                      group.collapsible && 'cursor-pointer group/section'
+                    )}
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 group-hover/section:text-gray-400 transition-colors">
+                      {group.title}
+                    </p>
+                    {group.collapsible && (
+                      <ChevronDown
+                        size={12}
+                        className={cn(
+                          'text-gray-600 transition-transform duration-200',
+                          isCollapsed && '-rotate-90'
+                        )}
+                      />
+                    )}
+                  </button>
+                )}
+
+                {/* Items */}
+                <div
+                  className={cn(
+                    'flex flex-col gap-0.5 overflow-hidden transition-all duration-200',
+                    group.collapsible && isCollapsed && !hasActiveItem ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'
+                  )}
+                >
+                  {group.items.map((link) => {
+                    const isActive = pathname === link.href
+                    const Icon = link.icon
+
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setIsMobileOpen(false)}
+                        className={cn(
+                          'flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 group',
+                          isActive
+                            ? 'bg-blue-600/10 text-blue-400 border border-blue-600/20 shadow-sm'
+                            : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'
+                        )}
+                      >
+                        <div className="flex items-center gap-3 truncate">
+                          <Icon size={17} className={isActive ? 'text-blue-400' : 'text-gray-500 group-hover:text-white'} />
+                          <span className="truncate">
+                            {link.label}
+                            {link.isComingSoon && (
+                              <span className="text-[10px] opacity-60 ml-1">{t.comingSoon}</span>
+                            )}
+                          </span>
+                        </div>
+
+                        {/* Badge de notificação */}
+                        {link.badge && !isActive && (
+                          <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse shrink-0" />
+                        )}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
         </nav>
 
         {/* INDICADOR STAFF */}
