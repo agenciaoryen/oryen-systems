@@ -1,0 +1,532 @@
+// @ts-nocheck
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { useActiveOrgId } from '@/lib/AuthContext'
+import { PROPERTY_TYPES, TRANSACTION_TYPES, PROPERTY_STATUSES, formatPrice, formatArea } from '@/lib/properties/constants'
+import {
+  Plus,
+  Search,
+  Filter,
+  Loader2,
+  Home,
+  Bed,
+  Bath,
+  Car,
+  Maximize,
+  Star,
+  Eye,
+  Edit3,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  ImageIcon,
+  X,
+  LayoutGrid,
+  List,
+  ArrowUpDown,
+} from 'lucide-react'
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TRADUÇÕES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const T = {
+  pt: {
+    title: 'Portfólio de Imóveis',
+    subtitle: 'Gerencie seus imóveis. Eles aparecem automaticamente no seu site.',
+    newProperty: 'Novo Imóvel',
+    search: 'Buscar por título...',
+    allStatuses: 'Todos os Status',
+    allTypes: 'Todos os Tipos',
+    noProperties: 'Nenhum imóvel cadastrado',
+    noPropertiesDesc: 'Cadastre seu primeiro imóvel para começar a montar seu portfólio.',
+    noResults: 'Nenhum imóvel encontrado',
+    noResultsDesc: 'Tente mudar os filtros ou buscar outro termo.',
+    featured: 'Destaque',
+    edit: 'Editar',
+    delete: 'Excluir',
+    confirmDelete: 'Tem certeza que deseja excluir este imóvel? Esta ação não pode ser desfeita.',
+    deleting: 'Excluindo...',
+    of: 'de',
+    properties: 'imóveis',
+    bedrooms: 'quartos',
+    bathrooms: 'banheiros',
+    parking: 'vagas',
+  },
+  en: {
+    title: 'Property Portfolio',
+    subtitle: 'Manage your properties. They appear automatically on your site.',
+    newProperty: 'New Property',
+    search: 'Search by title...',
+    allStatuses: 'All Statuses',
+    allTypes: 'All Types',
+    noProperties: 'No properties yet',
+    noPropertiesDesc: 'Add your first property to start building your portfolio.',
+    noResults: 'No properties found',
+    noResultsDesc: 'Try changing the filters or search term.',
+    featured: 'Featured',
+    edit: 'Edit',
+    delete: 'Delete',
+    confirmDelete: 'Are you sure you want to delete this property? This action cannot be undone.',
+    deleting: 'Deleting...',
+    of: 'of',
+    properties: 'properties',
+    bedrooms: 'bedrooms',
+    bathrooms: 'bathrooms',
+    parking: 'parking',
+  },
+  es: {
+    title: 'Portafolio de Inmuebles',
+    subtitle: 'Gestione sus inmuebles. Aparecen automáticamente en su sitio.',
+    newProperty: 'Nuevo Inmueble',
+    search: 'Buscar por título...',
+    allStatuses: 'Todos los Estados',
+    allTypes: 'Todos los Tipos',
+    noProperties: 'Ningún inmueble registrado',
+    noPropertiesDesc: 'Registre su primer inmueble para empezar a armar su portafolio.',
+    noResults: 'Ningún inmueble encontrado',
+    noResultsDesc: 'Intente cambiar los filtros o buscar otro término.',
+    featured: 'Destacado',
+    edit: 'Editar',
+    delete: 'Eliminar',
+    confirmDelete: '¿Está seguro que desea eliminar este inmueble? Esta acción no se puede deshacer.',
+    deleting: 'Eliminando...',
+    of: 'de',
+    properties: 'inmuebles',
+    bedrooms: 'habitaciones',
+    bathrooms: 'baños',
+    parking: 'estacionamiento',
+  },
+}
+
+type Lang = 'pt' | 'en' | 'es'
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATUS COLORS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const STATUS_COLORS: Record<string, string> = {
+  draft: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+  active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  sold: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  rented: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  inactive: 'bg-red-500/20 text-red-400 border-red-500/30',
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENTE PRINCIPAL
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export default function PortfolioPage() {
+  const router = useRouter()
+  const orgId = useActiveOrgId()
+  const lang: Lang = 'pt'
+  const t = T[lang]
+
+  // States
+  const [properties, setProperties] = useState<any[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+
+  // ─── FETCH ───
+  const fetchProperties = useCallback(async () => {
+    if (!orgId) return
+    setLoading(true)
+
+    const params = new URLSearchParams({
+      org_id: orgId,
+      page: String(page),
+      limit: '12',
+    })
+    if (search) params.set('search', search)
+    if (statusFilter) params.set('status', statusFilter)
+    if (typeFilter) params.set('type', typeFilter)
+
+    try {
+      const res = await fetch(`/api/properties?${params}`)
+      const data = await res.json()
+      setProperties(data.properties || [])
+      setTotal(data.total || 0)
+      setTotalPages(data.totalPages || 1)
+    } catch (err) {
+      console.error('Failed to fetch properties:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [orgId, page, search, statusFilter, typeFilter])
+
+  useEffect(() => {
+    fetchProperties()
+  }, [fetchProperties])
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [search, statusFilter, typeFilter])
+
+  // ─── DELETE ───
+  const handleDelete = async (id: string) => {
+    if (!confirm(t.confirmDelete)) return
+    setDeleting(id)
+
+    try {
+      await fetch(`/api/properties/${id}?org_id=${orgId}`, { method: 'DELETE' })
+      fetchProperties()
+    } catch (err) {
+      console.error('Failed to delete property:', err)
+    } finally {
+      setDeleting(null)
+    }
+  }
+
+  // ─── COVER IMAGE ───
+  const getCover = (images: any[]) => {
+    if (!images || images.length === 0) return null
+    const cover = images.find((img: any) => img.is_cover)
+    return cover?.url || images[0]?.url || null
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* ═══ HEADER ═══ */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            {t.title}
+          </h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+            {t.subtitle}
+          </p>
+        </div>
+        <button
+          onClick={() => router.push('/dashboard/portfolio/new')}
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-600/20 hover:shadow-blue-500/30 shrink-0"
+        >
+          <Plus size={18} />
+          {t.newProperty}
+        </button>
+      </div>
+
+      {/* ═══ FILTROS ═══ */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Busca */}
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <input
+            type="text"
+            placeholder={t.search}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm border transition-all"
+            style={{
+              background: 'var(--color-bg-elevated)',
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text-primary)',
+            }}
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        {/* Status */}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-3 py-2.5 rounded-xl text-sm border cursor-pointer"
+          style={{
+            background: 'var(--color-bg-elevated)',
+            borderColor: 'var(--color-border)',
+            color: 'var(--color-text-primary)',
+          }}
+        >
+          <option value="">{t.allStatuses}</option>
+          {Object.entries(PROPERTY_STATUSES).map(([key, labels]) => (
+            <option key={key} value={key}>{labels[lang]}</option>
+          ))}
+        </select>
+
+        {/* Tipo */}
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="px-3 py-2.5 rounded-xl text-sm border cursor-pointer"
+          style={{
+            background: 'var(--color-bg-elevated)',
+            borderColor: 'var(--color-border)',
+            color: 'var(--color-text-primary)',
+          }}
+        >
+          <option value="">{t.allTypes}</option>
+          {Object.entries(PROPERTY_TYPES).map(([key, labels]) => (
+            <option key={key} value={key}>{labels[lang]}</option>
+          ))}
+        </select>
+
+        {/* View toggle */}
+        <div className="flex rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`px-3 py-2.5 transition-all ${viewMode === 'grid' ? 'bg-blue-600/20 text-blue-400' : 'text-gray-500 hover:text-gray-300'}`}
+            style={{ background: viewMode !== 'grid' ? 'var(--color-bg-elevated)' : undefined }}
+          >
+            <LayoutGrid size={16} />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`px-3 py-2.5 transition-all ${viewMode === 'list' ? 'bg-blue-600/20 text-blue-400' : 'text-gray-500 hover:text-gray-300'}`}
+            style={{ background: viewMode !== 'list' ? 'var(--color-bg-elevated)' : undefined }}
+          >
+            <List size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* ═══ CONTADOR ═══ */}
+      {!loading && (
+        <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+          {total} {t.properties}
+        </p>
+      )}
+
+      {/* ═══ LOADING ═══ */}
+      {loading && (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="animate-spin text-blue-500" size={32} />
+        </div>
+      )}
+
+      {/* ═══ EMPTY STATE ═══ */}
+      {!loading && properties.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-4">
+            <Home size={28} className="text-blue-400" />
+          </div>
+          <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+            {total === 0 ? t.noProperties : t.noResults}
+          </h3>
+          <p className="text-sm max-w-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+            {total === 0 ? t.noPropertiesDesc : t.noResultsDesc}
+          </p>
+          {total === 0 && (
+            <button
+              onClick={() => router.push('/dashboard/portfolio/new')}
+              className="mt-4 flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-all"
+            >
+              <Plus size={18} />
+              {t.newProperty}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ═══ GRID VIEW ═══ */}
+      {!loading && properties.length > 0 && viewMode === 'grid' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {properties.map((prop) => {
+            const cover = getCover(prop.images)
+            return (
+              <div
+                key={prop.id}
+                className="rounded-2xl border overflow-hidden transition-all hover:shadow-lg hover:shadow-black/10 group cursor-pointer"
+                style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}
+                onClick={() => router.push(`/dashboard/portfolio/${prop.id}`)}
+              >
+                {/* Imagem */}
+                <div className="relative aspect-[4/3] overflow-hidden" style={{ background: 'var(--color-bg-surface)' }}>
+                  {cover ? (
+                    <img src={cover} alt={prop.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon size={40} className="text-gray-600" />
+                    </div>
+                  )}
+                  {/* Status badge */}
+                  <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase border ${STATUS_COLORS[prop.status] || STATUS_COLORS.draft}`}>
+                    {PROPERTY_STATUSES[prop.status]?.[lang] || prop.status}
+                  </div>
+                  {/* Featured badge */}
+                  {prop.is_featured && (
+                    <div className="absolute top-3 right-3 p-1.5 rounded-lg bg-amber-500/90 text-white">
+                      <Star size={14} />
+                    </div>
+                  )}
+                  {/* Price overlay */}
+                  {prop.price && (
+                    <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-black/70 backdrop-blur-sm text-white text-sm font-bold">
+                      {formatPrice(prop.price, lang)}
+                    </div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="p-4">
+                  <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                    {PROPERTY_TYPES[prop.property_type]?.[lang]} • {TRANSACTION_TYPES[prop.transaction_type]?.[lang]}
+                  </p>
+                  <h3 className="font-semibold text-sm truncate mb-2" style={{ color: 'var(--color-text-primary)' }}>
+                    {prop.title}
+                  </h3>
+                  {prop.address_neighborhood && (
+                    <p className="text-xs truncate mb-3" style={{ color: 'var(--color-text-tertiary)' }}>
+                      {prop.address_neighborhood}{prop.address_city ? `, ${prop.address_city}` : ''}
+                    </p>
+                  )}
+                  {/* Features */}
+                  <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                    {prop.bedrooms > 0 && (
+                      <span className="flex items-center gap-1"><Bed size={13} /> {prop.bedrooms}</span>
+                    )}
+                    {prop.bathrooms > 0 && (
+                      <span className="flex items-center gap-1"><Bath size={13} /> {prop.bathrooms}</span>
+                    )}
+                    {prop.parking_spots > 0 && (
+                      <span className="flex items-center gap-1"><Car size={13} /> {prop.parking_spots}</span>
+                    )}
+                    {prop.total_area && (
+                      <span className="flex items-center gap-1"><Maximize size={13} /> {formatArea(prop.total_area)}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex border-t" style={{ borderColor: 'var(--color-border)' }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/portfolio/${prop.id}`) }}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:bg-blue-500/10 hover:text-blue-400"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
+                    <Edit3 size={13} /> {t.edit}
+                  </button>
+                  <div className="w-px" style={{ background: 'var(--color-border)' }} />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(prop.id) }}
+                    disabled={deleting === prop.id}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
+                    {deleting === prop.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                    {deleting === prop.id ? t.deleting : t.delete}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* ═══ LIST VIEW ═══ */}
+      {!loading && properties.length > 0 && viewMode === 'list' && (
+        <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
+          {properties.map((prop, i) => {
+            const cover = getCover(prop.images)
+            return (
+              <div
+                key={prop.id}
+                className="flex items-center gap-4 p-4 transition-all hover:bg-white/5 cursor-pointer"
+                style={{ borderBottom: i < properties.length - 1 ? '1px solid var(--color-border)' : 'none' }}
+                onClick={() => router.push(`/dashboard/portfolio/${prop.id}`)}
+              >
+                {/* Thumb */}
+                <div className="w-20 h-14 rounded-lg overflow-hidden shrink-0" style={{ background: 'var(--color-bg-surface)' }}>
+                  {cover ? (
+                    <img src={cover} alt={prop.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon size={20} className="text-gray-600" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h3 className="font-semibold text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
+                      {prop.title}
+                    </h3>
+                    {prop.is_featured && <Star size={13} className="text-amber-400 shrink-0" />}
+                  </div>
+                  <p className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>
+                    {PROPERTY_TYPES[prop.property_type]?.[lang]} • {TRANSACTION_TYPES[prop.transaction_type]?.[lang]}
+                    {prop.address_neighborhood ? ` • ${prop.address_neighborhood}` : ''}
+                  </p>
+                </div>
+
+                {/* Features */}
+                <div className="hidden md:flex items-center gap-3 text-xs shrink-0" style={{ color: 'var(--color-text-secondary)' }}>
+                  {prop.bedrooms > 0 && <span className="flex items-center gap-1"><Bed size={13} /> {prop.bedrooms}</span>}
+                  {prop.total_area && <span className="flex items-center gap-1"><Maximize size={13} /> {formatArea(prop.total_area)}</span>}
+                </div>
+
+                {/* Price */}
+                <div className="text-sm font-bold shrink-0" style={{ color: 'var(--color-text-primary)' }}>
+                  {formatPrice(prop.price, lang)}
+                </div>
+
+                {/* Status */}
+                <div className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase border shrink-0 ${STATUS_COLORS[prop.status] || STATUS_COLORS.draft}`}>
+                  {PROPERTY_STATUSES[prop.status]?.[lang]}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/portfolio/${prop.id}`) }}
+                    className="p-2 rounded-lg transition-all hover:bg-blue-500/10 hover:text-blue-400"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
+                    <Edit3 size={15} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(prop.id) }}
+                    disabled={deleting === prop.id}
+                    className="p-2 rounded-lg transition-all hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
+                    {deleting === prop.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* ═══ PAGINAÇÃO ═══ */}
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="p-2 rounded-lg border transition-all disabled:opacity-30"
+            style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span className="text-sm px-3" style={{ color: 'var(--color-text-secondary)' }}>
+            {page} {t.of} {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="p-2 rounded-lg border transition-all disabled:opacity-30"
+            style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}

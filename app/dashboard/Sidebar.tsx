@@ -27,6 +27,8 @@ import {
   RefreshCw,
   Sun,
   Moon,
+  Home,
+  Globe,
   type LucideIcon
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
@@ -49,6 +51,8 @@ const TRANSLATIONS = {
       whatsapp: 'WhatsApp',
       calendar: 'Agenda',
       followUp: 'Follow-up',
+      portfolio: 'Portfólio',
+      mySite: 'Meu Site',
       settings: 'Configurações'
     },
     comingSoon: '(Em Breve)',
@@ -74,6 +78,8 @@ const TRANSLATIONS = {
       whatsapp: 'WhatsApp',
       calendar: 'Calendar',
       followUp: 'Follow-up',
+      portfolio: 'Portfolio',
+      mySite: 'My Site',
       settings: 'Settings'
     },
     comingSoon: '(Coming Soon)',
@@ -99,6 +105,8 @@ const TRANSLATIONS = {
       whatsapp: 'WhatsApp',
       calendar: 'Agenda',
       followUp: 'Follow-up',
+      portfolio: 'Portafolio',
+      mySite: 'Mi Sitio',
       settings: 'Configuración'
     },
     comingSoon: '(Próximamente)',
@@ -272,6 +280,8 @@ export default function Sidebar() {
     { href: '/dashboard', label: t.menu.overview, icon: LayoutDashboard },
     { href: '/dashboard/alerts', label: t.menu.alerts, icon: Bell, badge: hasUnreadAlerts },
     { href: '/dashboard/crm', label: t.menu.crm, icon: Users },
+    { href: '/dashboard/portfolio', label: t.menu.portfolio, icon: Home, requiredNiche: NICHES_WITH_DOCUMENTS },
+    { href: '/dashboard/site', label: t.menu.mySite, icon: Globe, requiredNiche: NICHES_WITH_DOCUMENTS },
     { href: '/dashboard/messages', label: t.menu.conversations, icon: MessageSquare },
     { href: '/dashboard/documents', label: t.menu.documents, icon: FileText, requiredNiche: NICHES_WITH_DOCUMENTS },
     { href: '/dashboard/whatsapp', label: t.menu.whatsapp, icon: Smartphone, requiredNiche: NICHES_WITH_DOCUMENTS },
