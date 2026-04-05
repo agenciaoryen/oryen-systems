@@ -245,6 +245,60 @@ export const agentTools: Anthropic.Messages.Tool[] = [
     }
   },
 
+  // 12. Buscar imóveis no portfólio da imobiliária
+  {
+    name: 'search_properties',
+    description: 'Busca imóveis disponíveis no portfólio da imobiliária. Use para encontrar imóveis que combinem com o que o lead procura (tipo, região, quartos, faixa de preço). Retorna até 5 resultados com detalhes completos.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        property_type: {
+          type: 'string',
+          enum: ['apartment', 'house', 'commercial', 'land', 'rural', 'other'],
+          description: 'Tipo de imóvel (opcional)'
+        },
+        transaction_type: {
+          type: 'string',
+          enum: ['sale', 'rent', 'sale_or_rent'],
+          description: 'Tipo de transação (opcional)'
+        },
+        min_price: {
+          type: 'number',
+          description: 'Preço mínimo (opcional)'
+        },
+        max_price: {
+          type: 'number',
+          description: 'Preço máximo (opcional)'
+        },
+        min_bedrooms: {
+          type: 'number',
+          description: 'Número mínimo de quartos (opcional)'
+        },
+        neighborhood: {
+          type: 'string',
+          description: 'Bairro ou região de interesse (opcional)'
+        }
+      },
+      required: []
+    }
+  },
+
+  // 13. Buscar imóvel por código de referência
+  {
+    name: 'get_property_by_ref',
+    description: 'Busca um imóvel específico pelo código de referência (ex: REF-1001), slug, ou ID. Use quando o lead mencionar um código de imóvel na conversa ou quando a primeira mensagem contiver uma referência a um imóvel específico.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        reference: {
+          type: 'string',
+          description: 'Código de referência, slug ou ID do imóvel (ex: REF-1001, apartamento-3-quartos-centro, ou UUID)'
+        }
+      },
+      required: ['reference']
+    }
+  },
+
   {
     name: 'save_lead_info',
     description: 'Salva informações coletadas do lead durante a conversa (tipo de imóvel, orçamento, região, urgência, etc). Estes dados ficam disponíveis para o corretor.',
@@ -312,6 +366,12 @@ export async function executeTool(
 
     case 'save_lead_info':
       return executeSaveLeadInfo(input, ctx)
+
+    case 'search_properties':
+      return executeSearchProperties(input, ctx)
+
+    case 'get_property_by_ref':
+      return executeGetPropertyByRef(input, ctx)
 
     default:
       return { success: false, error: `Tool desconhecida: ${toolName}` }
@@ -943,6 +1003,213 @@ async function executeSaveLeadInfo(
 
   console.log(`[SDR:Info] Lead ${ctx.lead_id} | ${fieldKey}: ${input.value}`)
   return { success: true, data: { field: fieldKey, value: input.value } }
+}
+
+// ─── Search Properties: buscar imóveis no portfólio ───
+async function executeSearchProperties(
+  input: { property_type?: string; transaction_type?: string; min_price?: number; max_price?: number; min_bedrooms?: number; neighborhood?: string },
+  ctx: ToolContext
+): Promise<ToolResult> {
+  let query = supabase
+    .from('properties')
+    .select('id, title, slug, property_type, transaction_type, price, condo_fee, bedrooms, suites, bathrooms, parking_spots, total_area, address_neighborhood, address_city, address_state, amenities, external_code, description')
+    .eq('org_id', ctx.org_id)
+    .eq('status', 'active')
+
+  if (input.property_type) query = query.eq('property_type', input.property_type)
+  if (input.transaction_type) query = query.eq('transaction_type', input.transaction_type)
+  if (input.min_price) query = query.gte('price', input.min_price)
+  if (input.max_price) query = query.lte('price', input.max_price)
+  if (input.min_bedrooms) query = query.gte('bedrooms', input.min_bedrooms)
+  if (input.neighborhood) query = query.ilike('address_neighborhood', `%${input.neighborhood}%`)
+
+  query = query
+    .order('is_featured', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  const { data: properties, error } = await query
+
+  if (error) return { success: false, error: error.message }
+
+  if (!properties || properties.length === 0) {
+    return {
+      success: true,
+      data: {
+        found: 0,
+        properties: [],
+        message: 'Nenhum imóvel encontrado com esses critérios. Tente ampliar a busca.'
+      }
+    }
+  }
+
+  // Verificar se a org tem site publicado para gerar links
+  const { data: site } = await supabase
+    .from('site_settings')
+    .select('slug, is_published')
+    .eq('org_id', ctx.org_id)
+    .single()
+
+  const siteSlug = site?.is_published ? site.slug : null
+
+  const formatted = properties.map(p => ({
+    id: p.id,
+    ref: p.external_code || p.slug || p.id.slice(0, 8),
+    title: p.title,
+    type: p.property_type,
+    transaction: p.transaction_type,
+    price: p.price,
+    bedrooms: p.bedrooms,
+    suites: p.suites,
+    bathrooms: p.bathrooms,
+    parking: p.parking_spots,
+    area: p.total_area,
+    neighborhood: p.address_neighborhood,
+    city: p.address_city,
+    state: p.address_state,
+    condo_fee: p.condo_fee,
+    amenities: p.amenities,
+    description: p.description?.slice(0, 200),
+    site_url: siteSlug ? `/sites/${siteSlug}/properties/${p.slug || p.id}` : null,
+  }))
+
+  console.log(`[SDR:SearchProperties] Encontrados ${formatted.length} imóveis | org: ${ctx.org_id}`)
+  return {
+    success: true,
+    data: {
+      found: formatted.length,
+      properties: formatted,
+      tip: 'Apresente os imóveis de forma natural na conversa. Mencione as características que combinam com o que o lead busca. Se houver link do site, pode compartilhar.'
+    }
+  }
+}
+
+// ─── Get Property by Reference: buscar imóvel específico ───
+async function executeGetPropertyByRef(
+  input: { reference: string },
+  ctx: ToolContext
+): Promise<ToolResult> {
+  const ref = input.reference.trim()
+
+  // Tentar buscar por external_code (REF-1001), slug, ou ID
+  let property = null
+
+  // 1. Por external_code (ex: REF-1001)
+  const { data: byCode } = await supabase
+    .from('properties')
+    .select('*')
+    .eq('org_id', ctx.org_id)
+    .eq('status', 'active')
+    .ilike('external_code', ref)
+    .limit(1)
+    .single()
+
+  if (byCode) {
+    property = byCode
+  } else {
+    // 2. Por slug
+    const { data: bySlug } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('org_id', ctx.org_id)
+      .eq('status', 'active')
+      .eq('slug', ref.toLowerCase())
+      .limit(1)
+      .single()
+
+    if (bySlug) {
+      property = bySlug
+    } else {
+      // 3. Por ID (UUID)
+      const { data: byId } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('org_id', ctx.org_id)
+        .eq('status', 'active')
+        .eq('id', ref)
+        .limit(1)
+        .single()
+
+      if (byId) property = byId
+    }
+  }
+
+  if (!property) {
+    // 4. Busca parcial no external_code (caso o lead diga só "1001" sem "REF-")
+    const { data: byPartial } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('org_id', ctx.org_id)
+      .eq('status', 'active')
+      .ilike('external_code', `%${ref}%`)
+      .limit(1)
+      .single()
+
+    if (byPartial) property = byPartial
+  }
+
+  if (!property) {
+    return {
+      success: true,
+      data: {
+        found: false,
+        message: `Imóvel com referência "${ref}" não encontrado. Pode ter sido vendido ou o código estar incorreto.`
+      }
+    }
+  }
+
+  // Verificar se a org tem site publicado
+  const { data: site } = await supabase
+    .from('site_settings')
+    .select('slug, is_published')
+    .eq('org_id', ctx.org_id)
+    .single()
+
+  const siteSlug = site?.is_published ? site.slug : null
+
+  // Salvar no contexto do lead que ele tem interesse neste imóvel
+  await saveMeta(ctx, 'lead_info_property_interest', {
+    field: 'property_interest',
+    value: property.title,
+    property_id: property.id,
+    property_ref: property.external_code || property.slug,
+    collected_at: new Date().toISOString()
+  })
+
+  console.log(`[SDR:GetPropertyByRef] Found: ${property.title} (${ref}) | Lead: ${ctx.lead_id}`)
+
+  return {
+    success: true,
+    data: {
+      found: true,
+      property: {
+        id: property.id,
+        ref: property.external_code || property.slug || property.id.slice(0, 8),
+        title: property.title,
+        description: property.description,
+        type: property.property_type,
+        transaction: property.transaction_type,
+        price: property.price,
+        condo_fee: property.condo_fee,
+        iptu: property.iptu,
+        bedrooms: property.bedrooms,
+        suites: property.suites,
+        bathrooms: property.bathrooms,
+        parking: property.parking_spots,
+        total_area: property.total_area,
+        private_area: property.private_area,
+        neighborhood: property.address_neighborhood,
+        city: property.address_city,
+        state: property.address_state,
+        address: [property.address_street, property.address_number, property.address_neighborhood, property.address_city].filter(Boolean).join(', '),
+        amenities: property.amenities,
+        video_url: property.video_url,
+        virtual_tour_url: property.virtual_tour_url,
+        site_url: siteSlug ? `/sites/${siteSlug}/properties/${property.slug || property.id}` : null,
+      },
+      tip: 'O lead tem interesse neste imóvel. Use os detalhes para responder dúvidas com precisão. NÃO despeje todas as informações de uma vez — responda o que ele perguntar e guie a conversa para agendar uma visita.'
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

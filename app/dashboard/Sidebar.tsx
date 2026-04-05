@@ -294,8 +294,12 @@ export default function Sidebar() {
     }
   }, [isOrgDropdownOpen])
 
-  // ─── COLLAPSED STATE ───
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({})
+  // ─── COLLAPSED STATE (fechado por default) ───
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+    commercial: true,
+    properties: true,
+    tools: true,
+  })
 
   const toggleSection = (key: string) => {
     setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }))
@@ -362,14 +366,6 @@ export default function Sidebar() {
       .filter(group => group.items.length > 0)
   }, [allGroups, activeNiche])
 
-  // Auto-expand section if active page is inside it
-  useEffect(() => {
-    for (const group of groups) {
-      if (group.collapsible && group.items.some(item => pathname === item.href)) {
-        setCollapsedSections(prev => ({ ...prev, [group.key]: false }))
-      }
-    }
-  }, [pathname])
 
   return (
     <>
@@ -494,7 +490,6 @@ export default function Sidebar() {
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
           {groups.map((group) => {
             const isCollapsed = collapsedSections[group.key] ?? false
-            const hasActiveItem = group.items.some(item => pathname === item.href)
 
             return (
               <div key={group.key}>
@@ -526,7 +521,7 @@ export default function Sidebar() {
                 <div
                   className={cn(
                     'flex flex-col gap-0.5 overflow-hidden transition-all duration-200',
-                    group.collapsible && isCollapsed && !hasActiveItem ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'
+                    group.collapsible && isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'
                   )}
                 >
                   {group.items.map((link) => {
