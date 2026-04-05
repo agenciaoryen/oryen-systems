@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/sdr/follow-up",
+      "schedule": "0 * * * *"
+    }
+  ]
+}

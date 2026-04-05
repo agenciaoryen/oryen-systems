@@ -196,6 +196,29 @@ export async function POST(request: NextRequest) {
         .eq('org_id', instance.org_id)
     }
 
+    // ─── 8.1. Cancelar follow-up ativo (lead respondeu!) ───
+    try {
+      const { data: activeFollowUps } = await supabase
+        .from('follow_up_queue')
+        .select('id')
+        .eq('lead_id', lead.id)
+        .eq('org_id', instance.org_id)
+        .in('status', ['pending', 'active'])
+
+      if (activeFollowUps && activeFollowUps.length > 0) {
+        await supabase
+          .from('follow_up_queue')
+          .update({ status: 'responded', updated_at: new Date().toISOString() })
+          .eq('lead_id', lead.id)
+          .eq('org_id', instance.org_id)
+          .in('status', ['pending', 'active'])
+
+        console.log(`[SDR] ✓ Follow-up cancelado (lead ${lead.id} respondeu) — ${activeFollowUps.length} item(s)`)
+      }
+    } catch (fuErr: any) {
+      console.warn(`[SDR] Follow-up reset error (non-fatal): ${fuErr.message}`)
+    }
+
     // ─── 8.5. Se áudio sem transcrição, notificar mas não processar pela IA ───
     if (isAudioMessage && !messageText.trim()) {
       console.log(`[SDR] Áudio sem transcrição para ${phone} — salvo no histórico, IA não processa`)

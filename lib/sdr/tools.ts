@@ -845,6 +845,51 @@ async function executeEndConversation(
     ended_at: new Date().toISOString()
   })
 
+  // Enfileirar para follow-up automático (se não existe já)
+  try {
+    // Verificar se já existe um follow-up ativo para este lead
+    const { data: existing } = await supabase
+      .from('follow_up_queue')
+      .select('id')
+      .eq('lead_id', ctx.lead_id)
+      .eq('org_id', ctx.org_id)
+      .in('status', ['pending', 'active'])
+      .limit(1)
+
+    if (!existing || existing.length === 0) {
+      // Buscar stage atual do lead
+      const { data: lead } = await supabase
+        .from('leads')
+        .select('stage')
+        .eq('id', ctx.lead_id)
+        .single()
+
+      const now = new Date()
+      // Primeira tentativa: 4 horas após o fim da conversa
+      const firstAttempt = new Date(now.getTime() + 4 * 60 * 60 * 1000)
+
+      await supabase.from('follow_up_queue').insert({
+        org_id: ctx.org_id,
+        lead_id: ctx.lead_id,
+        attempt_number: 0,
+        max_attempts: 5,
+        next_attempt_at: firstAttempt.toISOString(),
+        last_lead_message_at: now.toISOString(),
+        cadence_hours: [4, 24, 72, 120, 168],
+        status: 'pending',
+        last_conversation_summary: input.summary,
+        lead_stage: lead?.stage || null,
+        instance_name: ctx.instance_name,
+        agent_id: ctx.agent_id,
+        campaign_id: ctx.campaign_id
+      })
+
+      console.log(`[SDR:End] Follow-up enfileirado para lead ${ctx.lead_id} — primeira tentativa em ${firstAttempt.toISOString()}`)
+    }
+  } catch (fuErr: any) {
+    console.warn(`[SDR:End] Erro ao enfileirar follow-up (non-fatal): ${fuErr.message}`)
+  }
+
   console.log(`[SDR:End] Lead ${ctx.lead_id} — ${input.reason}: ${input.summary.slice(0, 100)}`)
   return { success: true, data: { reason: input.reason } }
 }
