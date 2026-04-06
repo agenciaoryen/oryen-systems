@@ -25,7 +25,9 @@ import {
   Check,
   ExternalLink,
   Pencil,
-  Timer
+  Timer,
+  Trash2,
+  Save
 } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -360,6 +362,10 @@ export default function LeadProfilePage() {
   // Estados de edição de nome
   const [isEditingName, setIsEditingName] = useState(false)
   const [editName, setEditName] = useState('')
+
+  // Estados de edição/exclusão de eventos da timeline
+  const [editingEventId, setEditingEventId] = useState<string | null>(null)
+  const [editingEventContent, setEditingEventContent] = useState('')
   const [editCompany, setEditCompany] = useState('')
 
   // ─── CARREGAR DADOS ───
@@ -680,6 +686,26 @@ export default function LeadProfilePage() {
       alert(t.errorNote)
     } finally {
       setSavingNote(false)
+    }
+  }
+
+  const handleDeleteEvent = async (eventId: string) => {
+    const { error } = await supabase.from('lead_events').delete().eq('id', eventId)
+    if (!error) {
+      setEvents(prev => prev.filter(e => e.id !== eventId))
+    }
+  }
+
+  const handleEditEvent = async (eventId: string) => {
+    if (!editingEventContent.trim()) return
+    const { error } = await supabase
+      .from('lead_events')
+      .update({ content: editingEventContent.trim() })
+      .eq('id', eventId)
+    if (!error) {
+      setEvents(prev => prev.map(e => e.id === eventId ? { ...e, content: editingEventContent.trim() } : e))
+      setEditingEventId(null)
+      setEditingEventContent('')
     }
   }
 
@@ -1146,8 +1172,8 @@ export default function LeadProfilePage() {
               )}
 
               {events.map((event) => (
-                <div key={event.id} className="flex gap-4 group">
-                  <div className="min-w-[2px] relative group-last:bg-transparent" style={{ background: 'var(--color-border-subtle)' }}>
+                <div key={event.id} className="flex gap-4 group/event">
+                  <div className="min-w-[2px] relative group-last/event:bg-transparent" style={{ background: 'var(--color-border-subtle)' }}>
                     <div className="absolute top-1 -left-[5px] w-3 h-3 rounded-full" style={{
                       background: event.type === 'stage_change' ? 'var(--color-indigo)' :
                         event.type === 'tag_added' ? 'var(--color-success)' :
@@ -1157,12 +1183,63 @@ export default function LeadProfilePage() {
                     }} />
                   </div>
                   <div className="pb-6 flex-1">
-                    <p className="text-[10px] font-mono mb-2 font-medium" style={{ color: 'var(--color-text-muted)' }}>
-                      {formatDateTime(event.created_at, userLang, userTimezone)}
-                    </p>
-                    <div className="p-4 rounded-xl text-sm shadow-sm leading-relaxed" style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}>
-                      {event.content}
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[10px] font-mono font-medium" style={{ color: 'var(--color-text-muted)' }}>
+                        {formatDateTime(event.created_at, userLang, userTimezone)}
+                      </p>
+                      <div className="flex items-center gap-1 opacity-0 group-hover/event:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => {
+                            setEditingEventId(event.id)
+                            setEditingEventContent(event.content)
+                          }}
+                          className="p-1.5 rounded-lg transition-colors hover:bg-[var(--color-bg-hover)]"
+                          style={{ color: 'var(--color-text-muted)' }}
+                          title="Editar"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteEvent(event.id)}
+                          className="p-1.5 rounded-lg transition-colors hover:bg-[var(--color-bg-hover)]"
+                          style={{ color: 'var(--color-error)' }}
+                          title="Excluir"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
+                    {editingEventId === event.id ? (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={editingEventContent}
+                          onChange={(e) => setEditingEventContent(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleEditEvent(event.id); if (e.key === 'Escape') setEditingEventId(null) }}
+                          autoFocus
+                          className="flex-1 p-3 rounded-xl text-sm outline-none"
+                          style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-primary)', color: 'var(--color-text-secondary)' }}
+                        />
+                        <button
+                          onClick={() => handleEditEvent(event.id)}
+                          className="p-3 rounded-xl transition-all"
+                          style={{ background: 'var(--color-primary)', color: '#fff' }}
+                        >
+                          <Save size={14} />
+                        </button>
+                        <button
+                          onClick={() => setEditingEventId(null)}
+                          className="p-3 rounded-xl transition-all"
+                          style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-muted)' }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-xl text-sm shadow-sm leading-relaxed" style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}>
+                        {event.content}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

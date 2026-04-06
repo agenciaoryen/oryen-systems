@@ -186,6 +186,15 @@ export async function POST(request: NextRequest) {
           await supabase.from('leads').update(updateData).eq('id', existingLead.id)
         }
       } else {
+        // Buscar primeiro estágio do pipeline da org
+        const { data: firstStage } = await supabase
+          .from('pipeline_stages')
+          .select('name')
+          .eq('org_id', site.org_id)
+          .order('position', { ascending: true })
+          .limit(1)
+          .single()
+
         // Criar novo lead no CRM com dados enriquecidos
         const { data: newLead } = await supabase
           .from('leads')
@@ -195,7 +204,7 @@ export async function POST(request: NextRequest) {
             phone,
             email: body.email || null,
             source: 'site',
-            stage: 'new',
+            stage: firstStage?.name || 'new',
             interesse: interesse || null,
             tipo_contato: tipoContato || null,
             city: propertyData?.address_city || null,

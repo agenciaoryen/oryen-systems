@@ -564,6 +564,17 @@ async function findOrCreateLead(
     newLeadName = `Lead ${phone.slice(-4)}`
   }
 
+  // Buscar primeiro estágio do pipeline da org
+  const { data: firstStage } = await supabase
+    .from('pipeline_stages')
+    .select('name')
+    .eq('org_id', orgId)
+    .order('position', { ascending: true })
+    .limit(1)
+    .single()
+
+  const initialStage = firstStage?.name || 'new'
+
   const { data: newLead, error } = await supabase
     .from('leads')
     .insert({
@@ -571,7 +582,7 @@ async function findOrCreateLead(
       name: newLeadName,
       phone: phone,
       source: isFromMe ? 'whatsapp_outbound' : 'whatsapp_inbound',
-      stage: 'new',
+      stage: initialStage,
       created_at: new Date().toISOString()
     })
     .select('*')
@@ -585,7 +596,7 @@ async function findOrCreateLead(
       name: newLeadName,
       phone,
       email: null,
-      stage: 'new',
+      stage: initialStage,
       source: 'whatsapp_inbound',
       org_id: orgId,
       created_at: new Date().toISOString(),
