@@ -11,15 +11,42 @@ const supabase = createClient(
 )
 
 /**
+ * GET /api/properties/[id]
+ * Retorna um imóvel pelo ID
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error || !data) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ property: data })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
+/**
  * PUT /api/properties/[id]
  * Body: campos parciais do imóvel
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
 
     // Se título mudou, regenerar slug
@@ -88,10 +115,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const orgId = request.nextUrl.searchParams.get('org_id')
 
     if (!orgId) {
