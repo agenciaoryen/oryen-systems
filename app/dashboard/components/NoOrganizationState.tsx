@@ -1,125 +1,19 @@
 'use client'
 
-import { Building2, MessageSquare, ArrowRight } from 'lucide-react'
-import { useAuth } from '@/lib/AuthContext'
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TRADUÇÕES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const TRANSLATIONS = {
-  pt: {
-    greeting: 'Bem-vindo, {name}!',
-    visitor: 'Visitante',
-    subtitlePart1: 'Sua conta foi criada com sucesso, mas você ainda não está vinculado a nenhuma ',
-    orgHighlight: 'Organização',
-    subtitlePart2: '.',
-    nextSteps: 'Próximos Passos',
-    instructions: 'Para começar a usar os Agentes de IA e gerenciar seus contatos, é necessário ativar seu ambiente. Fale com o suporte e te configuramos em minutos.',
-    supportBtn: 'Falar com Suporte',
-    supportMsg: 'Olá, criei minha conta e preciso configurar minha organização.',
-    footerText: 'Já faz parte de uma imobiliária? Peça ao administrador para te enviar um convite por e-mail.'
-  },
-  en: {
-    greeting: 'Welcome, {name}!',
-    visitor: 'Visitor',
-    subtitlePart1: 'Your account was created successfully, but you are not linked to any ',
-    orgHighlight: 'Organization',
-    subtitlePart2: ' yet.',
-    nextSteps: 'Next Steps',
-    instructions: 'To start using AI Agents and managing your contacts, you need to activate your account. Talk to support and we will get you set up in minutes.',
-    supportBtn: 'Talk to Support',
-    supportMsg: 'Hello, I created my account and I need to set up my organization.',
-    footerText: 'Part of a real estate agency? Ask your administrator to send you an email invitation.'
-  },
-  es: {
-    greeting: '¡Bienvenido, {name}!',
-    visitor: 'Visitante',
-    subtitlePart1: 'Su cuenta fue creada con éxito, pero aún no está vinculado a ninguna ',
-    orgHighlight: 'Organización',
-    subtitlePart2: '.',
-    nextSteps: 'Próximos Pasos',
-    instructions: 'Para comenzar a usar los Agentes de IA y administrar sus contactos, debe activar su cuenta. Hable con el soporte y lo configuramos en minutos.',
-    supportBtn: 'Hablar con Soporte',
-    supportMsg: 'Hola, creé mi cuenta y necesito configurar mi organización.',
-    footerText: '¿Perteneces a una inmobiliaria? Pídele a tu administrador que te envíe una invitación por correo electrónico.'
-  }
-}
-
-type Language = keyof typeof TRANSLATIONS
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// COMPONENTE
-// ═══════════════════════════════════════════════════════════════════════════════
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 
 export default function NoOrganizationState() {
-  const { user } = useAuth()
+  const router = useRouter()
 
-  // Detecta o idioma do usuário
-  const userLang = (user?.language as Language) || 'pt'
-  const t = TRANSLATIONS[userLang]
-
-  // Obtém primeiro nome do usuário
-  const getFirstName = (): string => {
-    // Tenta pegar do user_metadata (Supabase Auth)
-    const rawUser = user as { user_metadata?: { full_name?: string } } | null
-    if (rawUser?.user_metadata?.full_name) {
-      return rawUser.user_metadata.full_name.split(' ')[0]
-    }
-    // Tenta pegar do email
-    if (user?.email) {
-      return user.email.split('@')[0]
-    }
-    return t.visitor
-  }
-
-  const firstName = getFirstName()
-
-  // Link do WhatsApp de suporte
-  const supportLink = `https://wa.me/5551998388409?text=${encodeURIComponent(t.supportMsg)}`
+  useEffect(() => {
+    router.replace('/onboarding')
+  }, [router])
 
   return (
-    <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] text-center px-4">
-      
-      {/* Ícone de destaque */}
-      <div className="w-24 h-24 bg-blue-600/10 rounded-full flex items-center justify-center mb-6 border border-blue-500/20 shadow-[0_0_30px_rgba(37,99,235,0.15)]">
-        <Building2 className="w-10 h-10 text-blue-500" />
-      </div>
-
-      <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">
-        {t.greeting.replace('{name}', firstName)}
-      </h1>
-      
-      <p className="text-gray-400 max-w-md text-base md:text-lg mb-8 leading-relaxed">
-        {t.subtitlePart1}
-        <span className="text-blue-400 font-bold">{t.orgHighlight}</span>
-        {t.subtitlePart2}
-      </p>
-
-      <div className="bg-[#111] border border-white/10 p-5 md:p-6 rounded-2xl max-w-lg w-full mb-8">
-        <h3 className="text-sm font-bold text-gray-300 uppercase mb-4 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-          {t.nextSteps}
-        </h3>
-        <p className="text-sm text-gray-500 mb-6">
-          {t.instructions}
-        </p>
-        
-        <a 
-          href={supportLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-600/20 group"
-        >
-          <MessageSquare size={20} />
-          {t.supportBtn}
-          <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-        </a>
-      </div>
-
-      <p className="text-xs text-gray-600">
-        {t.footerText}
-      </p>
+    <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)]">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
     </div>
   )
 }

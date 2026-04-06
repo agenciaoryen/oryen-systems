@@ -90,9 +90,7 @@ export default function RegisterPage() {
           
           data: {
             full_name: formData.name,
-            language: lang, 
-            currency: lang === 'pt' ? 'BRL' : 'USD', 
-            timezone: lang === 'pt' ? 'America/Sao_Paulo' : 'UTC' 
+            language: lang,
           },
         },
       })
