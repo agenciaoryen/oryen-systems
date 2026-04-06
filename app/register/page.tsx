@@ -86,7 +86,7 @@ export default function RegisterPage() {
         options: {
           // CORREÇÃO CRÍTICA PARA VERCEL:
           // Isso garante que o link no e-mail aponte para a URL correta (seja localhost ou Vercel)
-          emailRedirectTo: typeof window !== 'undefined' ? window.location.origin + '/dashboard' : undefined,
+          emailRedirectTo: typeof window !== 'undefined' ? window.location.origin + '/onboarding' : undefined,
           
           data: {
             full_name: formData.name,

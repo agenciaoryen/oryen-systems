@@ -64,6 +64,15 @@ export async function POST(req: NextRequest) {
         .eq('id', orgId)
     }
 
+    // URLs de retorno (custom ou padrão billing)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+    const successUrl = body.successUrl
+      ? `${baseUrl}${body.successUrl}`
+      : `${baseUrl}/dashboard/settings/billing?success=true&session_id={CHECKOUT_SESSION_ID}`
+    const cancelUrl = body.cancelUrl
+      ? `${baseUrl}${body.cancelUrl}`
+      : `${baseUrl}/dashboard/settings/billing?canceled=true`
+
     // Criar sessão de checkout
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -75,8 +84,8 @@ export async function POST(req: NextRequest) {
           quantity: 1
         }
       ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/billing?canceled=true`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       subscription_data: {
         metadata: {
           org_id: orgId,

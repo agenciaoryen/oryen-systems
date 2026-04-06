@@ -1,16 +1,19 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Sidebar from './Sidebar'
 import { Toaster } from 'sonner'
 import { useTheme } from '@/lib/ThemeContext'
-import { MessageCircle } from 'lucide-react'
+import { useAuth } from '@/lib/AuthContext'
+import { MessageCircle, Loader2 } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DASHBOARD LAYOUT
 // ═══════════════════════════════════════════════════════════════════════════════
 // Este layout envolve todas as páginas dentro de /dashboard/*
 // Inclui a Sidebar (responsiva) e o container principal de conteúdo
+// Guard: redireciona para /onboarding se plan_status é 'trial' (não pagou)
 
 export default function DashboardLayout({
   children,
@@ -18,6 +21,33 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const { theme } = useTheme()
+  const router = useRouter()
+  const { user, loading, org, activePlanStatus, isStaff } = useAuth()
+
+  // Guard: usuário com org mas sem pagamento → onboarding
+  useEffect(() => {
+    if (!loading && user && org && activePlanStatus === 'trial' && !isStaff) {
+      router.replace('/onboarding')
+    }
+  }, [loading, user, org, activePlanStatus, isStaff, router])
+
+  // Mostrar loading enquanto verifica
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center" style={{ background: 'var(--color-bg-base)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-text-secondary)' }} />
+      </div>
+    )
+  }
+
+  // Se plan_status é trial e não é staff, não renderiza o dashboard
+  if (user && org && activePlanStatus === 'trial' && !isStaff) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center" style={{ background: 'var(--color-bg-base)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-text-secondary)' }} />
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-screen w-full overflow-hidden" style={{ background: 'var(--color-bg-base)' }}>

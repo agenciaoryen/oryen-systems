@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <!--
+    Oryen — Logo Principal (horizontal, dark theme)
+    Símbolo: dois arcos assimétricos derivados de círculo de 40px diâmetro
+    Wordmark: "oryen" em estilo Plus Jakarta Sans SemiBold
+    Versão: 1.0
+  -->
+
+  <!-- ═══════════════════════════════════════════════════
+       SÍMBOLO — dois arcos assimétricos
+       Centro: (24, 24), raio do arco principal: 17px
+       Arco principal: 240° de arco, traço 7px, #2D7EF8
+       Arco secundário: 100° de arco, traço 4.5px, #2D7EF8 @ 60%
+       Ambos com stroke-linecap: round
+       ═══════════════════════════════════════════════════ -->
+
+  <!-- Arco principal: começa ~330° (11h) vai até ~210° (7h) sentido horário = 240° -->
+  <!-- Em coordenadas SVG: ângulo 0° = direita (3h), sentido horário -->
+  <!-- 330° = start: (24 + 17*cos(330°), 24 + 17*sin(330°)) = (38.73, 15.5) -->
+  <!-- 210° = end:   (24 + 17*cos(210°), 24 + 17*sin(210°)) = (9.27, 15.5) -->
+  <!-- large-arc-flag = 1 porque 240° > 180° -->
+  <path
+    d="M 38.73 15.5 A 17 17 0 1 1 9.27 15.5"
+    stroke="#2D7EF8"
+    stroke-width="7"
+    stroke-linecap="round"
+    fill="none"
+  />
+
+  <!-- Arco secundário: 100° de arco, raio 20px (deslocado para fora), mais fino -->
+  <!-- Preenche o "gap" inferior de forma assimétrica — não fecha o círculo -->
+  <!-- começa ~210° vai até ~310° sentido horário = 100° -->
+  <!-- 210° em r=20: (24 + 20*cos(210°), 24 + 20*sin(210°)) = (6.68, 14) -->
+  <!-- 310° em r=20: (24 + 20*cos(310°), 24 + 20*sin(310°)) = (36.86, 8.68) -->
+  <!-- large-arc-flag = 0 porque 100° < 180° -->
+  <path
+    d="M 6.68 34 A 20 20 0 0 1 36.86 39.32"
+    stroke="#2D7EF8"
+    stroke-width="4.5"
+    stroke-linecap="round"
+    stroke-opacity="0.6"
+    fill="none"
+  />
+
+  <!-- ═══════════════════════════════════════════════════
+       WORDMARK — "oryen" em Plus Jakarta Sans SemiBold
+       Posição: x=58, baseline y=32
+       Cor: #F0F0F8 (text-primary dark)
+       Font-size: 26px, letter-spacing: -0.01em
+       ═══════════════════════════════════════════════════ -->
+  <text
+    x="58"
+    y="31"
+    font-family="'Plus Jakarta Sans', 'Inter', Arial, sans-serif"
+    font-size="26"
+    font-weight="600"
+    letter-spacing="-0.01em"
+    fill="#F0F0F8"
+  >oryen</text>
+
+</svg>
