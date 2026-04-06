@@ -341,7 +341,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 h-[calc(100vh-160px)]">
+    <div className="flex flex-col gap-4 h-[calc(100vh-180px)]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.title}</h1>
@@ -357,9 +357,9 @@ export default function CalendarPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
         {/* ═══ Month Grid ═══ */}
-        <div className="lg:col-span-2 rounded-2xl p-4" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+        <div className="lg:col-span-2 rounded-2xl p-4 flex flex-col" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
           {/* Month nav */}
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
               {t.months[currentMonth]} {currentYear}
             </h2>
@@ -379,15 +379,15 @@ export default function CalendarPage() {
           {/* Day headers */}
           <div className="grid grid-cols-7 gap-1 mb-1">
             {dayNames.map(d => (
-              <div key={d} className="text-center text-[10px] font-bold uppercase tracking-wider py-2" style={{ color: 'var(--color-text-muted)' }}>{d}</div>
+              <div key={d} className="text-center text-[10px] font-bold uppercase tracking-wider py-1" style={{ color: 'var(--color-text-muted)' }}>{d}</div>
             ))}
           </div>
 
           {/* Day cells */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-1 flex-1 auto-rows-fr">
             {/* Empty cells before first day */}
             {Array.from({ length: firstDay }).map((_, i) => (
-              <div key={`empty-${i}`} className="aspect-square" />
+              <div key={`empty-${i}`} />
             ))}
 
             {/* Day cells */}
@@ -402,7 +402,7 @@ export default function CalendarPage() {
                 <button
                   key={dateStr}
                   onClick={() => setSelectedDate(dateStr === selectedDate ? null : dateStr)}
-                  className="aspect-square rounded-xl flex flex-col items-center justify-center gap-1 text-sm transition-all relative"
+                  className="rounded-xl flex flex-col items-center justify-center gap-0.5 text-sm transition-all relative"
                   style={
                     isSelected ? { background: 'var(--color-primary-subtle)', border: '1px solid var(--color-primary)', color: 'var(--color-text-primary)' } :
                     isToday ? { background: 'var(--color-bg-hover)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)', fontWeight: 700 } :

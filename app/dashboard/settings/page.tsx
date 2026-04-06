@@ -1142,8 +1142,8 @@ export default function SettingsPage() {
                 <button
                   type="submit"
                   disabled={!newPassword || passwordLoading}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg disabled:opacity-50 w-full md:w-auto justify-center"
-                  style={{ background: 'var(--color-error)', color: 'var(--color-text-primary)' }}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg disabled:cursor-not-allowed w-full md:w-auto justify-center"
+                  style={{ background: 'var(--color-error)', color: '#fff' }}
                 >
                   {passwordLoading ? <Loader2 className="animate-spin" size={16} /> : <Shield size={16} />}
                   {t.profile.changePass}
