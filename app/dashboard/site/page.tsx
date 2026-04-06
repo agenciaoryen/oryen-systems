@@ -328,7 +328,7 @@ export default function SiteSettingsPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6 pb-16">
       {/* ═══ HEADER ═══ */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -665,7 +665,7 @@ export default function SiteSettingsPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                style={{ background: 'var(--color-success)', color: 'var(--color-text-primary)' }}
+                style={{ background: 'var(--color-success)', color: '#fff' }}
               >
                 <ExternalLink size={15} /> {T.visitSite}
               </a>
