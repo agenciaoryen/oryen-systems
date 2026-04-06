@@ -131,7 +131,38 @@ export async function POST(request: NextRequest) {
     const interesse = propertyData ? interesseMap[propertyData.transaction_type] || null : null
     const tipoContato = propertyData ? tipoContatoMap[propertyData.transaction_type] || null : null
 
-    // 3. Criar/atualizar lead no CRM (tabela leads)
+    // 3. Determinar responsável via round-robin (ignorar staff)
+    let assignedTo: string | null = null
+    try {
+      const { data: orgUsers } = await supabase
+        .from('users')
+        .select('id, role')
+        .eq('org_id', site.org_id)
+        .neq('role', 'staff')
+
+      if (orgUsers && orgUsers.length === 1) {
+        // Corretor individual — vai direto para ele
+        assignedTo = orgUsers[0].id
+      } else if (orgUsers && orgUsers.length > 1) {
+        // Round-robin: contar leads atribuídos a cada membro e pegar o que tem menos
+        const counts = await Promise.all(
+          orgUsers.map(async (u: any) => {
+            const { count } = await supabase
+              .from('leads')
+              .select('id', { count: 'exact', head: true })
+              .eq('org_id', site.org_id)
+              .eq('assigned_to', u.id)
+            return { userId: u.id, count: count || 0 }
+          })
+        )
+        counts.sort((a, b) => a.count - b.count)
+        assignedTo = counts[0].userId
+      }
+    } catch (e) {
+      console.error('[SiteLeads] Erro ao determinar responsável:', e)
+    }
+
+    // 4. Criar/atualizar lead no CRM (tabela leads)
     let crmLeadId: string | null = null
     try {
       // Verificar se já existe lead com esse telefone na org
@@ -168,6 +199,7 @@ export async function POST(request: NextRequest) {
             interesse: interesse || null,
             tipo_contato: tipoContato || null,
             city: propertyData?.address_city || null,
+            assigned_to: assignedTo,
             created_at: new Date().toISOString(),
           })
           .select('id')
@@ -195,11 +227,12 @@ export async function POST(request: NextRequest) {
         ? `${name} (${phone}) demonstrou interesse no imóvel "${propertyTitle}"${refCode}. ${body.message || ''}`
         : `${name} (${phone}) enviou uma mensagem pelo site. ${body.message || ''}`
 
-      // Buscar todos os usuários da org
+      // Buscar todos os usuários da org (exceto staff)
       const { data: orgUsers } = await supabase
         .from('users')
         .select('id')
         .eq('org_id', site.org_id)
+        .neq('role', 'staff')
 
       if (orgUsers && orgUsers.length > 0) {
         const alertRows = orgUsers.map((u: any) => ({
