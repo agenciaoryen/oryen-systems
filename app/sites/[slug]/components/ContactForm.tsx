@@ -43,6 +43,8 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
         setStatus('success')
         setForm({ name: '', phone: '', email: '', message: '', website: '' })
       } else {
+        const errData = await res.json().catch(() => ({}))
+        console.error('[ContactForm] Error:', res.status, errData)
         setStatus('error')
       }
     } catch {

@@ -268,7 +268,7 @@ export default async function PropertyDetailPage({
                 <h3 className="text-lg font-bold text-gray-900 mb-1">Tenho interesse</h3>
                 <p className="text-xs text-gray-500 mb-5">Preencha e entraremos em contato.</p>
                 <ContactForm
-                  siteSlug={params.slug}
+                  siteSlug={site.slug}
                   propertyId={property.id}
                   propertyTitle={property.title}
                 />

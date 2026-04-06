@@ -65,9 +65,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { site_slug, name, phone } = body
 
+    console.log('[SiteLeads] POST body:', JSON.stringify({ site_slug, name, phone: phone ? '***' : null }))
+
     if (!site_slug || !name || !phone) {
+      console.error('[SiteLeads] Missing fields:', { site_slug: !!site_slug, name: !!name, phone: !!phone })
       return NextResponse.json(
-        { error: 'Missing required fields: site_slug, name, phone' },
+        { error: `Missing required fields: ${!site_slug ? 'site_slug ' : ''}${!name ? 'name ' : ''}${!phone ? 'phone' : ''}`.trim() },
         { status: 400 }
       )
     }
