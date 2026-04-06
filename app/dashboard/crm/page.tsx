@@ -727,8 +727,8 @@ export default function CrmPage() {
         <div>
           <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>
             {t.title}
-            <span className="text-xs font-normal px-2 py-0.5 rounded-full" style={{ color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)' }}>
-              {filteredLeads.length} {t.leads}
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ color: 'var(--color-primary)', background: 'var(--color-primary-subtle)' }}>
+              {filteredLeads.length}
             </span>
           </h1>
           <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: 'var(--color-text-muted)' }}>
@@ -904,7 +904,7 @@ export default function CrmPage() {
       <main className="flex-1 overflow-hidden relative p-3 md:p-6">
         {/* Loading */}
         {loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center z-50 backdrop-blur-sm" style={{ background: 'var(--color-bg-overlay)' }}>
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-50" style={{ background: 'var(--color-bg-base)' }}>
             <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
             <p className="mt-4 text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{t.loading}</p>
           </div>
@@ -1227,7 +1227,7 @@ export default function CrmPage() {
       </main>
 
       {/* FOOTER - ESTILO TRELLO */}
-      <footer className="shrink-0 px-4 md:px-6 py-2.5" style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-bg-surface)' }}>
+      <footer className="shrink-0 px-4 md:px-6 py-2.5 pr-20" style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-bg-surface)' }}>
         <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Estatísticas */}
           <div className="flex items-center gap-4 md:gap-6">
