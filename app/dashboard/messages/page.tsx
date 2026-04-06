@@ -24,7 +24,15 @@ import {
   Send,
   AlertCircle,
   RefreshCw,
-  UserCircle
+  UserCircle,
+  Info,
+  Mail,
+  Phone as PhoneIcon,
+  MapPin,
+  Calendar,
+  Tag,
+  Globe,
+  ChevronRight,
 } from 'lucide-react'
 
 /* =============================================
@@ -87,6 +95,17 @@ const TRANSLATIONS = {
     sendErrorUazapi: 'Falha ao enviar pelo WhatsApp. Verifique se a instancia esta ativa.',
     refresh: 'Atualizar',
     allStages: 'Todas',
+    leadInfo: 'Dados do Lead',
+    noConversationForLead: 'Nenhuma conversa anterior com este contato.',
+    startNewChat: 'Iniciar Conversa',
+    leadPhone: 'Telefone',
+    leadEmail: 'E-mail',
+    leadSource: 'Origem',
+    leadInterest: 'Interesse',
+    leadContactType: 'Tipo de contato',
+    leadCity: 'Cidade',
+    leadCreatedAt: 'Criado em',
+    leadStage: 'Etapa',
   },
   en: {
     activePipeline: 'Active Pipeline',
@@ -112,6 +131,17 @@ const TRANSLATIONS = {
     sendErrorUazapi: 'Failed to send via WhatsApp. Check if the instance is active.',
     refresh: 'Refresh',
     allStages: 'All',
+    leadInfo: 'Lead Info',
+    noConversationForLead: 'No previous conversation with this contact.',
+    startNewChat: 'Start Chat',
+    leadPhone: 'Phone',
+    leadEmail: 'Email',
+    leadSource: 'Source',
+    leadInterest: 'Interest',
+    leadContactType: 'Contact type',
+    leadCity: 'City',
+    leadCreatedAt: 'Created',
+    leadStage: 'Stage',
   },
   es: {
     activePipeline: 'Pipeline Activo',
@@ -137,6 +167,17 @@ const TRANSLATIONS = {
     sendErrorUazapi: 'Fallo al enviar por WhatsApp. Verifica si la instancia esta activa.',
     refresh: 'Actualizar',
     allStages: 'Todas',
+    leadInfo: 'Datos del Lead',
+    noConversationForLead: 'Sin conversación previa con este contacto.',
+    startNewChat: 'Iniciar Chat',
+    leadPhone: 'Teléfono',
+    leadEmail: 'Email',
+    leadSource: 'Origen',
+    leadInterest: 'Interés',
+    leadContactType: 'Tipo de contacto',
+    leadCity: 'Ciudad',
+    leadCreatedAt: 'Creado',
+    leadStage: 'Etapa',
   },
 }
 
@@ -715,6 +756,9 @@ function MessagesContent() {
   const [showScrollDown, setShowScrollDown] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
+  const [showLeadInfo, setShowLeadInfo] = useState(false)
+  const [leadDetails, setLeadDetails] = useState<any>(null)
+  const [loadingLeadDetails, setLoadingLeadDetails] = useState(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -823,10 +867,83 @@ function MessagesContent() {
 
   // ---- Deep link ----
   useEffect(() => {
-    if (!targetLeadId || !orgId || conversations.length === 0) return
+    if (!targetLeadId || !orgId) return
+
+    // Wait for conversations to load
+    if (loadingConversations) return
+
     const found = conversations.find(c => c.lead_id === targetLeadId)
-    if (found) { setActiveConversation(found); setFilterStage('todos') }
-  }, [targetLeadId, orgId, conversations])
+    if (found) {
+      setActiveConversation(found)
+      setFilterStage('todos')
+      return
+    }
+
+    // No conversation found — create one for this lead
+    const createConv = async () => {
+      // Fetch lead data
+      const { data: lead } = await supabase
+        .from('leads')
+        .select('id, name, nome_empresa, phone, stage, last_message_emotion')
+        .eq('id', targetLeadId)
+        .single()
+
+      if (!lead) return
+
+      // Check if conversation already exists (may have been created by webhook)
+      const { data: existingConv } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('org_id', orgId)
+        .eq('lead_id', targetLeadId)
+        .single()
+
+      if (existingConv) {
+        const enriched: Conversation = {
+          ...existingConv,
+          lead_name: lead.name || '',
+          lead_nome_empresa: lead.nome_empresa || '',
+          lead_phone: lead.phone || null,
+          lead_stage: lead.stage || 'new',
+          lead_emotion: lead.last_message_emotion || null,
+        }
+        setConversations(prev => [enriched, ...prev])
+        setActiveConversation(enriched)
+        setFilterStage('todos')
+        return
+      }
+
+      // Create new conversation
+      const { data: newConv } = await supabase
+        .from('conversations')
+        .insert({
+          org_id: orgId,
+          lead_id: targetLeadId,
+          channel: 'whatsapp',
+          status: 'active',
+          is_bot_active: false,
+          unread_count: 0,
+        })
+        .select('*')
+        .single()
+
+      if (newConv) {
+        const enriched: Conversation = {
+          ...newConv,
+          lead_name: lead.name || '',
+          lead_nome_empresa: lead.nome_empresa || '',
+          lead_phone: lead.phone || null,
+          lead_stage: lead.stage || 'new',
+          lead_emotion: lead.last_message_emotion || null,
+        }
+        setConversations(prev => [enriched, ...prev])
+        setActiveConversation(enriched)
+        setFilterStage('todos')
+      }
+    }
+
+    createConv()
+  }, [targetLeadId, orgId, loadingConversations, conversations])
 
   // ---- Fetch messages ----
   useEffect(() => {
@@ -1072,6 +1189,36 @@ function MessagesContent() {
     }
   }, [activeConversation?.lead_id, router])
 
+  // ---- Toggle lead info panel ----
+  const toggleLeadInfo = useCallback(async () => {
+    if (showLeadInfo) {
+      setShowLeadInfo(false)
+      return
+    }
+    if (!activeConversation?.lead_id) return
+
+    setShowLeadInfo(true)
+    setLoadingLeadDetails(true)
+    try {
+      const { data } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('id', activeConversation.lead_id)
+        .single()
+      setLeadDetails(data)
+    } catch {
+      setLeadDetails(null)
+    } finally {
+      setLoadingLeadDetails(false)
+    }
+  }, [showLeadInfo, activeConversation?.lead_id])
+
+  // Close lead info when conversation changes
+  useEffect(() => {
+    setShowLeadInfo(false)
+    setLeadDetails(null)
+  }, [activeConversation?.id])
+
   // ---- Filters ----
   // Busca por nome OU número de telefone
   const filteredConversations = conversations
@@ -1227,7 +1374,15 @@ function MessagesContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  {/* NOVO: Botão para ir ao perfil do lead */}
+                  {/* Botão para ver dados do lead (painel flutuante) */}
+                  <button
+                    onClick={toggleLeadInfo}
+                    className={`p-2 rounded-full transition-colors ${showLeadInfo ? 'text-blue-400 bg-blue-500/10' : 'text-[#aebac1] hover:text-white hover:bg-[#374045]'}`}
+                    title={t.leadInfo}
+                  >
+                    <Info size={18} />
+                  </button>
+                  {/* Botão para ir ao perfil do lead */}
                   <button
                     onClick={handleOpenLeadProfile}
                     className="p-2 text-[#aebac1] hover:text-white rounded-full hover:bg-[#374045] transition-colors"
@@ -1255,6 +1410,112 @@ function MessagesContent() {
                   </button>
                 </div>
               </div>
+
+              {/* Lead Info floating panel */}
+              {showLeadInfo && (
+                <div
+                  className="absolute top-[52px] right-3 z-30 w-72 rounded-xl shadow-2xl border overflow-hidden"
+                  style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}
+                >
+                  <div className="p-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
+                      {t.leadInfo}
+                    </span>
+                    <button onClick={() => setShowLeadInfo(false)} className="p-1 rounded hover:bg-white/10 transition-colors">
+                      <X size={14} style={{ color: 'var(--color-text-secondary)' }} />
+                    </button>
+                  </div>
+                  {loadingLeadDetails ? (
+                    <div className="p-6 flex justify-center">
+                      <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'var(--color-text-secondary)' }} />
+                    </div>
+                  ) : leadDetails ? (
+                    <div className="p-3 space-y-2.5 max-h-[400px] overflow-y-auto sidebar-scrollbar">
+                      {/* Nome */}
+                      <div className="text-center pb-2" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                        <div className="w-12 h-12 mx-auto rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg mb-1">
+                          {leadDetails.name?.[0]?.toUpperCase() || '#'}
+                        </div>
+                        <p className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>{leadDetails.name || '—'}</p>
+                        {leadDetails.nome_empresa && (
+                          <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{leadDetails.nome_empresa}</p>
+                        )}
+                      </div>
+
+                      {/* Dados */}
+                      {leadDetails.phone && (
+                        <div className="flex items-center gap-2">
+                          <PhoneIcon size={12} style={{ color: 'var(--color-text-tertiary)' }} />
+                          <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{formatPhone(leadDetails.phone)}</span>
+                        </div>
+                      )}
+                      {leadDetails.email && (
+                        <div className="flex items-center gap-2">
+                          <Mail size={12} style={{ color: 'var(--color-text-tertiary)' }} />
+                          <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{leadDetails.email}</span>
+                        </div>
+                      )}
+                      {leadDetails.city && (
+                        <div className="flex items-center gap-2">
+                          <MapPin size={12} style={{ color: 'var(--color-text-tertiary)' }} />
+                          <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{leadDetails.city}</span>
+                        </div>
+                      )}
+                      {leadDetails.source && (
+                        <div className="flex items-center gap-2">
+                          <Globe size={12} style={{ color: 'var(--color-text-tertiary)' }} />
+                          <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{leadDetails.source}</span>
+                        </div>
+                      )}
+                      {leadDetails.interesse && (
+                        <div className="flex items-center gap-2">
+                          <Tag size={12} style={{ color: 'var(--color-text-tertiary)' }} />
+                          <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                            {leadDetails.interesse === 'compra' ? 'Compra' : leadDetails.interesse === 'locacao' ? 'Locação' : leadDetails.interesse === 'ambos' ? 'Compra/Locação' : leadDetails.interesse}
+                          </span>
+                        </div>
+                      )}
+                      {leadDetails.tipo_contato && (
+                        <div className="flex items-center gap-2">
+                          <User size={12} style={{ color: 'var(--color-text-tertiary)' }} />
+                          <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                            {leadDetails.tipo_contato === 'comprador' ? 'Comprador' : leadDetails.tipo_contato === 'locatario' ? 'Locatário' : leadDetails.tipo_contato === 'vendedor' ? 'Vendedor' : leadDetails.tipo_contato === 'proprietario' ? 'Proprietário' : leadDetails.tipo_contato}
+                          </span>
+                        </div>
+                      )}
+                      {leadDetails.stage && (
+                        <div className="flex items-center gap-2">
+                          <Circle size={12} style={{ fill: 'var(--color-primary)', color: 'var(--color-primary)' }} />
+                          <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                            {pipelineStages.find(s => s.name === leadDetails.stage)?.label || leadDetails.stage}
+                          </span>
+                        </div>
+                      )}
+                      {leadDetails.created_at && (
+                        <div className="flex items-center gap-2">
+                          <Calendar size={12} style={{ color: 'var(--color-text-tertiary)' }} />
+                          <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                            {new Date(leadDetails.created_at).toLocaleDateString(userLang === 'en' ? 'en-US' : userLang === 'es' ? 'es-ES' : 'pt-BR')}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Link para perfil completo */}
+                      <button
+                        onClick={handleOpenLeadProfile}
+                        className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-colors hover:opacity-80"
+                        style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                      >
+                        Ver perfil completo <ChevronRight size={12} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center">
+                      <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>Lead não encontrado</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Messages area */}
               <div

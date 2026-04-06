@@ -114,7 +114,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // 2. Criar/atualizar lead no CRM (tabela leads)
+    // 2. Buscar dados do imóvel para enriquecer o lead
+    let propertyData: any = null
+    if (body.property_id) {
+      const { data: prop } = await supabase
+        .from('properties')
+        .select('title, transaction_type, property_type, address_city, address_neighborhood, external_code')
+        .eq('id', body.property_id)
+        .single()
+      propertyData = prop
+    }
+
+    // Mapear transaction_type → interesse e tipo_contato
+    const interesseMap: Record<string, string> = { sale: 'compra', rent: 'locacao', sale_or_rent: 'ambos' }
+    const tipoContatoMap: Record<string, string> = { sale: 'comprador', rent: 'locatario', sale_or_rent: 'comprador' }
+    const interesse = propertyData ? interesseMap[propertyData.transaction_type] || null : null
+    const tipoContato = propertyData ? tipoContatoMap[propertyData.transaction_type] || null : null
+
+    // 3. Criar/atualizar lead no CRM (tabela leads)
     let crmLeadId: string | null = null
     try {
       // Verificar se já existe lead com esse telefone na org
@@ -127,8 +144,18 @@ export async function POST(request: NextRequest) {
 
       if (existingLead) {
         crmLeadId = existingLead.id
+        // Atualizar dados do lead existente com info do imóvel
+        const updateData: any = {}
+        if (body.email) updateData.email = body.email
+        if (interesse) updateData.interesse = interesse
+        if (tipoContato) updateData.tipo_contato = tipoContato
+        if (propertyData?.address_city) updateData.city = propertyData.address_city
+        if (Object.keys(updateData).length > 0) {
+          updateData.updated_at = new Date().toISOString()
+          await supabase.from('leads').update(updateData).eq('id', existingLead.id)
+        }
       } else {
-        // Criar novo lead no CRM
+        // Criar novo lead no CRM com dados enriquecidos
         const { data: newLead } = await supabase
           .from('leads')
           .insert({
@@ -138,6 +165,9 @@ export async function POST(request: NextRequest) {
             email: body.email || null,
             source: 'site',
             stage: 'new',
+            interesse: interesse || null,
+            tipo_contato: tipoContato || null,
+            city: propertyData?.address_city || null,
             created_at: new Date().toISOString(),
           })
           .select('id')
@@ -157,19 +187,18 @@ export async function POST(request: NextRequest) {
       console.error('[SiteLeads] Erro ao sincronizar com CRM:', e)
     }
 
-    // 3. Criar alerta para o corretor
+    // 4. Criar alerta para o corretor
     try {
-      const propertyInfo = body.property_id
-        ? await supabase.from('properties').select('title').eq('id', body.property_id).single().then(r => r.data?.title)
-        : null
+      const refCode = propertyData?.external_code ? ` (${propertyData.external_code})` : ''
+      const propertyTitle = propertyData?.title
 
       await supabase.from('alerts').insert({
         org_id: site.org_id,
         lead_id: crmLeadId,
         type: 'new_site_lead',
         title: `Novo lead do site: ${name}`,
-        body: propertyInfo
-          ? `${name} (${phone}) demonstrou interesse no imóvel "${propertyInfo}". ${body.message || ''}`
+        body: propertyTitle
+          ? `${name} (${phone}) demonstrou interesse no imóvel "${propertyTitle}"${refCode}. ${body.message || ''}`
           : `${name} (${phone}) enviou uma mensagem pelo site. ${body.message || ''}`,
         priority: 'high',
         status: 'unread',
