@@ -879,80 +879,79 @@ export default function DashboardPage() {
           className="col-span-12 md:col-span-5 lg:col-span-4 p-5 sm:p-6 relative group"
           onClick={() => setIsGoalsModalOpen(true)}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 opacity-50 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(to bottom right, rgba(79, 111, 255, 0.1), transparent, transparent)' }} />
           <div className="flex items-center justify-between mb-4 relative">
-            <div className="p-2.5 sm:p-3 bg-blue-500/10 rounded-xl text-blue-400 border border-blue-500/20">
+            <div className="p-2.5 sm:p-3 rounded-xl" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(79, 111, 255, 0.2)' }}>
               <DollarSign size={20} className="sm:w-6 sm:h-6" />
             </div>
-            <span className="text-[10px] sm:text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 flex items-center gap-1">
+            <span className="text-[10px] sm:text-xs font-mono px-2 py-1 rounded flex items-center gap-1" style={{ color: 'var(--color-success)', background: 'var(--color-success-subtle)', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
               Meta: {formatPrice(goals.revenue, userCurrency, userLang)}
             </span>
           </div>
-          <p className="text-gray-400 text-xs sm:text-sm font-medium relative">{t.revenue} ({range}d)</p>
-          <h2 className="text-3xl sm:text-4xl font-black text-white mt-1 sm:mt-2 tracking-tight relative">
+          <p className="text-xs sm:text-sm font-medium relative" style={{ color: 'var(--color-text-tertiary)' }}>{t.revenue} ({range}d)</p>
+          <h2 className="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 tracking-tight relative" style={{ color: 'var(--color-text-primary)' }}>
             {formatPrice(kpis.totalFaturamento, userCurrency, userLang)}
           </h2>
           <div className="mt-4 w-full rounded-full overflow-hidden h-1.5 sm:h-2 relative" style={{ background: 'var(--color-border)' }}>
-            <div 
-              className="h-full bg-blue-500 transition-all duration-1000 shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
-              style={{ width: `${Math.min(kpis.metaAtingida, 100)}%` }} 
-            /> 
+            <div
+              className="h-full transition-all duration-1000"
+              style={{ width: `${Math.min(kpis.metaAtingida, 100)}%`, background: 'var(--color-primary)', boxShadow: '0 0 10px rgba(79, 111, 255, 0.5)' }}
+            />
           </div>
-          <p className="text-[10px] sm:text-xs text-gray-500 mt-2 flex justify-between font-medium relative">
+          <p className="text-[10px] sm:text-xs mt-2 flex justify-between font-medium relative" style={{ color: 'var(--color-text-muted)' }}>
             <span>{t.goalProgress}</span>
-            <span className="text-white">{kpis.metaAtingida.toFixed(1)}% {t.reached}</span>
+            <span style={{ color: 'var(--color-text-primary)' }}>{kpis.metaAtingida.toFixed(1)}% {t.reached}</span>
           </p>
         </Card>
 
         {/* KPIs Rápidos */}
         <div className="col-span-12 md:col-span-7 lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           {/* Leads */}
-          <Card className="p-4 sm:p-6 flex flex-col justify-between hover:border-white/10 transition-colors">
+          <Card className="p-4 sm:p-6 flex flex-col justify-between transition-colors" style={{ borderColor: 'transparent' }} onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border-hover)' }} onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'transparent' }}>
             <div className="flex justify-between items-start">
               <StatBadge value={kpis.leadsTotal} label={t.leadsCaptured} trend={5.2} />
-              <div className="p-2 bg-orange-500/10 rounded-lg text-orange-400 border border-orange-500/20">
+              <div className="p-2 rounded-lg" style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
                 <Users size={16} className="sm:w-5 sm:h-5" />
               </div>
             </div>
-            <div className="mt-4 pt-3 sm:pt-4 border-t border-white/5 flex justify-between text-[10px] sm:text-xs text-gray-400 font-medium">
+            <div className="mt-4 pt-3 sm:pt-4 flex justify-between text-[10px] sm:text-xs font-medium" style={{ borderTop: '1px solid var(--color-border)', color: 'var(--color-text-tertiary)' }}>
               <span title="Baseado no investimento configurado">{t.costPerLead}</span>
-              <span className="text-white font-bold">{formatPrice(kpis.custoPorLead, userCurrency, userLang)}</span>
+              <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatPrice(kpis.custoPorLead, userCurrency, userLang)}</span>
             </div>
           </Card>
 
-          {/* Agendamentos - CORRIGIDO: usa data_agendamento */}
-          <Card className="p-4 sm:p-6 flex flex-col justify-between hover:border-white/10 transition-colors">
+          {/* Agendamentos */}
+          <Card className="p-4 sm:p-6 flex flex-col justify-between transition-colors" style={{ borderColor: 'transparent' }} onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border-hover)' }} onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'transparent' }}>
             <div className="flex justify-between items-start">
               <StatBadge value={kpis.reunioesAgendadas} label={t.scheduling} />
-              <div className="p-2 bg-purple-900/20 rounded-lg text-purple-400 border border-purple-500/20">
+              <div className="p-2 rounded-lg" style={{ background: 'var(--color-indigo-subtle)', color: 'var(--color-indigo)', border: '1px solid rgba(110, 95, 255, 0.2)' }}>
                 <Calendar size={16} className="sm:w-5 sm:h-5" />
               </div>
             </div>
-            <div className="mt-4 pt-3 sm:pt-4 border-t border-white/5 flex justify-between text-[10px] sm:text-xs text-gray-400 font-medium">
+            <div className="mt-4 pt-3 sm:pt-4 flex justify-between text-[10px] sm:text-xs font-medium" style={{ borderTop: '1px solid var(--color-border)', color: 'var(--color-text-tertiary)' }}>
               <span>{t.attendanceRate}</span>
-              <span className="text-white font-bold">
-                {kpis.reunioesAgendadas > 0 
-                  ? ((kpis.reunioesRealizadas / kpis.reunioesAgendadas) * 100).toFixed(0) 
+              <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                {kpis.reunioesAgendadas > 0
+                  ? ((kpis.reunioesRealizadas / kpis.reunioesAgendadas) * 100).toFixed(0)
                   : 0}%
               </span>
             </div>
-            {/* Indicador visual de que são agendamentos no período */}
-            <p className="text-[9px] text-gray-600 mt-1 text-right">
+            <p className="text-[9px] mt-1 text-right" style={{ color: 'var(--color-text-muted)' }}>
               {kpis.reunioesRealizadas} {t.attendedInPeriod}
             </p>
           </Card>
 
           {/* Pipeline */}
-          <Card className="p-4 sm:p-6 flex flex-col justify-between hover:border-white/10 transition-colors">
+          <Card className="p-4 sm:p-6 flex flex-col justify-between transition-colors" style={{ borderColor: 'transparent' }} onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border-hover)' }} onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'transparent' }}>
             <div className="flex justify-between items-start">
               <StatBadge value={kpis.leadsQualificados} label={t.activePipeline} trend={15} />
-              <div className="p-2 bg-emerald-900/20 rounded-lg text-emerald-400 border border-emerald-500/20">
+              <div className="p-2 rounded-lg" style={{ background: 'var(--color-success-subtle)', color: 'var(--color-success)', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
                 <TrendingUp size={16} className="sm:w-5 sm:h-5" />
               </div>
             </div>
-            <div className="mt-4 pt-3 sm:pt-4 border-t border-white/5 flex justify-between text-[10px] sm:text-xs text-gray-400 font-medium">
+            <div className="mt-4 pt-3 sm:pt-4 flex justify-between text-[10px] sm:text-xs font-medium" style={{ borderTop: '1px solid var(--color-border)', color: 'var(--color-text-tertiary)' }}>
               <span>{t.advancedStages}</span>
-              <span className="text-white font-bold">{kpis.leadsQualificados} {t.opportunities}</span>
+              <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{kpis.leadsQualificados} {t.opportunities}</span>
             </div>
           </Card>
         </div>
@@ -960,14 +959,14 @@ export default function DashboardPage() {
         {/* Gráfico de Área */}
         <Card className="col-span-12 lg:col-span-8 p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
-            <h3 className="text-base sm:text-lg font-semibold text-white">{t.flowTitle}</h3>
-            <div className="flex gap-4 text-[10px] sm:text-xs font-medium bg-white/5 px-3 py-1.5 rounded-full">
+            <h3 className="text-base sm:text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>{t.flowTitle}</h3>
+            <div className="flex gap-4 text-[10px] sm:text-xs font-medium px-3 py-1.5 rounded-full" style={{ background: 'var(--color-bg-hover)' }}>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-primary)', boxShadow: '0 0 8px rgba(79, 111, 255, 0.8)' }} />
                 {t.sales} ({userCurrency})
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-success)', boxShadow: '0 0 8px rgba(34, 197, 94, 0.8)' }} />
                 Leads
               </div>
             </div>
@@ -986,12 +985,12 @@ export default function DashboardPage() {
                     <stop offset="95%" stopColor={COLORS.success} stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
-                <XAxis dataKey="name" stroke="#555" fontSize={10} tickLine={false} axisLine={false} dy={10} />
-                <YAxis stroke="#555" fontSize={10} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                  itemStyle={{ color: '#fff', fontWeight: 'bold' }}
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                <XAxis dataKey="name" stroke="var(--color-text-muted)" fontSize={10} tickLine={false} axisLine={false} dy={10} />
+                <YAxis stroke="var(--color-text-muted)" fontSize={10} tickLine={false} axisLine={false} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', borderRadius: '8px', color: 'var(--color-text-primary)', fontSize: '12px' }}
+                  itemStyle={{ color: 'var(--color-text-primary)', fontWeight: 'bold' }}
                 />
                 <Area type="monotone" dataKey="valor" stroke={COLORS.blue} strokeWidth={3} fillOpacity={1} fill="url(#colorVendas)" name={t.sales} />
                 <Area type="monotone" dataKey="leads" stroke={COLORS.success} strokeWidth={3} fillOpacity={1} fill="url(#colorLeads)" name="Leads" />
@@ -1004,94 +1003,94 @@ export default function DashboardPage() {
         <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 sm:gap-6">
           {/* Sentiment */}
           <Card className="p-4 sm:p-6 flex-1">
-            <h3 className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+            <h3 className="text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-4" style={{ color: 'var(--color-text-tertiary)' }}>
               {t.sentimentTitle}
             </h3>
             <div className="h-[140px] sm:h-[160px] w-full relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie 
-                    data={sentimentData} 
-                    innerRadius="70%" 
-                    outerRadius="90%" 
-                    paddingAngle={5} 
-                    dataKey="value" 
+                  <Pie
+                    data={sentimentData}
+                    innerRadius="70%"
+                    outerRadius="90%"
+                    paddingAngle={5}
+                    dataKey="value"
                     stroke="none"
                   >
                     {sentimentData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: '#111', borderRadius: '8px', border: 'none', color: '#fff', fontSize: '12px' }} />
+                  <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-elevated)', borderRadius: '8px', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)', fontSize: '12px' }} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center">
-                  <span className="block text-2xl sm:text-3xl font-black text-white">
+                  <span className="block text-2xl sm:text-3xl font-black" style={{ color: 'var(--color-text-primary)' }}>
                     {sentimentPercentage}%
                   </span>
-                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">
+                  <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
                     {t.positive}
                   </span>
                 </div>
               </div>
             </div>
             <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
-              <div className="flex justify-between text-xs sm:text-sm items-center bg-white/5 p-2 rounded-lg">
-                <span className="flex items-center gap-2 text-gray-300 font-medium">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_5px_rgba(16,185,129,0.8)]" />
+              <div className="flex justify-between text-xs sm:text-sm items-center p-2 rounded-lg" style={{ background: 'var(--color-bg-hover)' }}>
+                <span className="flex items-center gap-2 font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                  <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-success)', boxShadow: '0 0 5px rgba(34, 197, 94, 0.8)' }} />
                   {t.positive}
                 </span>
-                <span className="text-white font-mono font-bold">{sentimentData[0]?.value || 0}</span>
+                <span className="font-mono font-bold" style={{ color: 'var(--color-text-primary)' }}>{sentimentData[0]?.value || 0}</span>
               </div>
-              <div className="flex justify-between text-xs sm:text-sm items-center bg-white/5 p-2 rounded-lg">
-                <span className="flex items-center gap-2 text-gray-300 font-medium">
-                  <div className="w-2 h-2 bg-rose-500 rounded-full shadow-[0_0_5px_rgba(244,63,94,0.8)]" />
+              <div className="flex justify-between text-xs sm:text-sm items-center p-2 rounded-lg" style={{ background: 'var(--color-bg-hover)' }}>
+                <span className="flex items-center gap-2 font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                  <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-error)', boxShadow: '0 0 5px rgba(239, 68, 68, 0.8)' }} />
                   {t.negative}
                 </span>
-                <span className="text-white font-mono font-bold">{sentimentData[2]?.value || 0}</span>
+                <span className="font-mono font-bold" style={{ color: 'var(--color-text-primary)' }}>{sentimentData[2]?.value || 0}</span>
               </div>
             </div>
           </Card>
 
           {/* Funnel */}
           <Card className="p-4 sm:p-6">
-            <h3 className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+            <h3 className="text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-4" style={{ color: 'var(--color-text-tertiary)' }}>
               {t.funnelTitle}
             </h3>
             <div className="space-y-4">
               <div>
-                <div className="flex justify-between text-[10px] sm:text-xs text-gray-400 font-medium mb-1.5">
+                <div className="flex justify-between text-[10px] sm:text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-tertiary)' }}>
                   <span>{t.capture} ({kpis.leadsTotal})</span>
                   <span>100%</span>
                 </div>
-                <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-gray-500 rounded-full w-full" />
+                <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--color-border)' }}>
+                  <div className="h-full rounded-full w-full" style={{ background: 'var(--color-text-muted)' }} />
                 </div>
               </div>
               <div>
-                <div className="flex justify-between text-[10px] sm:text-xs text-gray-400 font-medium mb-1.5">
+                <div className="flex justify-between text-[10px] sm:text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-tertiary)' }}>
                   <span>{t.qualification} ({kpis.leadsQualificados})</span>
-                  <span className="text-blue-400">
+                  <span style={{ color: 'var(--color-primary)' }}>
                     {kpis.leadsTotal > 0 ? ((kpis.leadsQualificados / kpis.leadsTotal) * 100).toFixed(1) : 0}%
                   </span>
                 </div>
-                <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)]" 
-                    style={{ width: `${kpis.leadsTotal > 0 ? (kpis.leadsQualificados / kpis.leadsTotal) * 100 : 0}%` }}
+                <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--color-border)' }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${kpis.leadsTotal > 0 ? (kpis.leadsQualificados / kpis.leadsTotal) * 100 : 0}%`, background: 'var(--color-primary)', boxShadow: '0 0 8px rgba(79, 111, 255, 0.6)' }}
                   />
                 </div>
               </div>
               <div>
-                <div className="flex justify-between text-[10px] sm:text-xs text-gray-400 font-medium mb-1.5">
+                <div className="flex justify-between text-[10px] sm:text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-tertiary)' }}>
                   <span>{t.sales} ({Math.round(kpis.taxaConversao * kpis.leadsTotal / 100)})</span>
-                  <span className="text-emerald-400 font-bold">{kpis.taxaConversao.toFixed(1)}%</span>
+                  <span className="font-bold" style={{ color: 'var(--color-success)' }}>{kpis.taxaConversao.toFixed(1)}%</span>
                 </div>
-                <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]" 
-                    style={{ width: `${kpis.taxaConversao}%` }}
+                <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--color-border)' }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${kpis.taxaConversao}%`, background: 'var(--color-success)', boxShadow: '0 0 8px rgba(34, 197, 94, 0.8)' }}
                   />
                 </div>
               </div>
@@ -1102,44 +1101,47 @@ export default function DashboardPage() {
         {/* Bloco de Inteligência Tática */}
         <div className="col-span-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Leads Estagnados */}
-          <Card className="p-4 sm:p-6 border-l-4 border-l-amber-500">
+          <Card className="p-4 sm:p-6" style={{ borderLeft: '4px solid var(--color-accent)' }}>
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                  <Activity size={16} className="text-amber-500 animate-pulse" />
+                <h3 className="text-sm sm:text-base font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                  <Activity size={16} className="animate-pulse" style={{ color: 'var(--color-accent)' }} />
                   {t.attention}
                 </h3>
-                <p className="text-[10px] sm:text-xs text-gray-400 mt-1">{t.stalledLeads}</p>
+                <p className="text-[10px] sm:text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.stalledLeads}</p>
               </div>
-              <span className="bg-amber-500/10 text-amber-500 text-[10px] font-bold px-2 py-1 rounded border border-amber-500/20">
+              <span className="text-[10px] font-bold px-2 py-1 rounded" style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
                 {stalledLeads.length} {t.alerts}
               </span>
             </div>
             <div className="space-y-2 sm:space-y-3">
               {stalledLeads.length === 0 ? (
-                <div className="text-center py-6 sm:py-8 text-gray-500 text-xs sm:text-sm">
+                <div className="text-center py-6 sm:py-8 text-xs sm:text-sm" style={{ color: 'var(--color-text-muted)' }}>
                   {t.cleanState}
                 </div>
               ) : (
                 stalledLeads.map(lead => (
-                  <div 
-                    key={lead.id} 
-                    onClick={() => router.push(`/dashboard/crm/${lead.id}`)} 
-                    className="bg-white/5 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:bg-white/10 hover:border-white/10 border border-transparent transition-all group"
+                  <div
+                    key={lead.id}
+                    onClick={() => router.push(`/dashboard/crm/${lead.id}`)}
+                    className="p-3 rounded-xl flex justify-between items-center cursor-pointer transition-all group"
+                    style={{ background: 'var(--color-bg-hover)', border: '1px solid transparent' }}
+                    onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.background = 'var(--color-bg-elevated)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border)' }}
+                    onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'transparent' }}
                   >
                     <div className="min-w-0 pr-2">
-                      <p className="font-semibold text-gray-200 text-xs sm:text-sm truncate group-hover:text-amber-400 transition-colors">
+                      <p className="font-semibold text-xs sm:text-sm truncate transition-colors" style={{ color: 'var(--color-text-secondary)' }}>
                         {lead.name}
                       </p>
-                      <p className="text-[9px] sm:text-[10px] text-gray-500 mt-0.5">
+                      <p className="text-[9px] sm:text-[10px] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
                         {lead.stage} • {format(parseDateSafe(lead.created_at), 'dd/MM')}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-mono text-emerald-400 text-xs sm:text-sm font-bold">
+                      <p className="font-mono text-xs sm:text-sm font-bold" style={{ color: 'var(--color-success)' }}>
                         {formatPrice(Number(lead.total_em_vendas), userCurrency, userLang)}
                       </p>
-                      <span className="text-[9px] sm:text-[10px] text-rose-400 font-medium mt-0.5 inline-block">
+                      <span className="text-[9px] sm:text-[10px] font-medium mt-0.5 inline-block" style={{ color: 'var(--color-error)' }}>
                         {t.stalled}
                       </span>
                     </div>
@@ -1151,7 +1153,7 @@ export default function DashboardPage() {
 
           {/* Horários de Resposta */}
           <Card className="p-4 sm:p-6">
-            <h3 className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <h3 className="text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
               <Calendar size={14} /> {t.responseTimes}
             </h3>
             <div className="h-[140px] sm:h-[180px] w-full">
@@ -1163,46 +1165,48 @@ export default function DashboardPage() {
                       <stop offset="95%" stopColor={COLORS.purple} stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="hour" stroke="#555" fontSize={9} tickLine={false} axisLine={false} dy={5} />
-                  <Tooltip 
-                    cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
-                    contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '12px' }} 
+                  <XAxis dataKey="hour" stroke="var(--color-text-muted)" fontSize={9} tickLine={false} axisLine={false} dy={5} />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                    contentStyle={{ backgroundColor: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', borderRadius: '8px', color: 'var(--color-text-primary)', fontSize: '12px' }}
                   />
                   <Area type="step" dataKey="responses" stroke={COLORS.purple} fill="url(#colorHours)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-[9px] sm:text-[10px] text-gray-500 mt-2 text-center uppercase tracking-wide">
+            <p className="text-[9px] sm:text-[10px] mt-2 text-center uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>
               {t.peakTimes}
             </p>
           </Card>
 
           {/* Taxa de Conversão por Fonte */}
           <Card className="p-4 sm:p-6">
-            <h3 className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <h3 className="text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
               <TrendingUp size={14} /> {t.conversionRate}
             </h3>
             <div className="space-y-4 overflow-y-auto max-h-[160px] sm:max-h-[200px] pr-2 hide-scrollbar">
               {sourceData.length === 0 ? (
-                <p className="text-gray-500 text-xs text-center mt-8 sm:mt-10">{t.insufficientData}</p>
+                <p className="text-xs text-center mt-8 sm:mt-10" style={{ color: 'var(--color-text-muted)' }}>{t.insufficientData}</p>
               ) : (
                 sourceData.map((source, idx) => (
                   <div key={idx} className="group">
                     <div className="flex justify-between text-xs sm:text-sm mb-1.5">
-                      <span className="text-gray-300 font-medium truncate pr-2">{source.name}</span>
-                      <span className={`font-bold shrink-0 ${Number(source.rate) > 10 ? 'text-emerald-400' : 'text-gray-500'}`}>
+                      <span className="font-medium truncate pr-2" style={{ color: 'var(--color-text-secondary)' }}>{source.name}</span>
+                      <span className="font-bold shrink-0" style={{ color: Number(source.rate) > 10 ? 'var(--color-success)' : 'var(--color-text-muted)' }}>
                         {source.rate}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          Number(source.rate) > 10 ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]' : 'bg-blue-500'
-                        }`} 
-                        style={{ width: `${Math.min(Number(source.rate) * 3, 100)}%` }}
+                    <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--color-border)' }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.min(Number(source.rate) * 3, 100)}%`,
+                          background: Number(source.rate) > 10 ? 'var(--color-success)' : 'var(--color-primary)',
+                          boxShadow: Number(source.rate) > 10 ? '0 0 5px rgba(34, 197, 94, 0.8)' : 'none',
+                        }}
                       />
                     </div>
-                    <p className="text-[9px] sm:text-[10px] text-gray-600 mt-1.5 text-right">
+                    <p className="text-[9px] sm:text-[10px] mt-1.5 text-right" style={{ color: 'var(--color-text-muted)' }}>
                       {t.sourceBase}: {source.volume} leads
                     </p>
                   </div>
@@ -1214,19 +1218,20 @@ export default function DashboardPage() {
 
         {/* Tabela de Leads Recentes */}
         <div className="col-span-12">
-          <Card className="p-0 border border-white/5">
-            <div className="p-4 sm:p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-              <h3 className="text-base sm:text-lg font-semibold text-white">{t.recentInteractions}</h3>
-              <button 
-                onClick={() => router.push('/dashboard/crm')} 
-                className="text-[10px] sm:text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-wider"
+          <Card className="p-0" style={{ border: '1px solid var(--color-border)' }}>
+            <div className="p-4 sm:p-6 flex justify-between items-center" style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-bg-hover)' }}>
+              <h3 className="text-base sm:text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>{t.recentInteractions}</h3>
+              <button
+                onClick={() => router.push('/dashboard/crm')}
+                className="text-[10px] sm:text-xs font-bold transition-colors uppercase tracking-wider"
+                style={{ color: 'var(--color-primary)' }}
               >
                 {t.viewAll}
               </button>
             </div>
             <div className="overflow-x-auto hide-scrollbar">
               <table className="w-full text-xs sm:text-sm text-left whitespace-nowrap">
-                <thead className="bg-black/40 text-gray-400 uppercase text-[9px] sm:text-[10px] tracking-wider">
+                <thead className="uppercase text-[9px] sm:text-[10px] tracking-wider" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)' }}>
                   <tr>
                     <th className="px-4 sm:px-6 py-3 sm:py-4 font-bold">{t.tableLead}</th>
                     <th className="px-4 sm:px-6 py-3 sm:py-4 font-bold">{t.tableStatus}</th>
@@ -1235,54 +1240,57 @@ export default function DashboardPage() {
                     <th className="px-4 sm:px-6 py-3 sm:py-4 font-bold text-right">{t.tableValue}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody style={{ borderTop: '1px solid var(--color-border)' }}>
                   {recentLeads.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500 text-sm">
+                      <td colSpan={5} className="px-6 py-8 text-center text-sm" style={{ color: 'var(--color-text-muted)' }}>
                         {t.noData}
                       </td>
                     </tr>
                   ) : (
                     recentLeads.map((lead) => (
-                      <tr 
-                        key={lead.id} 
-                        onClick={() => router.push(`/dashboard/crm/${lead.id}`)} 
-                        className="hover:bg-white/5 transition-colors group cursor-pointer"
+                      <tr
+                        key={lead.id}
+                        onClick={() => router.push(`/dashboard/crm/${lead.id}`)}
+                        className="transition-colors group cursor-pointer"
+                        style={{ borderBottom: '1px solid var(--color-border)' }}
+                        onMouseEnter={(e: React.MouseEvent<HTMLTableRowElement>) => { (e.currentTarget as HTMLTableRowElement).style.background = 'var(--color-bg-hover)' }}
+                        onMouseLeave={(e: React.MouseEvent<HTMLTableRowElement>) => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent' }}
                       >
                         <td className="px-4 sm:px-6 py-3 sm:py-4">
-                          <p className="font-bold text-gray-200 group-hover:text-blue-400 transition-colors">
+                          <p className="font-bold transition-colors" style={{ color: 'var(--color-text-secondary)' }}>
                             {lead.name}
                           </p>
-                          <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
+                          <p className="text-[10px] sm:text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
                             {lead.nome_empresa || t.companyNotInformed}
                           </p>
                         </td>
                         <td className="px-4 sm:px-6 py-3 sm:py-4">
-                          <span className={`px-2 py-1 rounded text-[9px] sm:text-[10px] font-bold uppercase border ${
-                            lead.stage === 'venda' 
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                              : lead.stage === 'qualificado' 
-                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' 
-                                : 'bg-gray-800/50 text-gray-400 border-gray-700/50'
-                          }`}>
+                          <span className="px-2 py-1 rounded text-[9px] sm:text-[10px] font-bold uppercase" style={
+                            lead.stage === 'venda'
+                              ? { background: 'var(--color-success-subtle)', color: 'var(--color-success)', border: '1px solid rgba(34, 197, 94, 0.2)' }
+                              : lead.stage === 'qualificado'
+                                ? { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(79, 111, 255, 0.2)' }
+                                : { background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border)' }
+                          }>
                             {lead.stage}
                           </span>
                         </td>
-                        <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-400 font-medium">
+                        <td className="px-4 sm:px-6 py-3 sm:py-4 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
                           {format(parseDateSafe(lead.created_at), "dd MMM, HH:mm", { locale: dateLocale })}
                         </td>
                         <td className="px-4 sm:px-6 py-3 sm:py-4">
                           {lead.agendou_reuniao ? (
-                            <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                            <span className="flex items-center gap-1.5 font-medium" style={{ color: 'var(--color-success)' }}>
                               <Calendar size={12}/> {t.yes}
                             </span>
                           ) : (
-                            <span className="text-gray-600">-</span>
+                            <span style={{ color: 'var(--color-text-muted)' }}>-</span>
                           )}
                         </td>
-                        <td className="px-4 sm:px-6 py-3 sm:py-4 text-right font-mono text-gray-300 font-bold group-hover:text-white transition-colors">
-                          {Number(lead.total_em_vendas) > 0 
-                            ? formatPrice(Number(lead.total_em_vendas), userCurrency, userLang) 
+                        <td className="px-4 sm:px-6 py-3 sm:py-4 text-right font-mono font-bold transition-colors" style={{ color: 'var(--color-text-secondary)' }}>
+                          {Number(lead.total_em_vendas) > 0
+                            ? formatPrice(Number(lead.total_em_vendas), userCurrency, userLang)
                             : '-'}
                         </td>
                       </tr>
