@@ -7,7 +7,7 @@ import {
   User, Shield, Building, Globe, Bell, Save, UserPlus, Trash2,
   X, Loader2, AlertCircle, Lock, Mail, Smartphone, MapPin, Copy, Check,
   Tag, Plus, GripVertical, Pencil, LayoutGrid, ChevronUp, ChevronDown,
-  Sun, Moon
+  Sun, Moon, CreditCard, Eye, RotateCcw
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
 
@@ -64,7 +64,8 @@ const TRANSLATIONS = {
       team: 'Equipe',
       pipeline: 'Pipeline',
       tags: 'Tags',
-      integrations: 'Integrações'
+      integrations: 'Integrações',
+      leadCard: 'Card do Lead'
     },
     profile: {
       personalData: 'Dados Pessoais',
@@ -142,6 +143,29 @@ const TRANSLATIONS = {
       copy: 'Copiar',
       copied: 'Copiado'
     },
+    leadCard: {
+      title: 'Card do Lead',
+      subtitle: 'Escolha quais informações aparecem nos cards do kanban.',
+      fieldsTitle: 'Campos visíveis',
+      indicatorsTitle: 'Indicadores',
+      fields: {
+        total_em_vendas: 'Valor da Venda',
+        phone: 'Telefone / WhatsApp',
+        email: 'E-mail',
+        tags: 'Tags',
+        source: 'Origem',
+        nicho: 'Nicho / Segmento',
+        nome_empresa: 'Nome da Empresa',
+        created_at: 'Data de Entrada',
+      },
+      indicators: {
+        show_stale_indicator: 'Lead parado (sem atualização há 5+ dias)',
+        show_ai_status: 'Status do agente de IA',
+      },
+      save: 'Salvar Configuração',
+      saved: 'Configuração salva!',
+      reset: 'Restaurar padrão',
+    },
     modal: {
       title: 'Convidar Membro',
       info: 'O usuário receberá um e-mail.',
@@ -171,7 +195,8 @@ const TRANSLATIONS = {
       team: 'Team',
       pipeline: 'Pipeline',
       tags: 'Tags',
-      integrations: 'Integrations'
+      integrations: 'Integrations',
+      leadCard: 'Lead Card'
     },
     profile: {
       personalData: 'Personal Data',
@@ -249,6 +274,29 @@ const TRANSLATIONS = {
       copy: 'Copy',
       copied: 'Copied'
     },
+    leadCard: {
+      title: 'Lead Card',
+      subtitle: 'Choose which fields appear on kanban lead cards.',
+      fieldsTitle: 'Visible fields',
+      indicatorsTitle: 'Indicators',
+      fields: {
+        total_em_vendas: 'Sale Value',
+        phone: 'Phone / WhatsApp',
+        email: 'Email',
+        tags: 'Tags',
+        source: 'Source',
+        nicho: 'Niche / Segment',
+        nome_empresa: 'Company Name',
+        created_at: 'Entry Date',
+      },
+      indicators: {
+        show_stale_indicator: 'Stale lead (no update in 5+ days)',
+        show_ai_status: 'AI agent status',
+      },
+      save: 'Save Configuration',
+      saved: 'Configuration saved!',
+      reset: 'Restore defaults',
+    },
     modal: {
       title: 'Invite Member',
       info: 'The user will receive an email.',
@@ -278,7 +326,8 @@ const TRANSLATIONS = {
       team: 'Equipo',
       pipeline: 'Pipeline',
       tags: 'Tags',
-      integrations: 'Integraciones'
+      integrations: 'Integraciones',
+      leadCard: 'Card del Lead'
     },
     profile: {
       personalData: 'Datos Personales',
@@ -355,6 +404,29 @@ const TRANSLATIONS = {
       webhookHint: 'Pega esta URL en el campo "Webhook" de tu instancia UAZAPI.',
       copy: 'Copiar',
       copied: 'Copiado'
+    },
+    leadCard: {
+      title: 'Card del Lead',
+      subtitle: 'Elige qué información aparece en los cards del kanban.',
+      fieldsTitle: 'Campos visibles',
+      indicatorsTitle: 'Indicadores',
+      fields: {
+        total_em_vendas: 'Valor de Venta',
+        phone: 'Teléfono / WhatsApp',
+        email: 'Correo Electrónico',
+        tags: 'Tags',
+        source: 'Origen',
+        nicho: 'Nicho / Segmento',
+        nome_empresa: 'Nombre de la Empresa',
+        created_at: 'Fecha de Ingreso',
+      },
+      indicators: {
+        show_stale_indicator: 'Lead inactivo (sin actualización en 5+ días)',
+        show_ai_status: 'Estado del agente de IA',
+      },
+      save: 'Guardar Configuración',
+      saved: '¡Configuración guardada!',
+      reset: 'Restaurar predeterminados',
     },
     modal: {
       title: 'Invitar Miembro',
@@ -445,6 +517,13 @@ export default function SettingsPage() {
   const [tagsLoading, setTagsLoading] = useState(false)
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState('blue')
+
+  // Estados para Lead Card Config
+  const DEFAULT_LEAD_CARD_FIELDS = ['total_em_vendas', 'phone', 'email', 'tags', 'source', 'created_at']
+  const ALL_LEAD_CARD_FIELDS = ['total_em_vendas', 'phone', 'email', 'tags', 'source', 'nicho', 'nome_empresa', 'created_at']
+  const [leadCardFields, setLeadCardFields] = useState<string[]>(DEFAULT_LEAD_CARD_FIELDS)
+  const [leadCardIndicators, setLeadCardIndicators] = useState({ show_stale_indicator: true, show_ai_status: true })
+  const [leadCardLoading, setLeadCardLoading] = useState(false)
 
   // Outros
   const [copiedWebhook, setCopiedWebhook] = useState(false)
@@ -766,6 +845,66 @@ export default function SettingsPage() {
     setNotifSettings(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
+  // ─── LEAD CARD CONFIG ───
+  const fetchLeadCardConfig = useCallback(async () => {
+    if (!orgId) return
+    const { data } = await supabase
+      .from('orgs')
+      .select('lead_card_config')
+      .eq('id', orgId)
+      .single()
+
+    if (data?.lead_card_config) {
+      const config = data.lead_card_config as any
+      if (config.fields) setLeadCardFields(config.fields)
+      if (config.show_stale_indicator !== undefined || config.show_ai_status !== undefined) {
+        setLeadCardIndicators({
+          show_stale_indicator: config.show_stale_indicator ?? true,
+          show_ai_status: config.show_ai_status ?? true,
+        })
+      }
+    }
+  }, [orgId])
+
+  useEffect(() => {
+    if (activeTab === 'leadCard') fetchLeadCardConfig()
+  }, [activeTab, fetchLeadCardConfig])
+
+  const handleSaveLeadCardConfig = async () => {
+    if (!orgId) return
+    setLeadCardLoading(true)
+    try {
+      await supabase
+        .from('orgs')
+        .update({
+          lead_card_config: {
+            fields: leadCardFields,
+            show_stale_indicator: leadCardIndicators.show_stale_indicator,
+            show_ai_status: leadCardIndicators.show_ai_status,
+          },
+        })
+        .eq('id', orgId)
+      alert(t.leadCard.saved)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLeadCardLoading(false)
+    }
+  }
+
+  const handleResetLeadCardConfig = () => {
+    setLeadCardFields([...DEFAULT_LEAD_CARD_FIELDS])
+    setLeadCardIndicators({ show_stale_indicator: true, show_ai_status: true })
+  }
+
+  const toggleLeadCardField = (field: string) => {
+    setLeadCardFields(prev =>
+      prev.includes(field)
+        ? prev.filter(f => f !== field)
+        : [...prev, field]
+    )
+  }
+
   const webhookUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/api/sdr/webhook`
     : `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/sdr/webhook`
@@ -796,6 +935,7 @@ export default function SettingsPage() {
     { id: 'team', label: t.tabs.team, icon: Shield, adminOnly: true },
     { id: 'pipeline', label: t.tabs.pipeline, icon: LayoutGrid, adminOnly: true },
     { id: 'tags', label: t.tabs.tags, icon: Tag, adminOnly: true },
+    { id: 'leadCard', label: t.tabs.leadCard, icon: Eye, adminOnly: true },
     { id: 'integrations', label: t.tabs.integrations, icon: Globe, adminOnly: true },
   ]
 
@@ -1442,6 +1582,101 @@ export default function SettingsPage() {
                     <Plus size={16} /> {t.tags.addTag}
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ABA: CARD DO LEAD */}
+          {activeTab === 'leadCard' && isAdmin && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Eye size={20} className="text-blue-500" /> {t.leadCard.title}
+                </h2>
+                <p className="text-sm text-gray-400 mt-1">{t.leadCard.subtitle}</p>
+              </div>
+
+              {/* Campos visíveis */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-300">{t.leadCard.fieldsTitle}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {ALL_LEAD_CARD_FIELDS.map(field => (
+                    <button
+                      key={field}
+                      onClick={() => toggleLeadCardField(field)}
+                      className="flex items-center gap-3 p-3 rounded-xl text-left transition-all"
+                      style={{
+                        background: leadCardFields.includes(field) ? 'var(--color-primary-subtle)' : 'var(--color-bg-elevated)',
+                        border: `1px solid ${leadCardFields.includes(field) ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                      }}
+                    >
+                      <div
+                        className="w-5 h-5 rounded flex items-center justify-center shrink-0 transition-all"
+                        style={{
+                          background: leadCardFields.includes(field) ? 'var(--color-primary)' : 'transparent',
+                          border: `2px solid ${leadCardFields.includes(field) ? 'var(--color-primary)' : 'var(--color-border-strong)'}`,
+                        }}
+                      >
+                        {leadCardFields.includes(field) && <Check size={12} color="#fff" />}
+                      </div>
+                      <span className="text-sm" style={{ color: leadCardFields.includes(field) ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
+                        {t.leadCard.fields[field as keyof typeof t.leadCard.fields]}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Indicadores */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-300">{t.leadCard.indicatorsTitle}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {(['show_stale_indicator', 'show_ai_status'] as const).map(key => (
+                    <button
+                      key={key}
+                      onClick={() => setLeadCardIndicators(prev => ({ ...prev, [key]: !prev[key] }))}
+                      className="flex items-center gap-3 p-3 rounded-xl text-left transition-all"
+                      style={{
+                        background: leadCardIndicators[key] ? 'var(--color-primary-subtle)' : 'var(--color-bg-elevated)',
+                        border: `1px solid ${leadCardIndicators[key] ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                      }}
+                    >
+                      <div
+                        className="w-5 h-5 rounded flex items-center justify-center shrink-0 transition-all"
+                        style={{
+                          background: leadCardIndicators[key] ? 'var(--color-primary)' : 'transparent',
+                          border: `2px solid ${leadCardIndicators[key] ? 'var(--color-primary)' : 'var(--color-border-strong)'}`,
+                        }}
+                      >
+                        {leadCardIndicators[key] && <Check size={12} color="#fff" />}
+                      </div>
+                      <span className="text-sm" style={{ color: leadCardIndicators[key] ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
+                        {t.leadCard.indicators[key]}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ações */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleSaveLeadCardConfig}
+                  disabled={leadCardLoading}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+                  style={{ background: 'var(--color-primary)' }}
+                >
+                  {leadCardLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  {t.leadCard.save}
+                </button>
+                <button
+                  onClick={handleResetLeadCardConfig}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+                  style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
+                >
+                  <RotateCcw size={14} />
+                  {t.leadCard.reset}
+                </button>
               </div>
             </div>
           )}

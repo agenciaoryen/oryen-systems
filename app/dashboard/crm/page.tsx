@@ -27,7 +27,8 @@ import {
   Users,
   TrendingUp,
   Pause,
-  Play
+  Play,
+  Smartphone
 } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -374,6 +375,12 @@ export default function CrmPage() {
   const [tags, setTags] = useState<Tag[]>([])
   const [leadTags, setLeadTags] = useState<LeadTag[]>([])
 
+  // Config do card do lead (campos visíveis)
+  const DEFAULT_CARD_FIELDS = ['total_em_vendas', 'phone', 'email', 'tags', 'source', 'created_at']
+  const [cardFields, setCardFields] = useState<string[]>(DEFAULT_CARD_FIELDS)
+  const [cardShowStale, setCardShowStale] = useState(true)
+  const [cardShowAiStatus, setCardShowAiStatus] = useState(true)
+
   // Estados de UI
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('pipeline')
@@ -433,7 +440,7 @@ export default function CrmPage() {
       }
 
       // Buscar tudo em paralelo
-      const [stagesRes, tagsRes, leadTagsRes] = await Promise.all([
+      const [stagesRes, tagsRes, leadTagsRes, orgConfigRes] = await Promise.all([
         supabase
           .from('pipeline_stages')
           .select('*')
@@ -447,7 +454,12 @@ export default function CrmPage() {
           .order('name'),
         supabase
           .from('lead_tags')
-          .select('lead_id, tag_id')
+          .select('lead_id, tag_id'),
+        supabase
+          .from('orgs')
+          .select('lead_card_config')
+          .eq('id', orgId)
+          .single()
       ])
 
       // Buscar leads — sem paginação infinita, query direta com filtro de data
@@ -469,6 +481,14 @@ export default function CrmPage() {
       setTags(tagsRes.data || [])
       setLeadTags(leadTagsRes.data || [])
       setLeads(allLeads || [])
+
+      // Carregar config do card do lead
+      const config = orgConfigRes.data?.lead_card_config as any
+      if (config) {
+        if (config.fields) setCardFields(config.fields)
+        if (config.show_stale_indicator !== undefined) setCardShowStale(config.show_stale_indicator)
+        if (config.show_ai_status !== undefined) setCardShowAiStatus(config.show_ai_status)
+      }
 
     } catch (err) {
       console.error('Erro ao carregar dados:', err)
@@ -1044,12 +1064,12 @@ export default function CrmPage() {
                           >
                             {/* Indicadores no canto superior direito */}
                             <div className="absolute -top-1.5 -right-1.5 flex items-center gap-1">
-                              {isStale && (
+                              {cardShowStale && isStale && (
                                 <div className="bg-amber-500 text-gray-900 rounded-full p-1 shadow-lg" title={`${daysSinceUpdate} ${t.stale}`}>
                                   <Clock size={10} />
                                 </div>
                               )}
-                              <AiStatusBadge isActive={isAiActive} />
+                              {cardShowAiStatus && <AiStatusBadge isActive={isAiActive} />}
                             </div>
 
                             <div className="absolute top-2 right-6 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">
@@ -1065,27 +1085,37 @@ export default function CrmPage() {
                                 <h4 className="font-semibold text-sm leading-tight truncate" style={{ color: 'var(--color-text-primary)' }} title={leadDisplayName}>
                                   {leadDisplayName}
                                 </h4>
-                                {lead.nome_empresa && (
+                                {cardFields.includes('nome_empresa') && lead.nome_empresa && (
                                   <p className="text-[10px] text-gray-500 truncate">{t.contactLabel} {lead.name}</p>
                                 )}
                               </div>
                             </div>
 
-                            {/* Valor e Email */}
+                            {/* Valor, Telefone e Email */}
+                            {(cardFields.includes('total_em_vendas') || cardFields.includes('email') || cardFields.includes('phone')) && (
                             <div className="space-y-1 mb-2">
+                              {cardFields.includes('total_em_vendas') && (
                               <div className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
                                 {formatPrice(lead.total_em_vendas, userCurrency, userLang)}
                               </div>
-                              {lead.email && (
+                              )}
+                              {cardFields.includes('phone') && lead.phone && (
+                                <div className="flex items-center gap-1.5 text-[10px] text-gray-500 truncate">
+                                  <Smartphone size={10} />
+                                  <span className="truncate">{lead.phone}</span>
+                                </div>
+                              )}
+                              {cardFields.includes('email') && lead.email && (
                                 <div className="flex items-center gap-1.5 text-[10px] text-gray-500 truncate">
                                   <Mail size={10} />
                                   <span className="truncate">{lead.email}</span>
                                 </div>
                               )}
                             </div>
+                            )}
 
                             {/* Tags */}
-                            {leadTagsList.length > 0 && (
+                            {cardFields.includes('tags') && leadTagsList.length > 0 && (
                               <div className="flex flex-wrap gap-1 mb-2">
                                 {leadTagsList.slice(0, 3).map(tag => {
                                   const tagColor = getTagColor(tag.color)
@@ -1106,14 +1136,14 @@ export default function CrmPage() {
                             )}
 
                             {/* Origem e Nicho */}
-                            {(lead.source || lead.nicho) && (
+                            {((cardFields.includes('source') && lead.source) || (cardFields.includes('nicho') && lead.nicho)) && (
                               <div className="flex flex-wrap gap-1 mb-2">
-                                {lead.source && (
+                                {cardFields.includes('source') && lead.source && (
                                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-800/50 text-gray-400 rounded text-[8px] border border-gray-700/50 truncate max-w-[100px]">
                                     {lead.source}
                                   </span>
                                 )}
-                                {lead.nicho && (
+                                {cardFields.includes('nicho') && lead.nicho && (
                                   <span className="inline-flex items-center px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded text-[8px] border border-blue-500/20 truncate max-w-[100px]">
                                     {lead.nicho}
                                   </span>
@@ -1122,6 +1152,7 @@ export default function CrmPage() {
                             )}
 
                             {/* Rodapé */}
+                            {cardFields.includes('created_at') && (
                             <div className="flex justify-between items-center pt-2 border-t border-gray-800">
                               <div className="flex items-center gap-1.5 text-[9px] font-medium text-gray-500">
                                 <Calendar size={10} />
@@ -1133,6 +1164,7 @@ export default function CrmPage() {
                                 </span>
                               )}
                             </div>
+                            )}
                           </div>
                         )
                       })}
