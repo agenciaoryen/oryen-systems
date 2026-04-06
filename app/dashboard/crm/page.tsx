@@ -1227,7 +1227,7 @@ export default function CrmPage() {
       </main>
 
       {/* FOOTER - ESTILO TRELLO */}
-      <footer className="shrink-0 px-4 md:px-6 py-2.5 pr-20" style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-bg-surface)' }}>
+      <footer className="shrink-0 px-4 md:px-6 py-2.5 pr-24 md:pr-28" style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-bg-surface)' }}>
         <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Estatísticas */}
           <div className="flex items-center gap-4 md:gap-6">
