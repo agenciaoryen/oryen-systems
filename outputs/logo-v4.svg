@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 48" fill="none">
+  <!--
+    Oryen — Logo v4 (wordmark, dark background)
+    Tipografia geométrica, caixa alta, letter-spacing largo
+    Cor: silver/cinza claro para contraste em fundo escuro
+    Versao: 4.0
+  -->
+
+  <text
+    x="140"
+    y="35"
+    text-anchor="middle"
+    font-family="'Rajdhani', 'Michroma', 'Orbitron', 'Plus Jakarta Sans', Arial, sans-serif"
+    font-size="38"
+    font-weight="600"
+    letter-spacing="0.25em"
+    fill="#B0BEC5"
+  >ORYEN</text>
+
+</svg>

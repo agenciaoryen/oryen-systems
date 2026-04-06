@@ -373,11 +373,16 @@ export default function Sidebar() {
           BARRA SUPERIOR MOBILE
           ═══════════════════════════════════════════════════════════════════════ */}
       <div className="md:hidden fixed top-0 left-0 w-full h-16 border-b flex items-center justify-between px-4 z-40" style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border)' }}>
-        <div className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-icon.svg" alt="Oryen" className="h-8 w-8" />
-          <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>Oryen</span>
-        </div>
+        <span
+          className="text-xl font-extrabold tracking-widest"
+          style={{
+            fontFamily: 'var(--font-orbitron), sans-serif',
+            background: 'linear-gradient(180deg, #BFCAD3 0%, #7C8A96 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >ORYEN</span>
         <button
           onClick={() => setIsMobileOpen(true)}
           className="p-2 transition-colors rounded-lg"
@@ -409,13 +414,16 @@ export default function Sidebar() {
         
         {/* LOGO */}
         <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b" style={{ borderColor: 'var(--color-border-subtle)' }}>
-          <div className="flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-icon.svg" alt="Oryen" className="h-8 w-8" />
-            <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>
-              Oryen
-            </span>
-          </div>
+          <span
+            className="text-xl font-extrabold tracking-widest"
+            style={{
+              fontFamily: 'var(--font-orbitron), sans-serif',
+              background: 'linear-gradient(180deg, #BFCAD3 0%, #7C8A96 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >ORYEN</span>
 
           {/* Botão de fechar no mobile */}
           <button

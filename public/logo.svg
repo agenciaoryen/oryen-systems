@@ -1,72 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" fill="none">
   <!--
-    Oryen — Logo Principal v2 (horizontal, dark theme)
-    Conceito: "Orbital Intelligence"
-    Simbolo: anel orbital aberto (280 graus) com terminal node
-    Wordmark: "oryen" em Plus Jakarta Sans SemiBold, caixa baixa
-    Versao: 2.0
+    Oryen — Logo v5 (wordmark, dark background)
+    Orbitron ExtraBold, caixa alta, degradê prata metálico
+    Versao: 5.0
   -->
-
-  <!-- Definicoes de gradiente -->
   <defs>
-    <linearGradient id="brand-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4F6FFF"/>
-      <stop offset="50%" stop-color="#6E5FFF"/>
-      <stop offset="100%" stop-color="#8B5CF6"/>
+    <linearGradient id="logo-grad-dark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#BFCAD3"/>
+      <stop offset="100%" stop-color="#7C8A96"/>
     </linearGradient>
   </defs>
-
-  <!-- ═══════════════════════════════════════════════════
-       SIMBOLO — Orbital Intelligence
-       Centro: (24, 24), raio: 16px
-       Arco: 280 graus (abertura de 80 graus no topo-direita)
-       Stroke: 5px, round cap
-       Terminal node: circulo de 5.5px na extremidade superior
-       ═══════════════════════════════════════════════════ -->
-
-  <!--
-    Arco de 280 graus:
-    Start angle: 320 graus (gap começa ~topo-direita)
-    End angle: 240 graus (fechando 280 graus no sentido horario)
-
-    320 graus: (24 + 16*cos(320), 24 + 16*sin(320)) = (36.26, 13.72)
-    240 graus: (24 + 16*cos(240), 24 + 16*sin(240)) = (16.00, 37.86)
-
-    Ajuste: rotacionar levemente para abertura ficar no topo-direita
-    Ponto start (40 graus CW from top): ~(36.26, 13.72)
-    Ponto end (320 graus CW): ~(16.00, 37.86)
-  -->
-
-  <!-- Arco orbital principal — 280 graus, gradient -->
-  <path
-    d="M 36.26 13.72 A 16 16 0 1 1 16.00 37.86"
-    stroke="url(#brand-gradient)"
-    stroke-width="5"
-    stroke-linecap="round"
-    fill="none"
-  />
-
-  <!-- Terminal node — no neural no ponto de inicio do arco -->
-  <circle
-    cx="36.26"
-    cy="13.72"
-    r="3"
-    fill="#4F6FFF"
-  />
-
-  <!-- ═══════════════════════════════════════════════════
-       WORDMARK — "oryen"
-       Plus Jakarta Sans SemiBold, caixa baixa
-       Letter-spacing: -0.02em (mais apertado que v1)
-       ═══════════════════════════════════════════════════ -->
   <text
-    x="54"
-    y="31"
-    font-family="'Plus Jakarta Sans', 'Inter', Arial, sans-serif"
-    font-size="26"
-    font-weight="600"
-    letter-spacing="-0.02em"
-    fill="#EDEDF5"
-  >oryen</text>
-
+    x="110"
+    y="36"
+    text-anchor="middle"
+    font-family="'Orbitron', sans-serif"
+    font-size="38"
+    font-weight="800"
+    letter-spacing="0.1em"
+    fill="url(#logo-grad-dark)"
+  >ORYEN</text>
 </svg>

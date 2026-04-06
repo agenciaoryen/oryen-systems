@@ -168,8 +168,16 @@ export default function AcceptInvitePage() {
 
       <div className="w-full max-w-md p-8 rounded-3xl shadow-2xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
         <div className="flex flex-col items-center mb-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-icon.svg" alt="Oryen" className="h-12 w-12 mb-4" />
+          <span
+            className="text-2xl font-extrabold tracking-widest mb-4"
+            style={{
+              fontFamily: 'var(--font-orbitron), sans-serif',
+              background: 'linear-gradient(180deg, #BFCAD3 0%, #7C8A96 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >ORYEN</span>
           <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>{t.title}</h1>
           <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{t.subtitle}</p>
         </div>

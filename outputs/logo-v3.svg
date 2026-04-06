@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48" fill="none">
+  <!--
+    Oryen — Logo v3 (horizontal, dark background)
+    Conceito: "Open Core"
+    Simbolo: dois arcos formando um O aberto com nucleo central
+    Os gaps no topo e base representam fluxo de dados
+    O ponto central representa inteligencia/processamento IA
+    Wordmark: "oryen" em Plus Jakarta Sans SemiBold, caixa baixa
+    Versao: 3.0
+  -->
+
+  <defs>
+    <linearGradient id="brand-grad" x1="8" y1="8" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4F6FFF"/>
+      <stop offset="50%" stop-color="#6E5FFF"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ═══════════════════════════════════════════════════
+       SIMBOLO — Open Core
+       Centro: (24, 24), raio: 15px
+       Dois arcos de ~150 graus cada, gaps no topo e base
+       Stroke: 3.5px, round cap
+       Nucleo: circulo de 3px no centro
+       ═══════════════════════════════════════════════════ -->
+
+  <!-- Arco direito: do topo-direita ao fundo-direita, sentido horario -->
+  <path
+    d="M 27.9 9.5 A 15 15 0 0 1 27.9 38.5"
+    stroke="url(#brand-grad)"
+    stroke-width="3.5"
+    stroke-linecap="round"
+    fill="none"
+  />
+
+  <!-- Arco esquerdo: do topo-esquerda ao fundo-esquerda, sentido anti-horario -->
+  <path
+    d="M 20.1 9.5 A 15 15 0 0 0 20.1 38.5"
+    stroke="url(#brand-grad)"
+    stroke-width="3.5"
+    stroke-linecap="round"
+    fill="none"
+  />
+
+  <!-- Nucleo central — intelligence core -->
+  <circle
+    cx="24"
+    cy="24"
+    r="3"
+    fill="url(#brand-grad)"
+  />
+
+  <!-- ═══════════════════════════════════════════════════
+       WORDMARK — "oryen"
+       Plus Jakarta Sans SemiBold, caixa baixa
+       Letter-spacing: -0.02em
+       ═══════════════════════════════════════════════════ -->
+  <text
+    x="50"
+    y="31"
+    font-family="'Plus Jakarta Sans', 'Inter', Arial, sans-serif"
+    font-size="26"
+    font-weight="600"
+    letter-spacing="-0.02em"
+    fill="#EDEDF5"
+  >oryen</text>
+
+</svg>

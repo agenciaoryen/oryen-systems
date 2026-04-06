@@ -385,8 +385,16 @@ function OnboardingPage() {
 
         {/* Logo */}
         <div className="flex justify-center mb-6">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="Oryen" className="h-7" />
+          <span
+            className="text-xl font-extrabold tracking-widest"
+            style={{
+              fontFamily: 'var(--font-orbitron), sans-serif',
+              background: 'linear-gradient(180deg, #BFCAD3 0%, #7C8A96 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >ORYEN</span>
         </div>
 
         {/* Progress bar */}

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Oryen — Logo v5.1 Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; padding: 40px; background: #f0f0f0; }
+    h1 { text-align: center; margin-bottom: 8px; color: #222; }
+    p.sub { text-align: center; margin-bottom: 40px; color: #666; font-size: 14px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1000px; margin: 0 auto; }
+    .card { border-radius: 16px; padding: 60px 40px; display: flex; flex-direction: column; align-items: center; gap: 20px; box-shadow: 0 2px 16px rgba(0,0,0,0.1); }
+    .card h3 { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'Segoe UI', sans-serif; }
+    .dark { background: #0A0A0A; }
+    .dark h3 { color: #555; }
+    .light { background: #FFFFFF; border: 1px solid #e0e0e0; }
+    .light h3 { color: #999; }
+
+    .wordmark {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 800;
+      font-size: 46px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .wordmark-dark {
+      background-image: linear-gradient(180deg, #BFCAD3 0%, #7C8A96 100%);
+    }
+    .wordmark-light {
+      background-image: linear-gradient(180deg, #4A5A68 0%, #8C9AA6 100%);
+    }
+
+    .wordmark-sm {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .sep { grid-column: 1 / -1; border: none; border-top: 1px solid #ddd; margin: 8px 0; }
+    .note { grid-column: 1 / -1; text-align: center; color: #888; font-size: 13px; padding: 0 20px; }
+
+    .palette { display: flex; gap: 16px; justify-content: center; grid-column: 1 / -1; flex-wrap: wrap; }
+    .swatch { width: 80px; text-align: center; }
+    .swatch-color { width: 80px; height: 80px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #ddd; }
+    .swatch-label { font-size: 11px; color: #666; }
+    .swatch-hex { font-size: 11px; color: #999; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>Oryen — Logo v5.1</h1>
+  <p class="sub">Orbitron ExtraBold (800) &bull; Degrad&ecirc; prata met&aacute;lico &bull; Cor highlight atualizada</p>
+
+  <div class="grid">
+
+    <!-- WORDMARK GRANDE -->
+    <div class="card dark">
+      <h3>Wordmark &mdash; Fundo Escuro</h3>
+      <span class="wordmark wordmark-dark">ORYEN</span>
+    </div>
+    <div class="card light">
+      <h3>Wordmark &mdash; Fundo Claro</h3>
+      <span class="wordmark wordmark-light">ORYEN</span>
+    </div>
+
+    <!-- WORDMARK PEQUENO (sidebar) -->
+    <div class="card dark">
+      <h3>Sidebar / Header &mdash; Dark</h3>
+      <span class="wordmark-sm wordmark-dark">ORYEN</span>
+    </div>
+    <div class="card light">
+      <h3>Sidebar / Header &mdash; Light</h3>
+      <span class="wordmark-sm wordmark-light">ORYEN</span>
+    </div>
+
+    <hr class="sep">
+
+    <!-- PALETA -->
+    <div class="palette">
+      <div class="swatch">
+        <div class="swatch-color" style="background: #BFCAD3;"></div>
+        <div class="swatch-label">Prata Met&aacute;lico</div>
+        <div class="swatch-hex">#BFCAD3</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #7C8A96;"></div>
+        <div class="swatch-label">Cinza Frio</div>
+        <div class="swatch-hex">#7C8A96</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #0A0A0A;"></div>
+        <div class="swatch-label">Grafite</div>
+        <div class="swatch-hex">#0A0A0A</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #FFFFFF;"></div>
+        <div class="swatch-label">Branco</div>
+        <div class="swatch-hex">#FFFFFF</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #4F6FFF;"></div>
+        <div class="swatch-label">Azul Brand</div>
+        <div class="swatch-hex">#4F6FFF</div>
+      </div>
+    </div>
+
+    <p class="note">Font: Orbitron ExtraBold (800) &bull; Highlight: Azul Brand #4F6FFF (substituindo ciano neon)</p>
+
+  </div>
+</body>
+</html>

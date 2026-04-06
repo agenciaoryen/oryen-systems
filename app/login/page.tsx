@@ -136,8 +136,16 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-[400px] mx-4">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="Oryen" className="h-8" />
+          <span
+            className="text-2xl font-extrabold tracking-widest"
+            style={{
+              fontFamily: 'var(--font-orbitron), sans-serif',
+              background: 'linear-gradient(180deg, #BFCAD3 0%, #7C8A96 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >ORYEN</span>
         </div>
 
         <div className="rounded-2xl p-8"

@@ -1,36 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
   <!--
-    Oryen — Icon v2 (favicon / app icon)
-    Uso: favicon 16x16+, app icon, avatar, loading
-    Versao: 2.0
+    Oryen — Icon v5 (favicon / app icon)
+    Letra "O" em Orbitron ExtraBold, degradê prata metálico
+    Versao: 5.0
   -->
-
   <defs>
-    <linearGradient id="icon-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4F6FFF"/>
-      <stop offset="50%" stop-color="#6E5FFF"/>
-      <stop offset="100%" stop-color="#8B5CF6"/>
+    <linearGradient id="icon-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#BFCAD3"/>
+      <stop offset="100%" stop-color="#7C8A96"/>
     </linearGradient>
   </defs>
-
-  <!-- Fundo arredondado -->
   <rect width="48" height="48" rx="10.5" fill="#0C0C16"/>
-
-  <!-- Arco orbital principal -->
-  <path
-    d="M 36.26 13.72 A 16 16 0 1 1 16.00 37.86"
-    stroke="url(#icon-gradient)"
-    stroke-width="4.5"
-    stroke-linecap="round"
-    fill="none"
-  />
-
-  <!-- Terminal node -->
-  <circle
-    cx="36.26"
-    cy="13.72"
-    r="2.5"
-    fill="#4F6FFF"
-  />
-
+  <text
+    x="24"
+    y="36"
+    text-anchor="middle"
+    font-family="'Orbitron', sans-serif"
+    font-size="34"
+    font-weight="800"
+    fill="url(#icon-grad)"
+  >O</text>
 </svg>

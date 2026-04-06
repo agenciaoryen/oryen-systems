@@ -520,8 +520,16 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.svg" alt="Oryen" className="h-8" />
+              <span
+                className="text-2xl font-extrabold tracking-widest"
+                style={{
+                  fontFamily: 'var(--font-orbitron), sans-serif',
+                  background: 'linear-gradient(180deg, #BFCAD3 0%, #7C8A96 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >ORYEN</span>
             </Link>
 
             <div className="hidden md:flex items-center gap-8">
@@ -1219,8 +1227,16 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.svg" alt="Oryen" className="h-7 mb-4" />
+              <span
+                className="text-xl font-extrabold tracking-widest mb-4 inline-block"
+                style={{
+                  fontFamily: 'var(--font-orbitron), sans-serif',
+                  background: 'linear-gradient(180deg, #BFCAD3 0%, #7C8A96 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >ORYEN</span>
               <p className="text-sm max-w-sm leading-relaxed" style={{ color: 'var(--color-text-tertiary)' }}>
                 {t.footer.description}
               </p>
