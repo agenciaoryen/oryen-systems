@@ -14,16 +14,24 @@ const supabase = createClient(
 )
 
 async function getSiteSettings(slug: string) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('site_settings')
     .select('*')
     .eq('slug', slug)
     .single()
+
+  if (error) {
+    console.error(`[Site] Error fetching site "${slug}":`, error.message)
+  } else {
+    console.log(`[Site] Found site "${slug}": ${data?.site_name || 'no name'}`)
+  }
+
   return data
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const site = await getSiteSettings(params.slug)
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const site = await getSiteSettings(slug)
   if (!site) return {}
 
   return {
@@ -42,9 +50,10 @@ export default async function SiteLayout({
   params,
 }: {
   children: React.ReactNode
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }) {
-  const site = await getSiteSettings(params.slug)
+  const { slug } = await params
+  const site = await getSiteSettings(slug)
 
   if (!site) {
     notFound()

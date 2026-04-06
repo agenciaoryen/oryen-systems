@@ -52,8 +52,9 @@ async function getData(slug: string, propertySlug: string) {
   return { site, property, related: related || [] }
 }
 
-export async function generateMetadata({ params }: { params: { slug: string; propertySlug: string } }): Promise<Metadata> {
-  const data = await getData(params.slug, params.propertySlug)
+export async function generateMetadata({ params }: { params: Promise<{ slug: string; propertySlug: string }> }): Promise<Metadata> {
+  const { slug, propertySlug } = await params
+  const data = await getData(slug, propertySlug)
   if (!data) return {}
 
   const { property, site } = data
@@ -73,9 +74,10 @@ export async function generateMetadata({ params }: { params: { slug: string; pro
 export default async function PropertyDetailPage({
   params,
 }: {
-  params: { slug: string; propertySlug: string }
+  params: Promise<{ slug: string; propertySlug: string }>
 }) {
-  const data = await getData(params.slug, params.propertySlug)
+  const { slug, propertySlug } = await params
+  const data = await getData(slug, propertySlug)
   if (!data) notFound()
 
   const { site, property, related } = data

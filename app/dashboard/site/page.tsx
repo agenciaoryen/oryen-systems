@@ -104,6 +104,7 @@ export default function SiteSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
+  const [hasSaved, setHasSaved] = useState(false)
   const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
 
   const [form, setForm] = useState({
@@ -142,6 +143,7 @@ export default function SiteSettingsPage() {
       const res = await fetch(`/api/site?org_id=${orgId}`)
       const data = await res.json()
       if (data.site) {
+        setHasSaved(true)
         setForm({
           slug: data.site.slug || '',
           site_name: data.site.site_name || '',
@@ -237,6 +239,7 @@ export default function SiteSettingsPage() {
         return
       }
 
+      setHasSaved(true)
       toast.success(T.saved)
     } catch (err) {
       toast.error('Erro ao salvar configurações')
@@ -649,7 +652,7 @@ export default function SiteSettingsPage() {
             </>
           ) : (
             <>
-              {form.slug && (
+              {form.slug && hasSaved ? (
                 <a
                   href={`/sites/${form.slug}`}
                   target="_blank"
@@ -659,15 +662,29 @@ export default function SiteSettingsPage() {
                 >
                   <Eye size={15} /> {T.preview}
                 </a>
+              ) : (
+                <span
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border opacity-40 cursor-not-allowed"
+                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                  title="Salve as alterações primeiro"
+                >
+                  <Eye size={15} /> {T.preview}
+                </span>
               )}
               <button
                 onClick={() => handlePublish(true)}
-                disabled={publishing}
-                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"
+                disabled={publishing || !hasSaved}
+                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {publishing ? <Loader2 size={15} className="animate-spin" /> : <Globe size={15} />}
                 {publishing ? T.publishing : T.publishBtn}
               </button>
+              {!hasSaved && (
+                <p className="text-xs text-amber-400 w-full mt-1">
+                  <AlertCircle size={12} className="inline mr-1" />
+                  Salve as alterações antes de pré-visualizar ou publicar.
+                </p>
+              )}
             </>
           )}
         </div>

@@ -35,8 +35,9 @@ async function getData(slug: string) {
   return { site, properties: properties || [] }
 }
 
-export default async function SiteHomePage({ params }: { params: { slug: string } }) {
-  const data = await getData(params.slug)
+export default async function SiteHomePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const data = await getData(slug)
   if (!data) notFound()
 
   const { site, properties } = data

@@ -66,10 +66,12 @@ export default async function PropertiesListPage({
   params,
   searchParams,
 }: {
-  params: { slug: string }
-  searchParams: SearchParams
+  params: Promise<{ slug: string }>
+  searchParams: Promise<SearchParams>
 }) {
-  const data = await getData(params.slug, searchParams)
+  const { slug } = await params
+  const resolvedSearchParams = await searchParams
+  const data = await getData(slug, resolvedSearchParams)
   if (!data) notFound()
 
   const { site, properties, total, page, totalPages } = data
