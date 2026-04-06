@@ -248,7 +248,7 @@ export default function PortfolioPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2.5 rounded-xl text-sm border cursor-pointer"
+          className="px-4 pr-8 py-2.5 rounded-xl text-sm border cursor-pointer"
           style={{
             background: 'var(--color-bg-elevated)',
             borderColor: 'var(--color-border)',
@@ -265,7 +265,7 @@ export default function PortfolioPage() {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-3 py-2.5 rounded-xl text-sm border cursor-pointer"
+          className="px-4 pr-8 py-2.5 rounded-xl text-sm border cursor-pointer"
           style={{
             background: 'var(--color-bg-elevated)',
             borderColor: 'var(--color-border)',
