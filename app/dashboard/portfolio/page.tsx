@@ -191,6 +191,24 @@ export default function PortfolioPage() {
     }
   }
 
+  // ─── TOGGLE FEATURED ───
+  const handleToggleFeatured = async (e: React.MouseEvent, prop: any) => {
+    e.stopPropagation()
+    const newValue = !prop.is_featured
+    // Atualizar otimisticamente na UI
+    setProperties(prev => prev.map(p => p.id === prop.id ? { ...p, is_featured: newValue } : p))
+    try {
+      await fetch(`/api/properties/${prop.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...prop, is_featured: newValue, org_id: orgId }),
+      })
+    } catch (err) {
+      // Reverter em caso de erro
+      setProperties(prev => prev.map(p => p.id === prop.id ? { ...p, is_featured: !newValue } : p))
+    }
+  }
+
   // ─── COVER IMAGE ───
   const getCover = (images: any[]) => {
     if (!images || images.length === 0) return null
@@ -361,12 +379,18 @@ export default function PortfolioPage() {
                   <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase" style={{ background: (STATUS_STYLES[prop.status] || STATUS_STYLES.draft).bg, color: (STATUS_STYLES[prop.status] || STATUS_STYLES.draft).color, border: `1px solid ${(STATUS_STYLES[prop.status] || STATUS_STYLES.draft).border}` }}>
                     {PROPERTY_STATUSES[prop.status]?.[lang] || prop.status}
                   </div>
-                  {/* Featured badge */}
-                  {prop.is_featured && (
-                    <div className="absolute top-3 right-3 p-1.5 rounded-lg" style={{ background: 'var(--color-accent)', color: 'var(--color-text-primary)' }}>
-                      <Star size={14} />
-                    </div>
-                  )}
+                  {/* Featured toggle */}
+                  <button
+                    onClick={(e) => handleToggleFeatured(e, prop)}
+                    className="absolute top-3 right-3 p-1.5 rounded-lg transition-all hover:scale-110"
+                    style={{
+                      background: prop.is_featured ? 'var(--color-accent)' : 'var(--color-bg-overlay)',
+                      color: prop.is_featured ? '#111' : 'var(--color-text-muted)',
+                    }}
+                    title={prop.is_featured ? 'Remover destaque' : 'Destacar imóvel'}
+                  >
+                    <Star size={14} fill={prop.is_featured ? 'currentColor' : 'none'} />
+                  </button>
                   {/* Price overlay */}
                   {prop.price && (
                     <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg backdrop-blur-sm text-sm font-bold" style={{ background: 'var(--color-bg-overlay)', color: 'var(--color-text-primary)' }}>
@@ -467,7 +491,14 @@ export default function PortfolioPage() {
                     <h3 className="font-semibold text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
                       {prop.title}
                     </h3>
-                    {prop.is_featured && <Star size={13} className="shrink-0" style={{ color: 'var(--color-accent)' }} />}
+                    <button
+                      onClick={(e) => handleToggleFeatured(e, prop)}
+                      className="shrink-0 transition-all hover:scale-110"
+                      style={{ color: prop.is_featured ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+                      title={prop.is_featured ? 'Remover destaque' : 'Destacar imóvel'}
+                    >
+                      <Star size={13} fill={prop.is_featured ? 'currentColor' : 'none'} />
+                    </button>
                   </div>
                   <p className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>
                     {PROPERTY_TYPES[prop.property_type]?.[lang]} • {TRANSACTION_TYPES[prop.transaction_type]?.[lang]}

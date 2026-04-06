@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { PROPERTY_TYPES, TRANSACTION_TYPES, PROPERTY_STATUSES, AMENITIES, BR_STATES } from '@/lib/properties/constants'
@@ -179,9 +179,64 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
     }
   }, [initialData])
 
+  // ─── AUTO-SAVE DRAFT (localStorage) ───
+  const draftKey = `oryen_property_draft_${propertyId || 'new'}`
+  const [hasSavedOnce, setHasSavedOnce] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const initialFormRef = useRef<string>('')
+
+  // Carregar rascunho do localStorage ao montar (só para novos imóveis)
+  useEffect(() => {
+    if (!isEditing) {
+      const saved = localStorage.getItem(draftKey)
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          setForm(parsed)
+          toast.info('Rascunho restaurado automaticamente')
+        } catch {}
+      }
+    }
+  }, [])
+
+  // Gravar snapshot inicial para comparação de dirty
+  useEffect(() => {
+    if (!initialFormRef.current) {
+      initialFormRef.current = JSON.stringify(form)
+    }
+  }, [form])
+
+  // Auto-save no localStorage a cada 5s se dirty
+  useEffect(() => {
+    if (!isDirty) return
+    const timer = setTimeout(() => {
+      localStorage.setItem(draftKey, JSON.stringify(form))
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [form, isDirty, draftKey])
+
+  // Limpar rascunho após salvar com sucesso
+  const clearDraft = () => {
+    localStorage.removeItem(draftKey)
+    setIsDirty(false)
+    setHasSavedOnce(true)
+  }
+
+  // Detectar mudanças não salvas — aviso ao sair da página
+  useEffect(() => {
+    if (!isDirty) return
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [isDirty])
+
   // ─── HELPERS ───
   const updateField = (field: string, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }))
+    setIsDirty(true)
   }
 
   const toggleAmenity = (key: string) => {
@@ -328,6 +383,7 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
       }
 
       toast.success(isEditing ? t.updated : t.created)
+      clearDraft()
 
       if (!isEditing && data.property?.id) {
         router.replace(`/dashboard/portfolio/${data.property.id}`)
@@ -352,15 +408,28 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push('/dashboard/portfolio')}
+            onClick={() => {
+              if (isDirty) {
+                if (!window.confirm('Você tem alterações não salvas. Deseja sair mesmo assim?')) return
+                localStorage.removeItem(draftKey)
+              }
+              router.push('/dashboard/portfolio')
+            }}
             className="p-2 rounded-xl border transition-all hover:bg-white/5"
             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
           >
             <ArrowLeft size={18} />
           </button>
-          <h1 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            {isEditing ? t.editTitle : t.newTitle}
-          </h1>
+          <div>
+            <h1 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+              {isEditing ? t.editTitle : t.newTitle}
+            </h1>
+            {isDirty && (
+              <p className="text-[10px] font-medium mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                Rascunho salvo automaticamente
+              </p>
+            )}
+          </div>
         </div>
         <button
           onClick={handleSave}
@@ -465,33 +534,33 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2">
               <label className={labelClass} style={labelStyle}>{t.street}</label>
-              <input type="text" value={form.address_street} onChange={(e) => updateField('address_street', e.target.value)} className={inputClass} style={inputStyle} />
+              <input type="text" value={form.address_street} onChange={(e) => updateField('address_street', e.target.value)} className={inputClass} style={inputStyle} autoComplete="nope-street" />
             </div>
             <div>
               <label className={labelClass} style={labelStyle}>{t.number}</label>
-              <input type="text" value={form.address_number} onChange={(e) => updateField('address_number', e.target.value)} className={inputClass} style={inputStyle} />
+              <input type="text" value={form.address_number} onChange={(e) => updateField('address_number', e.target.value)} className={inputClass} style={inputStyle} autoComplete="nope-number" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass} style={labelStyle}>{t.complement}</label>
-              <input type="text" value={form.address_complement} onChange={(e) => updateField('address_complement', e.target.value)} className={inputClass} style={inputStyle} />
+              <input type="text" value={form.address_complement} onChange={(e) => updateField('address_complement', e.target.value)} className={inputClass} style={inputStyle} autoComplete="nope-complement" />
             </div>
             <div>
               <label className={labelClass} style={labelStyle}>{t.neighborhood}</label>
-              <input type="text" value={form.address_neighborhood} onChange={(e) => updateField('address_neighborhood', e.target.value)} className={inputClass} style={inputStyle} />
+              <input type="text" value={form.address_neighborhood} onChange={(e) => updateField('address_neighborhood', e.target.value)} className={inputClass} style={inputStyle} autoComplete="nope-neighborhood" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className={labelClass} style={labelStyle}>{t.city}</label>
-              <input type="text" value={form.address_city} onChange={(e) => updateField('address_city', e.target.value)} className={inputClass} style={inputStyle} />
+              <input type="text" value={form.address_city} onChange={(e) => updateField('address_city', e.target.value)} className={inputClass} style={inputStyle} autoComplete="nope-city" />
             </div>
             <div>
               <label className={labelClass} style={labelStyle}>{t.state}</label>
-              <select value={form.address_state} onChange={(e) => updateField('address_state', e.target.value)} className={inputClass} style={inputStyle}>
+              <select value={form.address_state} onChange={(e) => updateField('address_state', e.target.value)} className={inputClass} style={inputStyle} autoComplete="nope-state">
                 <option value="">—</option>
                 {BR_STATES.map((st) => (
                   <option key={st} value={st}>{st}</option>
@@ -500,7 +569,7 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
             </div>
             <div>
               <label className={labelClass} style={labelStyle}>{t.zip}</label>
-              <input type="text" value={form.address_zip} onChange={(e) => updateField('address_zip', e.target.value)} className={inputClass} style={inputStyle} maxLength={9} />
+              <input type="text" value={form.address_zip} onChange={(e) => updateField('address_zip', e.target.value)} className={inputClass} style={inputStyle} autoComplete="nope-zip" maxLength={9} />
             </div>
           </div>
         </div>
