@@ -528,6 +528,27 @@ export default function SettingsPage() {
   const [leadCardIndicators, setLeadCardIndicators] = useState({ show_stale_indicator: true, show_ai_status: true })
   const [leadCardLoading, setLeadCardLoading] = useState(false)
 
+  // Modal personalizado (substituindo confirm/alert nativos)
+  const [modalState, setModalState] = useState<{
+    open: boolean
+    type: 'alert' | 'confirm'
+    title: string
+    message: string
+    onConfirm?: () => void
+  }>({ open: false, type: 'alert', title: '', message: '' })
+
+  function showAlert(message: string, title?: string) {
+    setModalState({ open: true, type: 'alert', title: title || '', message })
+  }
+
+  function showConfirm(message: string, onConfirm: () => void) {
+    setModalState({ open: true, type: 'confirm', title: '', message, onConfirm })
+  }
+
+  function closeModal() {
+    setModalState(prev => ({ ...prev, open: false }))
+  }
+
   // Outros
   const [copiedWebhook, setCopiedWebhook] = useState(false)
   const [notifSettings, setNotifSettings] = useState({
@@ -649,7 +670,7 @@ export default function SettingsPage() {
       window.location.reload()
     } catch (error) {
       console.error(error)
-      alert(t.alerts.errorProfile)
+      showAlert(t.alerts.errorProfile)
       setProfileLoading(false)
     }
   }
@@ -657,20 +678,20 @@ export default function SettingsPage() {
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault()
     if (newPassword !== confirmPassword) {
-      alert(t.alerts.passMismatch)
+      showAlert(t.alerts.passMismatch)
       return
     }
     if (newPassword.length < 6) {
-      alert(t.alerts.passShort)
+      showAlert(t.alerts.passShort)
       return
     }
 
     setPasswordLoading(true)
     const { error } = await supabase.auth.updateUser({ password: newPassword })
 
-    if (error) alert(`Erro: ${error.message}`)
+    if (error) showAlert(`Erro: ${error.message}`)
     else {
-      alert(t.alerts.passSuccess)
+      showAlert(t.alerts.passSuccess)
       setNewPassword('')
       setConfirmPassword('')
     }
@@ -679,12 +700,13 @@ export default function SettingsPage() {
 
   // ─── FUNÇÕES DE EQUIPE ───
   async function handleDeactivateUser(memberId: string) {
-    if (!confirm(t.alerts.confirmDeactivate)) return
-    const { error } = await supabase.from('users').update({ status: 'inactive' }).eq('id', memberId)
-    if (!error) {
-      setTeamMembers(prev => prev.map(m => m.id === memberId ? { ...m, status: 'inactive' } : m))
-      alert(t.alerts.userDeactivated)
-    }
+    showConfirm(t.alerts.confirmDeactivate, async () => {
+      const { error } = await supabase.from('users').update({ status: 'inactive' }).eq('id', memberId)
+      if (!error) {
+        setTeamMembers(prev => prev.map(m => m.id === memberId ? { ...m, status: 'inactive' } : m))
+        showAlert(t.alerts.userDeactivated)
+      }
+    })
   }
 
   async function handleReactivateUser(memberId: string) {
@@ -707,13 +729,13 @@ export default function SettingsPage() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.error)
 
-      alert(t.alerts.inviteSent)
+      showAlert(t.alerts.inviteSent)
       setInviteEmail('')
       setIsInviteModalOpen(false)
       fetchTeam()
     } catch (error: unknown) {
       const err = error as { message?: string }
-      alert(`Falha: ${err.message}`)
+      showAlert(`Falha: ${err.message}`)
     } finally {
       setInviteLoading(false)
     }
@@ -724,7 +746,7 @@ export default function SettingsPage() {
     if (!orgId) return
     setLoading(true)
     const { error } = await supabase.from('orgs').update({ name: orgName }).eq('id', orgId)
-    if (!error) alert(t.alerts.orgUpdated)
+    if (!error) showAlert(t.alerts.orgUpdated)
     setLoading(false)
   }
 
@@ -760,6 +782,20 @@ export default function SettingsPage() {
   }
 
   async function handleUpdateStage(stageId: string, updates: Partial<PipelineStage>) {
+    // Se o label mudou, também atualiza o name (slug interno) e migra leads
+    const oldStage = pipelineStages.find(s => s.id === stageId)
+    if (updates.label && oldStage) {
+      const newName = updates.label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+      if (newName !== oldStage.name) {
+        updates.name = newName
+        // Migrar leads do nome antigo para o novo
+        await supabase
+          .from('leads')
+          .update({ stage: newName })
+          .eq('org_id', orgId)
+          .eq('stage', oldStage.name)
+      }
+    }
     const { error } = await supabase
       .from('pipeline_stages')
       .update(updates)
@@ -771,18 +807,18 @@ export default function SettingsPage() {
   }
 
   async function handleDeleteStage(stageId: string) {
-    if (!confirm(t.pipeline.confirmDelete)) return
+    showConfirm(t.pipeline.confirmDelete, async () => {
+      const { error } = await supabase
+        .from('pipeline_stages')
+        .delete()
+        .eq('id', stageId)
 
-    const { error } = await supabase
-      .from('pipeline_stages')
-      .delete()
-      .eq('id', stageId)
-
-    if (error) {
-      alert(t.pipeline.cannotDelete)
-    } else {
-      setPipelineStages(prev => prev.filter(s => s.id !== stageId))
-    }
+      if (error) {
+        showAlert(t.pipeline.cannotDelete)
+      } else {
+        setPipelineStages(prev => prev.filter(s => s.id !== stageId))
+      }
+    })
   }
 
   async function handleMoveStage(stageId: string, direction: 'up' | 'down') {
@@ -828,19 +864,19 @@ export default function SettingsPage() {
       setTags(prev => [...prev, data])
       setNewTagName('')
       setNewTagColor('blue')
-      alert(t.tags.tagCreated)
+      showAlert(t.tags.tagCreated)
     }
   }
 
   async function handleDeleteTag(tagId: string) {
-    if (!confirm(t.tags.confirmDelete)) return
+    showConfirm(t.tags.confirmDelete, async () => {
+      const { error } = await supabase.from('tags').delete().eq('id', tagId)
 
-    const { error } = await supabase.from('tags').delete().eq('id', tagId)
-
-    if (!error) {
-      setTags(prev => prev.filter(t => t.id !== tagId))
-      alert(t.tags.tagDeleted)
-    }
+      if (!error) {
+        setTags(prev => prev.filter(t => t.id !== tagId))
+        showAlert(t.tags.tagDeleted)
+      }
+    })
   }
 
   // ─── OUTROS ───
@@ -887,7 +923,7 @@ export default function SettingsPage() {
           },
         })
         .eq('id', orgId)
-      alert(t.leadCard.saved)
+      showAlert(t.leadCard.saved)
     } catch (err) {
       console.error(err)
     } finally {
@@ -982,6 +1018,47 @@ export default function SettingsPage() {
                 {t.modal.submit}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PERSONALIZADO (confirm/alert) */}
+      {modalState.open && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }}>
+          <div
+            className="p-6 rounded-2xl w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+            style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}
+          >
+            {modalState.title && (
+              <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>{modalState.title}</h3>
+            )}
+            <p className="text-sm leading-relaxed mb-6" style={{ color: 'var(--color-text-secondary)' }}>{modalState.message}</p>
+            <div className="flex gap-3 justify-end">
+              {modalState.type === 'confirm' && (
+                <button
+                  onClick={closeModal}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+                  style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
+                >
+                  Cancelar
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  if (modalState.type === 'confirm' && modalState.onConfirm) {
+                    modalState.onConfirm()
+                  }
+                  closeModal()
+                }}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+                style={{
+                  background: modalState.type === 'confirm' ? 'var(--color-error)' : 'var(--color-primary)',
+                  color: '#fff',
+                }}
+              >
+                {modalState.type === 'confirm' ? 'Confirmar' : 'OK'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1446,7 +1523,16 @@ export default function SettingsPage() {
                         <input
                           type="text"
                           value={stage.label}
-                          onChange={(e) => handleUpdateStage(stage.id, { label: e.target.value })}
+                          onChange={(e) => {
+                            const newLabel = e.target.value
+                            setPipelineStages(prev => prev.map(s => s.id === stage.id ? { ...s, label: newLabel } : s))
+                          }}
+                          onBlur={(e) => {
+                            const newLabel = e.target.value.trim()
+                            if (newLabel && newLabel !== stage.name) {
+                              handleUpdateStage(stage.id, { label: newLabel })
+                            }
+                          }}
                           className="rounded-lg px-3 py-2 text-sm outline-none"
                           style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                           placeholder={t.pipeline.stageLabel}
@@ -1527,7 +1613,7 @@ export default function SettingsPage() {
                     onClick={handleAddStage}
                     disabled={!newStageLabel.trim()}
                     className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50"
-                    style={{ background: 'var(--color-indigo)', color: 'var(--color-text-primary)' }}
+                    style={{ background: 'var(--color-indigo)', color: '#fff' }}
                   >
                     <Plus size={16} /> {t.pipeline.addStage}
                   </button>
