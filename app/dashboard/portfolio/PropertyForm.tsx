@@ -113,6 +113,7 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const [showExitModal, setShowExitModal] = useState(false)
 
   const [form, setForm] = useState({
     title: '',
@@ -410,8 +411,8 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
           <button
             onClick={() => {
               if (isDirty) {
-                if (!window.confirm('Você tem alterações não salvas. Deseja sair mesmo assim?')) return
-                localStorage.removeItem(draftKey)
+                setShowExitModal(true)
+                return
               }
               router.push('/dashboard/portfolio')
             }}
@@ -766,6 +767,37 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
             <div>
               <label className={labelClass} style={labelStyle}>{t.virtualTourUrl}</label>
               <input type="url" value={form.virtual_tour_url} onChange={(e) => updateField('virtual_tour_url', e.target.value)} className={inputClass} style={inputStyle} placeholder="https://..." />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmação para sair */}
+      {showExitModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }}>
+          <div className="p-6 rounded-2xl w-full max-w-sm shadow-2xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+            <p className="text-sm leading-relaxed mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+              Você tem alterações não salvas. Deseja sair mesmo assim?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowExitModal(false)}
+                className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+                style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.removeItem(draftKey)
+                  setShowExitModal(false)
+                  router.push('/dashboard/portfolio')
+                }}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+                style={{ background: 'var(--color-error)', color: '#fff' }}
+              >
+                Sair sem salvar
+              </button>
             </div>
           </div>
         </div>

@@ -139,6 +139,7 @@ export default function PortfolioPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   // ─── FETCH ───
   const fetchProperties = useCallback(async () => {
@@ -178,11 +179,16 @@ export default function PortfolioPage() {
 
   // ─── DELETE ───
   const handleDelete = async (id: string) => {
-    if (!confirm(t.confirmDelete)) return
-    setDeleting(id)
+    setDeleteConfirmId(id)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return
+    setDeleting(deleteConfirmId)
+    setDeleteConfirmId(null)
 
     try {
-      await fetch(`/api/properties/${id}?org_id=${orgId}`, { method: 'DELETE' })
+      await fetch(`/api/properties/${deleteConfirmId}?org_id=${orgId}`, { method: 'DELETE' })
       fetchProperties()
     } catch (err) {
       console.error('Failed to delete property:', err)
@@ -568,6 +574,33 @@ export default function PortfolioPage() {
           >
             <ChevronRight size={16} />
           </button>
+        </div>
+      )}
+
+      {/* Modal de confirmação de exclusão */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }}>
+          <div className="p-6 rounded-2xl w-full max-w-sm shadow-2xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+            <p className="text-sm leading-relaxed mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+              {t.confirmDelete}
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+                style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+                style={{ background: 'var(--color-error)', color: '#fff' }}
+              >
+                {t.delete}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
