@@ -20,6 +20,7 @@ import {
   Upload,
   ImageIcon,
   AlertCircle,
+  Trash2,
 } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -420,35 +421,59 @@ export default function SiteSettingsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass} style={labelStyle}>{T.logo}</label>
-            <div
-              onClick={() => handleImageUpload('logo_url')}
-              className="w-full h-24 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-bg-hover)] overflow-hidden"
-              style={{ borderColor: 'var(--color-border)' }}
-            >
-              {form.logo_url ? (
-                <img src={form.logo_url} alt="Logo" className="h-full object-contain p-2" />
-              ) : (
-                <div className="text-center">
-                  <Upload size={20} className="mx-auto mb-1" style={{ color: 'var(--color-text-muted)' }} />
-                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Upload</span>
-                </div>
+            <div className="relative group">
+              <div
+                onClick={() => handleImageUpload('logo_url')}
+                className="w-full h-24 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-bg-hover)] overflow-hidden"
+                style={{ borderColor: 'var(--color-border)' }}
+              >
+                {form.logo_url ? (
+                  <img src={form.logo_url} alt="Logo" className="h-full object-contain p-2" />
+                ) : (
+                  <div className="text-center">
+                    <Upload size={20} className="mx-auto mb-1" style={{ color: 'var(--color-text-muted)' }} />
+                    <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Upload</span>
+                  </div>
+                )}
+              </div>
+              {form.logo_url && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); updateField('logo_url', '') }}
+                  className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                  style={{ background: 'var(--color-error)', color: '#fff' }}
+                  title="Remover logo"
+                >
+                  <Trash2 size={12} />
+                </button>
               )}
             </div>
           </div>
           <div>
             <label className={labelClass} style={labelStyle}>{T.coverImage}</label>
-            <div
-              onClick={() => handleImageUpload('cover_image_url')}
-              className="w-full h-24 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-bg-hover)] overflow-hidden"
-              style={{ borderColor: 'var(--color-border)' }}
-            >
-              {form.cover_image_url ? (
-                <img src={form.cover_image_url} alt="Cover" className="w-full h-full object-cover" />
-              ) : (
-                <div className="text-center">
-                  <ImageIcon size={20} className="mx-auto mb-1" style={{ color: 'var(--color-text-muted)' }} />
-                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Upload</span>
-                </div>
+            <div className="relative group">
+              <div
+                onClick={() => handleImageUpload('cover_image_url')}
+                className="w-full h-24 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-bg-hover)] overflow-hidden"
+                style={{ borderColor: 'var(--color-border)' }}
+              >
+                {form.cover_image_url ? (
+                  <img src={form.cover_image_url} alt="Cover" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-center">
+                    <ImageIcon size={20} className="mx-auto mb-1" style={{ color: 'var(--color-text-muted)' }} />
+                    <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Upload</span>
+                  </div>
+                )}
+              </div>
+              {form.cover_image_url && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); updateField('cover_image_url', '') }}
+                  className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                  style={{ background: 'var(--color-error)', color: '#fff' }}
+                  title="Remover imagem de capa"
+                >
+                  <Trash2 size={12} />
+                </button>
               )}
             </div>
           </div>
@@ -530,15 +555,27 @@ export default function SiteSettingsPage() {
         </div>
 
         <div className="flex items-start gap-4">
-          <div
-            onClick={() => handleImageUpload('avatar_url')}
-            className="w-20 h-20 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-[var(--color-primary)]/50 overflow-hidden shrink-0"
-            style={{ borderColor: 'var(--color-border)' }}
-          >
-            {form.avatar_url ? (
-              <img src={form.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              <User size={28} style={{ color: 'var(--color-text-muted)' }} />
+          <div className="relative group shrink-0">
+            <div
+              onClick={() => handleImageUpload('avatar_url')}
+              className="w-20 h-20 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-[var(--color-primary)]/50 overflow-hidden"
+              style={{ borderColor: 'var(--color-border)' }}
+            >
+              {form.avatar_url ? (
+                <img src={form.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <User size={28} style={{ color: 'var(--color-text-muted)' }} />
+              )}
+            </div>
+            {form.avatar_url && (
+              <button
+                onClick={(e) => { e.stopPropagation(); updateField('avatar_url', '') }}
+                className="absolute -top-1 -right-1 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                style={{ background: 'var(--color-error)', color: '#fff' }}
+                title="Remover foto"
+              >
+                <Trash2 size={10} />
+              </button>
             )}
           </div>
           <div className="flex-1 space-y-3">
@@ -626,18 +663,30 @@ export default function SiteSettingsPage() {
         </div>
         <div>
           <label className={labelClass} style={labelStyle}>{T.ogImage}</label>
-          <div
-            onClick={() => handleImageUpload('og_image_url')}
-            className="w-full h-32 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-bg-hover)] overflow-hidden"
-            style={{ borderColor: 'var(--color-border)' }}
-          >
-            {form.og_image_url ? (
-              <img src={form.og_image_url} alt="OG" className="w-full h-full object-cover" />
-            ) : (
-              <div className="text-center">
-                <ImageIcon size={24} className="mx-auto mb-1" style={{ color: 'var(--color-text-muted)' }} />
-                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>1200×630 recomendado</span>
-              </div>
+          <div className="relative group">
+            <div
+              onClick={() => handleImageUpload('og_image_url')}
+              className="w-full h-32 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-bg-hover)] overflow-hidden"
+              style={{ borderColor: 'var(--color-border)' }}
+            >
+              {form.og_image_url ? (
+                <img src={form.og_image_url} alt="OG" className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-center">
+                  <ImageIcon size={24} className="mx-auto mb-1" style={{ color: 'var(--color-text-muted)' }} />
+                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>1200×630 recomendado</span>
+                </div>
+              )}
+            </div>
+            {form.og_image_url && (
+              <button
+                onClick={(e) => { e.stopPropagation(); updateField('og_image_url', '') }}
+                className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                style={{ background: 'var(--color-error)', color: '#fff' }}
+                title="Remover imagem OG"
+              >
+                <Trash2 size={12} />
+              </button>
             )}
           </div>
         </div>
