@@ -794,7 +794,7 @@ export default function DashboardPage() {
 
   // ─── RENDER PRINCIPAL ───
   return (
-    <div className="space-y-6 sm:space-y-8 relative max-w-[1600px] mx-auto pb-8">
+    <div className="space-y-6 sm:space-y-8 relative max-w-[1600px] mx-auto pb-16">
       
       {/* Modal de Metas */}
       <GoalsModal 

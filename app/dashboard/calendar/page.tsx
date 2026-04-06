@@ -341,21 +341,21 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="flex flex-col gap-4 h-[calc(100vh-130px)]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.title}</h1>
         <button
           onClick={() => { setShowCreateModal(true) }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-colors text-sm"
-          style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+          style={{ background: 'var(--color-primary)', color: '#FFFFFF' }}
         >
-          <Plus size={16} />
-          {t.newEvent}
+          <Plus size={16} strokeWidth={2.5} />
+          <span className="font-semibold">{t.newEvent}</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
         {/* ═══ Month Grid ═══ */}
         <div className="lg:col-span-2 rounded-2xl p-4" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
           {/* Month nav */}
@@ -406,7 +406,7 @@ export default function CalendarPage() {
                   style={
                     isSelected ? { background: 'var(--color-primary-subtle)', border: '1px solid var(--color-primary)', color: 'var(--color-text-primary)' } :
                     isToday ? { background: 'var(--color-bg-hover)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)', fontWeight: 700 } :
-                    { color: 'var(--color-text-tertiary)', border: '1px solid transparent' }
+                    { color: 'var(--color-text-secondary)', border: '1px solid transparent' }
                   }
                 >
                   <span style={isToday ? { color: 'var(--color-primary)', fontWeight: 700 } : {}}>{day}</span>
@@ -425,7 +425,7 @@ export default function CalendarPage() {
         </div>
 
         {/* ═══ Event List ═══ */}
-        <div className="rounded-2xl p-5" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+        <div className="rounded-2xl p-5 overflow-y-auto" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
           <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--color-text-tertiary)' }}>
             {selectedDate
               ? selectedDate.split('-').reverse().join('/')
