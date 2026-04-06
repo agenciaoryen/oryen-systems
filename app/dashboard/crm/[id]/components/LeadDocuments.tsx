@@ -190,22 +190,23 @@ function DocumentItem({
 
   return (
     <>
-      <div className="bg-[#0a0a0a] border border-white/5 rounded-lg p-3 hover:border-white/10 transition-all group">
+      <div className="border rounded-lg p-3 transition-all group" style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border-subtle)' }}>
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-start gap-2 flex-1 min-w-0">
-            <div className="p-1.5 rounded bg-blue-500/10 text-blue-400 shrink-0 mt-0.5">
+            <div className="p-1.5 rounded shrink-0 mt-0.5" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
               <FileText size={14} />
             </div>
             <div className="flex-1 min-w-0">
               <button 
                 onClick={() => setShowPreview(true)}
-                className="text-white text-sm font-medium truncate block hover:text-blue-400 transition-colors text-left w-full"
+                className="text-sm font-medium truncate block transition-colors text-left w-full"
+                style={{ color: 'var(--color-text-primary)' }}
               >
                 {doc.name}
               </button>
               <div className="flex items-center gap-2 mt-1">
                 <StatusBadge status={doc.status} lang={lang} />
-                <span className="text-gray-600 text-xs">
+                <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                   {new Date(doc.created_at).toLocaleDateString()}
                 </span>
               </div>
@@ -217,7 +218,8 @@ function DocumentItem({
             <button
               onClick={() => setShowMenu(!showMenu)}
               disabled={loading}
-              className="p-1.5 rounded hover:bg-white/5 text-gray-500 hover:text-white transition-colors"
+              className="p-1.5 rounded transition-colors"
+              style={{ color: 'var(--color-text-muted)' }}
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <MoreVertical size={14} />}
             </button>
@@ -225,10 +227,10 @@ function DocumentItem({
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-full mt-1 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl z-20 py-1 min-w-[160px]">
+                <div className="absolute right-0 top-full mt-1 border rounded-lg shadow-xl z-20 py-1 min-w-[160px]" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
                   <button 
                     onClick={() => { setShowPreview(true); setShowMenu(false) }}
-                    className="w-full px-3 py-2 text-sm text-left text-gray-300 hover:bg-white/5 flex items-center gap-2"
+                    className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}
                   >
                     <Eye size={14} /> {t.view}
                   </button>
@@ -236,7 +238,7 @@ function DocumentItem({
                   {(doc.status === 'draft' || doc.status === 'ready') && (
                     <button 
                       onClick={handleOpenSendModal}
-                      className="w-full px-3 py-2 text-sm text-left text-gray-300 hover:bg-white/5 flex items-center gap-2"
+                      className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}
                     >
                       <Send size={14} /> {t.send}
                     </button>
@@ -245,7 +247,7 @@ function DocumentItem({
                   {doc.status === 'sent' && (
                     <button 
                       onClick={() => handleUpdateStatus('signed')}
-                      className="w-full px-3 py-2 text-sm text-left text-gray-300 hover:bg-white/5 flex items-center gap-2"
+                      className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}
                     >
                       <FileSignature size={14} /> {t.markAsSigned}
                     </button>
@@ -256,17 +258,18 @@ function DocumentItem({
                       href={doc.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full px-3 py-2 text-sm text-left text-gray-300 hover:bg-white/5 flex items-center gap-2"
+                      className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}
                     >
                       <Download size={14} /> {t.download}
                     </a>
                   )}
                   
-                  <hr className="border-white/5 my-1" />
-                  
-                  <button 
+                  <hr className="my-1" style={{ borderColor: 'var(--color-border-subtle)' }} />
+
+                  <button
                     onClick={handleDelete}
-                    className="w-full px-3 py-2 text-sm text-left text-red-400 hover:bg-red-500/10 flex items-center gap-2"
+                    className="w-full px-3 py-2 text-sm text-left flex items-center gap-2"
+                    style={{ color: 'var(--color-error)' }}
                   >
                     <Trash2 size={14} /> {t.delete}
                   </button>
@@ -279,23 +282,25 @@ function DocumentItem({
 
       {/* Preview Modal */}
       {showPreview && doc.content && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4"
+          style={{ background: 'var(--color-bg-overlay)' }}
           onClick={() => setShowPreview(false)}
         >
-          <div 
-            className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+          <div
+            className="border rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+            style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+            <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500/10 rounded-lg">
-                  <FileText size={20} className="text-blue-400" />
+                <div className="p-2 rounded-lg" style={{ background: 'var(--color-primary-subtle)' }}>
+                  <FileText size={20} style={{ color: 'var(--color-primary)' }} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white">{doc.name}</h3>
-                  <p className="text-sm text-gray-500">Vista previa del documento</p>
+                  <h3 className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
+                  <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Vista previa del documento</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -339,14 +344,16 @@ function DocumentItem({
                       printWindow.print()
                     }
                   }}
-                  className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                  className="px-4 py-2 border rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                  style={{ background: 'var(--color-bg-hover)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
                 >
                   <ExternalLink size={16} />
                   Imprimir
                 </button>
                 <button
                   onClick={() => setShowPreview(false)}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-colors"
+                  className="p-2 rounded-lg border transition-colors"
+                  style={{ background: 'var(--color-bg-hover)', borderColor: 'var(--color-border)', color: 'var(--color-text-tertiary)' }}
                 >
                   <X size={20} />
                 </button>
@@ -354,7 +361,7 @@ function DocumentItem({
             </div>
             
             {/* Document Content */}
-            <div className="flex-1 overflow-auto bg-gray-100 p-8">
+            <div className="flex-1 overflow-auto p-8" style={{ background: '#f3f4f6' }}>
               <div 
                 className="bg-white rounded-lg shadow-lg"
                 style={{
@@ -462,11 +469,11 @@ export default function LeadDocuments({ leadId, leadData }: LeadDocumentsProps) 
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-white font-semibold flex items-center gap-2">
-          <FileText size={18} className="text-blue-400" />
+        <h3 className="font-semibold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+          <FileText size={18} style={{ color: 'var(--color-primary)' }} />
           {t.title}
           {documents.length > 0 && (
-            <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-gray-400">
+            <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)' }}>
               {documents.length}
             </span>
           )}
@@ -474,7 +481,7 @@ export default function LeadDocuments({ leadId, leadData }: LeadDocumentsProps) 
         <div className="flex gap-2">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors" style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
           >
             <Plus size={14} />
             {t.newDocument}
@@ -485,16 +492,17 @@ export default function LeadDocuments({ leadId, leadData }: LeadDocumentsProps) 
       {/* Content */}
       {loading ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+          <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-primary)' }} />
         </div>
       ) : documents.length === 0 ? (
-        <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
-          <FileText className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">{t.noDocuments}</p>
-          <p className="text-gray-600 text-xs mt-1">{t.noDocumentsDesc}</p>
+        <div className="text-center py-8 border border-dashed rounded-xl" style={{ borderColor: 'var(--color-border)' }}>
+          <FileText className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--color-text-tertiary)' }} />
+          <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{t.noDocuments}</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.noDocumentsDesc}</p>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2 transition-colors"
+            className="mt-4 px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 transition-colors"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
           >
             <Plus size={14} />
             {t.newDocument}

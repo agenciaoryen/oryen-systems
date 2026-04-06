@@ -374,14 +374,14 @@ export default function Sidebar() {
           ═══════════════════════════════════════════════════════════════════════ */}
       <div className="md:hidden fixed top-0 left-0 w-full h-16 border-b flex items-center justify-between px-4 z-40" style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border)' }}>
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)]">
-            <Bot className="text-white" size={20} />
-          </div>
-          <span className="text-lg font-bold text-white tracking-tight">Oryen</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-icon.svg" alt="Oryen" className="h-8 w-8" />
+          <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>Oryen</span>
         </div>
-        <button 
-          onClick={() => setIsMobileOpen(true)} 
-          className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg bg-white/5"
+        <button
+          onClick={() => setIsMobileOpen(true)}
+          className="p-2 transition-colors rounded-lg"
+          style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)' }}
         >
           <Menu size={24} />
         </button>
@@ -389,9 +389,10 @@ export default function Sidebar() {
 
       {/* OVERLAY MOBILE */}
       {isMobileOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-40 transition-opacity" 
-          onClick={() => setIsMobileOpen(false)} 
+        <div
+          className="md:hidden fixed inset-0 backdrop-blur-sm z-40 transition-opacity"
+          style={{ background: 'var(--color-bg-overlay)' }}
+          onClick={() => setIsMobileOpen(false)}
         />
       )}
 
@@ -408,19 +409,19 @@ export default function Sidebar() {
         
         {/* LOGO */}
         <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b" style={{ borderColor: 'var(--color-border-subtle)' }}>
-          <div className="flex items-center">
-            <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)]">
-              <Bot className="text-white" size={20} />
-            </div>
-            <span className="text-lg font-bold text-white tracking-tight">
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-icon.svg" alt="Oryen" className="h-8 w-8" />
+            <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>
               Oryen
             </span>
           </div>
-          
+
           {/* Botão de fechar no mobile */}
-          <button 
+          <button
             onClick={() => setIsMobileOpen(false)}
-            className="md:hidden text-gray-500 hover:text-white transition-colors"
+            className="md:hidden transition-colors"
+            style={{ color: 'var(--color-text-muted)' }}
           >
             <X size={20} />
           </button>
@@ -434,27 +435,29 @@ export default function Sidebar() {
             <div className="relative">
               <button
                 onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
-                className="w-full bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-xl p-3 flex items-center justify-between transition-all group"
+                className="w-full rounded-xl p-3 flex items-center justify-between transition-all group"
+                style={{ background: 'var(--color-indigo-subtle)', border: '1px solid rgba(110, 95, 255, 0.2)' }}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="p-1.5 bg-indigo-500/20 rounded-lg shrink-0">
-                    <Building2 size={14} className="text-indigo-400" />
+                  <div className="p-1.5 rounded-lg shrink-0" style={{ background: 'rgba(110, 95, 255, 0.2)' }}>
+                    <Building2 size={14} style={{ color: 'var(--color-indigo)' }} />
                   </div>
                   <div className="min-w-0 text-left">
-                    <p className="text-indigo-300 text-[9px] font-black uppercase tracking-widest">
+                    <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: 'var(--color-indigo)' }}>
                       {t.viewingAs}
                     </p>
-                    <p className="text-white text-xs font-semibold truncate">
+                    <p className="text-xs font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>
                       {activeOrgName || t.selectOrg}
                     </p>
                   </div>
                 </div>
-                <ChevronDown 
-                  size={16} 
+                <ChevronDown
+                  size={16}
                   className={cn(
-                    "text-indigo-400 transition-transform shrink-0",
+                    "transition-transform shrink-0",
                     isOrgDropdownOpen && "rotate-180"
-                  )} 
+                  )}
+                  style={{ color: 'var(--color-indigo)' }}
                 />
               </button>
 
@@ -462,20 +465,21 @@ export default function Sidebar() {
               {isOrgDropdownOpen && (
                 <div className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl overflow-hidden z-50" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
                   <div className="max-h-[240px] overflow-y-auto">
-                    {availableOrgs.map((org) => (
+                    {availableOrgs.map((orgItem) => (
                       <button
-                        key={org.id}
-                        onClick={() => handleOrgChange(org.id)}
-                        className={cn(
-                          "w-full px-4 py-3 text-left text-sm transition-all flex items-center justify-between group",
-                          selectedOrgId === org.id 
-                            ? "bg-indigo-500/20 text-white" 
-                            : "text-gray-400 hover:bg-white/5 hover:text-white"
-                        )}
+                        key={orgItem.id}
+                        onClick={() => handleOrgChange(orgItem.id)}
+                        className="w-full px-4 py-3 text-left text-sm transition-all flex items-center justify-between group"
+                        style={{
+                          background: selectedOrgId === orgItem.id ? 'var(--color-indigo-subtle)' : 'transparent',
+                          color: selectedOrgId === orgItem.id ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                        }}
+                        onMouseEnter={e => { if (selectedOrgId !== orgItem.id) { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)' } }}
+                        onMouseLeave={e => { if (selectedOrgId !== orgItem.id) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' } }}
                       >
-                        <span className="truncate">{org.name}</span>
-                        {selectedOrgId === org.id && (
-                          <div className="w-2 h-2 rounded-full bg-indigo-400 shrink-0" />
+                        <span className="truncate">{orgItem.name}</span>
+                        {selectedOrgId === orgItem.id && (
+                          <div className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--color-indigo)' }} />
                         )}
                       </button>
                     ))}
@@ -502,16 +506,17 @@ export default function Sidebar() {
                       group.collapsible && 'cursor-pointer group/section'
                     )}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 group-hover/section:text-gray-400 transition-colors">
+                    <p className="text-[10px] font-bold uppercase tracking-widest transition-colors" style={{ color: 'var(--color-text-muted)' }}>
                       {group.title}
                     </p>
                     {group.collapsible && (
                       <ChevronDown
                         size={12}
                         className={cn(
-                          'text-gray-600 transition-transform duration-200',
+                          'transition-transform duration-200',
                           isCollapsed && '-rotate-90'
                         )}
+                        style={{ color: 'var(--color-text-muted)' }}
                       />
                     )}
                   </button>
@@ -533,15 +538,16 @@ export default function Sidebar() {
                         key={link.href}
                         href={link.href}
                         onClick={() => setIsMobileOpen(false)}
-                        className={cn(
-                          'flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 group',
-                          isActive
-                            ? 'bg-blue-600/10 text-blue-400 border border-blue-600/20 shadow-sm'
-                            : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'
-                        )}
+                        className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 group"
+                        style={isActive
+                          ? { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(79, 111, 255, 0.2)' }
+                          : { color: 'var(--color-text-tertiary)', border: '1px solid transparent' }
+                        }
+                        onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)' } }}
+                        onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' } }}
                       >
                         <div className="flex items-center gap-3 truncate">
-                          <Icon size={17} className={isActive ? 'text-blue-400' : 'text-gray-500 group-hover:text-white'} />
+                          <Icon size={17} style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)' }} />
                           <span className="truncate">
                             {link.label}
                             {link.isComingSoon && (
@@ -552,7 +558,7 @@ export default function Sidebar() {
 
                         {/* Badge de notificação */}
                         {link.badge && !isActive && (
-                          <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse shrink-0" />
+                          <span className="w-2 h-2 rounded-full animate-pulse shrink-0" style={{ background: 'var(--color-error)', boxShadow: '0 0 8px rgba(239, 68, 68, 0.6)' }} />
                         )}
                       </Link>
                     )
@@ -566,15 +572,15 @@ export default function Sidebar() {
         {/* INDICADOR STAFF */}
         {isStaff && (
           <div className="px-4 pb-2">
-            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3 flex items-center gap-3">
-              <div className="p-1.5 bg-indigo-500/20 rounded-lg shrink-0">
-                <ShieldCheck size={16} className="text-indigo-400" />
+            <div className="rounded-xl p-3 flex items-center gap-3" style={{ background: 'var(--color-indigo-subtle)', border: '1px solid rgba(110, 95, 255, 0.2)' }}>
+              <div className="p-1.5 rounded-lg shrink-0" style={{ background: 'rgba(110, 95, 255, 0.2)' }}>
+                <ShieldCheck size={16} style={{ color: 'var(--color-indigo)' }} />
               </div>
               <div className="min-w-0">
-                <p className="text-indigo-300 text-[9px] font-black uppercase tracking-widest truncate">
+                <p className="text-[9px] font-black uppercase tracking-widest truncate" style={{ color: 'var(--color-indigo)' }}>
                   {t.globalAccess}
                 </p>
-                <p className="text-indigo-400 text-xs font-medium truncate">
+                <p className="text-xs font-medium truncate" style={{ color: 'var(--color-indigo)' }}>
                   {t.staffMode}
                 </p>
               </div>
@@ -599,7 +605,10 @@ export default function Sidebar() {
           {/* Logout */}
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 transition-all hover:bg-rose-500/10 hover:text-rose-400 hover:border hover:border-rose-500/20 border border-transparent"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all"
+            style={{ color: 'var(--color-text-muted)', border: '1px solid transparent' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-error-subtle)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-error)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(239, 68, 68, 0.2)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'transparent' }}
           >
             <LogOut size={18} />
             {t.logout}

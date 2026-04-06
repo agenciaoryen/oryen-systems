@@ -320,12 +320,12 @@ const FIELD_HINTS: Record<string, { pt: string; en: string; es: string }> = {
   },
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  visit_order: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  rental_authorization: 'bg-green-500/10 text-green-400 border-green-500/30',
-  sale_authorization: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
-  commercial_proposal: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-  other: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
+const CATEGORY_STYLES: Record<string, React.CSSProperties> = {
+  visit_order: { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', borderColor: 'var(--color-primary)' },
+  rental_authorization: { background: 'var(--color-success-subtle)', color: 'var(--color-success)', borderColor: 'var(--color-success)' },
+  sale_authorization: { background: 'var(--color-indigo-subtle)', color: 'var(--color-indigo)', borderColor: 'var(--color-indigo)' },
+  commercial_proposal: { background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', borderColor: 'var(--color-accent)' },
+  other: { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)', borderColor: 'var(--color-border)' },
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -361,7 +361,10 @@ function FieldHint({ fieldKey, lang, label }: { fieldKey: string; lang: Language
           e.stopPropagation()
           setIsVisible(!isVisible)
         }}
-        className="text-gray-500 hover:text-blue-400 transition-colors focus:outline-none"
+        className="transition-colors focus:outline-none"
+        style={{ color: 'var(--color-text-muted)' }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-primary)')}
+        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-muted)')}
         aria-label="Ajuda"
       >
         <HelpCircle size={14} />
@@ -376,10 +379,10 @@ function FieldHint({ fieldKey, lang, label }: { fieldKey: string; lang: Language
           />
           
           {/* Tooltip - posicionado à direita */}
-          <div className="absolute z-50 left-6 top-1/2 -translate-y-1/2 w-64 sm:w-72 p-3 bg-[#1a1a1a] border border-gray-600 rounded-lg shadow-2xl text-xs text-gray-200 leading-relaxed whitespace-normal">
+          <div className="absolute z-50 left-6 top-1/2 -translate-y-1/2 w-64 sm:w-72 p-3 border rounded-lg shadow-2xl text-xs leading-relaxed whitespace-normal" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
             {getText()}
             {/* Seta apontando para a esquerda */}
-            <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px] border-r-[#1a1a1a]" />
+            <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px]" style={{ borderRightColor: 'var(--color-bg-elevated)' }} />
           </div>
         </>
       )}
@@ -564,19 +567,20 @@ export default function CreateDocumentModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div 
-        className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }}>
+      <div
+        className="border rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+        style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
           <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <FileText className="text-blue-400" size={20} />
+            <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <FileText style={{ color: 'var(--color-primary)' }} size={20} />
               {t.title}
             </h2>
-            <p className="text-gray-500 text-sm mt-0.5">
+            <p className="text-sm mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
               {t.step} {step} {t.of} 3: {
                 step === 1 ? t.selectTemplate :
                 step === 2 ? t.fillFields :
@@ -586,7 +590,8 @@ export default function CreateDocumentModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--color-text-muted)' }}
           >
             <X size={20} />
           </button>
@@ -599,10 +604,10 @@ export default function CreateDocumentModal({
             <div className="grid sm:grid-cols-2 gap-3">
               {loadingTemplates ? (
                 <div className="col-span-2 flex justify-center py-8">
-                  <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                  <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-primary)' }} />
                 </div>
               ) : templates.length === 0 ? (
-                <div className="col-span-2 text-center py-8 text-gray-500">
+                <div className="col-span-2 text-center py-8" style={{ color: 'var(--color-text-muted)' }}>
                   {t.noTemplates}
                 </div>
               ) : (
@@ -610,26 +615,25 @@ export default function CreateDocumentModal({
                   <button
                     key={template.id}
                     onClick={() => handleSelectTemplate(template)}
-                    className={`p-4 rounded-xl border text-left transition-all hover:border-blue-500/50 hover:bg-blue-500/5 ${
-                      CATEGORY_COLORS[template.category] || CATEGORY_COLORS.other
-                    }`}
+                    className="p-4 rounded-xl border text-left transition-all"
+                    style={CATEGORY_STYLES[template.category] || CATEGORY_STYLES.other}
                   >
                     <div className="flex items-start gap-3">
                       <div className="shrink-0">
                         {CATEGORY_ICONS[template.category] || CATEGORY_ICONS.other}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-white truncate">{template.name}</h3>
+                        <h3 className="font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{template.name}</h3>
                         {template.description && (
-                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                          <p className="text-sm mt-1 line-clamp-2" style={{ color: 'var(--color-text-muted)' }}>
                             {template.description}
                           </p>
                         )}
-                        <p className="text-xs text-gray-600 mt-2">
+                        <p className="text-xs mt-2" style={{ color: 'var(--color-text-tertiary)' }}>
                           {template.variables.length} campos
                         </p>
                       </div>
-                      <ChevronRight size={16} className="text-gray-600 shrink-0" />
+                      <ChevronRight size={16} className="shrink-0" style={{ color: 'var(--color-text-tertiary)' }} />
                     </div>
                   </button>
                 ))
@@ -642,9 +646,9 @@ export default function CreateDocumentModal({
             <div className="space-y-4">
               {selectedTemplate.variables.map((variable) => (
                 <div key={variable.key}>
-                  <label className="flex items-center text-sm font-medium text-gray-300 mb-1.5">
+                  <label className="flex items-center text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
                     {variable.label}
-                    {variable.required && <span className="text-red-400 ml-1">*</span>}
+                    {variable.required && <span className="ml-1" style={{ color: 'var(--color-error)' }}>*</span>}
                     <FieldHint fieldKey={variable.key} lang={lang} label={variable.label} />
                   </label>
                   
@@ -652,9 +656,8 @@ export default function CreateDocumentModal({
                     <select
                       value={formData[variable.key] || ''}
                       onChange={(e) => handleInputChange(variable.key, e.target.value)}
-                      className={`w-full px-3 py-2.5 bg-[#0a0a0a] border rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors ${
-                        errors[variable.key] ? 'border-red-500' : 'border-white/10'
-                      }`}
+                      className="w-full px-3 py-2.5 border rounded-lg focus:outline-none transition-colors"
+                      style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-primary)', borderColor: errors[variable.key] ? 'var(--color-error)' : 'var(--color-border-subtle)' }}
                     >
                       <option value="">Seleccionar...</option>
                       {variable.options.map(opt => (
@@ -667,9 +670,10 @@ export default function CreateDocumentModal({
                         type="checkbox"
                         checked={formData[variable.key] || false}
                         onChange={(e) => handleInputChange(variable.key, e.target.checked)}
-                        className="w-5 h-5 rounded bg-[#0a0a0a] border-white/10 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                        className="w-5 h-5 rounded focus:ring-offset-0"
+                        style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border-subtle)', accentColor: 'var(--color-primary)' }}
                       />
-                      <span className="text-gray-400 text-sm">Sí</span>
+                      <span className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Sí</span>
                     </label>
                   ) : (
                     <input
@@ -677,14 +681,13 @@ export default function CreateDocumentModal({
                       value={formData[variable.key] || ''}
                       onChange={(e) => handleInputChange(variable.key, e.target.value)}
                       placeholder={variable.placeholder}
-                      className={`w-full px-3 py-2.5 bg-[#0a0a0a] border rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors ${
-                        errors[variable.key] ? 'border-red-500' : 'border-white/10'
-                      }`}
+                      className="w-full px-3 py-2.5 border rounded-lg focus:outline-none transition-colors"
+                      style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-primary)', borderColor: errors[variable.key] ? 'var(--color-error)' : 'var(--color-border-subtle)' }}
                     />
                   )}
                   
                   {errors[variable.key] && (
-                    <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--color-error)' }}>
                       <AlertCircle size={12} />
                       {errors[variable.key]}
                     </p>
@@ -696,7 +699,7 @@ export default function CreateDocumentModal({
 
           {/* Step 3: Preview */}
           {step === 3 && (
-            <div className="bg-gray-100 rounded-lg overflow-hidden p-8">
+            <div className="rounded-lg overflow-hidden p-8" style={{ background: '#f3f4f6' }}>
               <div 
                 className="bg-white rounded-lg shadow-lg"
                 style={{
@@ -781,10 +784,11 @@ export default function CreateDocumentModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-4 border-t border-white/10 bg-[#0a0a0a]">
+        <div className="flex items-center justify-between p-4 border-t" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg-base)' }}>
           <button
             onClick={step === 1 ? onClose : handleBack}
-            className="px-4 py-2 text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+            className="px-4 py-2 transition-colors flex items-center gap-1"
+            style={{ color: 'var(--color-text-tertiary)' }}
           >
             {step === 1 ? (
               t.cancel
@@ -800,19 +804,21 @@ export default function CreateDocumentModal({
             {step === 2 && (
               <button
                 onClick={handleNext}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+                className="px-6 py-2.5 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
               >
                 <Eye size={16} />
                 {t.preview}
                 <ChevronRight size={16} />
               </button>
             )}
-            
+
             {step === 3 && (
               <button
                 onClick={handleCreate}
                 disabled={creating}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium flex items-center gap-2.5 transition-colors disabled:opacity-50"
+                className="px-6 py-2.5 rounded-lg font-medium flex items-center gap-2.5 transition-colors disabled:opacity-50"
+                style={{ background: 'var(--color-success)', color: 'var(--color-text-primary)' }}
               >
                 {creating ? (
                   <>

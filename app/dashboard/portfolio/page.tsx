@@ -108,12 +108,12 @@ type Lang = 'pt' | 'en' | 'es'
 // STATUS COLORS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
-  active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  sold: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  rented: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-  inactive: 'bg-red-500/20 text-red-400 border-red-500/30',
+const STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
+  draft: { bg: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)', border: 'var(--color-border)' },
+  active: { bg: 'var(--color-success-subtle)', color: 'var(--color-success)', border: 'var(--color-success)' },
+  sold: { bg: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: 'var(--color-primary)' },
+  rented: { bg: 'var(--color-indigo-subtle)', color: 'var(--color-indigo)', border: 'var(--color-indigo)' },
+  inactive: { bg: 'var(--color-error-subtle)', color: 'var(--color-error)', border: 'var(--color-error)' },
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -212,7 +212,8 @@ export default function PortfolioPage() {
         </div>
         <button
           onClick={() => router.push('/dashboard/portfolio/new')}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-600/20 hover:shadow-blue-500/30 shrink-0"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shrink-0"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)' }}
         >
           <Plus size={18} />
           {t.newProperty}
@@ -223,7 +224,7 @@ export default function PortfolioPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Busca */}
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
           <input
             type="text"
             placeholder={t.search}
@@ -237,7 +238,7 @@ export default function PortfolioPage() {
             }}
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }}>
               <X size={14} />
             </button>
           )}
@@ -281,15 +282,15 @@ export default function PortfolioPage() {
         <div className="flex rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
           <button
             onClick={() => setViewMode('grid')}
-            className={`px-3 py-2.5 transition-all ${viewMode === 'grid' ? 'bg-blue-600/20 text-blue-400' : 'text-gray-500 hover:text-gray-300'}`}
-            style={{ background: viewMode !== 'grid' ? 'var(--color-bg-elevated)' : undefined }}
+            className="px-3 py-2.5 transition-all"
+            style={{ background: viewMode === 'grid' ? 'var(--color-primary-subtle)' : 'var(--color-bg-elevated)', color: viewMode === 'grid' ? 'var(--color-primary)' : 'var(--color-text-muted)' }}
           >
             <LayoutGrid size={16} />
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`px-3 py-2.5 transition-all ${viewMode === 'list' ? 'bg-blue-600/20 text-blue-400' : 'text-gray-500 hover:text-gray-300'}`}
-            style={{ background: viewMode !== 'list' ? 'var(--color-bg-elevated)' : undefined }}
+            className="px-3 py-2.5 transition-all"
+            style={{ background: viewMode === 'list' ? 'var(--color-primary-subtle)' : 'var(--color-bg-elevated)', color: viewMode === 'list' ? 'var(--color-primary)' : 'var(--color-text-muted)' }}
           >
             <List size={16} />
           </button>
@@ -306,15 +307,15 @@ export default function PortfolioPage() {
       {/* ═══ LOADING ═══ */}
       {loading && (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="animate-spin text-blue-500" size={32} />
+          <Loader2 className="animate-spin" size={32} style={{ color: 'var(--color-primary)' }} />
         </div>
       )}
 
       {/* ═══ EMPTY STATE ═══ */}
       {!loading && properties.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-4">
-            <Home size={28} className="text-blue-400" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--color-primary-subtle)' }}>
+            <Home size={28} style={{ color: 'var(--color-primary)' }} />
           </div>
           <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
             {total === 0 ? t.noProperties : t.noResults}
@@ -325,7 +326,8 @@ export default function PortfolioPage() {
           {total === 0 && (
             <button
               onClick={() => router.push('/dashboard/portfolio/new')}
-              className="mt-4 flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-all"
+              className="mt-4 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
             >
               <Plus size={18} />
               {t.newProperty}
@@ -352,22 +354,22 @@ export default function PortfolioPage() {
                     <img src={cover} alt={prop.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <ImageIcon size={40} className="text-gray-600" />
+                      <ImageIcon size={40} style={{ color: 'var(--color-text-muted)' }} />
                     </div>
                   )}
                   {/* Status badge */}
-                  <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase border ${STATUS_COLORS[prop.status] || STATUS_COLORS.draft}`}>
+                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase" style={{ background: (STATUS_STYLES[prop.status] || STATUS_STYLES.draft).bg, color: (STATUS_STYLES[prop.status] || STATUS_STYLES.draft).color, border: `1px solid ${(STATUS_STYLES[prop.status] || STATUS_STYLES.draft).border}` }}>
                     {PROPERTY_STATUSES[prop.status]?.[lang] || prop.status}
                   </div>
                   {/* Featured badge */}
                   {prop.is_featured && (
-                    <div className="absolute top-3 right-3 p-1.5 rounded-lg bg-amber-500/90 text-white">
+                    <div className="absolute top-3 right-3 p-1.5 rounded-lg" style={{ background: 'var(--color-accent)', color: 'var(--color-text-primary)' }}>
                       <Star size={14} />
                     </div>
                   )}
                   {/* Price overlay */}
                   {prop.price && (
-                    <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-black/70 backdrop-blur-sm text-white text-sm font-bold">
+                    <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg backdrop-blur-sm text-sm font-bold" style={{ background: 'var(--color-bg-overlay)', color: 'var(--color-text-primary)' }}>
                       {formatPrice(prop.price, currency)}
                     </div>
                   )}
@@ -414,7 +416,7 @@ export default function PortfolioPage() {
                 <div className="flex border-t" style={{ borderColor: 'var(--color-border)' }}>
                   <button
                     onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/portfolio/${prop.id}`) }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:bg-blue-500/10 hover:text-blue-400"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all"
                     style={{ color: 'var(--color-text-secondary)' }}
                   >
                     <Edit3 size={13} /> {t.edit}
@@ -423,7 +425,7 @@ export default function PortfolioPage() {
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete(prop.id) }}
                     disabled={deleting === prop.id}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all disabled:opacity-50"
                     style={{ color: 'var(--color-text-secondary)' }}
                   >
                     {deleting === prop.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
@@ -444,7 +446,7 @@ export default function PortfolioPage() {
             return (
               <div
                 key={prop.id}
-                className="flex items-center gap-4 p-4 transition-all hover:bg-white/5 cursor-pointer"
+                className="flex items-center gap-4 p-4 transition-all cursor-pointer"
                 style={{ borderBottom: i < properties.length - 1 ? '1px solid var(--color-border)' : 'none' }}
                 onClick={() => router.push(`/dashboard/portfolio/${prop.id}`)}
               >
@@ -454,7 +456,7 @@ export default function PortfolioPage() {
                     <img src={cover} alt={prop.title} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <ImageIcon size={20} className="text-gray-600" />
+                      <ImageIcon size={20} style={{ color: 'var(--color-text-muted)' }} />
                     </div>
                   )}
                 </div>
@@ -465,7 +467,7 @@ export default function PortfolioPage() {
                     <h3 className="font-semibold text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
                       {prop.title}
                     </h3>
-                    {prop.is_featured && <Star size={13} className="text-amber-400 shrink-0" />}
+                    {prop.is_featured && <Star size={13} className="shrink-0" style={{ color: 'var(--color-accent)' }} />}
                   </div>
                   <p className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>
                     {PROPERTY_TYPES[prop.property_type]?.[lang]} • {TRANSACTION_TYPES[prop.transaction_type]?.[lang]}
@@ -485,7 +487,7 @@ export default function PortfolioPage() {
                 </div>
 
                 {/* Status */}
-                <div className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase border shrink-0 ${STATUS_COLORS[prop.status] || STATUS_COLORS.draft}`}>
+                <div className="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase shrink-0" style={{ background: (STATUS_STYLES[prop.status] || STATUS_STYLES.draft).bg, color: (STATUS_STYLES[prop.status] || STATUS_STYLES.draft).color, border: `1px solid ${(STATUS_STYLES[prop.status] || STATUS_STYLES.draft).border}` }}>
                   {PROPERTY_STATUSES[prop.status]?.[lang]}
                 </div>
 
@@ -493,7 +495,7 @@ export default function PortfolioPage() {
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/portfolio/${prop.id}`) }}
-                    className="p-2 rounded-lg transition-all hover:bg-blue-500/10 hover:text-blue-400"
+                    className="p-2 rounded-lg transition-all"
                     style={{ color: 'var(--color-text-secondary)' }}
                   >
                     <Edit3 size={15} />
@@ -501,7 +503,7 @@ export default function PortfolioPage() {
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete(prop.id) }}
                     disabled={deleting === prop.id}
-                    className="p-2 rounded-lg transition-all hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                    className="p-2 rounded-lg transition-all disabled:opacity-50"
                     style={{ color: 'var(--color-text-secondary)' }}
                   >
                     {deleting === prop.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}

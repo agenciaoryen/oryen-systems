@@ -287,12 +287,13 @@ export default function FollowUpPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">{t.title}</h1>
-            <p className="text-sm text-gray-500 mt-1">{t.subtitle}</p>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.title}</h1>
+            <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>{t.subtitle}</p>
           </div>
           <button
             onClick={fetchData}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:text-white border border-white/10 rounded-lg hover:bg-white/5 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors"
+            style={{ color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border-subtle)' }}
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             {t.refresh}
@@ -301,31 +302,31 @@ export default function FollowUpPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <StatCard icon={Users} label={t.statsTotal} value={stats.total} color="text-white" bg="bg-white/5" />
-          <StatCard icon={Clock} label={t.statsPending} value={stats.pending} color="text-yellow-400" bg="bg-yellow-500/10" />
-          <StatCard icon={Send} label={t.statsActive} value={stats.active} color="text-blue-400" bg="bg-blue-500/10" />
-          <StatCard icon={UserCheck} label={t.statsResponded} value={stats.responded} color="text-emerald-400" bg="bg-emerald-500/10" />
-          <StatCard icon={UserX} label={t.statsExhausted} value={stats.exhausted} color="text-rose-400" bg="bg-rose-500/10" />
-          <StatCard icon={Ban} label={t.statsCancelled} value={stats.cancelled} color="text-gray-400" bg="bg-white/5" />
+          <StatCard icon={Users} label={t.statsTotal} value={stats.total} colorVar="var(--color-text-primary)" bgVar="var(--color-bg-hover)" />
+          <StatCard icon={Clock} label={t.statsPending} value={stats.pending} colorVar="var(--color-accent)" bgVar="var(--color-accent-subtle)" />
+          <StatCard icon={Send} label={t.statsActive} value={stats.active} colorVar="var(--color-primary)" bgVar="var(--color-primary-subtle)" />
+          <StatCard icon={UserCheck} label={t.statsResponded} value={stats.responded} colorVar="var(--color-success)" bgVar="var(--color-success-subtle)" />
+          <StatCard icon={UserX} label={t.statsExhausted} value={stats.exhausted} colorVar="var(--color-error)" bgVar="var(--color-error-subtle)" />
+          <StatCard icon={Ban} label={t.statsCancelled} value={stats.cancelled} colorVar="var(--color-text-tertiary)" bgVar="var(--color-bg-hover)" />
         </div>
 
         {/* Success Rate Bar */}
         {totalFinished > 0 && (
-          <div className="bg-[#111] border border-white/5 rounded-xl p-4">
+          <div className="rounded-xl p-4" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <TrendingUp size={16} className="text-emerald-400" />
-                <span className="text-sm font-medium text-gray-300">{t.successRate}</span>
+                <TrendingUp size={16} style={{ color: 'var(--color-success)' }} />
+                <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>{t.successRate}</span>
               </div>
-              <span className="text-lg font-bold text-white">{successRate}%</span>
+              <span className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{successRate}%</span>
             </div>
-            <div className="w-full bg-white/5 rounded-full h-2.5">
+            <div className="w-full rounded-full h-2.5" style={{ background: 'var(--color-bg-hover)' }}>
               <div
-                className="bg-emerald-500 h-2.5 rounded-full transition-all duration-500"
-                style={{ width: `${successRate}%` }}
+                className="h-2.5 rounded-full transition-all duration-500"
+                style={{ width: `${successRate}%`, background: 'var(--color-success)' }}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>
               {stats.responded} {t.statsResponded.toLowerCase()} / {totalFinished} {t.statsTotal.toLowerCase().replace('total na fila', 'finalizados')}
             </p>
           </div>
@@ -343,16 +344,20 @@ export default function FollowUpPage() {
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors whitespace-nowrap ${
-                filter === f.key
-                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                  : 'text-gray-400 hover:text-gray-200 border border-white/5 hover:bg-white/5'
-              }`}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors whitespace-nowrap"
+              style={filter === f.key
+                ? { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid var(--color-primary-subtle)' }
+                : { color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border-subtle)' }
+              }
             >
               {f.label}
-              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                filter === f.key ? 'bg-blue-500/30 text-blue-300' : 'bg-white/5 text-gray-500'
-              }`}>
+              <span
+                className="text-xs px-1.5 py-0.5 rounded-full"
+                style={filter === f.key
+                  ? { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }
+                  : { background: 'var(--color-bg-hover)', color: 'var(--color-text-muted)' }
+                }
+              >
                 {f.count}
               </span>
             </button>
@@ -362,13 +367,13 @@ export default function FollowUpPage() {
         {/* Queue List */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+            <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-primary)' }} />
           </div>
         ) : filteredQueue.length === 0 ? (
           <div className="text-center py-20">
-            <MessageCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-gray-300">{t.emptyTitle}</h3>
-            <p className="text-sm text-gray-500 mt-1 max-w-md mx-auto">{t.emptyDesc}</p>
+            <MessageCircle className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--color-text-muted)' }} />
+            <h3 className="text-lg font-medium" style={{ color: 'var(--color-text-secondary)' }}>{t.emptyTitle}</h3>
+            <p className="text-sm mt-1 max-w-md mx-auto" style={{ color: 'var(--color-text-muted)' }}>{t.emptyDesc}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -392,16 +397,19 @@ export default function FollowUpPage() {
 // STAT CARD
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function StatCard({ icon: Icon, label, value, color, bg }: {
-  icon: any; label: string; value: number; color: string; bg: string
+function StatCard({ icon: Icon, label, value, colorVar, bgVar }: {
+  icon: any; label: string; value: number; colorVar: string; bgVar: string
 }) {
   return (
-    <div className={`${bg} border border-white/5 rounded-xl p-4 flex flex-col gap-1`}>
+    <div
+      className="rounded-xl p-4 flex flex-col gap-1"
+      style={{ background: bgVar, border: '1px solid var(--color-border-subtle)' }}
+    >
       <div className="flex items-center gap-2">
-        <Icon size={14} className={color} />
-        <span className="text-xs text-gray-500 truncate">{label}</span>
+        <Icon size={14} style={{ color: colorVar }} />
+        <span className="text-xs truncate" style={{ color: 'var(--color-text-muted)' }}>{label}</span>
       </div>
-      <span className={`text-2xl font-bold ${color}`}>{value}</span>
+      <span className="text-2xl font-bold" style={{ color: colorVar }}>{value}</span>
     </div>
   )
 }
@@ -421,12 +429,12 @@ function FollowUpCard({ item, t, expanded, onToggle, onCancel }: {
   const leadName = lead?.name || lead?.phone || '—'
   const leadPhone = lead?.phone || ''
 
-  const statusConfig: Record<string, { color: string; bg: string; icon: any }> = {
-    pending: { color: 'text-yellow-400', bg: 'bg-yellow-500/10', icon: Clock },
-    active: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Send },
-    responded: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: CheckCircle2 },
-    exhausted: { color: 'text-rose-400', bg: 'bg-rose-500/10', icon: XCircle },
-    cancelled: { color: 'text-gray-400', bg: 'bg-white/5', icon: Ban },
+  const statusConfig: Record<string, { colorVar: string; bgVar: string; icon: any }> = {
+    pending: { colorVar: 'var(--color-accent)', bgVar: 'var(--color-accent-subtle)', icon: Clock },
+    active: { colorVar: 'var(--color-primary)', bgVar: 'var(--color-primary-subtle)', icon: Send },
+    responded: { colorVar: 'var(--color-success)', bgVar: 'var(--color-success-subtle)', icon: CheckCircle2 },
+    exhausted: { colorVar: 'var(--color-error)', bgVar: 'var(--color-error-subtle)', icon: XCircle },
+    cancelled: { colorVar: 'var(--color-text-tertiary)', bgVar: 'var(--color-bg-hover)', icon: Ban },
   }
 
   const sc = statusConfig[item.status] || statusConfig.pending
@@ -452,34 +460,34 @@ function FollowUpCard({ item, t, expanded, onToggle, onCancel }: {
     : 0
 
   return (
-    <div className="bg-[#111] border border-white/5 rounded-xl overflow-hidden">
+    <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}>
       {/* Main row */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-4 p-4 text-left hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-center gap-4 p-4 text-left transition-colors"
       >
         {/* Status icon */}
-        <div className={`w-9 h-9 rounded-lg ${sc.bg} flex items-center justify-center flex-shrink-0`}>
-          <StatusIcon size={16} className={sc.color} />
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: sc.bgVar }}>
+          <StatusIcon size={16} style={{ color: sc.colorVar }} />
         </div>
 
         {/* Lead info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-white truncate">{leadName}</span>
+            <span className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{leadName}</span>
             {leadPhone && (
-              <span className="text-xs text-gray-600">{leadPhone}</span>
+              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{leadPhone}</span>
             )}
           </div>
           <div className="flex items-center gap-3 mt-1">
-            <span className={`text-xs px-2 py-0.5 rounded-full ${sc.bg} ${sc.color}`}>
+            <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: sc.bgVar, color: sc.colorVar }}>
               {t.status[item.status]}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
               {t.attempt} {item.attempt_number}/{item.max_attempts}
             </span>
             {item.next_attempt_at && ['pending', 'active'].includes(item.status) && (
-              <span className="text-xs text-gray-500 flex items-center gap-1">
+              <span className="text-xs flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
                 <Timer size={10} />
                 {formatDate(item.next_attempt_at)}
               </span>
@@ -489,49 +497,50 @@ function FollowUpCard({ item, t, expanded, onToggle, onCancel }: {
 
         {/* Progress bar */}
         <div className="w-20 flex-shrink-0 hidden sm:block">
-          <div className="w-full bg-white/5 rounded-full h-1.5">
+          <div className="w-full rounded-full h-1.5" style={{ background: 'var(--color-bg-hover)' }}>
             <div
-              className={`h-1.5 rounded-full transition-all ${
-                item.status === 'responded' ? 'bg-emerald-500' :
-                item.status === 'exhausted' ? 'bg-rose-500' :
-                'bg-blue-500'
-              }`}
-              style={{ width: `${progressPercent}%` }}
+              className="h-1.5 rounded-full transition-all"
+              style={{
+                width: `${progressPercent}%`,
+                background: item.status === 'responded' ? 'var(--color-success)' :
+                  item.status === 'exhausted' ? 'var(--color-error)' :
+                  'var(--color-primary)'
+              }}
             />
           </div>
         </div>
 
-        <ChevronRight size={16} className={`text-gray-600 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+        <ChevronRight size={16} className={`transition-transform ${expanded ? 'rotate-90' : ''}`} style={{ color: 'var(--color-text-muted)' }} />
       </button>
 
       {/* Expanded details */}
       {expanded && (
-        <div className="border-t border-white/5 px-4 py-3 space-y-3 bg-white/[0.01]">
+        <div className="px-4 py-3 space-y-3" style={{ borderTop: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-surface)' }}>
           {/* Details grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div>
-              <span className="text-gray-600 block">{t.nextAttempt}</span>
-              <span className="text-gray-300">{formatDate(item.next_attempt_at)}</span>
+              <span className="block" style={{ color: 'var(--color-text-muted)' }}>{t.nextAttempt}</span>
+              <span style={{ color: 'var(--color-text-secondary)' }}>{formatDate(item.next_attempt_at)}</span>
             </div>
             <div>
-              <span className="text-gray-600 block">{t.lastAttempt}</span>
-              <span className="text-gray-300">{formatDate(item.last_attempt_at)}</span>
+              <span className="block" style={{ color: 'var(--color-text-muted)' }}>{t.lastAttempt}</span>
+              <span style={{ color: 'var(--color-text-secondary)' }}>{formatDate(item.last_attempt_at)}</span>
             </div>
             <div>
-              <span className="text-gray-600 block">{t.lastMessage}</span>
-              <span className="text-gray-300">{formatDate(item.last_lead_message_at)}</span>
+              <span className="block" style={{ color: 'var(--color-text-muted)' }}>{t.lastMessage}</span>
+              <span style={{ color: 'var(--color-text-secondary)' }}>{formatDate(item.last_lead_message_at)}</span>
             </div>
             <div>
-              <span className="text-gray-600 block">{t.stage}</span>
-              <span className="text-gray-300">{item.lead_stage || '—'}</span>
+              <span className="block" style={{ color: 'var(--color-text-muted)' }}>{t.stage}</span>
+              <span style={{ color: 'var(--color-text-secondary)' }}>{item.lead_stage || '—'}</span>
             </div>
           </div>
 
           {/* Summary */}
           {item.last_conversation_summary && (
             <div className="text-xs">
-              <span className="text-gray-600 block mb-1">{t.summary}</span>
-              <p className="text-gray-400 leading-relaxed">{item.last_conversation_summary}</p>
+              <span className="block mb-1" style={{ color: 'var(--color-text-muted)' }}>{t.summary}</span>
+              <p className="leading-relaxed" style={{ color: 'var(--color-text-tertiary)' }}>{item.last_conversation_summary}</p>
             </div>
           )}
 
@@ -540,7 +549,8 @@ function FollowUpCard({ item, t, expanded, onToggle, onCancel }: {
             {lead?.id && (
               <Link
                 href={`/dashboard/crm/${lead.id}`}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-400 hover:text-blue-300 border border-blue-500/20 rounded-lg hover:bg-blue-500/10 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-colors"
+                style={{ color: 'var(--color-primary)', border: '1px solid var(--color-primary-subtle)' }}
               >
                 <Users size={12} />
                 {t.viewLead}
@@ -549,7 +559,8 @@ function FollowUpCard({ item, t, expanded, onToggle, onCancel }: {
             {['pending', 'active'].includes(item.status) && (
               <button
                 onClick={(e) => { e.stopPropagation(); onCancel() }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-rose-400 hover:text-rose-300 border border-rose-500/20 rounded-lg hover:bg-rose-500/10 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-colors"
+                style={{ color: 'var(--color-error)', border: '1px solid var(--color-error-subtle)' }}
               >
                 <Ban size={12} />
                 {t.cancel}

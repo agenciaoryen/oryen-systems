@@ -77,12 +77,12 @@ export default async function PropertiesListPage({
   const { site, properties, total, page, totalPages } = data
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="min-h-screen" style={{ background: 'var(--color-bg-surface)' }}>
       {/* Header */}
-      <div className="bg-white border-b border-gray-100">
+      <div style={{ background: 'var(--color-bg-elevated)', borderBottom: '1px solid var(--color-border-subtle)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Imóveis</h1>
-          <p className="text-sm text-gray-500 mt-1">{total} {total === 1 ? 'imóvel encontrado' : 'imóveis encontrados'}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Imóveis</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>{total} {total === 1 ? 'imóvel encontrado' : 'imóveis encontrados'}</p>
         </div>
       </div>
 
@@ -99,11 +99,11 @@ export default async function PropertiesListPage({
           </div>
         ) : (
           <div className="text-center py-20">
-            <svg width="48" height="48" className="mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width="48" height="48" className="mx-auto mb-4" style={{ color: 'var(--color-text-tertiary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
             </svg>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">Nenhum imóvel encontrado</h3>
-            <p className="text-sm text-gray-500">Tente mudar os filtros para ver mais resultados.</p>
+            <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>Nenhum imóvel encontrado</h3>
+            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Tente mudar os filtros para ver mais resultados.</p>
           </div>
         )}
 
@@ -113,18 +113,20 @@ export default async function PropertiesListPage({
             {page > 1 && (
               <a
                 href={`/sites/${site.slug}/properties?page=${page - 1}`}
-                className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-80"
+                style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
               >
                 ← Anterior
               </a>
             )}
-            <span className="px-4 py-2 text-sm text-gray-500">
+            <span className="px-4 py-2 text-sm" style={{ color: 'var(--color-text-muted)' }}>
               Página {page} de {totalPages}
             </span>
             {page < totalPages && (
               <a
                 href={`/sites/${site.slug}/properties?page=${page + 1}`}
-                className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-80"
+                style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
               >
                 Próxima →
               </a>

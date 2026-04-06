@@ -68,7 +68,8 @@ export default function DashboardLayout({
         href="https://wa.me/5551998388409"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-emerald-500 hover:bg-emerald-400 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all hover:scale-105 active:scale-95"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+        style={{ background: 'var(--color-success)', color: '#fff', boxShadow: '0 4px 16px rgba(34, 197, 94, 0.3)' }}
         title="Suporte via WhatsApp"
       >
         <MessageCircle size={24} />

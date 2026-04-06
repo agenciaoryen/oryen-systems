@@ -919,7 +919,7 @@ export default function SettingsPage() {
   if (!user) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
       </div>
     )
   }
@@ -944,34 +944,36 @@ export default function SettingsPage() {
 
       {/* MODAL DE CONVITE */}
       {isInviteModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-[#111] border border-white/10 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }}>
+          <div className="p-6 rounded-2xl w-full max-w-md shadow-2xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">{t.modal.title}</h3>
-              <button onClick={() => setIsInviteModalOpen(false)} className="text-gray-500 hover:text-white">
+              <h3 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.modal.title}</h3>
+              <button onClick={() => setIsInviteModalOpen(false)} style={{ color: 'var(--color-text-muted)' }}>
                 <X size={20} />
               </button>
             </div>
             <form onSubmit={handleInvite} className="space-y-4">
-              <div className="bg-blue-900/20 border border-blue-500/20 p-3 rounded-lg flex gap-3 items-start">
-                <AlertCircle className="text-blue-400 shrink-0 mt-0.5" size={16} />
-                <p className="text-xs text-blue-200 leading-relaxed">{t.modal.info}</p>
+              <div className="p-3 rounded-lg flex gap-3 items-start" style={{ background: 'var(--color-primary-subtle)', border: '1px solid var(--color-primary)' }}>
+                <AlertCircle className="shrink-0 mt-0.5" size={16} style={{ color: 'var(--color-primary)' }} />
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{t.modal.info}</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1 uppercase">{t.modal.emailLabel}</label>
+                <label className="block text-xs font-medium mb-1 uppercase" style={{ color: 'var(--color-text-tertiary)' }}>{t.modal.emailLabel}</label>
                 <input
                   type="email"
                   required
                   value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)}
                   placeholder="colaborador@oryen.com"
-                  className="w-full bg-black border border-white/10 rounded-lg p-3 text-white focus:border-blue-500 outline-none"
+                  className="w-full rounded-lg p-3 outline-none"
+                  style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                 />
               </div>
               <button
                 type="submit"
                 disabled={inviteLoading}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-lg text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
               >
                 {inviteLoading ? <Loader2 className="animate-spin" size={16} /> : <UserPlus size={18} />}
                 {t.modal.submit}
@@ -983,8 +985,8 @@ export default function SettingsPage() {
 
       {/* HEADER */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">{t.title}</h1>
-        <p className="text-gray-400 text-sm mt-1">{t.subtitle}</p>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>{t.title}</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.subtitle}</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6 md:gap-8">
@@ -998,11 +1000,11 @@ export default function SettingsPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                }`}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all"
+                style={activeTab === tab.id
+                  ? { background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }
+                  : { color: 'var(--color-text-tertiary)' }
+                }
               >
                 <Icon size={18} />
                 {tab.label}
@@ -1012,48 +1014,48 @@ export default function SettingsPage() {
         </aside>
 
         {/* CONTEÚDO */}
-        <div className="flex-1 bg-[#0A0A0A]/60 backdrop-blur-xl border border-white/5 rounded-2xl p-4 md:p-6 shadow-2xl min-h-[500px]">
+        <div className="flex-1 backdrop-blur-xl rounded-2xl p-4 md:p-6 shadow-2xl min-h-[500px]" style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)' }}>
 
           {/* ABA: PERFIL */}
           {activeTab === 'profile' && (
             <div className="space-y-8">
               <div className="space-y-6">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <User size={20} className="text-blue-500" /> {t.profile.personalData}
+                <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                  <User size={20} style={{ color: 'var(--color-primary)' }} /> {t.profile.personalData}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">{t.profile.fullName}</label>
+                    <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.profile.fullName}</label>
                     <input
                       type="text"
                       value={profileName}
                       onChange={(e) => setProfileName(e.target.value)}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-blue-500 outline-none"
+                      className="w-full rounded-lg p-3 outline-none" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">{t.profile.email}</label>
+                    <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.profile.email}</label>
                     <input
                       type="email"
                       value={userEmail}
                       disabled
-                      className="w-full bg-black/20 border border-white/5 rounded-lg p-3 text-gray-500 cursor-not-allowed"
+                      className="w-full rounded-lg p-3 cursor-not-allowed" style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-muted)' }}
                     />
                   </div>
                 </div>
 
                 {/* Preferências Regionais */}
-                <div className="pt-4 border-t border-white/5">
-                  <h3 className="text-sm font-bold text-gray-300 flex items-center gap-2 mb-4">
-                    <MapPin size={16} className="text-emerald-500" /> {t.profile.regionTitle}
+                <div className="pt-4" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+                  <h3 className="text-sm font-bold flex items-center gap-2 mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                    <MapPin size={16} style={{ color: 'var(--color-success)' }} /> {t.profile.regionTitle}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase">{t.profile.language}</label>
+                      <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.profile.language}</label>
                       <select
                         value={language}
                         onChange={(e) => setLanguage(e.target.value)}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-emerald-500 outline-none appearance-none"
+                        className="w-full rounded-lg p-3 outline-none appearance-none" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                       >
                         <option value="pt">🇧🇷 Português</option>
                         <option value="en">🇺🇸 English</option>
@@ -1061,11 +1063,11 @@ export default function SettingsPage() {
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase">{t.profile.currency}</label>
+                      <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.profile.currency}</label>
                       <select
                         value={currency}
                         onChange={(e) => setCurrency(e.target.value)}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-emerald-500 outline-none appearance-none"
+                        className="w-full rounded-lg p-3 outline-none appearance-none" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                       >
                         <option value="BRL">R$ (BRL)</option>
                         <option value="USD">$ (USD)</option>
@@ -1078,11 +1080,11 @@ export default function SettingsPage() {
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase">{t.profile.timezone}</label>
+                      <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.profile.timezone}</label>
                       <select
                         value={timezone}
                         onChange={(e) => setTimezone(e.target.value)}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-emerald-500 outline-none appearance-none"
+                        className="w-full rounded-lg p-3 outline-none appearance-none" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                       >
                         <option value="America/Sao_Paulo">🇧🇷 São Paulo</option>
                         <option value="America/New_York">🇺🇸 New York</option>
@@ -1100,46 +1102,48 @@ export default function SettingsPage() {
                 <button
                   onClick={handleSaveProfile}
                   disabled={profileLoading}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-600/20 w-full md:w-auto justify-center"
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg w-full md:w-auto justify-center"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
                 >
                   {profileLoading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                   {t.profile.save}
                 </button>
               </div>
 
-              <div className="w-full h-px bg-white/5" />
+              <div className="w-full h-px" style={{ background: 'var(--color-border-subtle)' }} />
 
               {/* Troca de Senha */}
               <form onSubmit={handleChangePassword} className="space-y-6">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Lock size={20} className="text-rose-500" /> {t.profile.securityTitle}
+                <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                  <Lock size={20} style={{ color: 'var(--color-error)' }} /> {t.profile.securityTitle}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">{t.profile.newPass}</label>
+                    <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.profile.newPass}</label>
                     <input
                       type="password"
                       value={newPassword}
                       onChange={e => setNewPassword(e.target.value)}
                       placeholder={t.profile.passPlaceholder}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-rose-500 outline-none"
+                      className="w-full rounded-lg p-3 outline-none" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">{t.profile.confirmPass}</label>
+                    <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.profile.confirmPass}</label>
                     <input
                       type="password"
                       value={confirmPassword}
                       onChange={e => setConfirmPassword(e.target.value)}
                       placeholder={t.profile.passPlaceholder}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-rose-500 outline-none"
+                      className="w-full rounded-lg p-3 outline-none" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                     />
                   </div>
                 </div>
                 <button
                   type="submit"
                   disabled={!newPassword || passwordLoading}
-                  className="flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-rose-600/20 disabled:opacity-50 w-full md:w-auto justify-center"
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg disabled:opacity-50 w-full md:w-auto justify-center"
+                  style={{ background: 'var(--color-error)', color: 'var(--color-text-primary)' }}
                 >
                   {passwordLoading ? <Loader2 className="animate-spin" size={16} /> : <Shield size={16} />}
                   {t.profile.changePass}
@@ -1151,61 +1155,64 @@ export default function SettingsPage() {
           {/* ABA: NOTIFICAÇÕES */}
           {activeTab === 'notifications' && (
             <div className="space-y-6">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Bell size={20} className="text-yellow-500" /> {t.notifications.title} <span className="text-xs text-gray-500">{t.notifications.comingSoon}</span>
+              <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                <Bell size={20} style={{ color: 'var(--color-accent)' }} /> {t.notifications.title} <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.notifications.comingSoon}</span>
               </h2>
-              <p className="text-sm text-gray-400">{t.notifications.subtitle}</p>
+              <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{t.notifications.subtitle}</p>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
+                <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border-subtle)' }}>
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
                       <Mail size={20} />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">{t.notifications.emailLeads.title}</p>
-                      <p className="text-xs text-gray-500">{t.notifications.emailLeads.desc}</p>
+                      <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.notifications.emailLeads.title}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.notifications.emailLeads.desc}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => toggleNotif('email_leads')}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors ${notifSettings.email_leads ? 'bg-blue-600' : 'bg-gray-700'}`}
+                    className="w-12 h-6 rounded-full p-1 transition-colors"
+                    style={{ background: notifSettings.email_leads ? 'var(--color-primary)' : 'var(--color-bg-elevated)' }}
                   >
                     <div className={`w-4 h-4 rounded-full bg-white transition-transform ${notifSettings.email_leads ? 'translate-x-6' : 'translate-x-0'}`} />
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
+                <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border-subtle)' }}>
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--color-success-subtle)', color: 'var(--color-success)' }}>
                       <Smartphone size={20} />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">{t.notifications.whatsappLeads.title}</p>
-                      <p className="text-xs text-gray-500">{t.notifications.whatsappLeads.desc}</p>
+                      <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.notifications.whatsappLeads.title}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.notifications.whatsappLeads.desc}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => toggleNotif('whatsapp_leads')}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors ${notifSettings.whatsapp_leads ? 'bg-emerald-600' : 'bg-gray-700'}`}
+                    className="w-12 h-6 rounded-full p-1 transition-colors"
+                    style={{ background: notifSettings.whatsapp_leads ? 'var(--color-success)' : 'var(--color-bg-elevated)' }}
                   >
                     <div className={`w-4 h-4 rounded-full bg-white transition-transform ${notifSettings.whatsapp_leads ? 'translate-x-6' : 'translate-x-0'}`} />
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
+                <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border-subtle)' }}>
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--color-indigo-subtle)', color: 'var(--color-indigo)' }}>
                       <Globe size={20} />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">{t.notifications.browserPush.title}</p>
-                      <p className="text-xs text-gray-500">{t.notifications.browserPush.desc}</p>
+                      <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.notifications.browserPush.title}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.notifications.browserPush.desc}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => toggleNotif('browser_push')}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors ${notifSettings.browser_push ? 'bg-purple-600' : 'bg-gray-700'}`}
+                    className="w-12 h-6 rounded-full p-1 transition-colors"
+                    style={{ background: notifSettings.browser_push ? 'var(--color-indigo)' : 'var(--color-bg-elevated)' }}
                   >
                     <div className={`w-4 h-4 rounded-full bg-white transition-transform ${notifSettings.browser_push ? 'translate-x-6' : 'translate-x-0'}`} />
                   </button>
@@ -1214,39 +1221,39 @@ export default function SettingsPage() {
 
               {/* Aparência / Tema */}
               <div className="mt-8">
-                <h3 className="text-sm font-bold text-white mb-1">{t.notifications.themeTitle}</h3>
-                <p className="text-xs text-gray-500 mb-4">{t.notifications.themeSubtitle}</p>
+                <h3 className="text-sm font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>{t.notifications.themeTitle}</h3>
+                <p className="text-xs mb-4" style={{ color: 'var(--color-text-muted)' }}>{t.notifications.themeSubtitle}</p>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setTheme('dark')}
-                    className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
-                      theme === 'dark'
-                        ? 'border-blue-500/50 bg-blue-600/10'
-                        : 'border-white/10 bg-white/5 hover:bg-white/10'
-                    }`}
+                    className="flex items-center gap-3 p-4 rounded-xl border transition-all"
+                    style={theme === 'dark'
+                      ? { borderColor: 'var(--color-primary)', background: 'var(--color-primary-subtle)' }
+                      : { borderColor: 'var(--color-border-subtle)', background: 'var(--color-bg-hover)' }
+                    }
                   >
-                    <Moon size={20} className={theme === 'dark' ? 'text-blue-400' : 'text-gray-500'} />
+                    <Moon size={20} style={{ color: theme === 'dark' ? 'var(--color-primary)' : 'var(--color-text-muted)' }} />
                     <div className="text-left">
-                      <p className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-400'}`}>{t.notifications.themeDark}</p>
-                      <p className="text-xs text-gray-600">{t.notifications.themeDarkDesc}</p>
+                      <p className="text-sm font-semibold" style={{ color: theme === 'dark' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }}>{t.notifications.themeDark}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.notifications.themeDarkDesc}</p>
                     </div>
-                    {theme === 'dark' && <div className="ml-auto w-2 h-2 rounded-full bg-blue-400" />}
+                    {theme === 'dark' && <div className="ml-auto w-2 h-2 rounded-full" style={{ background: 'var(--color-primary)' }} />}
                   </button>
 
                   <button
                     onClick={() => setTheme('light')}
-                    className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
-                      theme === 'light'
-                        ? 'border-blue-500/50 bg-blue-600/10'
-                        : 'border-white/10 bg-white/5 hover:bg-white/10'
-                    }`}
+                    className="flex items-center gap-3 p-4 rounded-xl border transition-all"
+                    style={theme === 'light'
+                      ? { borderColor: 'var(--color-primary)', background: 'var(--color-primary-subtle)' }
+                      : { borderColor: 'var(--color-border-subtle)', background: 'var(--color-bg-hover)' }
+                    }
                   >
-                    <Sun size={20} className={theme === 'light' ? 'text-blue-400' : 'text-gray-500'} />
+                    <Sun size={20} style={{ color: theme === 'light' ? 'var(--color-primary)' : 'var(--color-text-muted)' }} />
                     <div className="text-left">
-                      <p className={`text-sm font-semibold ${theme === 'light' ? 'text-white' : 'text-gray-400'}`}>{t.notifications.themeLight}</p>
-                      <p className="text-xs text-gray-600">{t.notifications.themeLightDesc}</p>
+                      <p className="text-sm font-semibold" style={{ color: theme === 'light' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }}>{t.notifications.themeLight}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.notifications.themeLightDesc}</p>
                     </div>
-                    {theme === 'light' && <div className="ml-auto w-2 h-2 rounded-full bg-blue-400" />}
+                    {theme === 'light' && <div className="ml-auto w-2 h-2 rounded-full" style={{ background: 'var(--color-primary)' }} />}
                   </button>
                 </div>
               </div>
@@ -1256,40 +1263,42 @@ export default function SettingsPage() {
           {/* ABA: EMPRESA */}
           {activeTab === 'company' && isAdmin && (
             <div className="space-y-6">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Building size={20} className="text-blue-500" /> {t.company.title}
+              <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                <Building size={20} style={{ color: 'var(--color-primary)' }} /> {t.company.title}
               </h2>
               {orgId ? (
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">{t.company.nameLabel}</label>
+                    <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.company.nameLabel}</label>
                     <input
                       type="text"
                       value={orgName}
                       onChange={(e) => setOrgName(e.target.value)}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-blue-500 outline-none"
+                      className="w-full rounded-lg p-3 outline-none" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">{t.company.idLabel}</label>
+                    <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.company.idLabel}</label>
                     <input
                       type="text"
                       readOnly
                       value={orgId}
-                      className="w-full bg-black/20 border border-white/5 rounded-lg p-3 text-gray-500 font-mono text-xs"
+                      className="w-full rounded-lg p-3 font-mono text-xs"
+                      style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-muted)' }}
                     />
                   </div>
                   <button
                     onClick={handleSaveOrg}
                     disabled={loading}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all"
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all"
+                    style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
                   >
                     {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                     {t.company.updateBtn}
                   </button>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-10 text-gray-500 gap-2">
+                <div className="flex flex-col items-center justify-center py-10 gap-2" style={{ color: 'var(--color-text-muted)' }}>
                   <AlertCircle size={32} />
                   <p>{t.company.noOrg}</p>
                 </div>
@@ -1301,20 +1310,21 @@ export default function SettingsPage() {
           {activeTab === 'team' && isAdmin && (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Shield size={20} className="text-emerald-500" /> {t.team.title}
+                <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                  <Shield size={20} style={{ color: 'var(--color-success)' }} /> {t.team.title}
                 </h2>
                 <button
                   onClick={() => setIsInviteModalOpen(true)}
-                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all"
+                  style={{ background: 'var(--color-success)', color: 'var(--color-text-primary)' }}
                 >
                   <UserPlus size={16} /> {t.team.inviteBtn}
                 </button>
               </div>
-              <div className="border border-white/5 rounded-xl overflow-hidden bg-black/20">
+              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-elevated)' }}>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm min-w-[500px]">
-                    <thead className="bg-white/5 text-gray-400 uppercase text-[10px] tracking-wider">
+                    <thead className="uppercase text-[10px] tracking-wider" style={{ background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)' }}>
                       <tr>
                         <th className="px-4 py-3 font-medium">{t.team.table.name}</th>
                         <th className="px-4 py-3 font-medium">{t.team.table.status}</th>
@@ -1322,29 +1332,29 @@ export default function SettingsPage() {
                         <th className="px-4 py-3 font-medium text-right">{t.team.table.actions}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
                       {teamMembers.length > 0 ? teamMembers.map((member) => (
-                        <tr key={member.id} className="hover:bg-white/5 transition-colors">
-                          <td className="px-4 py-4 text-white font-medium">
+                        <tr key={member.id} className="transition-colors" style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+                          <td className="px-4 py-4 font-medium" style={{ color: 'var(--color-text-primary)' }}>
                             <div className="flex flex-col">
                               {member.name}
-                              <span className="text-[10px] text-gray-500 font-normal">{member.email}</span>
+                              <span className="text-[10px] font-normal" style={{ color: 'var(--color-text-muted)' }}>{member.email}</span>
                             </div>
                           </td>
                           <td className="px-4 py-4">
                             {member.status === 'active' ? (
-                              <span className="bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/20 flex w-fit items-center gap-1">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded flex w-fit items-center gap-1" style={{ background: 'var(--color-success-subtle)', color: 'var(--color-success)', border: '1px solid var(--color-success)' }}>
+                                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--color-success)' }} />
                                 {t.team.status.active}
                               </span>
                             ) : (
-                              <span className="bg-gray-800 text-gray-400 text-[10px] font-bold px-2 py-0.5 rounded border border-gray-700">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border)' }}>
                                 {t.team.status.inactive}
                               </span>
                             )}
                           </td>
                           <td className="px-4 py-4">
-                            <span className="bg-blue-500/10 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-500/20 uppercase">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)' }}>
                               {member.role}
                             </span>
                           </td>
@@ -1353,7 +1363,8 @@ export default function SettingsPage() {
                               member.status === 'active' ? (
                                 <button
                                   onClick={() => handleDeactivateUser(member.id)}
-                                  className="text-gray-600 hover:text-rose-500 transition-colors p-2 hover:bg-rose-500/10 rounded-lg"
+                                  className="transition-colors p-2 rounded-lg"
+                                  style={{ color: 'var(--color-text-muted)' }}
                                   title={t.team.actions.deactivate}
                                 >
                                   <Trash2 size={16} />
@@ -1361,7 +1372,8 @@ export default function SettingsPage() {
                               ) : (
                                 <button
                                   onClick={() => handleReactivateUser(member.id)}
-                                  className="text-gray-600 hover:text-emerald-500 transition-colors p-2 hover:bg-emerald-500/10 rounded-lg font-bold text-xs"
+                                  className="transition-colors p-2 rounded-lg font-bold text-xs"
+                                  style={{ color: 'var(--color-text-muted)' }}
                                 >
                                   {t.team.actions.reactivate}
                                 </button>
@@ -1371,7 +1383,7 @@ export default function SettingsPage() {
                         </tr>
                       )) : (
                         <tr>
-                          <td colSpan={4} className="px-4 py-6 text-center text-gray-500">
+                          <td colSpan={4} className="px-4 py-6 text-center" style={{ color: 'var(--color-text-muted)' }}>
                             {t.team.table.empty}
                           </td>
                         </tr>
@@ -1387,36 +1399,39 @@ export default function SettingsPage() {
           {activeTab === 'pipeline' && isAdmin && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <LayoutGrid size={20} className="text-purple-500" /> {t.pipeline.title}
+                <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                  <LayoutGrid size={20} style={{ color: 'var(--color-indigo)' }} /> {t.pipeline.title}
                 </h2>
-                <p className="text-sm text-gray-400 mt-1">{t.pipeline.subtitle}</p>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.pipeline.subtitle}</p>
               </div>
 
               {/* Lista de Estágios */}
               <div className="space-y-2">
                 {pipelineLoading ? (
                   <div className="flex justify-center py-8">
-                    <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-primary)' }} />
                   </div>
                 ) : (
                   pipelineStages.map((stage, index) => (
                     <div
                       key={stage.id}
-                      className="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-xl hover:border-white/10 transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-xl transition-colors"
+                      style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border-subtle)' }}
                     >
                       <div className="flex flex-col gap-1">
                         <button
                           onClick={() => handleMoveStage(stage.id, 'up')}
                           disabled={index === 0}
-                          className="text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="disabled:opacity-30 disabled:cursor-not-allowed"
+                          style={{ color: 'var(--color-text-muted)' }}
                         >
                           <ChevronUp size={14} />
                         </button>
                         <button
                           onClick={() => handleMoveStage(stage.id, 'down')}
                           disabled={index === pipelineStages.length - 1}
-                          className="text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="disabled:opacity-30 disabled:cursor-not-allowed"
+                          style={{ color: 'var(--color-text-muted)' }}
                         >
                           <ChevronDown size={14} />
                         </button>
@@ -1429,13 +1444,15 @@ export default function SettingsPage() {
                           type="text"
                           value={stage.label}
                           onChange={(e) => handleUpdateStage(stage.id, { label: e.target.value })}
-                          className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
+                          className="rounded-lg px-3 py-2 text-sm outline-none"
+                          style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                           placeholder={t.pipeline.stageLabel}
                         />
                         <select
                           value={stage.color}
                           onChange={(e) => handleUpdateStage(stage.id, { color: e.target.value })}
-                          className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none appearance-none"
+                          className="rounded-lg px-3 py-2 text-sm outline-none appearance-none"
+                          style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                         >
                           {AVAILABLE_COLORS.map(color => (
                             <option key={color.name} value={color.name}>{color.label}</option>
@@ -1444,21 +1461,23 @@ export default function SettingsPage() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-1 text-[10px] text-gray-400 cursor-pointer">
+                        <label className="flex items-center gap-1 text-[10px] cursor-pointer" style={{ color: 'var(--color-text-tertiary)' }}>
                           <input
                             type="checkbox"
                             checked={stage.is_won}
                             onChange={(e) => handleUpdateStage(stage.id, { is_won: e.target.checked, is_lost: false })}
-                            className="rounded border-gray-600"
+                            className="rounded"
+                            style={{ borderColor: 'var(--color-border)' }}
                           />
                           ✅
                         </label>
-                        <label className="flex items-center gap-1 text-[10px] text-gray-400 cursor-pointer">
+                        <label className="flex items-center gap-1 text-[10px] cursor-pointer" style={{ color: 'var(--color-text-tertiary)' }}>
                           <input
                             type="checkbox"
                             checked={stage.is_lost}
                             onChange={(e) => handleUpdateStage(stage.id, { is_lost: e.target.checked, is_won: false })}
-                            className="rounded border-gray-600"
+                            className="rounded"
+                            style={{ borderColor: 'var(--color-border)' }}
                           />
                           ❌
                         </label>
@@ -1466,7 +1485,8 @@ export default function SettingsPage() {
 
                       <button
                         onClick={() => handleDeleteStage(stage.id)}
-                        className="text-gray-500 hover:text-rose-500 transition-colors p-2 hover:bg-rose-500/10 rounded-lg"
+                        className="transition-colors p-2 rounded-lg"
+                        style={{ color: 'var(--color-text-muted)' }}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -1476,8 +1496,8 @@ export default function SettingsPage() {
               </div>
 
               {/* Adicionar Estágio */}
-              <div className="border-t border-white/5 pt-6">
-                <h3 className="text-sm font-bold text-gray-300 mb-4">{t.pipeline.addStage}</h3>
+              <div className="pt-6" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+                <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--color-text-secondary)' }}>{t.pipeline.addStage}</h3>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="text"
@@ -1486,13 +1506,15 @@ export default function SettingsPage() {
                       setNewStageLabel(e.target.value)
                       setNewStageName(e.target.value.toLowerCase().replace(/\s+/g, '_'))
                     }}
-                    className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
+                    className="flex-1 rounded-lg px-3 py-2 text-sm outline-none"
+                    style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                     placeholder={t.pipeline.stageLabel}
                   />
                   <select
                     value={newStageColor}
                     onChange={(e) => setNewStageColor(e.target.value)}
-                    className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none appearance-none w-full sm:w-32"
+                    className="rounded-lg px-3 py-2 text-sm outline-none appearance-none w-full sm:w-32"
+                    style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                   >
                     {AVAILABLE_COLORS.map(color => (
                       <option key={color.name} value={color.name}>{color.label}</option>
@@ -1501,7 +1523,8 @@ export default function SettingsPage() {
                   <button
                     onClick={handleAddStage}
                     disabled={!newStageLabel.trim()}
-                    className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50"
+                    style={{ background: 'var(--color-indigo)', color: 'var(--color-text-primary)' }}
                   >
                     <Plus size={16} /> {t.pipeline.addStage}
                   </button>
@@ -1514,20 +1537,20 @@ export default function SettingsPage() {
           {activeTab === 'tags' && isAdmin && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Tag size={20} className="text-cyan-500" /> {t.tags.title}
+                <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                  <Tag size={20} style={{ color: 'var(--color-primary)' }} /> {t.tags.title}
                 </h2>
-                <p className="text-sm text-gray-400 mt-1">{t.tags.subtitle}</p>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.tags.subtitle}</p>
               </div>
 
               {/* Lista de Tags */}
               <div className="space-y-2">
                 {tagsLoading ? (
                   <div className="flex justify-center py-8">
-                    <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-primary)' }} />
                   </div>
                 ) : tags.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8" style={{ color: 'var(--color-text-muted)' }}>
                     <Tag size={32} className="mx-auto mb-2 opacity-50" />
                     <p>{t.tags.noTags}</p>
                   </div>
@@ -1536,15 +1559,17 @@ export default function SettingsPage() {
                     {tags.map(tag => (
                       <div
                         key={tag.id}
-                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border ${
+                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium ${
                           AVAILABLE_COLORS.find(c => c.name === tag.color)?.class.replace('bg-', 'bg-') + '/20'
-                        } border-white/10`}
+                        }`}
+                        style={{ border: '1px solid var(--color-border-subtle)' }}
                       >
                         <div className={`w-3 h-3 rounded-full ${AVAILABLE_COLORS.find(c => c.name === tag.color)?.class || 'bg-gray-500'}`} />
-                        <span className="text-white">{tag.name}</span>
+                        <span style={{ color: 'var(--color-text-primary)' }}>{tag.name}</span>
                         <button
                           onClick={() => handleDeleteTag(tag.id)}
-                          className="text-gray-400 hover:text-rose-500 transition-colors ml-1"
+                          className="transition-colors ml-1"
+                          style={{ color: 'var(--color-text-muted)' }}
                         >
                           <X size={14} />
                         </button>
@@ -1555,20 +1580,22 @@ export default function SettingsPage() {
               </div>
 
               {/* Adicionar Tag */}
-              <div className="border-t border-white/5 pt-6">
-                <h3 className="text-sm font-bold text-gray-300 mb-4">{t.tags.addTag}</h3>
+              <div className="pt-6" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+                <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--color-text-secondary)' }}>{t.tags.addTag}</h3>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="text"
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
-                    className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none"
+                    className="flex-1 rounded-lg px-3 py-2 text-sm outline-none"
+                    style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                     placeholder={t.tags.tagName}
                   />
                   <select
                     value={newTagColor}
                     onChange={(e) => setNewTagColor(e.target.value)}
-                    className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none appearance-none w-full sm:w-32"
+                    className="rounded-lg px-3 py-2 text-sm outline-none appearance-none w-full sm:w-32"
+                    style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                   >
                     {AVAILABLE_COLORS.map(color => (
                       <option key={color.name} value={color.name}>{color.label}</option>
@@ -1577,7 +1604,8 @@ export default function SettingsPage() {
                   <button
                     onClick={handleAddTag}
                     disabled={!newTagName.trim()}
-                    className="flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50"
+                    style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
                   >
                     <Plus size={16} /> {t.tags.addTag}
                   </button>
@@ -1590,15 +1618,15 @@ export default function SettingsPage() {
           {activeTab === 'leadCard' && isAdmin && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Eye size={20} className="text-blue-500" /> {t.leadCard.title}
+                <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                  <Eye size={20} style={{ color: 'var(--color-primary)' }} /> {t.leadCard.title}
                 </h2>
-                <p className="text-sm text-gray-400 mt-1">{t.leadCard.subtitle}</p>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.leadCard.subtitle}</p>
               </div>
 
               {/* Campos visíveis */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-300">{t.leadCard.fieldsTitle}</h3>
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-secondary)' }}>{t.leadCard.fieldsTitle}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {ALL_LEAD_CARD_FIELDS.map(field => (
                     <button
@@ -1629,7 +1657,7 @@ export default function SettingsPage() {
 
               {/* Indicadores */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-300">{t.leadCard.indicatorsTitle}</h3>
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-secondary)' }}>{t.leadCard.indicatorsTitle}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {(['show_stale_indicator', 'show_ai_status'] as const).map(key => (
                     <button
@@ -1663,8 +1691,8 @@ export default function SettingsPage() {
                 <button
                   onClick={handleSaveLeadCardConfig}
                   disabled={leadCardLoading}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
-                  style={{ background: 'var(--color-primary)' }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
                 >
                   {leadCardLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                   {t.leadCard.save}
@@ -1684,32 +1712,35 @@ export default function SettingsPage() {
           {/* ABA: INTEGRAÇÕES */}
           {activeTab === 'integrations' && isAdmin && (
             <div className="space-y-6">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Globe size={20} className="text-purple-500" /> {t.integrations.title}
+              <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                <Globe size={20} style={{ color: 'var(--color-indigo)' }} /> {t.integrations.title}
               </h2>
-              <div className="bg-purple-500/5 border border-purple-500/20 p-4 rounded-xl">
-                <p className="text-sm text-purple-200">{t.integrations.desc}</p>
+              <div className="p-4 rounded-xl" style={{ background: 'var(--color-indigo-subtle)', border: '1px solid var(--color-indigo)' }}>
+                <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{t.integrations.desc}</p>
               </div>
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">{t.integrations.webhookLabel}</label>
+                  <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.integrations.webhookLabel}</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       readOnly
                       value={webhookUrl}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-gray-400 text-xs font-mono"
+                      className="w-full rounded-lg p-3 text-xs font-mono"
+                      style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-tertiary)' }}
                     />
                     <button
                       onClick={handleCopyWebhook}
-                      className={`px-4 rounded-lg text-xs font-bold text-white transition-all flex items-center justify-center gap-2 min-w-[90px] ${
-                        copiedWebhook ? 'bg-emerald-600' : 'bg-gray-800 hover:bg-gray-700'
-                      }`}
+                      className="px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 min-w-[90px]"
+                      style={copiedWebhook
+                        ? { background: 'var(--color-success)', color: 'var(--color-text-primary)' }
+                        : { background: 'var(--color-bg-elevated)', color: 'var(--color-text-primary)' }
+                      }
                     >
                       {copiedWebhook ? <><Check size={14} /> {t.integrations.copied}</> : <><Copy size={14} /> {t.integrations.copy}</>}
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">{t.integrations.webhookHint}</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{t.integrations.webhookHint}</p>
                 </div>
               </div>
             </div>

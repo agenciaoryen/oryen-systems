@@ -6,8 +6,8 @@ import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { usePlan } from '@/lib/usePlan'
 import { FeatureLock, UpgradeBanner } from '@/app/dashboard/components/FeatureLock'
-import { 
-  Plus, FileText, Settings, Trash2, X, Save, 
+import {
+  Plus, FileText, Settings, Trash2, X, Save,
   Clock, Calendar, MessageCircle, BarChart3, Loader2, Info,
   CheckCircle2, XCircle, Send
 } from 'lucide-react'
@@ -179,18 +179,18 @@ const DEFAULT_BASE_METRICS = {
 function getNextSendDate(report: any, t: any): string {
   const now = new Date()
   const [hours, minutes] = (report.send_time || '18:00').substring(0, 5).split(':').map(Number)
-  
+
   if (report.frequency === 'daily') {
     const today = new Date()
     today.setHours(hours, minutes, 0, 0)
-    
+
     if (now < today) {
       return `${t.today}, ${report.send_time.substring(0, 5)}`
     } else {
       return `${t.tomorrow}, ${report.send_time.substring(0, 5)}`
     }
   }
-  
+
   if (report.frequency === 'weekly') {
     const daysMap: Record<string, number> = {
       sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
@@ -205,23 +205,23 @@ function getNextSendDate(report: any, t: any): string {
       todayTime.setHours(hours, minutes, 0, 0)
       if (now >= todayTime) daysUntil = 7
     }
-    
+
     const nextDate = new Date()
     nextDate.setDate(now.getDate() + daysUntil)
     return `${nextDate.toLocaleDateString()}, ${report.send_time.substring(0, 5)}`
   }
-  
+
   if (report.frequency === 'monthly') {
     const targetDay = parseInt(report.send_day) || 1
     let nextDate = new Date(now.getFullYear(), now.getMonth(), targetDay, hours, minutes)
-    
+
     if (now >= nextDate) {
       nextDate = new Date(now.getFullYear(), now.getMonth() + 1, targetDay, hours, minutes)
     }
-    
+
     return `${nextDate.toLocaleDateString()}, ${report.send_time.substring(0, 5)}`
   }
-  
+
   return '-'
 }
 
@@ -239,19 +239,19 @@ export default function ReportsPage() {
   const { user } = useAuth()
   const activeOrgId = useActiveOrgId()
   const { canUseReports, isBasic } = usePlan()
-  
+
   const userLang = ((user as any)?.language as Language) || 'pt'
   const t = TRANSLATIONS[userLang]
 
   const [reports, setReports] = useState<any[]>([])
   const [pipelineStages, setPipelineStages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  
+
   // Form State
   const [formData, setFormData] = useState({
     name: '',
@@ -289,7 +289,7 @@ export default function ReportsPage() {
 
       if (reportsRes.error) throw reportsRes.error
       if (stagesRes.error) throw stagesRes.error
-      
+
       setReports(reportsRes.data || [])
       setPipelineStages(stagesRes.data || [])
     } catch (err) {
@@ -339,8 +339,8 @@ export default function ReportsPage() {
       const isSelected = prev.pipeline_stages.includes(stageId)
       return {
         ...prev,
-        pipeline_stages: isSelected 
-          ? prev.pipeline_stages.filter(id => id !== stageId) 
+        pipeline_stages: isSelected
+          ? prev.pipeline_stages.filter(id => id !== stageId)
           : [...prev.pipeline_stages, stageId]
       }
     })
@@ -370,9 +370,9 @@ export default function ReportsPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!activeOrgId) return
-    
+
     setIsSaving(true)
-    
+
     const combinedMetrics = {
       base: formData.metrics,
       pipeline: formData.pipeline_stages
@@ -410,25 +410,25 @@ export default function ReportsPage() {
   // Se não tem acesso a Reports, mostra tela de upgrade
   if (!canUseReports) {
     return (
-      <div className="min-h-[calc(100vh-100px)] bg-[#0A0A0A] p-4 sm:p-6 font-sans animate-in fade-in duration-300">
+      <div className="min-h-[calc(100vh-100px)] p-4 sm:p-6 font-sans animate-in fade-in duration-300" style={{ background: 'var(--color-bg-surface)' }}>
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-              <BarChart3 className="text-blue-500 shrink-0" size={24} /> 
+            <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <BarChart3 className="shrink-0" size={24} style={{ color: 'var(--color-primary)' }} />
               <span>{t.title}</span>
             </h1>
-            <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.subtitle}</p>
+            <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>{t.subtitle}</p>
           </div>
-          
+
           {/* FeatureLock Replace */}
-          <FeatureLock 
-            feature="hasReports" 
+          <FeatureLock
+            feature="hasReports"
             variant="replace"
             lang={userLang}
             title={t.title}
-            description={userLang === 'pt' 
-              ? 'Envie métricas automaticamente via WhatsApp para sua equipe.' 
+            description={userLang === 'pt'
+              ? 'Envie métricas automaticamente via WhatsApp para sua equipe.'
               : userLang === 'es'
               ? 'Envía métricas automáticamente vía WhatsApp a tu equipo.'
               : 'Automatically send metrics via WhatsApp to your team.'
@@ -442,20 +442,21 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-100px)] bg-[#0A0A0A] p-4 sm:p-6 font-sans animate-in fade-in duration-300 overflow-x-hidden">
-      
+    <div className="min-h-[calc(100vh-100px)] p-4 sm:p-6 font-sans animate-in fade-in duration-300 overflow-x-hidden" style={{ background: 'var(--color-bg-surface)' }}>
+
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 max-w-full">
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-            <BarChart3 className="text-blue-500 shrink-0" size={24} /> 
+          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+            <BarChart3 className="shrink-0" size={24} style={{ color: 'var(--color-primary)' }} />
             <span className="truncate">{t.title}</span>
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.subtitle}</p>
+          <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>{t.subtitle}</p>
         </div>
-        <button 
+        <button
           onClick={() => handleOpenModal()}
-          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 shrink-0"
+          className="w-full sm:w-auto px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all shrink-0"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)' }}
         >
           <Plus size={18} /> {t.newReport}
         </button>
@@ -464,21 +465,22 @@ export default function ReportsPage() {
       {/* LOADING */}
       {loading && (
         <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-blue-500" size={32} />
+          <Loader2 className="animate-spin" size={32} style={{ color: 'var(--color-primary)' }} />
         </div>
       )}
 
       {/* EMPTY STATE */}
       {!loading && reports.length === 0 && (
-        <div className="bg-[#111] border border-white/5 rounded-2xl p-8 sm:p-12 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mb-4">
-            <FileText className="text-blue-500" size={32} />
+        <div className="rounded-2xl p-8 sm:p-12 flex flex-col items-center justify-center text-center" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: 'var(--color-primary-subtle)' }}>
+            <FileText size={32} style={{ color: 'var(--color-primary)' }} />
           </div>
-          <h3 className="text-lg font-bold text-white mb-2">{t.noReports}</h3>
-          <p className="text-gray-500 text-sm mb-6">{t.createFirst}</p>
-          <button 
+          <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>{t.noReports}</h3>
+          <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>{t.createFirst}</p>
+          <button
             onClick={() => handleOpenModal()}
-            className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="px-6 py-2 rounded-lg text-sm font-medium transition-colors"
+            style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
           >
             {t.newReport}
           </button>
@@ -489,37 +491,39 @@ export default function ReportsPage() {
       {!loading && reports.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {reports.map((report) => (
-            <div 
-              key={report.id} 
-              className="bg-[#111] border border-white/5 rounded-xl p-4 sm:p-5 hover:border-white/10 transition-all group relative overflow-hidden flex flex-col"
+            <div
+              key={report.id}
+              className="rounded-xl p-4 sm:p-5 transition-all group relative overflow-hidden flex flex-col"
+              style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
             >
               {/* Gradient top bar */}
-              <div className={`absolute top-0 left-0 w-full h-1 ${report.is_active ? 'bg-gradient-to-r from-blue-600 to-blue-400' : 'bg-gradient-to-r from-gray-700 to-gray-600'}`} />
-              
+              <div className="absolute top-0 left-0 w-full h-1" style={{ background: report.is_active ? 'var(--gradient-brand)' : 'var(--color-border)' }} />
+
               {/* Header */}
               <div className="flex justify-between items-start gap-3 mb-4">
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-bold text-white text-base sm:text-lg truncate" title={report.name}>
+                  <h3 className="font-bold text-base sm:text-lg truncate" style={{ color: 'var(--color-text-primary)' }} title={report.name}>
                     {report.name}
                   </h3>
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
-                    <MessageCircle size={12} className="shrink-0" /> 
+                  <div className="flex items-center gap-1.5 text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                    <MessageCircle size={12} className="shrink-0" />
                     <span className="truncate">+{report.recipient_whatsapp}</span>
                   </div>
                 </div>
-                
+
                 {/* Status Badge + Toggle */}
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                    report.is_active 
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                      : 'bg-gray-800 text-gray-500 border border-gray-700'
-                  }`}>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={
+                    report.is_active
+                      ? { background: 'var(--color-success-subtle)', color: 'var(--color-success)', border: '1px solid var(--color-success)' }
+                      : { background: 'var(--color-bg-elevated)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }
+                  }>
                     {report.is_active ? t.active : t.inactive}
                   </span>
-                  <button 
+                  <button
                     onClick={() => handleToggleActive(report.id, report.is_active)}
-                    className={`w-10 h-5 rounded-full relative transition-colors ${report.is_active ? 'bg-blue-600' : 'bg-gray-800'}`}
+                    className="w-10 h-5 rounded-full relative transition-colors"
+                    style={{ background: report.is_active ? 'var(--color-primary)' : 'var(--color-bg-elevated)' }}
                     aria-label="Toggle active"
                   >
                     <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${report.is_active ? 'left-[22px]' : 'left-[3px]'}`} />
@@ -529,40 +533,42 @@ export default function ReportsPage() {
 
               {/* Info Cards */}
               <div className="grid grid-cols-2 gap-2 mb-4">
-                <div className="flex items-center gap-2 p-2.5 bg-[#0A0A0A] rounded-lg border border-white/5">
-                  <Calendar size={14} className="text-blue-400 shrink-0" />
-                  <span className="text-xs text-gray-400 truncate">
+                <div className="flex items-center gap-2 p-2.5 rounded-lg" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+                  <Calendar size={14} className="shrink-0" style={{ color: 'var(--color-primary)' }} />
+                  <span className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>
                     {report.frequency === 'daily' ? t.freqDaily : report.frequency === 'weekly' ? t.freqWeekly : t.freqMonthly}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 p-2.5 bg-[#0A0A0A] rounded-lg border border-white/5">
-                  <Clock size={14} className="text-blue-400 shrink-0" />
-                  <span className="text-xs text-gray-400">{report.send_time.substring(0, 5)}</span>
+                <div className="flex items-center gap-2 p-2.5 rounded-lg" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+                  <Clock size={14} className="shrink-0" style={{ color: 'var(--color-primary)' }} />
+                  <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{report.send_time.substring(0, 5)}</span>
                 </div>
               </div>
 
               {/* Next Send & Metrics Count */}
-              <div className="flex items-center justify-between text-[10px] text-gray-500 mb-4 px-1">
+              <div className="flex items-center justify-between text-[10px] mb-4 px-1" style={{ color: 'var(--color-text-muted)' }}>
                 <span className="flex items-center gap-1">
-                  <Send size={10} className="text-gray-600" />
-                  {t.nextSend}: <span className="text-gray-400">{getNextSendDate(report, t)}</span>
+                  <Send size={10} style={{ color: 'var(--color-text-muted)' }} />
+                  {t.nextSend}: <span style={{ color: 'var(--color-text-tertiary)' }}>{getNextSendDate(report, t)}</span>
                 </span>
-                <span className="text-gray-600">
+                <span style={{ color: 'var(--color-text-muted)' }}>
                   {countSelectedMetrics(report)} {t.metricsSelected}
                 </span>
               </div>
 
               {/* Actions */}
               <div className="mt-auto flex gap-2">
-                <button 
-                  onClick={() => handleOpenModal(report)} 
-                  className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5 border border-white/5"
+                <button
+                  onClick={() => handleOpenModal(report)}
+                  className="flex-1 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
+                  style={{ background: 'var(--color-bg-hover)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border-subtle)' }}
                 >
                   <Settings size={14} /> {userLang === 'en' ? 'Edit' : userLang === 'es' ? 'Editar' : 'Editar'}
                 </button>
-                <button 
-                  onClick={() => handleDelete(report.id)} 
-                  className="w-10 flex items-center justify-center bg-red-500/5 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors border border-red-500/10"
+                <button
+                  onClick={() => handleDelete(report.id)}
+                  className="w-10 flex items-center justify-center rounded-lg transition-colors"
+                  style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid var(--color-error-subtle)' }}
                   aria-label="Delete"
                 >
                   <Trash2 size={14} />
@@ -575,21 +581,23 @@ export default function ReportsPage() {
 
       {/* MODAL CRIAR/EDITAR */}
       {isModalOpen && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto"
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto"
+          style={{ background: 'var(--color-bg-overlay)' }}
           onClick={(e) => e.target === e.currentTarget && setIsModalOpen(false)}
         >
-          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col my-4 max-h-[calc(100vh-2rem)] overflow-hidden">
-            
+          <div className="rounded-2xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col my-4 max-h-[calc(100vh-2rem)] overflow-hidden" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
+
             {/* Header Fixo */}
-            <div className="flex justify-between items-center p-4 sm:p-5 border-b border-white/5 shrink-0">
-              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <BarChart3 className="text-blue-500 shrink-0" size={20} />
+            <div className="flex justify-between items-center p-4 sm:p-5 shrink-0" style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+              <h2 className="text-base sm:text-lg font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                <BarChart3 className="shrink-0" size={20} style={{ color: 'var(--color-primary)' }} />
                 <span className="truncate">{editingId ? t.editReport : t.newReport}</span>
               </h2>
-              <button 
-                onClick={() => setIsModalOpen(false)} 
-                className="text-gray-500 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-lg"
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="transition-colors p-1 rounded-lg"
+                style={{ color: 'var(--color-text-muted)' }}
               >
                 <X size={20} />
               </button>
@@ -598,49 +606,52 @@ export default function ReportsPage() {
             {/* Corpo com Scroll */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-4 sm:p-6">
               <form id="report-form" onSubmit={handleSave} className="space-y-6 max-w-full">
-                
+
                 {/* Infos Básicas */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-full">
                   {/* Nome - Full Width */}
                   <div className="space-y-1.5 sm:col-span-2 min-w-0">
-                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.nameLabel}</label>
-                    <input 
-                      required 
-                      type="text" 
+                    <label className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.nameLabel}</label>
+                    <input
+                      required
+                      type="text"
                       placeholder={t.namePlaceholder}
-                      value={formData.name} 
+                      value={formData.name}
                       onChange={e => setFormData({...formData, name: e.target.value})}
-                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder-gray-700"
+                      className="w-full rounded-xl p-3 text-sm outline-none transition-all"
+                      style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
                     />
                   </div>
-                  
+
                   {/* WhatsApp - Full Width */}
                   <div className="space-y-1.5 sm:col-span-2 min-w-0">
-                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.whatsappLabel}</label>
-                    <input 
-                      required 
+                    <label className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.whatsappLabel}</label>
+                    <input
+                      required
                       type="tel"
                       inputMode="numeric"
                       pattern="[0-9]*"
                       maxLength={15}
                       placeholder={t.whatsappPlaceholder}
-                      value={formData.recipient_whatsapp} 
+                      value={formData.recipient_whatsapp}
                       onChange={e => setFormData({...formData, recipient_whatsapp: e.target.value.replace(/\D/g, '')})}
-                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder-gray-700 font-mono"
+                      className="w-full rounded-xl p-3 text-sm outline-none transition-all font-mono"
+                      style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
                     />
-                    <div className="flex items-center gap-1.5 mt-1 text-[10px] text-gray-500">
-                      <Info size={11} className="text-blue-400 shrink-0" />
+                    <div className="flex items-center gap-1.5 mt-1 text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+                      <Info size={11} className="shrink-0" style={{ color: 'var(--color-primary)' }} />
                       <span>{t.whatsappHint}</span>
                     </div>
                   </div>
 
                   {/* Frequência */}
                   <div className="space-y-1.5 min-w-0">
-                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.frequencyLabel}</label>
-                    <select 
-                      value={formData.frequency} 
+                    <label className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.frequencyLabel}</label>
+                    <select
+                      value={formData.frequency}
                       onChange={e => setFormData({...formData, frequency: e.target.value})}
-                      className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
+                      className="w-full rounded-xl p-3 text-sm outline-none transition-all appearance-none cursor-pointer"
+                      style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
                     >
                       <option value="daily">{t.freqDaily}</option>
                       <option value="weekly">{t.freqWeekly}</option>
@@ -650,24 +661,26 @@ export default function ReportsPage() {
 
                   {/* Horário */}
                   <div className="space-y-1.5 min-w-0">
-                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.timeLabel}</label>
-                    <input 
-                      required 
+                    <label className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.timeLabel}</label>
+                    <input
+                      required
                       type="time"
-                      value={formData.send_time} 
+                      value={formData.send_time}
                       onChange={e => setFormData({...formData, send_time: e.target.value})}
-                      className="w-full max-w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all cursor-text [color-scheme:dark] [-webkit-appearance:none] [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert"
+                      className="w-full max-w-full rounded-xl p-3 text-sm outline-none transition-all cursor-text [color-scheme:dark] [-webkit-appearance:none] [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert"
+                      style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
                     />
                   </div>
 
                   {/* Dia da Semana (Weekly) */}
                   {formData.frequency === 'weekly' && (
                     <div className="space-y-1.5 sm:col-span-2">
-                      <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.dayLabel}</label>
-                      <select 
-                        value={formData.send_day} 
+                      <label className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.dayLabel}</label>
+                      <select
+                        value={formData.send_day}
                         onChange={e => setFormData({...formData, send_day: e.target.value})}
-                        className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
+                        className="w-full rounded-xl p-3 text-sm outline-none transition-all appearance-none cursor-pointer"
+                        style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
                       >
                         {daysOfWeek.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                       </select>
@@ -677,50 +690,52 @@ export default function ReportsPage() {
                   {/* Dia do Mês (Monthly) */}
                   {formData.frequency === 'monthly' && (
                     <div className="space-y-1.5 sm:col-span-2">
-                      <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t.dayOfMonth}</label>
-                      <input 
-                        required 
-                        type="number" 
-                        min="1" 
+                      <label className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.dayOfMonth}</label>
+                      <input
+                        required
+                        type="number"
+                        min="1"
                         max="31"
-                        value={formData.send_day} 
+                        value={formData.send_day}
                         onChange={e => setFormData({...formData, send_day: e.target.value})}
-                        className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all"
+                        className="w-full rounded-xl p-3 text-sm outline-none transition-all"
+                        style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
                       />
                     </div>
                   )}
                 </div>
 
                 {/* Métricas Operacionais */}
-                <div className="border-t border-white/5 pt-6">
+                <div className="pt-6" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
                   <div className="mb-4">
-                    <h3 className="text-white font-bold text-sm sm:text-base">{t.metricsTitle}</h3>
-                    <p className="text-xs text-gray-500">{t.metricsDesc}</p>
+                    <h3 className="font-bold text-sm sm:text-base" style={{ color: 'var(--color-text-primary)' }}>{t.metricsTitle}</h3>
+                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.metricsDesc}</p>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                     {Object.keys(DEFAULT_BASE_METRICS).map((key) => {
                       const isActive = formData.metrics[key as keyof typeof DEFAULT_BASE_METRICS]
                       return (
-                        <label 
-                          key={key} 
-                          className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none ${
-                            isActive 
-                              ? 'bg-blue-500/5 border-blue-500/30' 
-                              : 'bg-[#0A0A0A] border-white/5 hover:border-white/10'
-                          }`}
+                        <label
+                          key={key}
+                          className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none"
+                          style={
+                            isActive
+                              ? { background: 'var(--color-primary-subtle)', border: '1px solid var(--color-primary)' }
+                              : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }
+                          }
                         >
-                          <span className={`text-sm font-medium truncate pr-2 ${isActive ? 'text-blue-400' : 'text-gray-400'}`}>
+                          <span className="text-sm font-medium truncate pr-2" style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}>
                             {t[`m_${key}` as keyof typeof t] || key}
                           </span>
-                          <div className={`shrink-0 w-9 h-5 rounded-full relative transition-colors ${isActive ? 'bg-blue-600' : 'bg-gray-800'}`}>
+                          <div className="shrink-0 w-9 h-5 rounded-full relative transition-colors" style={{ background: isActive ? 'var(--color-primary)' : 'var(--color-bg-elevated)' }}>
                             <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
                           </div>
-                          <input 
-                            type="checkbox" 
-                            className="sr-only" 
-                            checked={isActive} 
-                            onChange={() => handleToggleBaseMetric(key)} 
+                          <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={isActive}
+                            onChange={() => handleToggleBaseMetric(key)}
                           />
                         </label>
                       )
@@ -730,35 +745,36 @@ export default function ReportsPage() {
 
                 {/* Métricas do Funil */}
                 {pipelineStages.length > 0 && (
-                  <div className="border-t border-white/5 pt-6">
+                  <div className="pt-6" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
                     <div className="mb-4">
-                      <h3 className="text-white font-bold text-sm sm:text-base">{t.pipelineTitle}</h3>
-                      <p className="text-xs text-gray-500">{t.pipelineDesc}</p>
+                      <h3 className="font-bold text-sm sm:text-base" style={{ color: 'var(--color-text-primary)' }}>{t.pipelineTitle}</h3>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.pipelineDesc}</p>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                       {pipelineStages.map((stage) => {
                         const isActive = formData.pipeline_stages.includes(stage.id)
                         return (
-                          <label 
-                            key={stage.id} 
-                            className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none ${
-                              isActive 
-                                ? 'bg-purple-500/5 border-purple-500/30' 
-                                : 'bg-[#0A0A0A] border-white/5 hover:border-white/10'
-                            }`}
+                          <label
+                            key={stage.id}
+                            className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none"
+                            style={
+                              isActive
+                                ? { background: 'var(--color-indigo-subtle)', border: '1px solid var(--color-indigo)' }
+                                : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }
+                            }
                           >
-                            <span className={`text-sm font-medium truncate pr-2 ${isActive ? 'text-purple-400' : 'text-gray-400'}`}>
+                            <span className="text-sm font-medium truncate pr-2" style={{ color: isActive ? 'var(--color-indigo)' : 'var(--color-text-tertiary)' }}>
                               {stage.label}
                             </span>
-                            <div className={`shrink-0 w-9 h-5 rounded-full relative transition-colors ${isActive ? 'bg-purple-600' : 'bg-gray-800'}`}>
+                            <div className="shrink-0 w-9 h-5 rounded-full relative transition-colors" style={{ background: isActive ? 'var(--color-indigo)' : 'var(--color-bg-elevated)' }}>
                               <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
                             </div>
-                            <input 
-                              type="checkbox" 
-                              className="sr-only" 
-                              checked={isActive} 
-                              onChange={() => handleTogglePipelineStage(stage.id)} 
+                            <input
+                              type="checkbox"
+                              className="sr-only"
+                              checked={isActive}
+                              onChange={() => handleTogglePipelineStage(stage.id)}
                             />
                           </label>
                         )
@@ -771,33 +787,35 @@ export default function ReportsPage() {
             </div>
 
             {/* Footer Fixo */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 sm:p-5 border-t border-white/5 bg-[#111] shrink-0 rounded-b-2xl">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 sm:p-5 shrink-0 rounded-b-2xl" style={{ borderTop: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-elevated)' }}>
               {/* Contador de métricas */}
-              <div className="text-xs text-gray-500 order-2 sm:order-1">
-                <span className="text-blue-400 font-bold">{selectedMetricsCount}</span> {t.metricsSelected}
+              <div className="text-xs order-2 sm:order-1" style={{ color: 'var(--color-text-muted)' }}>
+                <span className="font-bold" style={{ color: 'var(--color-primary)' }}>{selectedMetricsCount}</span> {t.metricsSelected}
               </div>
-              
+
               {/* Botões */}
               <div className="flex gap-3 w-full sm:w-auto order-1 sm:order-2">
-                <button 
-                  type="button" 
-                  onClick={() => setIsModalOpen(false)} 
-                  className="flex-1 sm:flex-none px-5 py-2.5 text-sm font-medium text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 sm:flex-none px-5 py-2.5 text-sm font-medium transition-colors rounded-lg"
+                  style={{ color: 'var(--color-text-tertiary)' }}
                 >
                   {t.cancel}
                 </button>
-                <button 
-                  form="report-form" 
-                  type="submit" 
-                  disabled={isSaving} 
-                  className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                <button
+                  form="report-form"
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)' }}
                 >
                   {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                   {isSaving ? t.saving : t.save}
                 </button>
               </div>
             </div>
-            
+
           </div>
         </div>
       )}

@@ -115,7 +115,7 @@ export default async function PropertyDetailPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div className="bg-white">
+      <div style={{ background: 'var(--color-bg-elevated)' }}>
         {/* ═══ GALERIA ═══ */}
         {property.images && property.images.length > 0 && (
           <PropertyGallery images={property.images} title={property.title} />
@@ -129,20 +129,20 @@ export default async function PropertyDetailPage({
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <span
-                    className="px-3 py-1 rounded-lg text-xs font-bold text-white"
-                    style={{ background: 'var(--site-primary)' }}
+                    className="px-3 py-1 rounded-lg text-xs font-bold"
+                    style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
                   >
                     {TRANSACTION_TYPES[property.transaction_type]?.pt}
                   </span>
-                  <span className="text-xs font-medium text-gray-500">
+                  <span className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
                     {PROPERTY_TYPES[property.property_type]?.pt}
                   </span>
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
                   {property.title}
                 </h1>
                 {addressFull && (
-                  <p className="text-sm text-gray-500 flex items-center gap-1">
+                  <p className="text-sm flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
                     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -153,37 +153,37 @@ export default async function PropertyDetailPage({
               </div>
 
               {/* Preço + Features */}
-              <div className="rounded-2xl bg-gray-50 p-6 border border-gray-100">
+              <div className="rounded-2xl p-6" style={{ background: 'var(--color-bg-surface)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}>
                 {property.price && (
-                  <p className="text-3xl font-bold text-gray-900 mb-4">
+                  <p className="text-3xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
                     {formatPrice(property.price, site.currency)}
-                    {property.transaction_type === 'rent' && <span className="text-sm font-normal text-gray-500">/mês</span>}
+                    {property.transaction_type === 'rent' && <span className="text-sm font-normal" style={{ color: 'var(--color-text-muted)' }}>/mês</span>}
                   </p>
                 )}
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {property.bedrooms > 0 && (
-                    <div className="text-center p-3 bg-white rounded-xl">
-                      <p className="text-xl font-bold text-gray-900">{property.bedrooms}</p>
-                      <p className="text-xs text-gray-500">{property.bedrooms === 1 ? 'Quarto' : 'Quartos'}</p>
+                    <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
+                      <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{property.bedrooms}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{property.bedrooms === 1 ? 'Quarto' : 'Quartos'}</p>
                     </div>
                   )}
                   {property.suites > 0 && (
-                    <div className="text-center p-3 bg-white rounded-xl">
-                      <p className="text-xl font-bold text-gray-900">{property.suites}</p>
-                      <p className="text-xs text-gray-500">{property.suites === 1 ? 'Suíte' : 'Suítes'}</p>
+                    <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
+                      <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{property.suites}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{property.suites === 1 ? 'Suíte' : 'Suítes'}</p>
                     </div>
                   )}
                   {property.bathrooms > 0 && (
-                    <div className="text-center p-3 bg-white rounded-xl">
-                      <p className="text-xl font-bold text-gray-900">{property.bathrooms}</p>
-                      <p className="text-xs text-gray-500">{property.bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</p>
+                    <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
+                      <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{property.bathrooms}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{property.bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</p>
                     </div>
                   )}
                   {property.parking_spots > 0 && (
-                    <div className="text-center p-3 bg-white rounded-xl">
-                      <p className="text-xl font-bold text-gray-900">{property.parking_spots}</p>
-                      <p className="text-xs text-gray-500">{property.parking_spots === 1 ? 'Vaga' : 'Vagas'}</p>
+                    <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
+                      <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{property.parking_spots}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{property.parking_spots === 1 ? 'Vaga' : 'Vagas'}</p>
                     </div>
                   )}
                 </div>
@@ -191,27 +191,27 @@ export default async function PropertyDetailPage({
                 {/* Áreas + Valores extras */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
                   {property.total_area && (
-                    <div className="text-center p-3 bg-white rounded-xl">
-                      <p className="text-lg font-bold text-gray-900">{formatArea(property.total_area)}</p>
-                      <p className="text-xs text-gray-500">Área total</p>
+                    <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
+                      <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatArea(property.total_area)}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Área total</p>
                     </div>
                   )}
                   {property.private_area && (
-                    <div className="text-center p-3 bg-white rounded-xl">
-                      <p className="text-lg font-bold text-gray-900">{formatArea(property.private_area)}</p>
-                      <p className="text-xs text-gray-500">Área privativa</p>
+                    <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
+                      <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatArea(property.private_area)}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Área privativa</p>
                     </div>
                   )}
                   {property.condo_fee && (
-                    <div className="text-center p-3 bg-white rounded-xl">
-                      <p className="text-lg font-bold text-gray-900">{formatPrice(property.condo_fee, site.currency)}</p>
-                      <p className="text-xs text-gray-500">Condomínio</p>
+                    <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
+                      <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatPrice(property.condo_fee, site.currency)}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Condomínio</p>
                     </div>
                   )}
                   {property.iptu && (
-                    <div className="text-center p-3 bg-white rounded-xl">
-                      <p className="text-lg font-bold text-gray-900">{formatPrice(property.iptu, site.currency)}</p>
-                      <p className="text-xs text-gray-500">IPTU</p>
+                    <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
+                      <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatPrice(property.iptu, site.currency)}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>IPTU</p>
                     </div>
                   )}
                 </div>
@@ -220,19 +220,19 @@ export default async function PropertyDetailPage({
               {/* Descrição */}
               {property.description && (
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900 mb-3">Descrição</h2>
-                  <p className="text-gray-600 leading-relaxed whitespace-pre-line">{property.description}</p>
+                  <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>Descrição</h2>
+                  <p className="leading-relaxed whitespace-pre-line" style={{ color: 'var(--color-text-secondary)' }}>{property.description}</p>
                 </div>
               )}
 
               {/* Amenidades */}
               {amenityLabels.length > 0 && (
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900 mb-3">Características</h2>
+                  <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>Características</h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {amenityLabels.map((label: string, i: number) => (
-                      <div key={i} className="flex items-center gap-2 text-sm text-gray-600 py-2">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-emerald-500 shrink-0">
+                      <div key={i} className="flex items-center gap-2 text-sm py-2" style={{ color: 'var(--color-text-secondary)' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0" style={{ color: 'var(--color-success)' }}>
                           <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                         {label}
@@ -245,12 +245,13 @@ export default async function PropertyDetailPage({
               {/* Vídeo */}
               {property.video_url && (
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900 mb-3">Vídeo</h2>
+                  <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>Vídeo</h2>
                   <a
                     href={property.video_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors hover:opacity-80"
+                    style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
                   >
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -264,9 +265,9 @@ export default async function PropertyDetailPage({
 
             {/* ═══ SIDEBAR — CONTATO ═══ */}
             <div className="lg:col-span-1">
-              <div className="sticky top-20 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">Tenho interesse</h3>
-                <p className="text-xs text-gray-500 mb-5">Preencha e entraremos em contato.</p>
+              <div className="sticky top-20 rounded-2xl p-6 shadow-sm" style={{ background: 'var(--color-bg-elevated)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}>
+                <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>Tenho interesse</h3>
+                <p className="text-xs mb-5" style={{ color: 'var(--color-text-muted)' }}>Preencha e entraremos em contato.</p>
                 <ContactForm
                   siteSlug={site.slug}
                   propertyId={property.id}
@@ -278,8 +279,8 @@ export default async function PropertyDetailPage({
 
           {/* ═══ IMÓVEIS RELACIONADOS ═══ */}
           {related.length > 0 && (
-            <div className="mt-16 pt-10 border-t border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Imóveis Semelhantes</h2>
+            <div className="mt-16 pt-10" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+              <h2 className="text-xl font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>Imóveis Semelhantes</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {related.map((prop: any) => (
                   <PropertyCard key={prop.id} property={prop} slug={site.slug} currency={site.currency} />

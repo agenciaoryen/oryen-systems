@@ -155,21 +155,22 @@ export function FeatureLock({
         </div>
         
         {/* Overlay com lock */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-xl">
+        <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm rounded-xl" style={{ background: 'var(--color-bg-overlay)' }}>
           <div className="text-center p-6 max-w-sm">
-            <div className="w-14 h-14 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
-              <Lock className="w-6 h-6 text-amber-400" />
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(240, 160, 48, 0.3)' }}>
+              <Lock className="w-6 h-6" style={{ color: 'var(--color-accent)' }} />
             </div>
-            <h3 className="text-white font-bold text-lg mb-2">
+            <h3 className="font-bold text-lg mb-2" style={{ color: 'var(--color-text-primary)' }}>
               {title || t.lockedTitle}
             </h3>
-            <p className="text-gray-400 text-sm mb-4">
+            <p className="text-sm mb-4" style={{ color: 'var(--color-text-tertiary)' }}>
               {description || `${t.unlockWith} ${upgradePlan?.displayName || 'Gold'}`}
             </p>
             {showUpgradeButton && (
               <button
                 onClick={handleUpgrade}
-                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold px-6 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2 mx-auto shadow-lg shadow-amber-500/25"
+                className="font-bold px-6 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2 mx-auto"
+                style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)', color: '#000', boxShadow: '0 4px 16px rgba(240, 160, 48, 0.25)' }}
               >
                 <Sparkles size={16} />
                 {t.upgradeButton}
@@ -185,27 +186,28 @@ export function FeatureLock({
   // ─── VARIANT: REPLACE ───
   if (variant === 'replace') {
     return (
-      <div className={`bg-[#111] border border-white/5 rounded-2xl p-8 text-center ${className}`}>
-        <div className="w-16 h-16 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/20">
-          <Lock className="w-7 h-7 text-amber-400" />
+      <div className={`rounded-2xl p-8 text-center ${className}`} style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
+          <Lock className="w-7 h-7" style={{ color: 'var(--color-accent)' }} />
         </div>
-        <h3 className="text-white font-bold text-xl mb-2">
+        <h3 className="font-bold text-xl mb-2" style={{ color: 'var(--color-text-primary)' }}>
           {title || featureName}
         </h3>
-        <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
+        <p className="text-sm mb-6 max-w-md mx-auto" style={{ color: 'var(--color-text-muted)' }}>
           {description || `${t.availableIn} ${upgradePlan?.displayName || 'Gold'}`}
         </p>
         {showUpgradeButton && (
           <button
             onClick={handleUpgrade}
-            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold px-8 py-3 rounded-xl text-sm transition-all inline-flex items-center gap-2 shadow-lg shadow-amber-500/25"
+            className="font-bold px-8 py-3 rounded-xl text-sm transition-all inline-flex items-center gap-2"
+            style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)', color: '#000', boxShadow: '0 4px 16px rgba(240, 160, 48, 0.25)' }}
           >
             <Crown size={18} />
             {t.upgradeButton}
           </button>
         )}
-        <p className="text-gray-600 text-xs mt-4">
-          {t.currentPlan}: <span className="text-gray-400 font-medium">{displayName}</span>
+        <p className="text-xs mt-4" style={{ color: 'var(--color-text-muted)' }}>
+          {t.currentPlan}: <span className="font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{displayName}</span>
         </p>
       </div>
     )
@@ -214,9 +216,9 @@ export function FeatureLock({
   // ─── VARIANT: INLINE ───
   if (variant === 'inline') {
     return (
-      <div className={`inline-flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg ${className}`}>
-        <Lock size={14} className="text-amber-400" />
-        <span className="text-amber-400 text-xs font-medium">{upgradePlan?.displayName || 'Gold'}</span>
+      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${className}`} style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
+        <Lock size={14} style={{ color: 'var(--color-accent)' }} />
+        <span className="text-xs font-medium" style={{ color: 'var(--color-accent)' }}>{upgradePlan?.displayName || 'Gold'}</span>
       </div>
     )
   }
@@ -226,8 +228,8 @@ export function FeatureLock({
     return (
       <div className={`relative ${className}`}>
         {children}
-        <div className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full p-1 shadow-lg">
-          <Lock size={12} className="text-black" />
+        <div className="absolute -top-2 -right-2 rounded-full p-1 shadow-lg" style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)' }}>
+          <Lock size={12} style={{ color: '#000' }} />
         </div>
       </div>
     )
@@ -262,22 +264,23 @@ export function UpgradeBanner({
   // ─── VARIANT: FULL ───
   if (variant === 'full') {
     return (
-      <div className={`bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/20 rounded-2xl p-6 ${className}`}>
+      <div className={`rounded-2xl p-6 ${className}`} style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shrink-0">
-              <Zap className="w-6 h-6 text-black" />
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)' }}>
+              <Zap className="w-6 h-6" style={{ color: '#000' }} />
             </div>
             <div>
-              <h3 className="text-white font-bold text-lg">Desbloqueie todo o potencial</h3>
-              <p className="text-gray-400 text-sm mt-0.5">
+              <h3 className="font-bold text-lg" style={{ color: 'var(--color-text-primary)' }}>Desbloqueie todo o potencial</h3>
+              <p className="text-sm mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
                 Agentes de IA, automações, relatórios e muito mais
               </p>
             </div>
           </div>
           <button
             onClick={handleUpgrade}
-            className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25"
+            className="w-full sm:w-auto font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+            style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)', color: '#000', boxShadow: '0 4px 16px rgba(240, 160, 48, 0.25)' }}
           >
             <Crown size={18} />
             Upgrade para {upgradePlan?.displayName}
@@ -290,16 +293,17 @@ export function UpgradeBanner({
   // ─── VARIANT: COMPACT ───
   if (variant === 'compact') {
     return (
-      <div className={`bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 flex items-center justify-between gap-3 ${className}`}>
+      <div className={`rounded-xl px-4 py-3 flex items-center justify-between gap-3 ${className}`} style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
         <div className="flex items-center gap-3">
-          <Lock size={16} className="text-amber-400 shrink-0" />
-          <span className="text-amber-200 text-sm">
+          <Lock size={16} className="shrink-0" style={{ color: 'var(--color-accent)' }} />
+          <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
             {t.unlockWith} <strong>{upgradePlan?.displayName}</strong>
           </span>
         </div>
         <button
           onClick={handleUpgrade}
-          className="text-amber-400 hover:text-amber-300 text-sm font-bold flex items-center gap-1 shrink-0"
+          className="text-sm font-bold flex items-center gap-1 shrink-0"
+          style={{ color: 'var(--color-accent)' }}
         >
           {t.upgradeButton}
           <ArrowRight size={14} />
@@ -312,7 +316,8 @@ export function UpgradeBanner({
   return (
     <button
       onClick={handleUpgrade}
-      className={`text-amber-400 hover:text-amber-300 text-xs font-medium flex items-center gap-1 ${className}`}
+      className={`text-xs font-medium flex items-center gap-1 ${className}`}
+      style={{ color: 'var(--color-accent)' }}
     >
       <Lock size={12} />
       Upgrade
@@ -327,11 +332,11 @@ export function UpgradeBanner({
 export function PlanBadge({ className = '' }: PlanBadgeProps) {
   const { plan, displayName } = usePlan()
 
-  const badgeStyles: Record<string, string> = {
-    basic: 'bg-gray-800 text-gray-400 border-gray-700',
-    gold: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-    diamond: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
-    enterprise: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+  const badgeStyles: Record<string, React.CSSProperties> = {
+    basic: { background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)', borderColor: 'var(--color-border)' },
+    gold: { background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', borderColor: 'rgba(240, 160, 48, 0.3)' },
+    diamond: { background: 'var(--color-indigo-subtle)', color: 'var(--color-indigo)', borderColor: 'rgba(110, 95, 255, 0.3)' },
+    enterprise: { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', borderColor: 'rgba(79, 111, 255, 0.3)' },
   }
 
   const icons: Record<string, ReactNode> = {
@@ -342,7 +347,7 @@ export function PlanBadge({ className = '' }: PlanBadgeProps) {
   }
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${badgeStyles[plan] || badgeStyles.basic} ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${className}`} style={badgeStyles[plan] || badgeStyles.basic}>
       {icons[plan]}
       {displayName}
     </span>
@@ -374,23 +379,24 @@ export function LimitWarning({ current, limit, label, lang = 'pt', className = '
   if (!isNearLimit) return null
 
   return (
-    <div className={`bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 ${className}`}>
+    <div className={`rounded-xl px-4 py-3 ${className}`} style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
       <div className="flex items-center justify-between gap-3 mb-2">
-        <span className="text-amber-200 text-sm font-medium">{label}</span>
-        <span className={`text-sm font-bold ${isAtLimit ? 'text-red-400' : 'text-amber-400'}`}>
+        <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>{label}</span>
+        <span className="text-sm font-bold" style={{ color: isAtLimit ? 'var(--color-error)' : 'var(--color-accent)' }}>
           {current}/{limit}
         </span>
       </div>
-      <div className="w-full bg-amber-900/30 rounded-full h-1.5 overflow-hidden">
-        <div 
-          className={`h-full rounded-full transition-all ${isAtLimit ? 'bg-red-500' : 'bg-amber-500'}`}
-          style={{ width: `${Math.min(percentage, 100)}%` }}
+      <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: 'var(--color-border)' }}>
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${Math.min(percentage, 100)}%`, background: isAtLimit ? 'var(--color-error)' : 'var(--color-accent)' }}
         />
       </div>
       {isBasic && isAtLimit && (
         <button
           onClick={() => router.push('/dashboard/settings/billing')}
-          className="text-amber-400 hover:text-amber-300 text-xs font-medium mt-2 flex items-center gap-1"
+          className="text-xs font-medium mt-2 flex items-center gap-1"
+          style={{ color: 'var(--color-accent)' }}
         >
           Fazer upgrade para aumentar limite
           <ArrowRight size={12} />

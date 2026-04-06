@@ -47,7 +47,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
       {/* ═══ HERO ═══ */}
       <section className="relative overflow-hidden">
         {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" />
+        <div className="absolute inset-0" style={{ background: 'var(--gradient-brand)' }} />
         {site.cover_image_url && (
           <div className="absolute inset-0">
             <img
@@ -55,7 +55,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
               alt=""
               className="w-full h-full object-cover opacity-30"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-gray-900/40" />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, var(--color-bg-base), var(--color-bg-base)/60, var(--color-bg-base)/40)' }} />
           </div>
         )}
 
@@ -69,25 +69,26 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
                 {site.tagline}
               </p>
             )}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6" style={{ color: 'var(--color-text-primary)' }}>
               {site.site_name || 'Imóveis'}
             </h1>
             {site.bio && (
-              <p className="text-lg text-gray-300 mb-8 line-clamp-3">
+              <p className="text-lg mb-8 line-clamp-3" style={{ color: 'var(--color-text-tertiary)' }}>
                 {site.bio}
               </p>
             )}
             <div className="flex flex-col sm:flex-row gap-3">
               <Link
                 href={`/sites/${site.slug}/properties`}
-                className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 shadow-lg"
-                style={{ background: 'var(--site-primary)' }}
+                className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 shadow-lg"
+                style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
               >
                 Ver Todos os Imóveis
               </Link>
               <a
                 href="#contato"
-                className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-bold text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all border border-white/10"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-bold backdrop-blur-sm transition-all"
+                style={{ color: 'var(--color-text-primary)', background: 'var(--color-bg-hover)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}
               >
                 Fale Comigo
               </a>
@@ -98,12 +99,12 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
 
       {/* ═══ IMÓVEIS EM DESTAQUE ═══ */}
       {properties.length > 0 && (
-        <section className="py-16 sm:py-20 bg-gray-50">
+        <section className="py-16 sm:py-20" style={{ background: 'var(--color-bg-surface)' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Imóveis em Destaque</h2>
-                <p className="text-sm text-gray-500 mt-1">Confira as melhores oportunidades</p>
+                <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Imóveis em Destaque</h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>Confira as melhores oportunidades</p>
               </div>
               <Link
                 href={`/sites/${site.slug}/properties`}
@@ -126,8 +127,8 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
             <div className="mt-8 text-center sm:hidden">
               <Link
                 href={`/sites/${site.slug}/properties`}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-                style={{ background: 'var(--site-primary)' }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
               >
                 Ver Todos os Imóveis
               </Link>
@@ -138,7 +139,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
 
       {/* ═══ SOBRE O CORRETOR ═══ */}
       {(site.bio || site.avatar_url) && (
-        <section className="py-16 sm:py-20 bg-white">
+        <section className="py-16 sm:py-20" style={{ background: 'var(--color-bg-elevated)' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center gap-8">
               {site.avatar_url && (
@@ -151,13 +152,13 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
                 </div>
               )}
               <div className={site.avatar_url ? '' : 'text-center'}>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Sobre</h2>
+                <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Sobre</h2>
                 {site.creci && (
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
+                  <p className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: 'var(--color-text-tertiary)' }}>
                     CRECI {site.creci}
                   </p>
                 )}
-                <p className="text-gray-600 leading-relaxed whitespace-pre-line">{site.bio}</p>
+                <p className="leading-relaxed whitespace-pre-line" style={{ color: 'var(--color-text-secondary)' }}>{site.bio}</p>
               </div>
             </div>
           </div>
@@ -165,15 +166,15 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
       )}
 
       {/* ═══ CONTATO ═══ */}
-      <section id="contato" className="py-16 sm:py-20 bg-gray-50">
+      <section id="contato" className="py-16 sm:py-20" style={{ background: 'var(--color-bg-surface)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-lg mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Entre em Contato</h2>
-              <p className="text-sm text-gray-500">Preencha o formulário e retornaremos em breve.</p>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Entre em Contato</h2>
+              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Preencha o formulário e retornaremos em breve.</p>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
+            <div className="rounded-2xl p-6 sm:p-8 shadow-sm" style={{ background: 'var(--color-bg-elevated)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}>
               <ContactForm siteSlug={site.slug} />
             </div>
           </div>

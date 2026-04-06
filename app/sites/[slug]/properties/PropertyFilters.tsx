@@ -37,11 +37,12 @@ export default function PropertyFilters({ slug }: PropertyFiltersProps) {
   return (
     <div className="flex flex-wrap gap-3 items-end">
       <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1">Tipo</label>
+        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Tipo</label>
         <select
           value={type}
           onChange={(e) => setType(e.target.value)}
-          className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 cursor-pointer"
+          className="px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 cursor-pointer"
+          style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-secondary)', background: 'var(--color-bg-elevated)' }}
         >
           <option value="">Todos</option>
           {Object.entries(PROPERTY_TYPES).map(([key, labels]) => (
@@ -51,11 +52,12 @@ export default function PropertyFilters({ slug }: PropertyFiltersProps) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1">Transação</label>
+        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Transação</label>
         <select
           value={transaction}
           onChange={(e) => setTransaction(e.target.value)}
-          className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 cursor-pointer"
+          className="px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 cursor-pointer"
+          style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-secondary)', background: 'var(--color-bg-elevated)' }}
         >
           <option value="">Todas</option>
           {Object.entries(TRANSACTION_TYPES).map(([key, labels]) => (
@@ -65,11 +67,12 @@ export default function PropertyFilters({ slug }: PropertyFiltersProps) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1">Quartos (mín.)</label>
+        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Quartos (mín.)</label>
         <select
           value={minBedrooms}
           onChange={(e) => setMinBedrooms(e.target.value)}
-          className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 cursor-pointer"
+          className="px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 cursor-pointer"
+          style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-secondary)', background: 'var(--color-bg-elevated)' }}
         >
           <option value="">Qualquer</option>
           {[1, 2, 3, 4, 5].map((n) => (
@@ -80,8 +83,8 @@ export default function PropertyFilters({ slug }: PropertyFiltersProps) {
 
       <button
         onClick={applyFilters}
-        className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-        style={{ background: 'var(--site-primary)' }}
+        className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
+        style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
       >
         Filtrar
       </button>
@@ -89,7 +92,8 @@ export default function PropertyFilters({ slug }: PropertyFiltersProps) {
       {hasFilters && (
         <button
           onClick={clearFilters}
-          className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:text-gray-700 border border-gray-200 hover:bg-gray-50 transition-all"
+          className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+          style={{ color: 'var(--color-text-muted)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}
         >
           Limpar
         </button>

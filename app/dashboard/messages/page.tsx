@@ -312,12 +312,12 @@ function getSenderIcon(senderType: string) {
   }
 }
 
-function getSenderColor(senderType: string): string {
+function getSenderColor(senderType: string): React.CSSProperties {
   switch (senderType) {
-    case 'agent_bot': return 'text-violet-400'
-    case 'agent_human': return 'text-amber-400'
-    case 'lead': return 'text-emerald-400'
-    default: return 'text-gray-400'
+    case 'agent_bot': return { color: 'rgb(167,139,250)' }
+    case 'agent_human': return { color: 'var(--color-accent)' }
+    case 'lead': return { color: 'var(--color-success)' }
+    default: return { color: 'var(--color-text-tertiary)' }
   }
 }
 
@@ -365,7 +365,7 @@ function MediaContent({ msg, t }: { msg: Message; t: TranslationType }) {
               onClick={() => window.open(msg.media_url!, '_blank')}
             />
           ) : (
-            <div className="flex items-center gap-2 text-gray-400 text-xs py-2">
+            <div className="flex items-center gap-2 text-xs py-2" style={{ color: 'var(--color-text-tertiary)' }}>
               <ImageIcon size={14} /> <span>{t.image}</span>
             </div>
           )}
@@ -379,7 +379,7 @@ function MediaContent({ msg, t }: { msg: Message; t: TranslationType }) {
               <source src={msg.media_url} type={msg.media_mime_type || 'audio/ogg'} />
             </audio>
           ) : (
-            <div className="flex items-center gap-2 text-gray-400 text-xs py-2">
+            <div className="flex items-center gap-2 text-xs py-2" style={{ color: 'var(--color-text-tertiary)' }}>
               <Mic size={14} /> <span>{t.audio}</span>
             </div>
           )}
@@ -393,7 +393,7 @@ function MediaContent({ msg, t }: { msg: Message; t: TranslationType }) {
               <source src={msg.media_url} type={msg.media_mime_type || 'video/mp4'} />
             </video>
           ) : (
-            <div className="flex items-center gap-2 text-gray-400 text-xs py-2">
+            <div className="flex items-center gap-2 text-xs py-2" style={{ color: 'var(--color-text-tertiary)' }}>
               <Video size={14} /> <span>{t.video}</span>
             </div>
           )}
@@ -407,14 +407,15 @@ function MediaContent({ msg, t }: { msg: Message; t: TranslationType }) {
               href={msg.media_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 hover:bg-white/10 transition-colors"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 transition-colors"
+              style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border-subtle)' }}
             >
-              <FileText size={18} className="text-blue-400 shrink-0" />
-              <span className="text-sm text-blue-300 truncate">{msg.body || t.document}</span>
-              <ExternalLink size={12} className="text-gray-500 shrink-0 ml-auto" />
+              <FileText size={18} className="shrink-0" style={{ color: 'var(--color-primary)' }} />
+              <span className="text-sm truncate" style={{ color: 'var(--color-primary)' }}>{msg.body || t.document}</span>
+              <ExternalLink size={12} className="shrink-0 ml-auto" style={{ color: 'var(--color-text-muted)' }} />
             </a>
           ) : (
-            <div className="flex items-center gap-2 text-gray-400 text-xs py-2">
+            <div className="flex items-center gap-2 text-xs py-2" style={{ color: 'var(--color-text-tertiary)' }}>
               <FileText size={14} /> <span>{t.document}</span>
             </div>
           )}
@@ -469,7 +470,7 @@ function MessageBubble({
           style={{ color: 'var(--color-text-primary)', ...getBubbleStyle() }}
         >
           {!isSameSender && (
-            <div className={`flex items-center gap-1.5 mb-0.5 ${getSenderColor(msg.sender_type)}`}>
+            <div className="flex items-center gap-1.5 mb-0.5" style={getSenderColor(msg.sender_type)}>
               {getSenderIcon(msg.sender_type)}
               <span className="text-[11px] font-medium">
                 {msg.sender_name ||
@@ -487,14 +488,14 @@ function MessageBubble({
           )}
           {msg.body && msg.message_type === 'audio' && (
             <div className="flex items-start gap-2">
-              <Mic size={14} className="text-blue-400 mt-0.5 shrink-0" />
+              <Mic size={14} className="mt-0.5 shrink-0" style={{ color: 'var(--color-primary)' }} />
               <p className="whitespace-pre-wrap break-words text-sm">
                 {msg.body.replace('[Áudio transcrito]: ', '').replace('[Audio enviado]', 'Audio enviado')}
               </p>
             </div>
           )}
           {msg.body && msg.message_type !== 'text' && msg.message_type !== 'audio' && (
-            <p className="whitespace-pre-wrap break-words text-xs mt-1 text-gray-300">{msg.body}</p>
+            <p className="whitespace-pre-wrap break-words text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>{msg.body}</p>
           )}
 
           <span className="float-right ml-2 mt-1 flex items-center gap-1 relative -bottom-[3px]">
@@ -532,7 +533,7 @@ function ConversationItem({
     >
       {/* Avatar */}
       <div className="relative shrink-0">
-        <div className="w-[49px] h-[49px] rounded-full bg-[#6b7b8d] flex items-center justify-center text-lg font-medium text-white">
+        <div className="w-[49px] h-[49px] rounded-full flex items-center justify-center text-lg font-medium" style={{ backgroundColor: 'var(--color-bg-hover)', color: 'var(--color-text-primary)' }}>
           {getInitial(c)}
         </div>
         {c.channel === 'whatsapp' && (
@@ -662,9 +663,9 @@ function MessageInput({
   return (
     <div style={{ backgroundColor: 'var(--color-bg-surface)', borderTop: '1px solid var(--color-border)' }}>
       {sendError && (
-        <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 flex items-center gap-2">
-          <AlertCircle size={14} className="text-red-400 shrink-0" />
-          <span className="text-xs text-red-400">{sendError}</span>
+        <div className="px-4 py-2 flex items-center gap-2" style={{ background: 'var(--color-error-subtle)', borderBottom: '1px solid var(--color-error)' }}>
+          <AlertCircle size={14} className="shrink-0" style={{ color: 'var(--color-error)' }} />
+          <span className="text-xs" style={{ color: 'var(--color-error)' }}>{sendError}</span>
         </div>
       )}
       <div className="flex items-end gap-2 px-4 py-2">
@@ -673,16 +674,16 @@ function MessageInput({
             {/* Cancel */}
             <button
               onClick={cancelRecording}
-              className="p-2 rounded-full transition-all shrink-0 hover:bg-red-500/10"
+              className="p-2 rounded-full transition-all shrink-0"
               style={{ color: 'var(--color-text-secondary)' }}
             >
               <X size={20} />
             </button>
             {/* Recording indicator */}
             <div className="flex-1 flex items-center gap-3 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--color-bg-elevated)' }}>
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-sm font-mono text-red-400">{formatRecordingTime(recordingTime)}</span>
-              <span className="text-xs text-gray-500">Gravando...</span>
+              <div className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: 'var(--color-error)' }} />
+              <span className="text-sm font-mono" style={{ color: 'var(--color-error)' }}>{formatRecordingTime(recordingTime)}</span>
+              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Gravando...</span>
             </div>
             {/* Send audio */}
             <button
@@ -699,7 +700,7 @@ function MessageInput({
             <button
               onClick={startRecording}
               disabled={isSending}
-              className="p-2 rounded-full transition-all shrink-0 hover:bg-white/10"
+              className="p-2 rounded-full transition-all shrink-0"
               style={{ color: 'var(--color-text-secondary)' }}
               title="Gravar audio"
             >
@@ -1344,12 +1345,13 @@ function MessagesContent() {
                 {/* Botão voltar no mobile */}
                 <button
                   onClick={() => setActiveConversation(null)}
-                  className="sm:hidden p-2 -ml-2 text-[#aebac1] hover:text-white"
+                  className="sm:hidden p-2 -ml-2"
+                  style={{ color: 'var(--color-text-secondary)' }}
                 >
                   <X size={20} />
                 </button>
                 
-                <div className="w-10 h-10 rounded-full bg-[#6b7b8d] flex items-center justify-center text-white font-medium text-sm">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-medium text-sm" style={{ backgroundColor: 'var(--color-bg-hover)', color: 'var(--color-text-primary)' }}>
                   {getInitial(activeConversation)}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -1362,7 +1364,7 @@ function MessagesContent() {
                       {pipelineStages.find(s => s.name === activeConversation.lead_stage)?.label || activeConversation.lead_stage}
                     </span>
                     {activeConversation.is_bot_active && (
-                      <span className="text-[11px] text-violet-400 flex items-center gap-1">
+                      <span className="text-[11px] flex items-center gap-1" style={{ color: 'rgb(167,139,250)' }}>
                         <Bot size={10} /> IA
                       </span>
                     )}
@@ -1377,7 +1379,8 @@ function MessagesContent() {
                   {/* Botão para ver dados do lead (painel flutuante) */}
                   <button
                     onClick={toggleLeadInfo}
-                    className={`p-2 rounded-full transition-colors ${showLeadInfo ? 'text-blue-400 bg-blue-500/10' : 'text-[#aebac1] hover:text-white hover:bg-[#374045]'}`}
+                    className="p-2 rounded-full transition-colors"
+                    style={showLeadInfo ? { color: 'var(--color-primary)', background: 'var(--color-primary-subtle)' } : { color: 'var(--color-text-secondary)' }}
                     title={t.leadInfo}
                   >
                     <Info size={18} />
@@ -1385,7 +1388,8 @@ function MessagesContent() {
                   {/* Botão para ir ao perfil do lead */}
                   <button
                     onClick={handleOpenLeadProfile}
-                    className="p-2 text-[#aebac1] hover:text-white rounded-full hover:bg-[#374045] transition-colors"
+                    className="p-2 rounded-full transition-colors"
+                    style={{ color: 'var(--color-text-secondary)' }}
                     title={t.openLeadProfile}
                   >
                     <UserCircle size={18} />
@@ -1395,7 +1399,8 @@ function MessagesContent() {
                       href={getWhatsappLink(activeConversation.lead_phone)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 text-[#aebac1] hover:text-white rounded-full hover:bg-[#374045] transition-colors"
+                      className="p-2 rounded-full transition-colors"
+                      style={{ color: 'var(--color-text-secondary)' }}
                       title={t.openWhatsapp}
                     >
                       <ExternalLink size={18} />
@@ -1403,7 +1408,8 @@ function MessagesContent() {
                   )}
                   <button
                     onClick={() => { setActiveConversation(null); setSendError(null) }}
-                    className="hidden sm:block p-2 text-[#aebac1] hover:text-white rounded-full hover:bg-[#374045] transition-colors"
+                    className="hidden sm:block p-2 rounded-full transition-colors"
+                    style={{ color: 'var(--color-text-secondary)' }}
                     title={t.closeChat}
                   >
                     <X size={18} />
@@ -1433,7 +1439,7 @@ function MessagesContent() {
                     <div className="p-3 space-y-2.5 max-h-[400px] overflow-y-auto sidebar-scrollbar">
                       {/* Nome */}
                       <div className="text-center pb-2" style={{ borderBottom: '1px solid var(--color-border)' }}>
-                        <div className="w-12 h-12 mx-auto rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg mb-1">
+                        <div className="w-12 h-12 mx-auto rounded-full flex items-center justify-center font-bold text-lg mb-1" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-text-primary)' }}>
                           {leadDetails.name?.[0]?.toUpperCase() || '#'}
                         </div>
                         <p className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>{leadDetails.name || '—'}</p>

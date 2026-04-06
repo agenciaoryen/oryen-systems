@@ -166,70 +166,70 @@ function useBDRStats(campaignId: string) {
 // COMPONENTES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function BDRStatCard({ 
-  icon: Icon, label, value, sublabel, color, iconBg
-}: { 
+function BDRStatCard({
+  icon: Icon, label, value, sublabel, iconBg, iconColor
+}: {
   icon: any; label: string; value: number | string; sublabel: string
-  color: string; iconBg: string
+  iconBg: string; iconColor: string
 }) {
   return (
-    <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5 hover:border-white/20 transition-all">
+    <div className="border rounded-xl p-5 transition-all" style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border)' }}>
       <div className="flex items-start justify-between mb-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}>
-          <Icon size={18} className={color} />
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: iconBg, color: iconColor }}>
+          <Icon size={18} />
         </div>
       </div>
-      <p className="text-3xl font-bold text-white tracking-tight">{value}</p>
-      <p className="text-xs font-bold uppercase text-gray-500 mt-1">{label}</p>
-      <p className="text-[10px] text-gray-600 mt-0.5">{sublabel}</p>
+      <p className="text-3xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>{value}</p>
+      <p className="text-xs font-bold uppercase mt-1" style={{ color: 'var(--color-text-muted)' }}>{label}</p>
+      <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>{sublabel}</p>
     </div>
   )
 }
 
 function RunRow({ run, ui, dateLocale }: { run: AgentRun; ui: typeof UI.es; dateLocale: any }) {
   const [expanded, setExpanded] = useState(false)
-  const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-    success: { label: ui.success, color: 'text-emerald-400 bg-emerald-500/10', icon: CheckCircle2 },
-    error: { label: ui.error, color: 'text-red-400 bg-red-500/10', icon: XCircle },
-    partial: { label: ui.partial, color: 'text-amber-400 bg-amber-500/10', icon: AlertTriangle },
-    running: { label: ui.running, color: 'text-blue-400 bg-blue-500/10', icon: RefreshCw },
-    pending: { label: ui.pending, color: 'text-gray-400 bg-gray-500/10', icon: Clock }
+  const statusConfig: Record<string, { label: string; style: React.CSSProperties; icon: any }> = {
+    success: { label: ui.success, style: { color: 'var(--color-success)', background: 'var(--color-success-subtle)' }, icon: CheckCircle2 },
+    error: { label: ui.error, style: { color: 'var(--color-error)', background: 'var(--color-error-subtle)' }, icon: XCircle },
+    partial: { label: ui.partial, style: { color: 'var(--color-accent)', background: 'var(--color-accent-subtle)' }, icon: AlertTriangle },
+    running: { label: ui.running, style: { color: 'var(--color-primary)', background: 'var(--color-primary-subtle)' }, icon: RefreshCw },
+    pending: { label: ui.pending, style: { color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)' }, icon: Clock }
   }
   const status = statusConfig[run.status] || statusConfig.pending
   const StatusIcon = status.icon
 
   return (
-    <div className="border border-white/5 rounded-lg overflow-hidden">
-      <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center justify-between p-3 hover:bg-white/5 transition-colors text-left">
+    <div className="border rounded-lg overflow-hidden" style={{ borderColor: 'var(--color-border-subtle)' }}>
+      <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center justify-between p-3 transition-colors text-left">
         <div className="flex items-center gap-3">
-          <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-lg ${status.color}`}>
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-lg" style={status.style}>
             <StatusIcon size={12} className={run.status === 'running' ? 'animate-spin' : ''} />
             {status.label}
           </span>
-          <span className="text-sm text-gray-400">
+          <span className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
             {format(new Date(run.started_at), 'dd/MM/yyyy HH:mm', { locale: dateLocale })}
           </span>
         </div>
         <div className="flex items-center gap-4">
           {run.results?.messages_queued !== undefined && (
-            <span className="text-xs text-blue-400 font-medium">+{run.results.messages_queued} na fila</span>
+            <span className="text-xs font-medium" style={{ color: 'var(--color-primary)' }}>+{run.results.messages_queued} na fila</span>
           )}
-          {expanded ? <ChevronUp size={14} className="text-gray-500" /> : <ChevronDown size={14} className="text-gray-500" />}
+          {expanded ? <ChevronUp size={14} style={{ color: 'var(--color-text-muted)' }} /> : <ChevronDown size={14} style={{ color: 'var(--color-text-muted)' }} />}
         </div>
       </button>
       {expanded && (
-        <div className="p-4 pt-0 border-t border-white/5 bg-black/30">
+        <div className="p-4 pt-0 border-t" style={{ borderColor: 'var(--color-border-subtle)', background: 'var(--color-bg-base)' }}>
           <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
             {run.results && Object.entries(run.results).map(([key, val]) => (
               <div key={key}>
-                <p className="text-[10px] uppercase text-gray-500 mb-1">{key.replace(/_/g, ' ')}</p>
-                <p className="text-lg font-bold text-white">{String(val)}</p>
+                <p className="text-[10px] uppercase mb-1" style={{ color: 'var(--color-text-muted)' }}>{key.replace(/_/g, ' ')}</p>
+                <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{String(val)}</p>
               </div>
             ))}
           </div>
           {run.error_message && (
-            <div className="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <p className="text-xs text-red-400">{run.error_message}</p>
+            <div className="mt-3 p-2 border rounded-lg" style={{ background: 'var(--color-error-subtle)', borderColor: 'var(--color-error)' }}>
+              <p className="text-xs" style={{ color: 'var(--color-error)' }}>{run.error_message}</p>
             </div>
           )}
         </div>
@@ -304,31 +304,31 @@ export default function BDRCampaignDetail({ campaign, runs, agentId, lang, user,
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
-          <button onClick={() => router.push(`/dashboard/agents/${agentId}`)} className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors mt-1">
+          <button onClick={() => router.push(`/dashboard/agents/${agentId}`)} className="p-2 rounded-lg transition-colors mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
-                <MessageSquare size={20} className="text-emerald-400" />
+            <h1 className="text-2xl font-bold flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-success-subtle)' }}>
+                <MessageSquare size={20} style={{ color: 'var(--color-success)' }} />
               </div>
               {campaign.name}
             </h1>
             <div className="flex items-center gap-3 mt-2">
-              <span className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase px-2.5 py-1 rounded-full ${
-                isActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
-                isPaused ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                'bg-gray-500/10 text-gray-400 border border-gray-500/20'
-              }`}>
-                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase px-2.5 py-1 rounded-full border" style={
+                isActive ? { background: 'var(--color-success-subtle)', color: 'var(--color-success)', borderColor: 'var(--color-success)' } :
+                isPaused ? { background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', borderColor: 'var(--color-accent)' } :
+                { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)', borderColor: 'var(--color-border)' }
+              }>
+                {isActive && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--color-success)' }} />}
                 {statusLabels[campaign.status]}
               </span>
-              <span className="text-xs text-gray-500 flex items-center gap-1">
+              <span className="text-xs flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
                 <Clock size={10} />
                 {scheduleLabels[campaign.schedule_frequency]} {ui.at} {campaign.schedule_time}
               </span>
               {stats && stats.next_scheduled && (
-                <span className="text-xs text-blue-400 flex items-center gap-1">
+                <span className="text-xs flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
                   <Send size={10} />
                   {ui.proximoEnvio}: {format(new Date(stats.next_scheduled), 'HH:mm', { locale: dateLocale })}
                 </span>
@@ -338,14 +338,14 @@ export default function BDRCampaignDetail({ campaign, runs, agentId, lang, user,
         </div>
         <div className="flex items-center gap-2">
           {isActive && (
-            <button onClick={handleRunNow} disabled={isRunning} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50">
+            <button onClick={handleRunNow} disabled={isRunning} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-50" style={{ background: 'var(--color-success)', color: 'var(--color-text-primary)' }}>
               {isRunning ? <><Loader2 size={16} className="animate-spin" />{ui.running}</> : <><Zap size={16} />{ui.runNow}</>}
             </button>
           )}
           {(isActive || isPaused) && (
-            <button onClick={handleToggleStatus} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-              isActive ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
-            }`}>
+            <button onClick={handleToggleStatus} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors border" style={
+              isActive ? { background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', borderColor: 'var(--color-accent)' } : { background: 'var(--color-success-subtle)', color: 'var(--color-success)', borderColor: 'var(--color-success)' }
+            }>
               {isActive ? <PauseCircle size={16} /> : <PlayCircle size={16} />}
               {isActive ? ui.pause : ui.resume}
             </button>
@@ -354,11 +354,11 @@ export default function BDRCampaignDetail({ campaign, runs, agentId, lang, user,
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-[#0a0a0a] rounded-xl p-1 border border-white/10 w-fit">
+      <div className="flex rounded-xl p-1 border w-fit" style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border)' }}>
         {(['overview', 'runs', 'config'] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            activeTab === tab ? 'bg-white text-black' : 'text-gray-400 hover:text-white'
-          }`}>
+          <button key={tab} onClick={() => setActiveTab(tab)} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all" style={
+            activeTab === tab ? { background: 'var(--color-text-primary)', color: 'var(--color-bg-base)' } : { color: 'var(--color-text-tertiary)' }
+          }>
             {tab === 'overview' && <BarChart3 size={14} />}
             {tab === 'runs' && <Activity size={14} />}
             {tab === 'config' && <Settings size={14} />}
@@ -374,7 +374,7 @@ export default function BDRCampaignDetail({ campaign, runs, agentId, lang, user,
           {statsLoading ? (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[1,2,3,4].map(i => (
-                <div key={i} className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5 h-32 animate-pulse" />
+                <div key={i} className="border rounded-xl p-5 h-32 animate-pulse" style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border)' }} />
               ))}
             </div>
           ) : (
@@ -384,89 +384,89 @@ export default function BDRCampaignDetail({ campaign, runs, agentId, lang, user,
                 label={ui.naFila}
                 value={stats?.pending || 0}
                 sublabel={ui.naFilaDesc}
-                color="text-blue-400"
-                iconBg="bg-blue-500/10"
+                iconColor="var(--color-primary)"
+                iconBg="var(--color-primary-subtle)"
               />
               <BDRStatCard
                 icon={Send}
                 label={ui.enviadas}
                 value={stats?.sent || 0}
                 sublabel={ui.enviadasDesc}
-                color="text-emerald-400"
-                iconBg="bg-emerald-500/10"
+                iconColor="var(--color-success)"
+                iconBg="var(--color-success-subtle)"
               />
               <BDRStatCard
                 icon={Ban}
                 label={ui.erros}
                 value={stats?.failed || 0}
                 sublabel={ui.errosDesc}
-                color="text-red-400"
-                iconBg="bg-red-500/10"
+                iconColor="var(--color-error)"
+                iconBg="var(--color-error-subtle)"
               />
               <BDRStatCard
                 icon={MessageSquare}
                 label={ui.respostas}
                 value={stats?.replied || 0}
                 sublabel={ui.respostasDesc}
-                color="text-purple-400"
-                iconBg="bg-purple-500/10"
+                iconColor="var(--color-indigo)"
+                iconBg="var(--color-indigo-subtle)"
               />
             </div>
           )}
 
           {/* Barra de progresso visual */}
           {stats && (stats.pending + stats.sent + stats.failed) > 0 && (
-            <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5">
+            <div className="border rounded-xl p-5" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-white">Progresso dos disparos</h3>
-                <span className="text-sm text-gray-400">
+                <h3 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>Progresso dos disparos</h3>
+                <span className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
                   {stats.sent + stats.failed} / {stats.pending + stats.sent + stats.failed + stats.cancelled}
                 </span>
               </div>
-              <div className="h-3 bg-gray-800 rounded-full overflow-hidden flex">
+              <div className="h-3 rounded-full overflow-hidden flex" style={{ background: 'var(--color-bg-hover)' }}>
                 {/* Enviadas (verde) */}
                 {stats.sent > 0 && (
                   <div
-                    className="h-full bg-emerald-500 transition-all duration-500"
-                    style={{ width: `${(stats.sent / (stats.pending + stats.sent + stats.failed + stats.cancelled)) * 100}%` }}
+                    className="h-full transition-all duration-500"
+                    style={{ background: 'var(--color-success)', width: `${(stats.sent / (stats.pending + stats.sent + stats.failed + stats.cancelled)) * 100}%` }}
                     title={`${stats.sent} enviadas`}
                   />
                 )}
                 {/* Erros (vermelho) */}
                 {stats.failed > 0 && (
                   <div
-                    className="h-full bg-red-500 transition-all duration-500"
-                    style={{ width: `${(stats.failed / (stats.pending + stats.sent + stats.failed + stats.cancelled)) * 100}%` }}
+                    className="h-full transition-all duration-500"
+                    style={{ background: 'var(--color-error)', width: `${(stats.failed / (stats.pending + stats.sent + stats.failed + stats.cancelled)) * 100}%` }}
                     title={`${stats.failed} erros`}
                   />
                 )}
                 {/* Pendentes (azul) */}
                 {stats.pending > 0 && (
                   <div
-                    className="h-full bg-blue-500/40 transition-all duration-500"
-                    style={{ width: `${(stats.pending / (stats.pending + stats.sent + stats.failed + stats.cancelled)) * 100}%` }}
+                    className="h-full transition-all duration-500"
+                    style={{ background: 'var(--color-primary-subtle)', width: `${(stats.pending / (stats.pending + stats.sent + stats.failed + stats.cancelled)) * 100}%` }}
                     title={`${stats.pending} na fila`}
                   />
                 )}
               </div>
-              <div className="flex gap-4 mt-2 text-[10px]">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Enviadas</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> Erros</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500/40" /> Na fila</span>
+              <div className="flex gap-4 mt-2 text-[10px]" style={{ color: 'var(--color-text-tertiary)' }}>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: 'var(--color-success)' }} /> Enviadas</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: 'var(--color-error)' }} /> Erros</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: 'var(--color-primary-subtle)' }} /> Na fila</span>
               </div>
             </div>
           )}
 
           {/* Execuções recentes */}
           {runs.length > 0 && (
-            <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5">
+            <div className="border rounded-xl p-5" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
                   <Activity size={14} />
                   Execuções recentes
                 </h3>
-                <button onClick={() => setActiveTab('runs')} className="text-xs text-blue-400 hover:text-blue-300">
-                  Ver todas →
+                <button onClick={() => setActiveTab('runs')} className="text-xs" style={{ color: 'var(--color-primary)' }}>
+                  Ver todas &rarr;
                 </button>
               </div>
               <div className="space-y-2">
@@ -479,15 +479,15 @@ export default function BDRCampaignDetail({ campaign, runs, agentId, lang, user,
 
       {/* ═══ RUNS ═══ */}
       {activeTab === 'runs' && (
-        <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
+        <div className="border rounded-xl p-5" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
+          <h3 className="text-sm font-bold flex items-center gap-2 mb-4" style={{ color: 'var(--color-text-primary)' }}>
             <Activity size={14} />{ui.runs} ({runs.length})
           </h3>
           {runs.length === 0 ? (
             <div className="text-center py-12">
-              <Zap size={32} className="mx-auto text-gray-600 mb-3" />
-              <p className="text-gray-400 font-medium">{ui.noRuns}</p>
-              <p className="text-xs text-gray-500 mt-1">{ui.noRunsHint}</p>
+              <Zap size={32} className="mx-auto mb-3" style={{ color: 'var(--color-text-muted)' }} />
+              <p className="font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{ui.noRuns}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{ui.noRunsHint}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -499,17 +499,17 @@ export default function BDRCampaignDetail({ campaign, runs, agentId, lang, user,
 
       {/* ═══ CONFIG ═══ */}
       {activeTab === 'config' && (
-        <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5 space-y-5">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+        <div className="border rounded-xl p-5 space-y-5" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
+          <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
             <Settings size={14} />{ui.configuration}
           </h3>
 
           {/* Template de mensagem */}
           {campaign.config?.message_template && (
             <div>
-              <p className="text-[10px] uppercase text-gray-500 font-bold mb-2">{ui.mensagem}</p>
-              <div className="bg-black/50 border border-white/5 rounded-xl p-4">
-                <p className="text-sm text-gray-300 whitespace-pre-wrap font-mono leading-relaxed">
+              <p className="text-[10px] uppercase font-bold mb-2" style={{ color: 'var(--color-text-muted)' }}>{ui.mensagem}</p>
+              <div className="border rounded-xl p-4" style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border-subtle)' }}>
+                <p className="text-sm whitespace-pre-wrap font-mono leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
                   {campaign.config.message_template}
                 </p>
               </div>
@@ -520,55 +520,55 @@ export default function BDRCampaignDetail({ campaign, runs, agentId, lang, user,
           <div className="grid grid-cols-2 gap-4">
             {campaign.config?.lead_filter_tags?.length > 0 && (
               <div>
-                <p className="text-[10px] uppercase text-gray-500 font-bold mb-2">Tags</p>
+                <p className="text-[10px] uppercase font-bold mb-2" style={{ color: 'var(--color-text-muted)' }}>Tags</p>
                 <div className="flex flex-wrap gap-1">
                   {campaign.config.lead_filter_tags.map((tag: string, i: number) => (
-                    <span key={i} className="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded text-xs">{tag}</span>
+                    <span key={i} className="px-2 py-0.5 border rounded text-xs" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}>{tag}</span>
                   ))}
                 </div>
               </div>
             )}
             {campaign.config?.lead_filter_stages?.length > 0 && (
               <div>
-                <p className="text-[10px] uppercase text-gray-500 font-bold mb-2">Stages</p>
+                <p className="text-[10px] uppercase font-bold mb-2" style={{ color: 'var(--color-text-muted)' }}>Stages</p>
                 <div className="flex flex-wrap gap-1">
                   {campaign.config.lead_filter_stages.map((stage: string, i: number) => (
-                    <span key={i} className="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded text-xs">{stage}</span>
+                    <span key={i} className="px-2 py-0.5 border rounded text-xs" style={{ background: 'var(--color-indigo-subtle)', color: 'var(--color-indigo)', borderColor: 'var(--color-indigo)' }}>{stage}</span>
                   ))}
                 </div>
               </div>
             )}
             {campaign.config?.lead_filter_source && (
               <div>
-                <p className="text-[10px] uppercase text-gray-500 font-bold mb-2">Origem</p>
-                <span className="text-sm text-white">{campaign.config.lead_filter_source}</span>
+                <p className="text-[10px] uppercase font-bold mb-2" style={{ color: 'var(--color-text-muted)' }}>Origem</p>
+                <span className="text-sm" style={{ color: 'var(--color-text-primary)' }}>{campaign.config.lead_filter_source}</span>
               </div>
             )}
           </div>
 
           {/* Configurações gerais */}
-          <div className="pt-4 border-t border-white/10">
+          <div className="pt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
               <div>
-                <span className="text-gray-500 text-xs">{ui.limiteDiario}</span>
-                <p className="text-white font-bold">{campaign.config?.daily_limit || 30}</p>
+                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{ui.limiteDiario}</span>
+                <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{campaign.config?.daily_limit || 30}</p>
               </div>
               <div>
-                <span className="text-gray-500 text-xs">{ui.schedule}</span>
-                <p className="text-white font-bold">{scheduleLabels[campaign.schedule_frequency]} {ui.at} {campaign.schedule_time}</p>
+                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{ui.schedule}</span>
+                <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{scheduleLabels[campaign.schedule_frequency]} {ui.at} {campaign.schedule_time}</p>
               </div>
               <div>
-                <span className="text-gray-500 text-xs">{ui.pararAoResponder}</span>
-                <p className="text-white font-bold">{campaign.config?.stop_on_reply ? ui.sim : ui.nao}</p>
+                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{ui.pararAoResponder}</span>
+                <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{campaign.config?.stop_on_reply ? ui.sim : ui.nao}</p>
               </div>
               <div>
-                <span className="text-gray-500 text-xs">{ui.moverPipeline}</span>
-                <p className="text-white font-bold">{campaign.config?.auto_move_pipeline ? ui.sim : ui.nao}</p>
+                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{ui.moverPipeline}</span>
+                <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{campaign.config?.auto_move_pipeline ? ui.sim : ui.nao}</p>
               </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-white/10 text-xs text-gray-500">
+          <div className="pt-4 border-t text-xs" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>
             {ui.createdAt}: {format(new Date(campaign.created_at), 'dd/MM/yyyy HH:mm', { locale: dateLocale })}
           </div>
         </div>

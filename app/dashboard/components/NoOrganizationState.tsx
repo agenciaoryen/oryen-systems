@@ -13,7 +13,7 @@ export default function NoOrganizationState() {
 
   return (
     <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)]">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
     </div>
   )
 }

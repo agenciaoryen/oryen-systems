@@ -702,25 +702,26 @@ export default function LeadProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-100px)] flex flex-col items-center justify-center bg-[#0A0A0A] text-white">
-        <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
-        <p className="animate-pulse text-gray-400 font-medium">{t.loading}</p>
+      <div className="min-h-[calc(100vh-100px)] flex flex-col items-center justify-center" style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-primary)' }}>
+        <Loader2 className="w-10 h-10 animate-spin mb-4" style={{ color: 'var(--color-primary)' }} />
+        <p className="animate-pulse font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{t.loading}</p>
       </div>
     )
   }
 
   if (!lead) {
     return (
-      <div className="min-h-[calc(100vh-100px)] flex flex-col items-center justify-center bg-[#0A0A0A] text-white p-6 text-center">
-        <div className="text-red-500 text-6xl mb-4">⚠️</div>
+      <div className="min-h-[calc(100vh-100px)] flex flex-col items-center justify-center p-6 text-center" style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-primary)' }}>
+        <div className="text-6xl mb-4" style={{ color: 'var(--color-error)' }}>⚠️</div>
         <h2 className="text-2xl font-bold mb-2">{t.notFoundTitle}</h2>
-        <p className="text-gray-400 mb-6">{errorMessage || t.notFoundDesc}</p>
-        <div className="bg-gray-900 p-2 rounded text-xs font-mono text-gray-500 mb-6 border border-gray-800">
+        <p className="mb-6" style={{ color: 'var(--color-text-tertiary)' }}>{errorMessage || t.notFoundDesc}</p>
+        <div className="p-2 rounded text-xs font-mono mb-6" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }}>
           {t.notFoundId} {leadId || 'N/A'}
         </div>
         <button
           onClick={() => router.push('/dashboard/crm')}
-          className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg transition-colors font-bold shadow-lg shadow-blue-600/20"
+          className="px-6 py-2 rounded-lg transition-colors font-bold shadow-lg"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
         >
           {t.backToCrm}
         </button>
@@ -734,13 +735,14 @@ export default function LeadProfilePage() {
   const availableTags = allTags.filter(tag => !leadTags.some(lt => lt.id === tag.id))
 
   return (
-    <div className="min-h-[calc(100vh-100px)] bg-[#0A0A0A] text-gray-200 p-4 md:p-6 lg:p-10 font-sans pb-24">
+    <div className="min-h-[calc(100vh-100px)] p-4 md:p-6 lg:p-10 font-sans pb-24" style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-secondary)' }}>
 
       {/* HEADER */}
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-white transition-colors group"
+          className="flex items-center gap-2 text-sm font-medium transition-colors group"
+          style={{ color: 'var(--color-text-muted)' }}
         >
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
           {t.back}
@@ -748,14 +750,14 @@ export default function LeadProfilePage() {
 
         <button
           onClick={handleToggleIA}
-          className={`flex items-center gap-3 px-4 py-2.5 rounded-full border transition-all shadow-lg w-full sm:w-auto justify-center ${
-            lead.conversa_finalizada
-              ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20'
-              : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-          }`}
+          className="flex items-center gap-3 px-4 py-2.5 rounded-full border transition-all shadow-lg w-full sm:w-auto justify-center"
+          style={lead.conversa_finalizada
+            ? { background: 'var(--color-error-subtle)', borderColor: 'var(--color-error)', color: 'var(--color-error)' }
+            : { background: 'var(--color-success-subtle)', borderColor: 'var(--color-success)', color: 'var(--color-success)' }
+          }
         >
           <Bot size={16} />
-          <div className={`w-2 h-2 rounded-full ${lead.conversa_finalizada ? 'bg-red-500' : 'bg-emerald-500 animate-pulse'}`} />
+          <div className={`w-2 h-2 rounded-full ${lead.conversa_finalizada ? '' : 'animate-pulse'}`} style={{ background: lead.conversa_finalizada ? 'var(--color-error)' : 'var(--color-success)' }} />
           <span className="text-xs font-bold uppercase tracking-wider">
             {lead.conversa_finalizada ? t.agentPaused : t.agentActive}
           </span>
@@ -764,7 +766,7 @@ export default function LeadProfilePage() {
         {/* Cronômetro de pausa temporária do atendente */}
         {stopRemaining > 0 && !lead.conversa_finalizada && (
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: 'var(--color-accent-subtle)', border: '1px solid var(--color-accent)', color: 'var(--color-accent)' }}>
               <Timer size={14} className="animate-pulse" />
               <span className="text-xs font-medium">
                 {t.attendantPause} — {t.agentReturnsIn} {Math.floor(stopRemaining / 60)}:{String(stopRemaining % 60).padStart(2, '0')}
@@ -772,7 +774,8 @@ export default function LeadProfilePage() {
             </div>
             <button
               onClick={handleClearStop}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all text-xs font-bold uppercase tracking-wider"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full transition-all text-xs font-bold uppercase tracking-wider"
+              style={{ background: 'var(--color-success-subtle)', border: '1px solid var(--color-success)', color: 'var(--color-success)' }}
             >
               <Bot size={12} />
               {t.reactivateAI}
@@ -787,11 +790,11 @@ export default function LeadProfilePage() {
         <div className="xl:col-span-2 space-y-6">
 
           {/* CARTÃO DE PERFIL */}
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-5 md:p-8 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-blue-400 to-transparent opacity-50" />
+          <div className="rounded-2xl p-5 md:p-8 shadow-2xl relative overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+            <div className="absolute top-0 left-0 w-full h-1 opacity-50" style={{ background: 'var(--gradient-brand)' }} />
 
             <div className="flex flex-col md:flex-row gap-6 items-start">
-              <div className="w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-xl md:text-2xl font-black shadow-lg shadow-blue-900/40 text-white border border-blue-500/30">
+              <div className="w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-2xl flex items-center justify-center text-xl md:text-2xl font-black shadow-lg" style={{ background: 'var(--gradient-brand)', color: 'var(--color-text-primary)', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}>
                 {displayName[0]?.toUpperCase() || '?'}
               </div>
 
@@ -800,7 +803,7 @@ export default function LeadProfilePage() {
                 {isEditingName ? (
                   <div className="space-y-3 mb-4">
                     <div>
-                      <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">
+                      <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'var(--color-text-muted)' }}>
                         {t.namePlaceholder}
                       </label>
                       <input
@@ -808,14 +811,16 @@ export default function LeadProfilePage() {
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         placeholder={t.namePlaceholder}
-                        className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-lg text-white outline-none focus:border-blue-500 transition-all"
+                        className="w-full rounded-xl p-3 text-lg outline-none transition-all"
+                        style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                         autoFocus
                       />
                     </div>
                     <div className="flex gap-2">
                       <button
                         onClick={handleSaveName}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors"
+                        className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
                       >
                         <Check size={16} />
                       </button>
@@ -825,7 +830,8 @@ export default function LeadProfilePage() {
                           setEditName(lead.name || '')
                           setEditCompany(lead.nome_empresa || '')
                         }}
-                        className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm font-medium transition-colors"
+                        className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-secondary)' }}
                       >
                         <X size={16} />
                       </button>
@@ -834,12 +840,13 @@ export default function LeadProfilePage() {
                 ) : (
                   <div className="mb-3">
                     <div className="flex items-start gap-2 group">
-                      <h1 className="text-xl md:text-2xl font-bold text-white break-words leading-tight">
+                      <h1 className="text-xl md:text-2xl font-bold break-words leading-tight" style={{ color: 'var(--color-text-primary)' }}>
                         {displayName}
                       </h1>
                       <button
                         onClick={() => setIsEditingName(true)}
-                        className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 shrink-0 mt-1"
+                        className="p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100 shrink-0 mt-1"
+                        style={{ color: 'var(--color-text-muted)' }}
                         title={t.editName}
                       >
                         <Pencil size={14} />
@@ -866,7 +873,7 @@ export default function LeadProfilePage() {
                     </button>
 
                     {isStageDropdownOpen && (
-                      <div className="absolute top-full left-0 mt-2 w-48 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl z-50 overflow-hidden">
+                      <div className="absolute top-full left-0 mt-2 w-48 rounded-xl shadow-2xl z-50 overflow-hidden" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
                         {pipelineStages.map(stage => {
                           const color = getStageColor(stage.color)
                           const isActive = stage.name === lead.stage
@@ -874,13 +881,12 @@ export default function LeadProfilePage() {
                             <button
                               key={stage.id}
                               onClick={() => handleChangeStage(stage.name)}
-                              className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-all ${
-                                isActive ? 'bg-white/10' : 'hover:bg-white/5'
-                              }`}
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-all`}
+                              style={{ background: isActive ? 'var(--color-bg-hover)' : undefined }}
                             >
                               <span className={`w-2 h-2 rounded-full ${color.dot}`} />
                               <span className={`flex-1 text-left ${color.text}`}>{stage.label}</span>
-                              {isActive && <Check size={14} className="text-blue-400" />}
+                              {isActive && <Check size={14} style={{ color: 'var(--color-primary)' }} />}
                             </button>
                           )
                         })}
@@ -889,14 +895,14 @@ export default function LeadProfilePage() {
                   </div>
 
                   {lead.email && (
-                    <div className="flex items-center gap-2 text-gray-400 text-xs bg-gray-900/50 px-3 py-1.5 rounded-lg border border-white/5">
+                    <div className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}>
                       <Mail size={12} />
                       <span className="truncate max-w-[120px] sm:max-w-[180px]">{lead.email}</span>
                     </div>
                   )}
 
                   {lead.phone && (
-                    <div className="flex items-center gap-2 text-gray-400 text-xs bg-gray-900/50 px-3 py-1.5 rounded-lg border border-white/5">
+                    <div className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}>
                       <Phone size={12} />
                       {lead.phone}
                     </div>
@@ -907,7 +913,8 @@ export default function LeadProfilePage() {
                 <div className="flex flex-col sm:flex-row gap-2 mt-4">
                   <button
                     onClick={openChat}
-                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 transition-all shadow-lg text-sm"
+                    className="flex-1 px-4 py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 transition-all shadow-lg text-sm"
+                    style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
                   >
                     <MessageSquare size={16} />
                     {t.openChat}
@@ -915,7 +922,8 @@ export default function LeadProfilePage() {
                   <button
                     onClick={openWhatsApp}
                     disabled={!lead.phone}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-800 disabled:text-gray-500 text-white px-4 py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 transition-all shadow-lg text-sm"
+                    className="flex-1 px-4 py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 transition-all shadow-lg text-sm disabled:opacity-50"
+                    style={{ background: 'var(--color-success)', color: 'var(--color-text-primary)' }}
                   >
                     <ExternalLink size={16} />
                     {t.whatsapp}
@@ -925,10 +933,10 @@ export default function LeadProfilePage() {
             </div>
 
             {/* TAGS */}
-            <div className="mt-6 pt-6 border-t border-white/5">
+            <div className="mt-6 pt-6" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
               <div className="flex items-center gap-2 mb-3">
-                <Tag size={14} className="text-gray-500" />
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t.tagsTitle}</span>
+                <Tag size={14} style={{ color: 'var(--color-text-muted)' }} />
+                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>{t.tagsTitle}</span>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -954,14 +962,15 @@ export default function LeadProfilePage() {
                 <div className="relative">
                   <button
                     onClick={() => setIsTagDropdownOpen(!isTagDropdownOpen)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border border-dashed border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600 transition-all"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border-dashed transition-all"
+                    style={{ border: '1px dashed var(--color-border)', color: 'var(--color-text-muted)' }}
                   >
                     <Plus size={12} />
                     {t.addTag}
                   </button>
 
                   {isTagDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl z-50 overflow-hidden max-h-[200px] overflow-y-auto">
+                    <div className="absolute top-full left-0 mt-2 w-48 rounded-xl shadow-2xl z-50 overflow-hidden max-h-[200px] overflow-y-auto" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
                       {availableTags.length > 0 ? (
                         availableTags.map(tag => {
                           const tagColor = getTagColor(tag.color)
@@ -969,7 +978,10 @@ export default function LeadProfilePage() {
                             <button
                               key={tag.id}
                               onClick={() => handleAddTag(tag)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5 transition-all"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm transition-all"
+                              style={{ cursor: 'pointer' }}
+                              onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
+                              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                             >
                               <span className={`w-2 h-2 rounded-full ${tagColor.bg.replace('/20', '')}`} />
                               <span className={tagColor.text}>{tag.name}</span>
@@ -978,10 +990,11 @@ export default function LeadProfilePage() {
                         })
                       ) : (
                         <div className="px-3 py-4 text-center">
-                          <p className="text-xs text-gray-500 mb-2">{t.noTagsAvailable}</p>
-                          <a 
-                            href="/dashboard/settings" 
-                            className="text-xs text-blue-400 hover:text-blue-300 underline"
+                          <p className="text-xs mb-2" style={{ color: 'var(--color-text-muted)' }}>{t.noTagsAvailable}</p>
+                          <a
+                            href="/dashboard/settings"
+                            className="text-xs underline"
+                            style={{ color: 'var(--color-primary)' }}
                           >
                             {t.createTagsInSettings}
                           </a>
@@ -992,22 +1005,23 @@ export default function LeadProfilePage() {
                 </div>
 
                 {leadTags.length === 0 && (
-                  <span className="text-xs text-gray-600 italic">{t.noTags}</span>
+                  <span className="text-xs italic" style={{ color: 'var(--color-text-muted)' }}>{t.noTags}</span>
                 )}
               </div>
             </div>
 
             {/* CAMPOS DE EDIÇÃO */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 pt-6" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
               {/* Tipo de Contato */}
               <div className="space-y-1.5">
-                <label className="text-[10px] text-blue-400 font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider ml-1 flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
                   <Tag size={10} /> {t.contactType}
                 </label>
                 <select
                   value={lead.tipo_contato || ''}
                   onChange={(e) => handleUpdateField('tipo_contato', e.target.value)}
-                  className="w-full bg-[#0A0A0A] border border-blue-900/40 rounded-xl p-3 text-sm text-gray-300 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                  className="w-full rounded-xl p-3 text-sm outline-none transition-all cursor-pointer"
+                  style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
                 >
                   <option value="">{t.contactTypePlaceholder}</option>
                   <option value="comprador">{t.typeBuyer}</option>
@@ -1019,13 +1033,14 @@ export default function LeadProfilePage() {
 
               {/* Interesse */}
               <div className="space-y-1.5">
-                <label className="text-[10px] text-purple-400 font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider ml-1 flex items-center gap-1" style={{ color: 'var(--color-indigo)' }}>
                   <Globe size={10} /> {t.interest}
                 </label>
                 <select
                   value={lead.interesse || ''}
                   onChange={(e) => handleUpdateField('interesse', e.target.value)}
-                  className="w-full bg-[#0A0A0A] border border-purple-900/40 rounded-xl p-3 text-sm text-gray-300 outline-none focus:border-purple-500 transition-all cursor-pointer"
+                  className="w-full rounded-xl p-3 text-sm outline-none transition-all cursor-pointer"
+                  style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
                 >
                   <option value="">{t.interestPlaceholder}</option>
                   <option value="compra">{t.intPurchase}</option>
@@ -1036,59 +1051,63 @@ export default function LeadProfilePage() {
 
               {/* Cidade */}
               <div className="space-y-1.5">
-                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider ml-1 flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
                   <MapPin size={10} /> {t.city}
                 </label>
                 <input
                   defaultValue={lead.city || ''}
                   onBlur={(e) => handleUpdateField('city', e.target.value)}
-                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-300 outline-none focus:border-blue-500 transition-all placeholder-gray-700"
+                  className="w-full rounded-xl p-3 text-sm outline-none transition-all"
+                  style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
                   placeholder={t.city}
                 />
               </div>
 
               {/* Instagram */}
               <div className="space-y-1.5">
-                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider ml-1 flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
                   <Instagram size={10} /> {t.instagram}
                 </label>
                 <input
                   defaultValue={lead.instagram || ''}
                   onBlur={(e) => handleUpdateField('instagram', e.target.value)}
-                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-300 outline-none focus:border-blue-500 transition-all placeholder-gray-700"
+                  className="w-full rounded-xl p-3 text-sm outline-none transition-all"
+                  style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
                   placeholder="@instagram"
                 />
               </div>
 
               {/* Site */}
               <div className="space-y-1.5">
-                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider ml-1 flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
                   <Globe size={10} /> {t.website}
                 </label>
                 <input
                   defaultValue={lead.url_site || ''}
                   onBlur={(e) => handleUpdateField('url_site', e.target.value)}
-                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-3 text-sm text-gray-300 outline-none focus:border-blue-500 transition-all placeholder-gray-700"
+                  className="w-full rounded-xl p-3 text-sm outline-none transition-all"
+                  style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
                   placeholder="https://..."
                 />
               </div>
 
               {/* Valor */}
               <div className="space-y-1.5">
-                <label className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider ml-1 flex items-center gap-1" style={{ color: 'var(--color-success)' }}>
                   <DollarSign size={10} /> {t.value} ({userCurrency})
                 </label>
                 <input
                   type="number"
                   defaultValue={lead.total_em_vendas || 0}
                   onBlur={(e) => handleUpdateField('total_em_vendas', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-[#0A0A0A] border border-emerald-900/50 rounded-xl p-3 text-sm text-emerald-400 outline-none focus:border-emerald-500 font-bold transition-all"
+                  className="w-full rounded-xl p-3 text-sm outline-none font-bold transition-all"
+                  style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-success)' }}
                 />
               </div>
             </div>
 
             {/* INFO EXTRA */}
-            <div className="flex flex-wrap gap-4 mt-6 pt-6 border-t border-white/5 text-xs text-gray-500">
+            <div className="flex flex-wrap gap-4 mt-6 pt-6 text-xs" style={{ borderTop: '1px solid var(--color-border-subtle)', color: 'var(--color-text-muted)' }}>
               <div className="flex items-center gap-1.5">
                 <Clock size={12} />
                 {t.createdAt}: {formatDateTime(lead.created_at, userLang, userTimezone)}
@@ -1101,20 +1120,20 @@ export default function LeadProfilePage() {
               )}
               {lead.source && (
                 <div className="flex items-center gap-1.5">
-                  {t.source}: <span className="text-gray-400">{lead.source}</span>
+                  {t.source}: <span style={{ color: 'var(--color-text-tertiary)' }}>{lead.source}</span>
                 </div>
               )}
               {lead.nicho && (
                 <div className="flex items-center gap-1.5">
-                  {t.niche}: <span className="text-blue-400">{lead.nicho}</span>
+                  {t.niche}: <span style={{ color: 'var(--color-primary)' }}>{lead.nicho}</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* TIMELINE */}
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-5 md:p-8 shadow-xl">
-            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+          <div className="rounded-2xl p-5 md:p-8 shadow-xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+            <h3 className="text-lg font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
               <MessageSquare size={18} />
               {t.timelineTitle}
             </h3>
@@ -1122,25 +1141,26 @@ export default function LeadProfilePage() {
             <div className="space-y-4">
               {events.length === 0 && (
                 <div className="text-center py-10 opacity-50">
-                  <p className="text-gray-500 text-sm italic">{t.emptyHistory}</p>
+                  <p className="text-sm italic" style={{ color: 'var(--color-text-muted)' }}>{t.emptyHistory}</p>
                 </div>
               )}
 
               {events.map((event) => (
                 <div key={event.id} className="flex gap-4 group">
-                  <div className="min-w-[2px] bg-white/10 relative group-last:bg-transparent">
-                    <div className={`absolute top-1 -left-[5px] w-3 h-3 rounded-full ring-4 ring-[#111] ${
-                      event.type === 'stage_change' ? 'bg-purple-500' :
-                      event.type === 'tag_added' ? 'bg-green-500' :
-                      event.type === 'tag_removed' ? 'bg-red-500' :
-                      'bg-blue-500'
-                    }`} />
+                  <div className="min-w-[2px] relative group-last:bg-transparent" style={{ background: 'var(--color-border-subtle)' }}>
+                    <div className="absolute top-1 -left-[5px] w-3 h-3 rounded-full" style={{
+                      background: event.type === 'stage_change' ? 'var(--color-indigo)' :
+                        event.type === 'tag_added' ? 'var(--color-success)' :
+                        event.type === 'tag_removed' ? 'var(--color-error)' :
+                        'var(--color-primary)',
+                      boxShadow: '0 0 0 4px var(--color-bg-base)'
+                    }} />
                   </div>
                   <div className="pb-6 flex-1">
-                    <p className="text-[10px] text-gray-500 font-mono mb-2 font-medium">
+                    <p className="text-[10px] font-mono mb-2 font-medium" style={{ color: 'var(--color-text-muted)' }}>
                       {formatDateTime(event.created_at, userLang, userTimezone)}
                     </p>
-                    <div className="bg-[#0A0A0A] border border-white/5 p-4 rounded-xl text-sm text-gray-300 shadow-sm leading-relaxed">
+                    <div className="p-4 rounded-xl text-sm shadow-sm leading-relaxed" style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}>
                       {event.content}
                     </div>
                   </div>
@@ -1152,21 +1172,23 @@ export default function LeadProfilePage() {
 
         {/* COLUNA LATERAL */}
         <div className="space-y-6">
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-5 md:p-6 shadow-xl">
-            <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+          <div className="rounded-2xl p-5 md:p-6 shadow-xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+            <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--color-primary)' }} />
               {t.quickNoteTitle}
             </h3>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full h-32 lg:h-40 bg-[#0A0A0A] border border-white/10 rounded-xl p-4 text-sm text-gray-300 outline-none focus:border-blue-500 resize-none transition-all placeholder-gray-600"
+              className="w-full h-32 lg:h-40 rounded-xl p-4 text-sm outline-none resize-none transition-all"
+              style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
               placeholder={t.notePlaceholder}
             />
             <button
               onClick={handleSaveNote}
               disabled={savingNote || !note.trim()}
-              className="w-full mt-4 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-500 text-white font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2 shadow-lg shadow-blue-600/20 disabled:shadow-none"
+              className="w-full mt-4 font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2 shadow-lg disabled:opacity-50 disabled:shadow-none"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
             >
               {savingNote ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -1177,16 +1199,16 @@ export default function LeadProfilePage() {
           </div>
 
           {/* Valor do Negócio */}
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-5 md:p-6 shadow-xl">
-            <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-3">{t.value}</h3>
-            <p className="text-3xl font-black text-emerald-400">
+          <div className="rounded-2xl p-5 md:p-6 shadow-xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+            <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--color-text-muted)' }}>{t.value}</h3>
+            <p className="text-3xl font-black" style={{ color: 'var(--color-success)' }}>
               {formatPrice(lead.total_em_vendas, userCurrency, userLang)}
             </p>
           </div>
 
           {/* Documentos do Lead - Apenas para nichos específicos */}
           {activeOrg?.niche === 'real_estate' && (
-            <div className="bg-[#111] border border-white/5 rounded-2xl p-5 md:p-6 shadow-xl">
+            <div className="rounded-2xl p-5 md:p-6 shadow-xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
               <LeadDocuments 
                 leadId={lead.id} 
                 leadData={{

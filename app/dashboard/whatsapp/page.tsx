@@ -365,11 +365,11 @@ export default function WhatsAppPage() {
 
   // ─── Status badge ───
   const StatusBadge = ({ status }: { status: string }) => {
-    const colors: Record<string, string> = {
-      connected: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-      disconnected: 'bg-gray-500/15 text-gray-400 border-gray-500/30',
-      qr_pending: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-      banned: 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+    const colorStyles: Record<string, React.CSSProperties> = {
+      connected: { background: 'var(--color-success-subtle)', color: 'var(--color-success)', border: '1px solid var(--color-success)' },
+      disconnected: { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border)' },
+      qr_pending: { background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' },
+      banned: { background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid var(--color-error)' }
     }
     const icons: Record<string, React.ReactNode> = {
       connected: <Wifi size={12} />,
@@ -378,7 +378,7 @@ export default function WhatsAppPage() {
       banned: <AlertCircle size={12} />
     }
     return (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${colors[status] || colors.disconnected}`}>
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={colorStyles[status] || colorStyles.disconnected}>
         {icons[status] || icons.disconnected}
         {t.status[status as keyof typeof t.status] || status}
       </span>
@@ -416,8 +416,8 @@ export default function WhatsAppPage() {
           <button
             onClick={() => canCreateMore ? setShowCreate(true) : null}
             disabled={!canCreateMore}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: 'var(--color-primary)' }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
             title={!canCreateMore ? t.limitReached : ''}
           >
             <Plus size={16} />
@@ -429,9 +429,9 @@ export default function WhatsAppPage() {
       {/* Aviso de limite atingido */}
       {!canCreateMore && instances.length > 0 && (
         <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl" style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)' }}>
-          <AlertCircle size={16} className="text-amber-400 shrink-0" />
+          <AlertCircle size={16} className="shrink-0" style={{ color: 'var(--color-accent)' }} />
           <div>
-            <span className="text-sm font-medium text-amber-400">{t.limitReached}</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--color-accent)' }}>{t.limitReached}</span>
             <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
               {t.limitReachedDesc(maxInstances)}
             </p>
@@ -442,10 +442,10 @@ export default function WhatsAppPage() {
       {/* Dica do webhook — só mostra como fallback informativo */}
       {instances.length > 0 && (
         <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl" style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)' }}>
-          <Wifi size={16} className="text-indigo-400 shrink-0" />
+          <Wifi size={16} className="shrink-0" style={{ color: 'var(--color-indigo)' }} />
           <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
             O webhook do SDR é configurado automaticamente ao conectar. Caso precise da URL manualmente:{' '}
-            <Link href="/dashboard/settings" className="text-indigo-400 hover:underline font-medium">
+            <Link href="/dashboard/settings" className="hover:underline font-medium" style={{ color: 'var(--color-indigo)' }}>
               {t.webhookHintLink}
             </Link>
           </p>
@@ -456,7 +456,7 @@ export default function WhatsAppPage() {
           MODAL CRIAR INSTÂNCIA
           ═══════════════════════════════════════════════════════════════════════ */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" style={{ background: 'var(--color-bg-overlay)' }}>
           <div className="w-full max-w-md mx-4 rounded-2xl p-6" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -467,14 +467,14 @@ export default function WhatsAppPage() {
                   {t.addNew}
                 </h2>
               </div>
-              <button onClick={() => setShowCreate(false)} className="p-1 rounded-lg hover:bg-white/10 transition-colors">
+              <button onClick={() => setShowCreate(false)} className="p-1 rounded-lg transition-colors">
                 <X size={18} style={{ color: 'var(--color-text-secondary)' }} />
               </button>
             </div>
 
             <div className="space-y-4">
               {createError && (
-                <div className="px-3 py-2 rounded-lg text-xs text-red-400" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                <div className="px-3 py-2 rounded-lg text-xs" style={{ color: 'var(--color-error)', background: 'var(--color-error-subtle)', border: '1px solid var(--color-error)' }}>
                   {createError}
                 </div>
               )}
@@ -509,8 +509,8 @@ export default function WhatsAppPage() {
                 <button
                   onClick={handleCreate}
                   disabled={creating}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
-                  style={{ background: 'var(--color-primary)' }}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
                 >
                   {creating ? (
                     <><Loader2 size={14} className="animate-spin" /> {t.creating}</>
@@ -528,7 +528,7 @@ export default function WhatsAppPage() {
           MODAL QR CODE
           ═══════════════════════════════════════════════════════════════════════ */}
       {qrInstanceId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" style={{ background: 'var(--color-bg-overlay)' }}>
           <div className="w-full max-w-sm mx-4 rounded-2xl p-6 text-center" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
@@ -536,7 +536,7 @@ export default function WhatsAppPage() {
               </h2>
               <button
                 onClick={() => { setQrInstanceId(null); setQrCode(null) }}
-                className="p-1 rounded-lg hover:bg-white/10 transition-colors"
+                className="p-1 rounded-lg transition-colors"
               >
                 <X size={18} style={{ color: 'var(--color-text-secondary)' }} />
               </button>
@@ -545,16 +545,16 @@ export default function WhatsAppPage() {
             {/* QR Display */}
             <div className="relative mx-auto w-64 h-64 rounded-2xl overflow-hidden flex items-center justify-center mb-4" style={{ background: '#ffffff' }}>
               {qrLoading && !qrCode ? (
-                <Loader2 size={32} className="animate-spin text-gray-400" />
+                <Loader2 size={32} className="animate-spin" style={{ color: 'var(--color-text-tertiary)' }} />
               ) : qrStatus === 'connected' ? (
                 <div className="flex flex-col items-center gap-2">
-                  <CheckCircle2 size={48} className="text-emerald-500" />
-                  <span className="text-emerald-600 font-medium text-sm">Conectado!</span>
+                  <CheckCircle2 size={48} style={{ color: 'var(--color-success)' }} />
+                  <span className="font-medium text-sm" style={{ color: 'var(--color-success)' }}>Conectado!</span>
                   {webhookStatus === 'success' && (
-                    <span className="text-emerald-500 text-xs">Webhook configurado automaticamente</span>
+                    <span className="text-xs" style={{ color: 'var(--color-success)' }}>Webhook configurado automaticamente</span>
                   )}
                   {webhookStatus === 'error' && (
-                    <span className="text-amber-500 text-xs">Webhook: configure manualmente nas Integrações</span>
+                    <span className="text-xs" style={{ color: 'var(--color-accent)' }}>Webhook: configure manualmente nas Integrações</span>
                   )}
                 </div>
               ) : qrCode ? (
@@ -564,7 +564,7 @@ export default function WhatsAppPage() {
                   className="w-full h-full object-contain p-3"
                 />
               ) : (
-                <div className="flex flex-col items-center gap-2 text-gray-400">
+                <div className="flex flex-col items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
                   <QrCode size={48} />
                   <span className="text-xs">{t.connecting}</span>
                 </div>
@@ -602,8 +602,8 @@ export default function WhatsAppPage() {
           </p>
           <button
             onClick={() => setShowCreate(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90"
-            style={{ background: 'var(--color-primary)' }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
           >
             <Plus size={16} />
             {t.addNew}
@@ -669,10 +669,10 @@ export default function WhatsAppPage() {
                     <select
                       value={instance.agent_id || ''}
                       onChange={e => handleLinkAgent(instance.id, e.target.value)}
-                      className="text-xs rounded-lg px-2 py-1.5 outline-none cursor-pointer appearance-none [&>option]:bg-[#1a1a1a] [&>option]:text-white"
+                      className="text-xs rounded-lg px-2 py-1.5 outline-none cursor-pointer appearance-none"
                       style={{
-                        background: '#1a1a1a',
-                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'var(--color-bg-elevated)',
+                        border: '1px solid var(--color-border)',
                         color: instance.agent_id ? 'rgb(16,185,129)' : 'var(--color-text-secondary)',
                         colorScheme: 'dark'
                       }}
@@ -724,7 +724,7 @@ export default function WhatsAppPage() {
                   {instance.status === 'connected' && (
                     <button
                       onClick={() => handleDisconnect(instance.id)}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:bg-rose-500/10 hover:text-rose-400"
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all"
                       style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
                     >
                       <WifiOff size={13} />
@@ -734,7 +734,7 @@ export default function WhatsAppPage() {
                   <button
                     onClick={() => setConfirmDeleteId(instance.id)}
                     disabled={deletingId === instance.id}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
                     style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
                   >
                     {deletingId === instance.id ? (
@@ -754,27 +754,29 @@ export default function WhatsAppPage() {
 
       {/* Modal de confirmação de exclusão */}
       {confirmDeleteId && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setConfirmDeleteId(null)}>
-          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={() => setConfirmDeleteId(null)}>
+          <div className="rounded-2xl w-full max-w-sm p-6 space-y-4" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }} onClick={e => e.stopPropagation()}>
             <div className="flex items-start gap-3">
-              <div className="p-2.5 bg-rose-500/10 rounded-xl shrink-0">
-                <AlertTriangle size={20} className="text-rose-400" />
+              <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'var(--color-error-subtle)' }}>
+                <AlertTriangle size={20} style={{ color: 'var(--color-error)' }} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white">{t.delete}</h3>
-                <p className="text-sm text-gray-400 mt-1">{t.deleteConfirm}</p>
+                <h3 className="text-base font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.delete}</h3>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.deleteConfirm}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 pt-2">
               <button
                 onClick={() => setConfirmDeleteId(null)}
-                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors"
+                className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl transition-colors"
+                style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}
               >
                 {t.cancel || 'Cancelar'}
               </button>
               <button
                 onClick={() => handleDelete(confirmDeleteId)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-colors"
+                style={{ background: 'var(--color-error)', color: 'var(--color-text-primary)' }}
               >
                 <Trash2 size={14} />
                 {t.delete}

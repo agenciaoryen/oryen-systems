@@ -196,18 +196,18 @@ interface LeadOption {
 /* =============================================
    COLOR MAPS
    ============================================= */
-const EVENT_TYPE_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  visit:     { bg: 'bg-blue-500/10', text: 'text-blue-400', dot: 'bg-blue-500' },
-  meeting:   { bg: 'bg-purple-500/10', text: 'text-purple-400', dot: 'bg-purple-400' },
-  follow_up: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
-  other:     { bg: 'bg-gray-500/10', text: 'text-gray-400', dot: 'bg-gray-400' },
+const EVENT_TYPE_COLORS: Record<string, { bg: string; text: string; dotStyle: React.CSSProperties }> = {
+  visit:     { bg: 'var(--color-primary-subtle)', text: 'var(--color-primary)', dotStyle: { backgroundColor: 'var(--color-primary)' } },
+  meeting:   { bg: 'rgba(168,85,247,0.1)', text: 'rgb(192,132,252)', dotStyle: { backgroundColor: 'rgb(192,132,252)' } },
+  follow_up: { bg: 'var(--color-success-subtle)', text: 'var(--color-success)', dotStyle: { backgroundColor: 'var(--color-success)' } },
+  other:     { bg: 'var(--color-bg-hover)', text: 'var(--color-text-tertiary)', dotStyle: { backgroundColor: 'var(--color-text-tertiary)' } },
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  scheduled: { bg: 'bg-blue-500/10', text: 'text-blue-400' },
-  completed: { bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
-  cancelled: { bg: 'bg-gray-500/10', text: 'text-gray-500' },
-  no_show:   { bg: 'bg-rose-500/10', text: 'text-rose-400' },
+  scheduled: { bg: 'var(--color-primary-subtle)', text: 'var(--color-primary)' },
+  completed: { bg: 'var(--color-success-subtle)', text: 'var(--color-success)' },
+  cancelled: { bg: 'var(--color-bg-hover)', text: 'var(--color-text-muted)' },
+  no_show:   { bg: 'var(--color-error-subtle)', text: 'var(--color-error)' },
 }
 
 /* =============================================
@@ -335,7 +335,7 @@ export default function CalendarPage() {
   if (loading && events.length === 0) {
     return (
       <div className="flex h-[calc(100vh-100px)] items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
       </div>
     )
   }
@@ -344,10 +344,11 @@ export default function CalendarPage() {
     <div className="space-y-4 pb-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h1 className="text-2xl font-bold text-white">{t.title}</h1>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.title}</h1>
         <button
           onClick={() => { setShowCreateModal(true) }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors text-sm"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-colors text-sm"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
         >
           <Plus size={16} />
           {t.newEvent}
@@ -356,20 +357,20 @@ export default function CalendarPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* ═══ Month Grid ═══ */}
-        <div className="lg:col-span-2 bg-[#111] border border-white/5 rounded-2xl p-4">
+        <div className="lg:col-span-2 rounded-2xl p-4" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
           {/* Month nav */}
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-bold text-white">
+            <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
               {t.months[currentMonth]} {currentYear}
             </h2>
             <div className="flex items-center gap-2">
-              <button onClick={goToday} className="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+              <button onClick={goToday} className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)' }}>
                 {t.today}
               </button>
-              <button onClick={prevMonth} className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+              <button onClick={prevMonth} className="p-1.5 rounded-lg transition-colors" style={{ color: 'var(--color-text-tertiary)' }}>
                 <ChevronLeft size={18} />
               </button>
-              <button onClick={nextMonth} className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+              <button onClick={nextMonth} className="p-1.5 rounded-lg transition-colors" style={{ color: 'var(--color-text-tertiary)' }}>
                 <ChevronRight size={18} />
               </button>
             </div>
@@ -378,7 +379,7 @@ export default function CalendarPage() {
           {/* Day headers */}
           <div className="grid grid-cols-7 gap-1 mb-1">
             {dayNames.map(d => (
-              <div key={d} className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider py-2">{d}</div>
+              <div key={d} className="text-center text-[10px] font-bold uppercase tracking-wider py-2" style={{ color: 'var(--color-text-muted)' }}>{d}</div>
             ))}
           </div>
 
@@ -401,18 +402,19 @@ export default function CalendarPage() {
                 <button
                   key={dateStr}
                   onClick={() => setSelectedDate(dateStr === selectedDate ? null : dateStr)}
-                  className={`aspect-square rounded-xl flex flex-col items-center justify-center gap-1 text-sm transition-all relative ${
-                    isSelected ? 'bg-blue-600/20 border border-blue-500/40 text-white' :
-                    isToday ? 'bg-white/5 border border-white/10 text-white font-bold' :
-                    'hover:bg-white/5 text-gray-400 border border-transparent'
-                  }`}
+                  className="aspect-square rounded-xl flex flex-col items-center justify-center gap-1 text-sm transition-all relative"
+                  style={
+                    isSelected ? { background: 'var(--color-primary-subtle)', border: '1px solid var(--color-primary)', color: 'var(--color-text-primary)' } :
+                    isToday ? { background: 'var(--color-bg-hover)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)', fontWeight: 700 } :
+                    { color: 'var(--color-text-tertiary)', border: '1px solid transparent' }
+                  }
                 >
-                  <span className={isToday ? 'text-blue-400 font-bold' : ''}>{day}</span>
+                  <span style={isToday ? { color: 'var(--color-primary)', fontWeight: 700 } : {}}>{day}</span>
                   {dayEvents.length > 0 && (
                     <div className="flex gap-0.5">
                       {dayEvents.slice(0, 3).map((ev, idx) => {
                         const colors = EVENT_TYPE_COLORS[ev.event_type] || EVENT_TYPE_COLORS.other
-                        return <div key={idx} className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+                        return <div key={idx} className="w-1.5 h-1.5 rounded-full" style={colors.dotStyle} />
                       })}
                     </div>
                   )}
@@ -423,8 +425,8 @@ export default function CalendarPage() {
         </div>
 
         {/* ═══ Event List ═══ */}
-        <div className="bg-[#111] border border-white/5 rounded-2xl p-5">
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+        <div className="rounded-2xl p-5" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+          <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--color-text-tertiary)' }}>
             {selectedDate
               ? selectedDate.split('-').reverse().join('/')
               : t.upcoming
@@ -433,9 +435,9 @@ export default function CalendarPage() {
 
           {filteredEvents.length === 0 ? (
             <div className="text-center py-12">
-              <CalendarDays className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">{t.noEvents}</p>
-              <p className="text-xs text-gray-600 mt-1">{t.noEventsDesc}</p>
+              <CalendarDays className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--color-border)' }} />
+              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{t.noEvents}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{t.noEventsDesc}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -446,23 +448,24 @@ export default function CalendarPage() {
                   <button
                     key={ev.id}
                     onClick={() => setSelectedEvent(ev)}
-                    className="w-full text-left p-3 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-xl transition-all"
+                    className="w-full text-left p-3 rounded-xl transition-all"
+                    style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border-subtle)' }}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-white truncate">{ev.title}</p>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                        <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{ev.title}</p>
+                        <div className="flex items-center gap-2 mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>
                           <Clock size={12} />
                           <span>{formatTime(ev.start_time)}{ev.end_time ? ` - ${formatTime(ev.end_time)}` : ''}</span>
                         </div>
                         {ev.leads?.name && (
-                          <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
+                          <div className="flex items-center gap-1.5 mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>
                             <User size={12} />
                             <span className="truncate">{ev.leads.name}</span>
                           </div>
                         )}
                       </div>
-                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${sColors.bg} ${sColors.text}`}>
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ background: sColors.bg, color: sColors.text }}>
                         {statusLabel(ev.status)}
                       </span>
                     </div>
@@ -573,29 +576,31 @@ function CreateEventModal({
     }
   }
 
-  const selectClass = "w-full mt-1 bg-[#1a1a1a] border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:border-blue-500/50 focus:outline-none appearance-none [&>option]:bg-[#1a1a1a] [&>option]:text-white"
-  const inputClass = "w-full mt-1 bg-[#1a1a1a] border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500/50 focus:outline-none [color-scheme:dark]"
+  const selectClass = "w-full mt-1 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none appearance-none [&>option]:bg-[var(--color-bg-elevated)] [&>option]:text-[var(--color-text-primary)]"
+  const selectStyle: React.CSSProperties = { background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }
+  const inputClass = "w-full mt-1 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none [color-scheme:dark]"
+  const inputStyle: React.CSSProperties = { background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
-          <h2 className="text-base font-bold text-white">{t.newEvent}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={18} /></button>
+    <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={onClose}>
+      <div className="rounded-2xl w-full max-w-lg" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }} onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+          <h2 className="text-base font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.newEvent}</h2>
+          <button onClick={onClose} style={{ color: 'var(--color-text-muted)' }}><X size={18} /></button>
         </div>
 
         <div className="px-5 py-3 space-y-3">
           {/* Title */}
           <div>
-            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.eventTitle}</label>
-            <input value={title} onChange={e => setTitle(e.target.value)} className={inputClass} placeholder="Ex: Visita apartamento 2 quartos" />
+            <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.eventTitle}</label>
+            <input value={title} onChange={e => setTitle(e.target.value)} className={inputClass} style={inputStyle} placeholder="Ex: Visita apartamento 2 quartos" />
           </div>
 
           {/* Type + Date + Times em uma linha */}
           <div className="grid grid-cols-4 gap-2">
             <div>
-              <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.eventType}</label>
-              <select value={eventType} onChange={e => setEventType(e.target.value)} className={selectClass}>
+              <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.eventType}</label>
+              <select value={eventType} onChange={e => setEventType(e.target.value)} className={selectClass} style={selectStyle}>
                 <option value="visit">{t.typeVisit}</option>
                 <option value="meeting">{t.typeMeeting}</option>
                 <option value="follow_up">{t.typeFollowUp}</option>
@@ -603,45 +608,45 @@ function CreateEventModal({
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.date}</label>
-              <input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} className={inputClass} />
+              <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.date}</label>
+              <input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} className={inputClass} style={inputStyle} />
             </div>
             <div>
-              <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.startTime}</label>
-              <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className={inputClass} />
+              <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.startTime}</label>
+              <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className={inputClass} style={inputStyle} />
             </div>
             <div>
-              <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.endTime}</label>
-              <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className={inputClass} />
+              <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.endTime}</label>
+              <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className={inputClass} style={inputStyle} />
             </div>
           </div>
 
           {/* Address */}
           <div>
-            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.address}</label>
-            <input value={address} onChange={e => setAddress(e.target.value)} className={inputClass} placeholder="Rua, numero, bairro..." />
+            <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.address}</label>
+            <input value={address} onChange={e => setAddress(e.target.value)} className={inputClass} style={inputStyle} placeholder="Rua, numero, bairro..." />
           </div>
 
           {/* Lead search */}
           <div>
-            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.lead}</label>
+            <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.lead}</label>
             {selectedLead ? (
-              <div className="flex items-center gap-2 mt-1 bg-blue-500/10 border border-blue-500/30 rounded-lg px-3 py-2">
-                <User size={14} className="text-blue-400" />
-                <span className="text-sm text-white flex-1">{selectedLead.name}</span>
-                <button onClick={() => { setSelectedLead(null); setLeadId(null); setLeadSearch('') }} className="text-gray-500 hover:text-white"><X size={14} /></button>
+              <div className="flex items-center gap-2 mt-1 rounded-lg px-3 py-2" style={{ background: 'var(--color-primary-subtle)', border: '1px solid var(--color-primary)' }}>
+                <User size={14} style={{ color: 'var(--color-primary)' }} />
+                <span className="text-sm flex-1" style={{ color: 'var(--color-text-primary)' }}>{selectedLead.name}</span>
+                <button onClick={() => { setSelectedLead(null); setLeadId(null); setLeadSearch('') }} style={{ color: 'var(--color-text-muted)' }}><X size={14} /></button>
               </div>
             ) : (
               <div className="relative mt-1">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-                <input value={leadSearch} onChange={e => setLeadSearch(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-gray-600 focus:border-blue-500/50 focus:outline-none" placeholder={t.searchLead} />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
+                <input value={leadSearch} onChange={e => setLeadSearch(e.target.value)} className="w-full rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }} placeholder={t.searchLead} />
                 {leadResults.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1a1a] border border-white/10 rounded-lg overflow-hidden z-10">
+                  <div className="absolute top-full left-0 right-0 mt-1 rounded-lg overflow-hidden z-10" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
                     {leadResults.map(l => (
-                      <button key={l.id} onClick={() => { setSelectedLead(l); setLeadId(l.id); setLeadSearch(''); setLeadResults([]) }} className="w-full text-left px-3 py-2 hover:bg-white/10 text-sm text-gray-300 flex items-center gap-2">
-                        <User size={12} className="text-gray-500" />
+                      <button key={l.id} onClick={() => { setSelectedLead(l); setLeadId(l.id); setLeadSearch(''); setLeadResults([]) }} className="w-full text-left px-3 py-2 text-sm flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
+                        <User size={12} style={{ color: 'var(--color-text-muted)' }} />
                         <span>{l.name}</span>
-                        {l.phone && <span className="text-gray-600 text-xs">{l.phone}</span>}
+                        {l.phone && <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{l.phone}</span>}
                       </button>
                     ))}
                   </div>
@@ -652,15 +657,15 @@ function CreateEventModal({
 
           {/* Notes */}
           <div>
-            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t.notes}</label>
-            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={1} className="w-full mt-1 bg-[#1a1a1a] border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500/50 focus:outline-none resize-none" placeholder="Observacoes..." />
+            <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.notes}</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={1} className="w-full mt-1 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none resize-none" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }} placeholder="Observacoes..." />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-5 py-3 border-t border-white/5">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">{t.cancel}</button>
-          <button onClick={handleSave} disabled={saving || !title.trim()} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-medium text-sm transition-colors flex items-center gap-2">
+        <div className="flex justify-end gap-3 px-5 py-3" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+          <button onClick={onClose} className="px-4 py-2 text-sm transition-colors" style={{ color: 'var(--color-text-tertiary)' }}>{t.cancel}</button>
+          <button onClick={handleSave} disabled={saving || !title.trim()} className="px-5 py-2 disabled:opacity-50 rounded-xl font-medium text-sm transition-colors flex items-center gap-2" style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}>
             {saving && <Loader2 size={14} className="animate-spin" />}
             {t.save}
           </button>
@@ -696,26 +701,26 @@ function EventDetailModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b border-white/5">
-          <h2 className="text-lg font-bold text-white">{t.eventDetails}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={20} /></button>
+    <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={onClose}>
+      <div className="rounded-2xl w-full max-w-md" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }} onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+          <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.eventDetails}</h2>
+          <button onClick={onClose} style={{ color: 'var(--color-text-muted)' }}><X size={20} /></button>
         </div>
 
         <div className="p-5 space-y-4">
           {/* Title + badges */}
           <div>
-            <h3 className="text-lg font-bold text-white">{event.title}</h3>
+            <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{event.title}</h3>
             <div className="flex items-center gap-2 mt-2">
-              <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${colors.bg} ${colors.text}`}>
+              <span className="text-xs font-bold uppercase px-2 py-0.5 rounded" style={{ background: colors.bg, color: colors.text }}>
                 {typeLabel(event.event_type)}
               </span>
-              <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${sColors.bg} ${sColors.text}`}>
+              <span className="text-xs font-bold uppercase px-2 py-0.5 rounded" style={{ background: sColors.bg, color: sColors.text }}>
                 {statusLabel(event.status)}
               </span>
               {event.created_by === 'sdr_agent' && (
-                <span className="text-xs font-medium text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+                <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ color: 'var(--color-accent)', background: 'var(--color-accent-subtle)' }}>
                   {t.createdByAgent}
                 </span>
               )}
@@ -723,16 +728,16 @@ function EventDetailModal({
           </div>
 
           {/* Date/Time */}
-          <div className="flex items-center gap-3 text-sm text-gray-300">
-            <Clock size={16} className="text-gray-500" />
+          <div className="flex items-center gap-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            <Clock size={16} style={{ color: 'var(--color-text-muted)' }} />
             <span>{event.event_date.split('-').reverse().join('/')}</span>
             <span>{formatTime(event.start_time)}{event.end_time ? ` - ${formatTime(event.end_time)}` : ''}</span>
           </div>
 
           {/* Address */}
           {event.address && (
-            <div className="flex items-start gap-3 text-sm text-gray-300">
-              <MapPin size={16} className="text-gray-500 mt-0.5" />
+            <div className="flex items-start gap-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              <MapPin size={16} className="mt-0.5" style={{ color: 'var(--color-text-muted)' }} />
               <span>{event.address}</span>
             </div>
           )}
@@ -740,9 +745,9 @@ function EventDetailModal({
           {/* Lead */}
           {event.leads?.name && (
             <div className="flex items-center gap-3 text-sm">
-              <User size={16} className="text-gray-500" />
-              <span className="text-gray-300">{event.leads.name}</span>
-              <a href={`/dashboard/crm/${event.lead_id}`} className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-xs">
+              <User size={16} style={{ color: 'var(--color-text-muted)' }} />
+              <span style={{ color: 'var(--color-text-secondary)' }}>{event.leads.name}</span>
+              <a href={`/dashboard/crm/${event.lead_id}`} className="flex items-center gap-1 text-xs" style={{ color: 'var(--color-primary)' }}>
                 <ExternalLink size={12} />
                 {t.viewLead}
               </a>
@@ -751,28 +756,28 @@ function EventDetailModal({
 
           {/* Description */}
           {event.description && (
-            <div className="text-sm text-gray-400 bg-white/5 rounded-lg p-3">{event.description}</div>
+            <div className="text-sm rounded-lg p-3" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)' }}>{event.description}</div>
           )}
 
           {/* Notes */}
           {event.notes && (
-            <div className="text-sm text-gray-400 bg-white/5 rounded-lg p-3">{event.notes}</div>
+            <div className="text-sm rounded-lg p-3" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)' }}>{event.notes}</div>
           )}
         </div>
 
         {/* Actions */}
         {event.status === 'scheduled' && (
-          <div className="p-5 border-t border-white/5 space-y-2">
-            <button onClick={() => onUpdateStatus(event.id, 'completed')} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-sm font-medium hover:bg-emerald-500/20 transition-colors">
+          <div className="p-5 space-y-2" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+            <button onClick={() => onUpdateStatus(event.id, 'completed')} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ background: 'var(--color-success-subtle)', border: '1px solid var(--color-success)', color: 'var(--color-success)' }}>
               <CheckCircle2 size={16} />
               {t.markCompleted}
             </button>
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => onUpdateStatus(event.id, 'no_show')} className="flex items-center justify-center gap-2 px-4 py-2 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium hover:bg-rose-500/20 transition-colors">
+              <button onClick={() => onUpdateStatus(event.id, 'no_show')} className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-colors" style={{ background: 'var(--color-error-subtle)', border: '1px solid var(--color-error)', color: 'var(--color-error)' }}>
                 <AlertCircle size={14} />
                 {t.markNoShow}
               </button>
-              <button onClick={() => onUpdateStatus(event.id, 'cancelled')} className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-500/10 border border-gray-500/30 text-gray-400 rounded-xl text-xs font-medium hover:bg-gray-500/20 transition-colors">
+              <button onClick={() => onUpdateStatus(event.id, 'cancelled')} className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-colors" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-tertiary)' }}>
                 <XCircle size={14} />
                 {t.markCancelled}
               </button>
@@ -785,33 +790,36 @@ function EventDetailModal({
           {!showDeleteConfirm ? (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="w-full flex items-center justify-center gap-2 text-xs text-gray-600 hover:text-rose-400 transition-colors py-2"
+              className="w-full flex items-center justify-center gap-2 text-xs transition-colors py-2"
+              style={{ color: 'var(--color-text-muted)' }}
             >
               <Trash2 size={14} />
               {t.delete}
             </button>
           ) : (
-            <div className="bg-rose-500/5 border border-rose-500/20 rounded-xl p-4 space-y-3">
+            <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--color-error-subtle)', border: '1px solid var(--color-error)' }}>
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-rose-500/10 rounded-lg shrink-0">
-                  <AlertCircle size={18} className="text-rose-400" />
+                <div className="p-2 rounded-lg shrink-0" style={{ background: 'var(--color-error-subtle)' }}>
+                  <AlertCircle size={18} style={{ color: 'var(--color-error)' }} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-rose-300">{t.deleteConfirmTitle}</p>
-                  <p className="text-xs text-gray-400 mt-1">{t.deleteConfirmDesc}</p>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--color-error)' }}>{t.deleteConfirmTitle}</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.deleteConfirmDesc}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 px-3 py-2 text-xs font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors"
+                  className="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors"
+                  style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}
                 >
                   {t.cancel}
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-lg transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium disabled:opacity-50 rounded-lg transition-colors"
+                  style={{ background: 'var(--color-error)', color: 'var(--color-text-primary)' }}
                 >
                   {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                   {t.deleteConfirm}

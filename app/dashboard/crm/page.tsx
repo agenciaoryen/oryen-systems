@@ -348,12 +348,12 @@ function AiStatusBadge({ isActive, size = 'sm' }: { isActive: boolean; size?: 's
   const iconSize = size === 'sm' ? 10 : 12
   
   return (
-    <div 
-      className={`${sizeClasses} rounded-full flex items-center justify-center ${
-        isActive 
-          ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' 
-          : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]'
-      }`}
+    <div
+      className={`${sizeClasses} rounded-full flex items-center justify-center`}
+      style={{
+        background: isActive ? 'var(--color-success)' : 'var(--color-accent)',
+        boxShadow: isActive ? '0 0 8px rgba(34, 197, 94, 0.6)' : '0 0 8px rgba(240, 160, 48, 0.6)',
+      }}
       title={isActive ? 'IA Ativa' : 'IA Pausada'}
     >
       <Bot size={iconSize} className="text-white" />
@@ -731,10 +731,10 @@ export default function CrmPage() {
               {filteredLeads.length} {t.leads}
             </span>
           </h1>
-          <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5">
+          <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: 'var(--color-text-muted)' }}>
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--color-success)' }} />
+              <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--color-success)' }} />
             </span>
             {t.synced}
           </p>
@@ -744,7 +744,8 @@ export default function CrmPage() {
           {/* Botão Novo Lead */}
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg hover:shadow-blue-500/20 whitespace-nowrap"
+            className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+            style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
           >
             <Plus size={16} />
             <span className="hidden sm:inline">{t.newLead}</span>
@@ -752,19 +753,22 @@ export default function CrmPage() {
 
           {/* Busca */}
           <div className="relative flex-1 min-w-[140px] md:min-w-[200px] order-last lg:order-none w-full lg:w-auto mt-2 lg:mt-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--color-text-muted)' }} />
             <input
               type="text"
               placeholder={t.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-sm rounded-lg pl-9 pr-8 py-2 outline-none focus:ring-1 focus:ring-blue-500/50 transition-all"
+              className="w-full text-sm rounded-lg pl-9 pr-8 py-2 outline-none transition-all"
               style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79, 111, 255, 0.1)' }}
+              onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 p-1"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
+                style={{ color: 'var(--color-text-muted)' }}
               >
                 <X size={14} />
               </button>
@@ -775,17 +779,16 @@ export default function CrmPage() {
           <div className="relative">
             <button
               onClick={() => setIsTagFilterOpen(!isTagFilterOpen)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
-                selectedTags.length > 0
-                  ? 'bg-blue-500/10 border border-blue-500/30 text-blue-400'
-                  : ''
-              }`}
-              style={selectedTags.length === 0 ? { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' } : undefined}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all"
+              style={selectedTags.length > 0
+                ? { background: 'var(--color-primary-subtle)', border: '1px solid rgba(79, 111, 255, 0.3)', color: 'var(--color-primary)' }
+                : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }
+              }
             >
               <Filter size={14} />
               <span className="hidden sm:inline">{t.filterByTags}</span>
               {selectedTags.length > 0 && (
-                <span className="bg-blue-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                <span className="text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center" style={{ background: 'var(--color-primary)', color: '#fff' }}>
                   {selectedTags.length}
                 </span>
               )}
@@ -795,11 +798,12 @@ export default function CrmPage() {
             {isTagFilterOpen && (
               <div className="absolute top-full right-0 mt-2 w-56 rounded-xl shadow-2xl z-50 overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
                 <div className="p-2 flex justify-between items-center" style={{ borderBottom: '1px solid var(--color-border)' }}>
-                  <span className="text-xs font-medium text-gray-400">{t.filterByTags}</span>
+                  <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{t.filterByTags}</span>
                   {selectedTags.length > 0 && (
                     <button
                       onClick={() => setSelectedTags([])}
-                      className="text-[10px] text-blue-400 hover:text-blue-300"
+                      className="text-[10px]"
+                      style={{ color: 'var(--color-primary)' }}
                     >
                       {t.clearFilters}
                     </button>
@@ -807,7 +811,7 @@ export default function CrmPage() {
                 </div>
                 <div className="max-h-[200px] overflow-y-auto p-2 space-y-1">
                   {tags.length === 0 ? (
-                    <p className="text-xs text-gray-500 text-center py-4">Nenhuma tag criada</p>
+                    <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>Nenhuma tag criada</p>
                   ) : (
                     tags.map(tag => {
                       const isSelected = selectedTags.includes(tag.id)
@@ -822,14 +826,13 @@ export default function CrmPage() {
                                 : [...prev, tag.id]
                             )
                           }}
-                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all ${
-                            isSelected ? 'bg-white/10' : 'hover:bg-white/5'
-                          }`}
+                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all"
+                          style={{ background: isSelected ? 'var(--color-bg-hover)' : 'transparent' }}
                         >
                           <span className={`w-2 h-2 rounded-full ${color.bg.replace('/20', '')}`} />
-                          <span className="text-gray-300 truncate flex-1 text-left">{tag.name}</span>
+                          <span className="truncate flex-1 text-left" style={{ color: 'var(--color-text-secondary)' }}>{tag.name}</span>
                           {isSelected && (
-                            <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: 'var(--color-primary)' }}>
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                           )}
@@ -902,8 +905,8 @@ export default function CrmPage() {
         {/* Loading */}
         {loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-50 backdrop-blur-sm" style={{ background: 'var(--color-bg-overlay)' }}>
-            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-            <p className="mt-4 text-sm text-gray-400 font-medium">{t.loading}</p>
+            <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
+            <p className="mt-4 text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{t.loading}</p>
           </div>
         )}
 
@@ -912,11 +915,11 @@ export default function CrmPage() {
           <div className="h-full overflow-hidden rounded-xl shadow-sm" style={{ border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)' }}>
             <div className="overflow-auto h-full">
               <table className="w-full min-w-[900px] text-left text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                <thead className="bg-gray-900 text-gray-400 uppercase font-semibold text-[11px] tracking-wider sticky top-0 z-10 border-b border-gray-800">
+                <thead className="uppercase font-semibold text-[11px] tracking-wider sticky top-0 z-10" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)', borderBottom: '1px solid var(--color-border)' }}>
                   <tr>
                     <th className="px-4 md:px-6 py-4 font-medium">{t.companyLead}</th>
                     <th className="px-4 md:px-6 py-4 font-medium text-center">{t.aiStatus}</th>
-                    <th className="px-4 md:px-6 py-4 font-medium text-emerald-500">{t.value}</th>
+                    <th className="px-4 md:px-6 py-4 font-medium" style={{ color: 'var(--color-success)' }}>{t.value}</th>
                     <th className="px-4 md:px-6 py-4 font-medium">{t.stage}</th>
                     <th className="px-4 md:px-6 py-4 font-medium">Tags</th>
                     <th className="px-4 md:px-6 py-4 font-medium">{t.source}</th>
@@ -924,7 +927,7 @@ export default function CrmPage() {
                     <th className="px-4 md:px-6 py-4 font-medium text-right">{t.entryDate}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-800/50">
+                <tbody style={{ borderTop: '1px solid var(--color-border)' }}>
                   {filteredLeads.map((lead) => {
                     const stage = pipelineStages.find(s => s.name === lead.stage) || pipelineStages[0]
                     const stageColor = stage ? getStageColor(stage.color) : getStageColor('gray')
@@ -938,15 +941,18 @@ export default function CrmPage() {
                       <tr
                         key={lead.id}
                         onClick={() => handleOpenLead(lead.id)}
-                        className={`group hover:bg-gray-800/40 transition-colors cursor-pointer ${isStale ? 'bg-amber-500/5' : ''}`}
+                        className="group transition-colors cursor-pointer"
+                        style={{ borderBottom: '1px solid var(--color-border)', background: isStale ? 'rgba(240, 160, 48, 0.03)' : 'transparent' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isStale ? 'rgba(240, 160, 48, 0.03)' : 'transparent' }}
                       >
                         <td className="px-4 md:px-6 py-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 shrink-0 rounded-full bg-gray-800 flex items-center justify-center text-xs font-bold text-gray-300 border border-gray-700">
+                            <div className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>
                               {getInitials(leadDisplayName)}
                             </div>
                             <div className="flex flex-col min-w-0">
-                              <span className="font-medium text-gray-200 group-hover:text-white truncate">{leadDisplayName}</span>
+                              <span className="font-medium truncate" style={{ color: 'var(--color-text-secondary)' }}>{leadDisplayName}</span>
                             </div>
                           </div>
                         </td>
@@ -955,7 +961,7 @@ export default function CrmPage() {
                             <AiStatusBadge isActive={isAiActive} size="md" />
                           </div>
                         </td>
-                        <td className="px-4 md:px-6 py-3 font-bold text-emerald-400 font-mono whitespace-nowrap">
+                        <td className="px-4 md:px-6 py-3 font-bold font-mono whitespace-nowrap" style={{ color: 'var(--color-success)' }}>
                           {formatPrice(lead.total_em_vendas, userCurrency, userLang)}
                         </td>
                         <td className="px-4 md:px-6 py-3 whitespace-nowrap">
@@ -985,17 +991,17 @@ export default function CrmPage() {
                               )
                             })}
                             {leadTagsList.length > 2 && (
-                              <span className="text-[9px] text-gray-500">+{leadTagsList.length - 2}</span>
+                              <span className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>+{leadTagsList.length - 2}</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-4 md:px-6 py-3 text-xs text-gray-500 truncate max-w-[100px]">
+                        <td className="px-4 md:px-6 py-3 text-xs truncate max-w-[100px]" style={{ color: 'var(--color-text-muted)' }}>
                           {lead.source || '-'}
                         </td>
-                        <td className="px-4 md:px-6 py-3 text-xs text-gray-500 truncate max-w-[150px]">
+                        <td className="px-4 md:px-6 py-3 text-xs truncate max-w-[150px]" style={{ color: 'var(--color-text-muted)' }}>
                           {lead.email || '-'}
                         </td>
-                        <td className="px-4 md:px-6 py-3 text-right font-mono text-xs text-gray-500 whitespace-nowrap">
+                        <td className="px-4 md:px-6 py-3 text-right font-mono text-xs whitespace-nowrap" style={{ color: 'var(--color-text-muted)' }}>
                           {formatDate(lead.created_at, userLang, userTimezone)}
                         </td>
                       </tr>
@@ -1005,7 +1011,7 @@ export default function CrmPage() {
               </table>
 
               {filteredLeads.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+                <div className="flex flex-col items-center justify-center py-20" style={{ color: 'var(--color-text-muted)' }}>
                   <Search size={32} className="mb-4 opacity-50" />
                   <p className="text-sm font-medium">{t.noLeadsFound}</p>
                   <p className="text-xs mt-1">{t.noLeadsHint}</p>
@@ -1089,18 +1095,18 @@ export default function CrmPage() {
                             {/* Indicadores no canto superior direito */}
                             <div className="absolute -top-1.5 -right-1.5 flex items-center gap-1">
                               {cardShowStale && isStale && (
-                                <div className="bg-amber-500 text-gray-900 rounded-full p-1 shadow-lg" title={`${daysSinceUpdate} ${t.stale}`}>
+                                <div className="rounded-full p-1 shadow-lg" style={{ background: 'var(--color-accent)', color: '#111' }} title={`${daysSinceUpdate} ${t.stale}`}>
                                   <Clock size={10} />
                                 </div>
                               )}
                               {cardShowAiStatus && canUseAiAgents && (
                                 <button
                                   onClick={(e) => handleToggleAi(e, lead.id, lead.conversa_finalizada ?? false)}
-                                  className={`w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-110 ${
-                                    isAiActive
-                                      ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] hover:bg-red-500'
-                                      : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] hover:bg-emerald-500'
-                                  }`}
+                                  className="w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                                  style={{
+                                    background: isAiActive ? 'var(--color-success)' : 'var(--color-accent)',
+                                    boxShadow: isAiActive ? '0 0 8px rgba(34, 197, 94, 0.6)' : '0 0 8px rgba(240, 160, 48, 0.6)',
+                                  }}
                                   title={isAiActive ? (t.pauseAi || 'Pausar IA') : (t.activateAi || 'Ativar IA')}
                                 >
                                   {isAiActive ? <Pause size={10} className="text-white" /> : <Play size={10} className="text-white" />}
@@ -1109,7 +1115,7 @@ export default function CrmPage() {
                               {cardShowAiStatus && !canUseAiAgents && <AiStatusBadge isActive={isAiActive} />}
                             </div>
 
-                            <div className="absolute top-2 right-6 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">
+                            <div className="absolute top-2 right-6 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block" style={{ color: 'var(--color-text-muted)' }}>
                               <GripVertical size={14} />
                             </div>
 
@@ -1123,7 +1129,7 @@ export default function CrmPage() {
                                   {leadDisplayName}
                                 </h4>
                                 {cardFields.includes('nome_empresa') && lead.nome_empresa && (
-                                  <p className="text-[10px] text-gray-500 truncate">{t.contactLabel} {lead.name}</p>
+                                  <p className="text-[10px] truncate" style={{ color: 'var(--color-text-muted)' }}>{t.contactLabel} {lead.name}</p>
                                 )}
                               </div>
                             </div>
@@ -1132,18 +1138,18 @@ export default function CrmPage() {
                             {(cardFields.includes('total_em_vendas') || cardFields.includes('email') || cardFields.includes('phone')) && (
                             <div className="space-y-1 mb-2">
                               {cardFields.includes('total_em_vendas') && (
-                              <div className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                              <div className="text-[11px] font-bold flex items-center gap-1" style={{ color: 'var(--color-success)' }}>
                                 {formatPrice(lead.total_em_vendas, userCurrency, userLang)}
                               </div>
                               )}
                               {cardFields.includes('phone') && lead.phone && (
-                                <div className="flex items-center gap-1.5 text-[10px] text-gray-500 truncate">
+                                <div className="flex items-center gap-1.5 text-[10px] truncate" style={{ color: 'var(--color-text-muted)' }}>
                                   <Smartphone size={10} />
                                   <span className="truncate">{lead.phone}</span>
                                 </div>
                               )}
                               {cardFields.includes('email') && lead.email && (
-                                <div className="flex items-center gap-1.5 text-[10px] text-gray-500 truncate">
+                                <div className="flex items-center gap-1.5 text-[10px] truncate" style={{ color: 'var(--color-text-muted)' }}>
                                   <Mail size={10} />
                                   <span className="truncate">{lead.email}</span>
                                 </div>
@@ -1167,7 +1173,7 @@ export default function CrmPage() {
                                   )
                                 })}
                                 {leadTagsList.length > 3 && (
-                                  <span className="text-[8px] text-gray-500">+{leadTagsList.length - 3}</span>
+                                  <span className="text-[8px]" style={{ color: 'var(--color-text-muted)' }}>+{leadTagsList.length - 3}</span>
                                 )}
                               </div>
                             )}
@@ -1176,12 +1182,12 @@ export default function CrmPage() {
                             {((cardFields.includes('source') && lead.source) || (cardFields.includes('nicho') && lead.nicho)) && (
                               <div className="flex flex-wrap gap-1 mb-2">
                                 {cardFields.includes('source') && lead.source && (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-800/50 text-gray-400 rounded text-[8px] border border-gray-700/50 truncate max-w-[100px]">
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] truncate max-w-[100px]" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border)' }}>
                                     {lead.source}
                                   </span>
                                 )}
                                 {cardFields.includes('nicho') && lead.nicho && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded text-[8px] border border-blue-500/20 truncate max-w-[100px]">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] truncate max-w-[100px]" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(79, 111, 255, 0.2)' }}>
                                     {lead.nicho}
                                   </span>
                                 )}
@@ -1190,13 +1196,13 @@ export default function CrmPage() {
 
                             {/* Rodapé */}
                             {cardFields.includes('created_at') && (
-                            <div className="flex justify-between items-center pt-2 border-t border-gray-800">
-                              <div className="flex items-center gap-1.5 text-[9px] font-medium text-gray-500">
+                            <div className="flex justify-between items-center pt-2" style={{ borderTop: '1px solid var(--color-border)' }}>
+                              <div className="flex items-center gap-1.5 text-[9px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
                                 <Calendar size={10} />
                                 {formatDate(lead.created_at, userLang, userTimezone)}
                               </div>
                               {index === 0 && count > 2 && (
-                                <span className="text-[8px] px-1.5 py-0.5 bg-red-500/10 text-red-400 rounded border border-red-500/20">
+                                <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                                   {t.priority}
                                 </span>
                               )}
@@ -1208,7 +1214,7 @@ export default function CrmPage() {
 
                       {count === 0 && (
                         <div className="h-full flex flex-col items-center justify-center opacity-40 min-h-[120px] border-2 border-dashed rounded-lg" style={{ borderColor: 'var(--color-border)' }}>
-                          <span className="text-xs text-gray-500 font-medium italic">{t.noLeadsStage}</span>
+                          <span className="text-xs font-medium italic" style={{ color: 'var(--color-text-muted)' }}>{t.noLeadsStage}</span>
                         </div>
                       )}
                     </div>
@@ -1227,23 +1233,23 @@ export default function CrmPage() {
           <div className="flex items-center gap-4 md:gap-6">
             {/* Total de Leads */}
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-blue-500/10">
-                <Users size={14} className="text-blue-400" />
+              <div className="p-1.5 rounded-lg" style={{ background: 'var(--color-primary-subtle)' }}>
+                <Users size={14} style={{ color: 'var(--color-primary)' }} />
               </div>
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t.totalLeads}</p>
-                <p className="text-sm font-bold text-white">{stats.totalLeads}</p>
+                <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>{t.totalLeads}</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.totalLeads}</p>
               </div>
             </div>
 
             {/* Valor Total */}
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-emerald-500/10">
-                <TrendingUp size={14} className="text-emerald-400" />
+              <div className="p-1.5 rounded-lg" style={{ background: 'var(--color-success-subtle)' }}>
+                <TrendingUp size={14} style={{ color: 'var(--color-success)' }} />
               </div>
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t.totalValue}</p>
-                <p className="text-sm font-bold text-emerald-400 font-mono">
+                <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>{t.totalValue}</p>
+                <p className="text-sm font-bold font-mono" style={{ color: 'var(--color-success)' }}>
                   {formatPrice(stats.totalValue, userCurrency, userLang)}
                 </p>
               </div>
@@ -1254,23 +1260,23 @@ export default function CrmPage() {
 
             {/* IA Ativa */}
             <div className="hidden md:flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-emerald-500/10">
-                <Play size={14} className="text-emerald-400" />
+              <div className="p-1.5 rounded-lg" style={{ background: 'var(--color-success-subtle)' }}>
+                <Play size={14} style={{ color: 'var(--color-success)' }} />
               </div>
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t.aiActive}</p>
-                <p className="text-sm font-bold text-emerald-400">{stats.aiActive}</p>
+                <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>{t.aiActive}</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--color-success)' }}>{stats.aiActive}</p>
               </div>
             </div>
 
             {/* IA Pausada */}
             <div className="hidden md:flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-amber-500/10">
-                <Pause size={14} className="text-amber-400" />
+              <div className="p-1.5 rounded-lg" style={{ background: 'var(--color-accent-subtle)' }}>
+                <Pause size={14} style={{ color: 'var(--color-accent)' }} />
               </div>
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t.aiPaused}</p>
-                <p className="text-sm font-bold text-amber-400">{stats.aiPaused}</p>
+                <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>{t.aiPaused}</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--color-accent)' }}>{stats.aiPaused}</p>
               </div>
             </div>
           </div>
@@ -1292,22 +1298,22 @@ export default function CrmPage() {
               </button>
               <button
                 onClick={() => setAiFilter('active')}
-                className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all flex items-center gap-1 ${
-                  aiFilter === 'active'
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
+                className="px-2.5 py-1 rounded-md text-[10px] font-medium transition-all flex items-center gap-1"
+                style={aiFilter === 'active'
+                  ? { background: 'var(--color-success-subtle)', color: 'var(--color-success)' }
+                  : { color: 'var(--color-text-muted)' }
+                }
               >
                 <Play size={10} />
                 <span className="hidden sm:inline">{t.aiActiveOnly}</span>
               </button>
               <button
                 onClick={() => setAiFilter('paused')}
-                className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all flex items-center gap-1 ${
-                  aiFilter === 'paused'
-                    ? 'bg-amber-500/20 text-amber-400'
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
+                className="px-2.5 py-1 rounded-md text-[10px] font-medium transition-all flex items-center gap-1"
+                style={aiFilter === 'paused'
+                  ? { background: 'var(--color-accent-subtle)', color: 'var(--color-accent)' }
+                  : { color: 'var(--color-text-muted)' }
+                }
               >
                 <Pause size={10} />
                 <span className="hidden sm:inline">{t.aiPausedOnly}</span>
@@ -1340,13 +1346,14 @@ export default function CrmPage() {
 
       {/* MODAL CRIAR LEAD */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }}>
           <div className="rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
             <div className="flex justify-between items-center p-4" style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-bg-elevated)' }}>
-              <h2 className="text-lg font-semibold text-white">{t.modalTitle}</h2>
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>{t.modalTitle}</h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-500 hover:text-white transition-colors p-1"
+                className="transition-colors p-1"
+                style={{ color: 'var(--color-text-muted)' }}
               >
                 <X size={20} />
               </button>
@@ -1354,7 +1361,7 @@ export default function CrmPage() {
 
             <form onSubmit={handleSaveLead} className="p-4 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">{t.nameLabel}</label>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.nameLabel}</label>
                 <input
                   type="text"
                   required
@@ -1368,7 +1375,7 @@ export default function CrmPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1">{t.emailLabel}</label>
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.emailLabel}</label>
                   <input
                     type="email"
                     placeholder="email@exemplo.com"
@@ -1379,7 +1386,7 @@ export default function CrmPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1">{t.phoneLabel}</label>
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.phoneLabel}</label>
                   <input
                     type="text"
                     placeholder="(00) 00000-0000"
@@ -1394,7 +1401,7 @@ export default function CrmPage() {
               {/* Seleção de Tags */}
               {tags.length > 0 && (
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-2">{t.tagsLabel}</label>
+                  <label className="block text-xs font-medium mb-2" style={{ color: 'var(--color-text-tertiary)' }}>{t.tagsLabel}</label>
                   <div className="flex flex-wrap gap-2">
                     {tags.map(tag => {
                       const isSelected = newLeadData.selectedTags.includes(tag.id)
@@ -1414,8 +1421,9 @@ export default function CrmPage() {
                           className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border transition-all ${
                             isSelected
                               ? `${tagColor.bg} ${tagColor.text} ${tagColor.border}`
-                              : 'bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600'
+                              : ''
                           }`}
+                          style={!isSelected ? { background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)', borderColor: 'var(--color-border)' } : undefined}
                         >
                           <Tag size={10} />
                           {tag.name}
@@ -1430,14 +1438,16 @@ export default function CrmPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                  className="px-4 py-2 text-sm font-medium transition-colors"
+                  style={{ color: 'var(--color-text-tertiary)' }}
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving || !newLeadData.name.trim()}
-                  className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-medium rounded-lg shadow transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: 'var(--color-primary)', color: '#fff' }}
                 >
                   {isSaving && <Loader2 size={14} className="animate-spin" />}
                   {isSaving ? t.saving : t.save}

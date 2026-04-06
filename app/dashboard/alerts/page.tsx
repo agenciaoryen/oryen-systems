@@ -146,27 +146,39 @@ const formatRelativeTime = (dateString: string, lang: string): string => {
 // CONFIGURAÇÃO DE TIPOS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+const TYPE_STYLES = {
+  urgent: {
+    color: 'var(--color-error)',
+    bg: 'var(--color-error-subtle)',
+    border: 'var(--color-error)',
+  },
+  suggestion: {
+    color: 'var(--color-indigo)',
+    bg: 'var(--color-indigo-subtle)',
+    border: 'var(--color-indigo)',
+  },
+  info: {
+    color: 'var(--color-primary)',
+    bg: 'var(--color-primary-subtle)',
+    border: 'var(--color-primary)',
+  },
+}
+
 const getTypeConfig = (type: string, t: typeof TRANSLATIONS['pt']) => {
   const configs = {
     urgent: {
       icon: Flame,
-      color: 'text-rose-500',
-      bg: 'bg-rose-500/10',
-      border: 'border-rose-500/20',
+      style: TYPE_STYLES.urgent,
       badge: t.types.urgent
     },
     suggestion: {
       icon: Lightbulb,
-      color: 'text-purple-400',
-      bg: 'bg-purple-500/10',
-      border: 'border-purple-500/20',
+      style: TYPE_STYLES.suggestion,
       badge: t.types.suggestion
     },
     info: {
       icon: Bell,
-      color: 'text-blue-400',
-      bg: 'bg-blue-500/10',
-      border: 'border-blue-500/20',
+      style: TYPE_STYLES.info,
       badge: t.types.info
     }
   }
@@ -282,16 +294,16 @@ export default function AlertsPage() {
       <div className="max-w-2xl mx-auto py-8 px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-            <Bell className="text-blue-500" />
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>
+            <Bell style={{ color: 'var(--color-primary)' }} />
             {t.title}
           </h1>
-          <p className="text-gray-400 text-sm mt-1">{t.subtitle}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.subtitle}</p>
         </div>
-        
+
         {/* FeatureLock */}
-        <FeatureLock 
-          feature="hasAutomations" 
+        <FeatureLock
+          feature="hasAutomations"
           variant="replace"
           lang={userLang}
           title={t.title}
@@ -307,7 +319,7 @@ export default function AlertsPage() {
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-100px)] items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
       </div>
     )
   }
@@ -318,22 +330,23 @@ export default function AlertsPage() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>
             {t.title}
             {unreadCount > 0 && (
-              <span className="text-sm font-normal text-gray-400 bg-white/5 px-2.5 py-1 rounded-full">
+              <span className="text-sm font-normal px-2.5 py-1 rounded-full" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)' }}>
                 {unreadCount} {t.unreadCount}
               </span>
             )}
           </h1>
-          <p className="text-gray-400 text-sm mt-1">{t.subtitle}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.subtitle}</p>
         </div>
 
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="text-xs font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-2 rounded-lg transition-colors flex items-center gap-2"
+              className="text-xs font-medium px-3 py-2 rounded-lg transition-colors flex items-center gap-2"
+              style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)' }}
             >
               <CheckCheck size={14} />
               <span className="hidden sm:inline">{t.markAllRead}</span>
@@ -342,7 +355,8 @@ export default function AlertsPage() {
           <button
             onClick={() => fetchAlerts(true)}
             disabled={refreshing}
-            className="text-xs font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+            className="text-xs font-medium px-3 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+            style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)' }}
           >
             <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
             <span className="hidden sm:inline">{t.refresh}</span>
@@ -352,7 +366,7 @@ export default function AlertsPage() {
 
       {/* FILTROS */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        <Filter size={14} className="text-gray-500 shrink-0" />
+        <Filter size={14} className="shrink-0" style={{ color: 'var(--color-text-muted)' }} />
         {(['all', 'urgent', 'suggestion', 'info'] as AlertType[]).map((type) => {
           const isActive = filterType === type
           const count = type === 'all' ? alerts.length : alerts.filter(a => a.type === type).length
@@ -361,16 +375,15 @@ export default function AlertsPage() {
             <button
               key={type}
               onClick={() => setFilterType(type)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap"
+              style={
                 isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-              }`}
+                  ? { background: 'var(--color-primary)', color: 'var(--color-text-primary)' }
+                  : { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)' }
+              }
             >
               {type === 'all' ? t.filterAll : t.types[type]}
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                isActive ? 'bg-white/20' : 'bg-white/10'
-              }`}>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)' }}>
                 {count}
               </span>
             </button>
@@ -381,10 +394,10 @@ export default function AlertsPage() {
       {/* LISTA DE ALERTAS */}
       <div className="space-y-3">
         {filteredAlerts.length === 0 ? (
-          <div className="text-center py-16 border border-white/5 rounded-2xl bg-[#0A0A0A] shadow-2xl">
-            <CheckCircle2 size={48} className="mx-auto text-emerald-500/50 mb-4" />
-            <h3 className="text-lg font-bold text-white">{t.emptyTitle}</h3>
-            <p className="text-gray-500 text-sm">{t.emptyDesc}</p>
+          <div className="text-center py-16 rounded-2xl shadow-2xl" style={{ border: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-surface)' }}>
+            <CheckCircle2 size={48} className="mx-auto mb-4" style={{ color: 'var(--color-success)', opacity: 0.5 }} />
+            <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.emptyTitle}</h3>
+            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{t.emptyDesc}</p>
           </div>
         ) : (
           filteredAlerts.map((alert) => {
@@ -394,40 +407,48 @@ export default function AlertsPage() {
             return (
               <div
                 key={alert.id}
-                className={`relative group flex flex-col sm:flex-row gap-4 p-4 md:p-5 rounded-xl border transition-all duration-200 ${
-                  alert.is_read
-                    ? 'bg-[#0A0A0A] border-white/5 opacity-60 hover:opacity-100'
-                    : `bg-[#111] ${config.border} shadow-lg`
-                }`}
+                className="relative group flex flex-col sm:flex-row gap-4 p-4 md:p-5 rounded-xl transition-all duration-200"
+                style={{
+                  background: alert.is_read ? 'var(--color-bg-surface)' : 'var(--color-bg-elevated)',
+                  border: `1px solid ${alert.is_read ? 'var(--color-border-subtle)' : config.style.border}`,
+                  opacity: alert.is_read ? 0.6 : 1,
+                  boxShadow: alert.is_read ? 'none' : '0 4px 6px -1px rgba(0,0,0,0.1)',
+                }}
               >
                 {/* Indicador de não lido */}
                 {!alert.is_read && (
                   <div className="absolute top-4 right-4 sm:top-5 sm:right-5">
-                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--color-primary)' }} />
                   </div>
                 )}
 
                 {/* Ícone */}
-                <div className={`shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center ${config.bg} ${config.color}`}>
+                <div
+                  className="shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center"
+                  style={{ background: config.style.bg, color: config.style.color }}
+                >
                   <Icon size={20} />
                 </div>
 
                 {/* Conteúdo */}
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${config.bg} ${config.color} ${config.border}`}>
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                      style={{ background: config.style.bg, color: config.style.color, border: `1px solid ${config.style.border}` }}
+                    >
                       {config.badge}
                     </span>
-                    <span className="text-[11px] text-gray-500 font-medium">
+                    <span className="text-[11px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
                       {formatRelativeTime(alert.created_at, userLang)}
                     </span>
                   </div>
 
-                  <h3 className={`text-base md:text-lg font-bold leading-tight ${alert.is_read ? 'text-gray-400' : 'text-white'}`}>
+                  <h3 className="text-base md:text-lg font-bold leading-tight" style={{ color: alert.is_read ? 'var(--color-text-tertiary)' : 'var(--color-text-primary)' }}>
                     {alert.title}
                   </h3>
 
-                  <p className="text-sm text-gray-400 leading-relaxed line-clamp-2">
+                  <p className="text-sm leading-relaxed line-clamp-2" style={{ color: 'var(--color-text-tertiary)' }}>
                     {alert.description}
                   </p>
 
@@ -437,7 +458,8 @@ export default function AlertsPage() {
                       <Link
                         href={alert.action_link}
                         onClick={() => markAsRead(alert.id)}
-                        className={`inline-flex items-center gap-2 text-xs font-bold transition-all px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 ${config.color} hover:text-white`}
+                        className="inline-flex items-center gap-2 text-xs font-bold transition-all px-3 py-1.5 rounded-lg"
+                        style={{ background: 'var(--color-bg-hover)', color: config.style.color }}
                       >
                         {alert.action_label}
                         <ExternalLink size={12} />
@@ -451,7 +473,8 @@ export default function AlertsPage() {
                   {!alert.is_read && (
                     <button
                       onClick={() => markAsRead(alert.id)}
-                      className="p-2 text-gray-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ color: 'var(--color-text-muted)' }}
                       title={t.markRead}
                     >
                       <CheckCircle2 size={16} />
@@ -459,7 +482,8 @@ export default function AlertsPage() {
                   )}
                   <button
                     onClick={() => deleteAlert(alert.id)}
-                    className="p-2 text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                    className="p-2 rounded-lg transition-colors"
+                    style={{ color: 'var(--color-text-muted)' }}
                     title={t.delete}
                   >
                     <Trash2 size={16} />

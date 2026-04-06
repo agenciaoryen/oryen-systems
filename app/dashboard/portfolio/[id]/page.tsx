@@ -37,7 +37,7 @@ export default function EditPropertyPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="animate-spin text-blue-500" size={32} />
+        <Loader2 className="animate-spin" size={32} style={{ color: 'var(--color-primary)' }} />
       </div>
     )
   }

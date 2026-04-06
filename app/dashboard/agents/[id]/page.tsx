@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { 
+import {
   useAgent,
   createCampaign,
   toggleCampaignStatus,
@@ -201,17 +201,17 @@ function CampaignCard({
   const isActive = campaign.status === 'active'
   const isPaused = campaign.status === 'paused'
   const isCompleted = campaign.status === 'completed'
-  
+
   const captured = campaign.metrics?.leads_captured || 0
   const target = campaign.target_leads
   const progress = target ? (captured / target) * 100 : 0
 
   const statusConfig = {
-    active: { label: ui.active, color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-    paused: { label: ui.paused, color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-    draft: { label: ui.draft, color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
-    completed: { label: ui.completed, color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-    cancelled: { label: ui.cancelled, color: 'bg-red-500/10 text-red-400 border-red-500/20' }
+    active: { label: ui.active, bg: 'var(--color-success-subtle)', color: 'var(--color-success)', borderColor: 'var(--color-success-subtle)' },
+    paused: { label: ui.paused, bg: 'var(--color-accent-subtle)', color: 'var(--color-accent)', borderColor: 'var(--color-accent-subtle)' },
+    draft: { label: ui.draft, bg: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)', borderColor: 'var(--color-border-subtle)' },
+    completed: { label: ui.completed, bg: 'var(--color-primary-subtle)', color: 'var(--color-primary)', borderColor: 'var(--color-primary-subtle)' },
+    cancelled: { label: ui.cancelled, bg: 'var(--color-error-subtle)', color: 'var(--color-error)', borderColor: 'var(--color-error-subtle)' }
   }
 
   const scheduleLabels: Record<string, string> = {
@@ -223,38 +223,41 @@ function CampaignCard({
   const status = statusConfig[campaign.status] || statusConfig.draft
 
   return (
-    <div 
-      className="bg-[#0a0a0a] border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all cursor-pointer group"
+    <div
+      className="rounded-xl p-4 transition-all cursor-pointer group"
+      style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}
       onClick={onClick}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-hover)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-subtle)' }}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+          <h4 className="font-semibold truncate transition-colors" style={{ color: 'var(--color-text-primary)' }}>
             {campaign.name}
           </h4>
           <div className="flex items-center gap-2 mt-1">
-            <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${status.color}`}>
-              {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+            <span
+              className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
+              style={{ background: status.bg, color: status.color, border: `1px solid ${status.borderColor}` }}
+            >
+              {isActive && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--color-success)' }} />}
               {status.label}
             </span>
-            <span className="text-[10px] text-gray-500 flex items-center gap-1">
+            <span className="text-[10px] flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
               <Clock size={9} />
               {scheduleLabels[campaign.schedule_frequency] || campaign.schedule_frequency}
             </span>
           </div>
         </div>
-        
+
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
           {(isActive || isPaused) && (
             <button
               onClick={onToggle}
-              className={`p-1.5 rounded-lg transition-colors ${
-                isActive 
-                  ? 'hover:bg-amber-500/10 text-amber-400' 
-                  : 'hover:bg-emerald-500/10 text-emerald-400'
-              }`}
+              className="p-1.5 rounded-lg transition-colors"
+              style={{ color: isActive ? 'var(--color-accent)' : 'var(--color-success)' }}
               title={isActive ? ui.pause : ui.resume}
             >
               {isActive ? <PauseCircle size={14} /> : <PlayCircle size={14} />}
@@ -262,7 +265,8 @@ function CampaignCard({
           )}
           <button
             onClick={onDelete}
-            className="p-1.5 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors"
+            className="p-1.5 rounded-lg transition-colors"
+            style={{ color: 'var(--color-error)' }}
             title={ui.delete}
           >
             <Trash2 size={14} />
@@ -274,15 +278,16 @@ function CampaignCard({
       {target && (
         <div className="mb-3">
           <div className="flex items-center justify-between text-[10px] mb-1">
-            <span className="text-gray-500">{ui.target}: {target} leads</span>
-            <span className="text-gray-300 font-mono">{captured} {ui.captured}</span>
+            <span style={{ color: 'var(--color-text-muted)' }}>{ui.target}: {target} leads</span>
+            <span className="font-mono" style={{ color: 'var(--color-text-secondary)' }}>{captured} {ui.captured}</span>
           </div>
-          <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-            <div 
-              className={`h-full rounded-full transition-all ${
-                isCompleted ? 'bg-blue-500' : 'bg-gradient-to-r from-blue-500 to-purple-500'
-              }`}
-              style={{ width: `${Math.min(progress, 100)}%` }}
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--color-bg-elevated)' }}>
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${Math.min(progress, 100)}%`,
+                background: isCompleted ? 'var(--color-primary)' : 'var(--gradient-brand)'
+              }}
             />
           </div>
         </div>
@@ -294,9 +299,10 @@ function CampaignCard({
           {Object.entries(campaign.config).slice(0, 3).map(([key, value]) => {
             const displayValue = Array.isArray(value) ? value.join(', ') : String(value)
             return (
-              <span 
+              <span
                 key={key}
-                className="text-[9px] bg-gray-800 border border-gray-700 text-gray-400 px-2 py-0.5 rounded-full truncate max-w-[150px]"
+                className="text-[9px] px-2 py-0.5 rounded-full truncate max-w-[150px]"
+                style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-tertiary)' }}
                 title={`${key}: ${displayValue}`}
               >
                 {displayValue}
@@ -307,15 +313,15 @@ function CampaignCard({
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-[10px] text-gray-500 pt-2 border-t border-white/5">
+      <div className="flex items-center justify-between text-[10px] pt-2" style={{ color: 'var(--color-text-muted)', borderTop: '1px solid var(--color-border-subtle)' }}>
         <span className="flex items-center gap-1">
           <Calendar size={9} />
-          {ui.nextRun}: {campaign.next_run_at 
+          {ui.nextRun}: {campaign.next_run_at
             ? formatDistanceToNow(new Date(campaign.next_run_at), { addSuffix: true, locale: dateLocale })
             : ui.never
           }
         </span>
-        <ChevronRight size={12} className="text-gray-600 group-hover:text-blue-400 transition-colors" />
+        <ChevronRight size={12} style={{ color: 'var(--color-text-muted)' }} />
       </div>
     </div>
   )
@@ -411,8 +417,8 @@ function CreateCampaignModal({
   // Helper: renderizar campo baseado no type
   const renderField = (field: ConfigField) => {
     const fieldError = errors[field.name]
-    const borderClass = fieldError ? 'border-red-500' : 'border-white/10'
-    const baseInputClass = `w-full bg-black border rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors ${borderClass}`
+    const borderStyle = fieldError ? 'var(--color-error)' : 'var(--color-border-subtle)'
+    const baseInputStyle = { background: 'var(--color-bg-base)', border: `1px solid ${borderStyle}`, color: 'var(--color-text-primary)' }
 
     switch (field.type) {
       case 'text':
@@ -422,7 +428,8 @@ function CreateCampaignModal({
             value={config[field.name] || ''}
             onChange={(e) => updateConfig(field.name, e.target.value)}
             placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
-            className={baseInputClass}
+            className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
+            style={baseInputStyle}
           />
         )
 
@@ -434,10 +441,11 @@ function CreateCampaignModal({
               onChange={(e) => updateConfig(field.name, e.target.value)}
               placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
               rows={5}
-              className={`${baseInputClass} resize-none font-mono text-xs leading-relaxed`}
+              className="w-full rounded-xl p-3 text-sm resize-none font-mono text-xs leading-relaxed outline-none transition-colors"
+              style={baseInputStyle}
             />
             {field.description && (
-              <p className="text-[10px] text-gray-500 mt-1.5">
+              <p className="text-[10px] mt-1.5" style={{ color: 'var(--color-text-muted)' }}>
                 {t(field.description, lang)}
               </p>
             )}
@@ -454,10 +462,11 @@ function CreateCampaignModal({
               placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
               min={field.min}
               max={field.max}
-              className={baseInputClass}
+              className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
+              style={baseInputStyle}
             />
             {field.description && (
-              <p className="text-[10px] text-gray-500 mt-1.5">
+              <p className="text-[10px] mt-1.5" style={{ color: 'var(--color-text-muted)' }}>
                 {t(field.description, lang)}
               </p>
             )}
@@ -471,7 +480,8 @@ function CreateCampaignModal({
               <input
                 type="text"
                 placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
-                className={`${baseInputClass} pr-16`}
+                className="w-full rounded-xl p-3 pr-16 text-sm outline-none transition-colors"
+                style={baseInputStyle}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault()
@@ -485,16 +495,20 @@ function CreateCampaignModal({
                   }
                 }}
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
+              <span
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] px-2 py-0.5 rounded"
+                style={{ color: 'var(--color-text-muted)', background: 'var(--color-bg-elevated)' }}
+              >
                 Enter ↵
               </span>
             </div>
             {config[field.name]?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {config[field.name].map((tag: string, i: number) => (
-                  <span 
+                  <span
                     key={i}
-                    className="inline-flex items-center gap-1.5 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-lg"
+                    className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg"
+                    style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid var(--color-primary-subtle)' }}
                   >
                     {tag}
                     <button
@@ -503,7 +517,8 @@ function CreateCampaignModal({
                         const newTags = config[field.name].filter((_: any, idx: number) => idx !== i)
                         updateConfig(field.name, newTags)
                       }}
-                      className="hover:text-red-400 transition-colors"
+                      className="transition-colors"
+                      style={{ color: 'inherit' }}
                     >
                       <X size={12} />
                     </button>
@@ -519,7 +534,8 @@ function CreateCampaignModal({
           <select
             value={config[field.name] || field.default || ''}
             onChange={(e) => updateConfig(field.name, e.target.value)}
-            className={baseInputClass}
+            className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
+            style={baseInputStyle}
           >
             <option value="">Selecione...</option>
             {field.options?.map(opt => (
@@ -537,9 +553,10 @@ function CreateCampaignModal({
               type="checkbox"
               checked={config[field.name] ?? field.default ?? false}
               onChange={(e) => updateConfig(field.name, e.target.checked)}
-              className="w-5 h-5 rounded bg-black border-white/10 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+              className="w-5 h-5 rounded"
+              style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border-subtle)' }}
             />
-            <span className="text-sm text-gray-400">
+            <span className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
               {config[field.name] ?? field.default ? 'Sí' : 'No'}
             </span>
           </label>
@@ -552,27 +569,32 @@ function CreateCampaignModal({
             value={config[field.name] || ''}
             onChange={(e) => updateConfig(field.name, e.target.value)}
             placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
-            className={baseInputClass}
+            className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
+            style={baseInputStyle}
           />
         )
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }}>
+      <div
+        className="rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"
+        style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/10">
+        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
           <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Plus size={18} className="text-blue-400" />
+            <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <Plus size={18} style={{ color: 'var(--color-primary)' }} />
               {ui.createTitle}
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">{ui.createSubtitle}</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>{ui.createSubtitle}</p>
           </div>
-          <button 
+          <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--color-text-muted)' }}
           >
             <X size={18} />
           </button>
@@ -582,9 +604,9 @@ function CreateCampaignModal({
         <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
           {/* Nome */}
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase mb-2">
+            <label className="flex items-center gap-1.5 text-xs font-bold uppercase mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
               {ui.campaignName}
-              <span className="text-red-400">*</span>
+              <span style={{ color: 'var(--color-error)' }}>*</span>
             </label>
             <input
               type="text"
@@ -594,18 +616,21 @@ function CreateCampaignModal({
                 if (errors.name) setErrors({ ...errors, name: false })
               }}
               placeholder={ui.campaignNamePlaceholder}
-              className={`w-full bg-black border rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors ${
-                errors.name ? 'border-red-500' : 'border-white/10'
-              }`}
+              className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
+              style={{
+                background: 'var(--color-bg-base)',
+                border: `1px solid ${errors.name ? 'var(--color-error)' : 'var(--color-border-subtle)'}`,
+                color: 'var(--color-text-primary)'
+              }}
             />
           </div>
 
           {/* Campos dinâmicos do config_schema */}
           {fields.map(field => (
             <div key={field.name}>
-              <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase mb-2">
+              <label className="flex items-center gap-1.5 text-xs font-bold uppercase mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
                 {t(field.label, lang)}
-                {field.required && <span className="text-red-400">*</span>}
+                {field.required && <span style={{ color: 'var(--color-error)' }}>*</span>}
               </label>
               {renderField(field)}
             </div>
@@ -613,7 +638,7 @@ function CreateCampaignModal({
 
           {/* Meta de leads */}
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase mb-2">
+            <label className="flex items-center gap-1.5 text-xs font-bold uppercase mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
               {ui.targetLeads}
             </label>
             <input
@@ -622,21 +647,23 @@ function CreateCampaignModal({
               onChange={(e) => setTargetLeads(e.target.value ? Number(e.target.value) : '')}
               placeholder="Ex: 100"
               min={1}
-              className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+              className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
+              style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
             />
-            <p className="text-[10px] text-gray-500 mt-1">{ui.targetLeadsHint}</p>
+            <p className="text-[10px] mt-1" style={{ color: 'var(--color-text-muted)' }}>{ui.targetLeadsHint}</p>
           </div>
 
           {/* Agendamento */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">
+              <label className="text-xs font-bold uppercase mb-2 block" style={{ color: 'var(--color-text-tertiary)' }}>
                 {ui.schedule}
               </label>
               <select
                 value={scheduleFrequency}
                 onChange={(e) => setScheduleFrequency(e.target.value)}
-                className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+                className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
+                style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
               >
                 <option value="daily">{ui.daily}</option>
                 <option value="weekly">{ui.weekly}</option>
@@ -644,31 +671,37 @@ function CreateCampaignModal({
               </select>
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">
+              <label className="text-xs font-bold uppercase mb-2 block" style={{ color: 'var(--color-text-tertiary)' }}>
                 {ui.scheduleTime}
               </label>
               <input
                 type="time"
                 value={scheduleTime}
                 onChange={(e) => setScheduleTime(e.target.value)}
-                className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+                className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
+                style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
               />
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-5 border-t border-white/10 bg-black/30">
+        <div
+          className="flex items-center justify-end gap-3 p-5"
+          style={{ borderTop: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-surface)' }}
+        >
           <button
             onClick={onClose}
-            className="px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-white transition-colors"
+            className="px-4 py-2.5 text-sm font-medium transition-colors"
+            style={{ color: 'var(--color-text-tertiary)' }}
           >
             {ui.cancel}
           </button>
           <button
             onClick={handleCreate}
             disabled={creating}
-            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
           >
             {creating ? (
               <>
@@ -718,7 +751,7 @@ export default function AgentDetailPage() {
 
   const handleDeleteCampaign = async (campaign: AgentCampaign) => {
     if (!confirm(ui.confirmDelete)) return
-    
+
     const { success, error } = await deleteCampaign(campaign.id)
     if (error) {
       toast.error(`${ui.error}: ${error}`)
@@ -733,8 +766,8 @@ export default function AgentDetailPage() {
     return (
       <div className="min-h-[calc(100vh-100px)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-          <p className="text-gray-500 text-sm">{ui.loading}</p>
+          <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
+          <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{ui.loading}</p>
         </div>
       </div>
     )
@@ -745,11 +778,12 @@ export default function AgentDetailPage() {
     return (
       <div className="min-h-[calc(100vh-100px)] flex items-center justify-center">
         <div className="text-center">
-          <Bot size={48} className="mx-auto text-gray-600 mb-4" />
-          <p className="text-gray-400">{ui.notFound}</p>
+          <Bot size={48} className="mx-auto mb-4" style={{ color: 'var(--color-text-muted)' }} />
+          <p style={{ color: 'var(--color-text-tertiary)' }}>{ui.notFound}</p>
           <button
             onClick={() => router.push('/dashboard/agents')}
-            className="mt-4 text-blue-400 hover:text-blue-300 text-sm"
+            className="mt-4 text-sm"
+            style={{ color: 'var(--color-primary)' }}
           >
             {ui.back}
           </button>
@@ -763,25 +797,26 @@ export default function AgentDetailPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
           <button
             onClick={() => router.push('/dashboard/agents')}
-            className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors mt-1"
+            className="p-2 rounded-lg transition-colors mt-1"
+            style={{ color: 'var(--color-text-tertiary)' }}
           >
             <ArrowLeft size={20} />
           </button>
-          
+
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                <Target size={20} className="text-blue-400" />
+            <h1 className="text-2xl font-bold flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-primary-subtle)' }}>
+                <Target size={20} style={{ color: 'var(--color-primary)' }} />
               </div>
               {solution ? t(solution.name, lang) : agent.solution_slug}
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
               {solution ? t(solution.description, lang) : ''}
             </p>
           </div>
@@ -789,7 +824,8 @@ export default function AgentDetailPage() {
 
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
         >
           <Plus size={16} />
           {ui.newCampaign}
@@ -797,40 +833,44 @@ export default function AgentDetailPage() {
       </div>
 
       {/* Usage Card */}
-      <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5">
-        <h3 className="text-sm font-bold text-gray-400 uppercase mb-4 flex items-center gap-2">
+      <div
+        className="rounded-2xl p-5"
+        style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}
+      >
+        <h3 className="text-sm font-bold uppercase mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
           <BarChart3 size={14} />
           {ui.usage}
         </h3>
-        
+
         <div className="flex items-center gap-6">
           <div className="flex-1">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-gray-400">{ui.leadsMonth}</span>
-              <span className="text-white font-mono font-bold">
+              <span style={{ color: 'var(--color-text-tertiary)' }}>{ui.leadsMonth}</span>
+              <span className="font-mono font-bold" style={{ color: 'var(--color-text-primary)' }}>
                 {usage.used} / {usage.limit}
               </span>
             </div>
-            <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all ${
-                  usage.percentage > 90 ? 'bg-red-500' :
-                  usage.percentage > 70 ? 'bg-amber-500' :
-                  'bg-gradient-to-r from-blue-500 to-purple-500'
-                }`}
-                style={{ width: `${Math.min(usage.percentage, 100)}%` }}
+            <div className="h-3 rounded-full overflow-hidden" style={{ background: 'var(--color-bg-elevated)' }}>
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${Math.min(usage.percentage, 100)}%`,
+                  background: usage.percentage > 90 ? 'var(--color-error)' :
+                    usage.percentage > 70 ? 'var(--color-accent)' :
+                    'var(--gradient-brand)'
+                }}
               />
             </div>
           </div>
-          
+
           <div className="flex gap-6 text-center">
             <div>
-              <div className="text-2xl font-bold text-white">{usage.used}</div>
-              <div className="text-[10px] text-gray-500 uppercase">{ui.used}</div>
+              <div className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{usage.used}</div>
+              <div className="text-[10px] uppercase" style={{ color: 'var(--color-text-muted)' }}>{ui.used}</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-emerald-400">{usage.remaining}</div>
-              <div className="text-[10px] text-gray-500 uppercase">{ui.remaining}</div>
+              <div className="text-2xl font-bold" style={{ color: 'var(--color-success)' }}>{usage.remaining}</div>
+              <div className="text-[10px] uppercase" style={{ color: 'var(--color-text-muted)' }}>{ui.remaining}</div>
             </div>
           </div>
         </div>
@@ -838,21 +878,28 @@ export default function AgentDetailPage() {
 
       {/* Campaigns */}
       <div>
-        <h3 className="text-sm font-bold text-gray-400 uppercase mb-4 flex items-center gap-2">
+        <h3 className="text-sm font-bold uppercase mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
           <Zap size={14} />
           {ui.campaigns} ({campaigns.length})
         </h3>
 
         {campaigns.length === 0 ? (
-          <div className="bg-[#0a0a0a] border border-white/10 border-dashed rounded-2xl p-12 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-gray-900 border border-white/10 flex items-center justify-center mx-auto mb-4">
-              <Target size={24} className="text-gray-600" />
+          <div
+            className="border-dashed rounded-2xl p-12 text-center"
+            style={{ background: 'var(--color-bg-surface)', border: '1px dashed var(--color-border-subtle)' }}
+          >
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
+            >
+              <Target size={24} style={{ color: 'var(--color-text-muted)' }} />
             </div>
-            <h4 className="text-lg font-bold text-white mb-1">{ui.noCampaigns}</h4>
-            <p className="text-sm text-gray-500 mb-6">{ui.noCampaignsHint}</p>
+            <h4 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>{ui.noCampaigns}</h4>
+            <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>{ui.noCampaignsHint}</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
             >
               <Plus size={14} />
               {ui.createFirst}

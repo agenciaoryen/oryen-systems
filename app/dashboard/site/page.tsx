@@ -310,7 +310,7 @@ export default function SiteSettingsPage() {
   }
 
   // ─── STYLES ───
-  const inputClass = "w-full px-3 py-2.5 rounded-xl text-sm border transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50"
+  const inputClass = "w-full px-3 py-2.5 rounded-xl text-sm border transition-all focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]/50"
   const inputStyle = { background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }
   const labelClass = "block text-xs font-semibold mb-1.5"
   const labelStyle = { color: 'var(--color-text-secondary)' }
@@ -322,7 +322,7 @@ export default function SiteSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="animate-spin text-blue-500" size={32} />
+        <Loader2 className="animate-spin" style={{ color: 'var(--color-primary)' }} size={32} />
       </div>
     )
   }
@@ -345,7 +345,7 @@ export default function SiteSettingsPage() {
               href={`/sites/${form.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all hover:bg-white/5"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all hover:bg-[var(--color-bg-hover)]"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
             >
               <ExternalLink size={15} /> {T.visitSite}
@@ -354,7 +354,8 @@ export default function SiteSettingsPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {saving ? T.saving : T.save}
@@ -365,7 +366,7 @@ export default function SiteSettingsPage() {
       {/* ═══ URL DO SITE ═══ */}
       <div className={sectionClass} style={sectionStyle}>
         <div className="flex items-center gap-2 mb-2">
-          <Globe size={18} className="text-blue-400" />
+          <Globe size={18} style={{ color: 'var(--color-primary)' }} />
           <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.url}</h2>
         </div>
 
@@ -381,18 +382,18 @@ export default function SiteSettingsPage() {
               style={inputStyle}
             />
             <div className="shrink-0">
-              {slugStatus === 'checking' && <Loader2 size={16} className="animate-spin text-gray-400" />}
-              {slugStatus === 'available' && <Check size={16} className="text-emerald-400" />}
-              {slugStatus === 'taken' && <X size={16} className="text-red-400" />}
+              {slugStatus === 'checking' && <Loader2 size={16} className="animate-spin" style={{ color: 'var(--color-text-tertiary)' }} />}
+              {slugStatus === 'available' && <Check size={16} style={{ color: 'var(--color-success)' }} />}
+              {slugStatus === 'taken' && <X size={16} style={{ color: 'var(--color-error)' }} />}
             </div>
           </div>
           {form.slug && (
             <p className="text-xs mt-1.5" style={{ color: 'var(--color-text-tertiary)' }}>
-              {T.slugHint} <span className="font-mono text-blue-400">{siteUrl}</span>
+              {T.slugHint} <span className="font-mono" style={{ color: 'var(--color-primary)' }}>{siteUrl}</span>
             </p>
           )}
           {slugStatus === 'taken' && (
-            <p className="text-xs mt-1 text-red-400">{T.slugTaken}</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-error)' }}>{T.slugTaken}</p>
           )}
         </div>
       </div>
@@ -400,7 +401,7 @@ export default function SiteSettingsPage() {
       {/* ═══ BRANDING ═══ */}
       <div className={sectionClass} style={sectionStyle}>
         <div className="flex items-center gap-2 mb-2">
-          <Palette size={18} className="text-purple-400" />
+          <Palette size={18} style={{ color: 'var(--color-indigo)' }} />
           <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.branding}</h2>
         </div>
 
@@ -421,15 +422,15 @@ export default function SiteSettingsPage() {
             <label className={labelClass} style={labelStyle}>{T.logo}</label>
             <div
               onClick={() => handleImageUpload('logo_url')}
-              className="w-full h-24 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-blue-500/50 hover:bg-white/5 overflow-hidden"
+              className="w-full h-24 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-bg-hover)] overflow-hidden"
               style={{ borderColor: 'var(--color-border)' }}
             >
               {form.logo_url ? (
                 <img src={form.logo_url} alt="Logo" className="h-full object-contain p-2" />
               ) : (
                 <div className="text-center">
-                  <Upload size={20} className="mx-auto text-gray-500 mb-1" />
-                  <span className="text-xs text-gray-500">Upload</span>
+                  <Upload size={20} className="mx-auto mb-1" style={{ color: 'var(--color-text-muted)' }} />
+                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Upload</span>
                 </div>
               )}
             </div>
@@ -438,15 +439,15 @@ export default function SiteSettingsPage() {
             <label className={labelClass} style={labelStyle}>{T.coverImage}</label>
             <div
               onClick={() => handleImageUpload('cover_image_url')}
-              className="w-full h-24 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-blue-500/50 hover:bg-white/5 overflow-hidden"
+              className="w-full h-24 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-bg-hover)] overflow-hidden"
               style={{ borderColor: 'var(--color-border)' }}
             >
               {form.cover_image_url ? (
                 <img src={form.cover_image_url} alt="Cover" className="w-full h-full object-cover" />
               ) : (
                 <div className="text-center">
-                  <ImageIcon size={20} className="mx-auto text-gray-500 mb-1" />
-                  <span className="text-xs text-gray-500">Upload</span>
+                  <ImageIcon size={20} className="mx-auto mb-1" style={{ color: 'var(--color-text-muted)' }} />
+                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Upload</span>
                 </div>
               )}
             </div>
@@ -524,20 +525,20 @@ export default function SiteSettingsPage() {
       {/* ═══ SOBRE O CORRETOR ═══ */}
       <div className={sectionClass} style={sectionStyle}>
         <div className="flex items-center gap-2 mb-2">
-          <User size={18} className="text-emerald-400" />
+          <User size={18} style={{ color: 'var(--color-success)' }} />
           <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.about}</h2>
         </div>
 
         <div className="flex items-start gap-4">
           <div
             onClick={() => handleImageUpload('avatar_url')}
-            className="w-20 h-20 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-blue-500/50 overflow-hidden shrink-0"
+            className="w-20 h-20 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-[var(--color-primary)]/50 overflow-hidden shrink-0"
             style={{ borderColor: 'var(--color-border)' }}
           >
             {form.avatar_url ? (
               <img src={form.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
-              <User size={28} className="text-gray-500" />
+              <User size={28} style={{ color: 'var(--color-text-muted)' }} />
             )}
           </div>
           <div className="flex-1 space-y-3">
@@ -557,7 +558,7 @@ export default function SiteSettingsPage() {
       {/* ═══ CONTATO ═══ */}
       <div className={sectionClass} style={sectionStyle}>
         <div className="flex items-center gap-2 mb-2">
-          <Phone size={18} className="text-sky-400" />
+          <Phone size={18} style={{ color: 'var(--color-primary)' }} />
           <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.contact}</h2>
         </div>
 
@@ -584,7 +585,7 @@ export default function SiteSettingsPage() {
       {/* ═══ REDES SOCIAIS ═══ */}
       <div className={sectionClass} style={sectionStyle}>
         <div className="flex items-center gap-2 mb-2">
-          <Share2 size={18} className="text-pink-400" />
+          <Share2 size={18} style={{ color: 'var(--color-accent)' }} />
           <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.social}</h2>
         </div>
 
@@ -608,7 +609,7 @@ export default function SiteSettingsPage() {
       {/* ═══ SEO ═══ */}
       <div className={sectionClass} style={sectionStyle}>
         <div className="flex items-center gap-2 mb-2">
-          <SearchIcon size={18} className="text-orange-400" />
+          <SearchIcon size={18} style={{ color: 'var(--color-accent)' }} />
           <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.seo}</h2>
         </div>
 
@@ -627,15 +628,15 @@ export default function SiteSettingsPage() {
           <label className={labelClass} style={labelStyle}>{T.ogImage}</label>
           <div
             onClick={() => handleImageUpload('og_image_url')}
-            className="w-full h-32 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-blue-500/50 hover:bg-white/5 overflow-hidden"
+            className="w-full h-32 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-bg-hover)] overflow-hidden"
             style={{ borderColor: 'var(--color-border)' }}
           >
             {form.og_image_url ? (
               <img src={form.og_image_url} alt="OG" className="w-full h-full object-cover" />
             ) : (
               <div className="text-center">
-                <ImageIcon size={24} className="mx-auto text-gray-500 mb-1" />
-                <span className="text-xs text-gray-500">1200×630 recomendado</span>
+                <ImageIcon size={24} className="mx-auto mb-1" style={{ color: 'var(--color-text-muted)' }} />
+                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>1200×630 recomendado</span>
               </div>
             )}
           </div>
@@ -645,10 +646,10 @@ export default function SiteSettingsPage() {
       {/* ═══ PUBLICAÇÃO ═══ */}
       <div className={sectionClass} style={{ ...sectionStyle, borderColor: form.is_published ? 'rgba(16,185,129,0.3)' : sectionStyle.borderColor }}>
         <div className="flex items-center gap-2 mb-2">
-          <Eye size={18} className={form.is_published ? 'text-emerald-400' : 'text-gray-400'} />
+          <Eye size={18} style={{ color: form.is_published ? 'var(--color-success)' : 'var(--color-text-tertiary)' }} />
           <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.publish}</h2>
           {form.is_published && (
-            <span className="ml-auto px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <span className="ml-auto px-2.5 py-1 rounded-lg text-[11px] font-bold border" style={{ background: 'var(--color-success-subtle)', color: 'var(--color-success)', borderColor: 'var(--color-success)' }}>
               ONLINE
             </span>
           )}
@@ -663,14 +664,15 @@ export default function SiteSettingsPage() {
                 href={`/sites/${form.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-semibold transition-all"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: 'var(--color-success)', color: 'var(--color-text-primary)' }}
               >
                 <ExternalLink size={15} /> {T.visitSite}
               </a>
               <button
                 onClick={() => handlePublish(false)}
                 disabled={publishing}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all"
                 style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
               >
                 {publishing ? <Loader2 size={15} className="animate-spin" /> : <X size={15} />}
@@ -684,7 +686,7 @@ export default function SiteSettingsPage() {
                   href={`/sites/${form.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all hover:bg-white/5"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all hover:bg-[var(--color-bg-hover)]"
                   style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
                 >
                   <Eye size={15} /> {T.preview}
@@ -701,13 +703,14 @@ export default function SiteSettingsPage() {
               <button
                 onClick={() => handlePublish(true)}
                 disabled={publishing || !hasSaved}
-                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
               >
                 {publishing ? <Loader2 size={15} className="animate-spin" /> : <Globe size={15} />}
                 {publishing ? T.publishing : T.publishBtn}
               </button>
               {!hasSaved && (
-                <p className="text-xs text-amber-400 w-full mt-1">
+                <p className="text-xs w-full mt-1" style={{ color: 'var(--color-accent)' }}>
                   <AlertCircle size={12} className="inline mr-1" />
                   Salve as alterações antes de pré-visualizar ou publicar.
                 </p>

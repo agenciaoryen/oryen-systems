@@ -71,28 +71,29 @@ const UI = {
 // COMPONENTES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function StatCard({ 
+function StatCard({
   icon: Icon, label, value, subvalue, color = 'blue'
-}: { 
+}: {
   icon: any; label: string; value: string | number; subvalue?: string
   color?: 'blue' | 'emerald' | 'amber' | 'purple'
 }) {
-  const colors = {
-    blue: 'from-blue-500/20 to-blue-600/20 text-blue-400',
-    emerald: 'from-emerald-500/20 to-emerald-600/20 text-emerald-400',
-    amber: 'from-amber-500/20 to-amber-600/20 text-amber-400',
-    purple: 'from-purple-500/20 to-purple-600/20 text-purple-400'
+  const colorStyles: Record<string, { bg: string; text: string }> = {
+    blue: { bg: 'var(--color-primary-subtle)', text: 'var(--color-primary)' },
+    emerald: { bg: 'var(--color-success-subtle)', text: 'var(--color-success)' },
+    amber: { bg: 'var(--color-accent-subtle)', text: 'var(--color-accent)' },
+    purple: { bg: 'var(--color-indigo-subtle)', text: 'var(--color-indigo)' }
   }
+  const cs = colorStyles[color] || colorStyles.blue
   return (
-    <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-4">
+    <div className="border rounded-xl p-4" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${colors[color]} flex items-center justify-center`}>
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: cs.bg, color: cs.text }}>
           <Icon size={18} />
         </div>
         <div>
-          <p className="text-[10px] uppercase text-gray-500 font-bold">{label}</p>
-          <p className="text-xl font-bold text-white">{value}</p>
-          {subvalue && <p className="text-[10px] text-gray-500">{subvalue}</p>}
+          <p className="text-[10px] uppercase font-bold" style={{ color: 'var(--color-text-muted)' }}>{label}</p>
+          <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{value}</p>
+          {subvalue && <p className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>{subvalue}</p>}
         </div>
       </div>
     </div>
@@ -101,55 +102,55 @@ function StatCard({
 
 function RunRow({ run, ui, dateLocale }: { run: AgentRun; ui: typeof UI.es; dateLocale: any }) {
   const [expanded, setExpanded] = useState(false)
-  const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-    success: { label: ui.success, color: 'text-emerald-400 bg-emerald-500/10', icon: CheckCircle2 },
-    error: { label: ui.error, color: 'text-red-400 bg-red-500/10', icon: XCircle },
-    partial: { label: ui.partial, color: 'text-amber-400 bg-amber-500/10', icon: AlertTriangle },
-    running: { label: ui.running, color: 'text-blue-400 bg-blue-500/10', icon: RefreshCw },
-    pending: { label: ui.pending, color: 'text-gray-400 bg-gray-500/10', icon: Clock }
+  const statusConfig: Record<string, { label: string; style: React.CSSProperties; icon: any }> = {
+    success: { label: ui.success, style: { color: 'var(--color-success)', background: 'var(--color-success-subtle)' }, icon: CheckCircle2 },
+    error: { label: ui.error, style: { color: 'var(--color-error)', background: 'var(--color-error-subtle)' }, icon: XCircle },
+    partial: { label: ui.partial, style: { color: 'var(--color-accent)', background: 'var(--color-accent-subtle)' }, icon: AlertTriangle },
+    running: { label: ui.running, style: { color: 'var(--color-primary)', background: 'var(--color-primary-subtle)' }, icon: RefreshCw },
+    pending: { label: ui.pending, style: { color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)' }, icon: Clock }
   }
   const status = statusConfig[run.status] || statusConfig.pending
   const StatusIcon = status.icon
 
   return (
-    <div className="border border-white/5 rounded-lg overflow-hidden">
-      <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center justify-between p-3 hover:bg-white/5 transition-colors text-left">
+    <div className="border rounded-lg overflow-hidden" style={{ borderColor: 'var(--color-border-subtle)' }}>
+      <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center justify-between p-3 transition-colors text-left">
         <div className="flex items-center gap-3">
-          <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-lg ${status.color}`}>
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-lg" style={status.style}>
             <StatusIcon size={12} className={run.status === 'running' ? 'animate-spin' : ''} />
             {status.label}
           </span>
-          <span className="text-sm text-gray-400">
+          <span className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
             {format(new Date(run.started_at), 'dd/MM/yyyy HH:mm', { locale: dateLocale })}
           </span>
         </div>
         <div className="flex items-center gap-4">
-          {run.duration_ms && <span className="text-xs text-gray-500">{(run.duration_ms / 1000).toFixed(1)}s</span>}
+          {run.duration_ms && <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{(run.duration_ms / 1000).toFixed(1)}s</span>}
           {run.results?.leads_saved !== undefined && (
-            <span className="text-xs text-emerald-400 font-medium">+{run.results.leads_saved} leads</span>
+            <span className="text-xs font-medium" style={{ color: 'var(--color-success)' }}>+{run.results.leads_saved} leads</span>
           )}
-          {expanded ? <ChevronUp size={14} className="text-gray-500" /> : <ChevronDown size={14} className="text-gray-500" />}
+          {expanded ? <ChevronUp size={14} style={{ color: 'var(--color-text-muted)' }} /> : <ChevronDown size={14} style={{ color: 'var(--color-text-muted)' }} />}
         </div>
       </button>
       {expanded && (
-        <div className="p-4 pt-0 border-t border-white/5 bg-black/30">
+        <div className="p-4 pt-0 border-t" style={{ borderColor: 'var(--color-border-subtle)', background: 'var(--color-bg-base)' }}>
           <div className="grid grid-cols-3 gap-4 mt-3">
             <div>
-              <p className="text-[10px] uppercase text-gray-500 mb-1">{ui.leadsFound}</p>
-              <p className="text-lg font-bold text-white">{run.results?.leads_found || 0}</p>
+              <p className="text-[10px] uppercase mb-1" style={{ color: 'var(--color-text-muted)' }}>{ui.leadsFound}</p>
+              <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{run.results?.leads_found || 0}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase text-gray-500 mb-1">{ui.leadsSaved}</p>
-              <p className="text-lg font-bold text-emerald-400">{run.results?.leads_saved || 0}</p>
+              <p className="text-[10px] uppercase mb-1" style={{ color: 'var(--color-text-muted)' }}>{ui.leadsSaved}</p>
+              <p className="text-lg font-bold" style={{ color: 'var(--color-success)' }}>{run.results?.leads_saved || 0}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase text-gray-500 mb-1">{ui.leadsDuplicated}</p>
-              <p className="text-lg font-bold text-amber-400">{run.results?.leads_duplicated || 0}</p>
+              <p className="text-[10px] uppercase mb-1" style={{ color: 'var(--color-text-muted)' }}>{ui.leadsDuplicated}</p>
+              <p className="text-lg font-bold" style={{ color: 'var(--color-accent)' }}>{run.results?.leads_duplicated || 0}</p>
             </div>
           </div>
           {run.error_message && (
-            <div className="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <p className="text-xs text-red-400">{run.error_message}</p>
+            <div className="mt-3 p-2 border rounded-lg" style={{ background: 'var(--color-error-subtle)', borderColor: 'var(--color-error)' }}>
+              <p className="text-xs" style={{ color: 'var(--color-error)' }}>{run.error_message}</p>
             </div>
           )}
         </div>
@@ -226,26 +227,26 @@ export default function HunterCampaignDetail({ campaign, runs, agentId, lang, us
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
-          <button onClick={() => router.push(`/dashboard/agents/${agentId}`)} className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors mt-1">
+          <button onClick={() => router.push(`/dashboard/agents/${agentId}`)} className="p-2 rounded-lg transition-colors mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                <Target size={20} className="text-purple-400" />
+            <h1 className="text-2xl font-bold flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-indigo-subtle)' }}>
+                <Target size={20} style={{ color: 'var(--color-indigo)' }} />
               </div>
               {campaign.name}
             </h1>
             <div className="flex items-center gap-3 mt-2">
-              <span className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase px-2.5 py-1 rounded-full ${
-                isActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
-                isPaused ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                'bg-gray-500/10 text-gray-400 border border-gray-500/20'
-              }`}>
-                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase px-2.5 py-1 rounded-full border" style={
+                isActive ? { background: 'var(--color-success-subtle)', color: 'var(--color-success)', borderColor: 'var(--color-success)' } :
+                isPaused ? { background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', borderColor: 'var(--color-accent)' } :
+                { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)', borderColor: 'var(--color-border)' }
+              }>
+                {isActive && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--color-success)' }} />}
                 {statusLabels[campaign.status]}
               </span>
-              <span className="text-xs text-gray-500 flex items-center gap-1">
+              <span className="text-xs flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
                 <Clock size={10} />
                 {scheduleLabels[campaign.schedule_frequency]} {ui.at} {campaign.schedule_time}
               </span>
@@ -254,14 +255,14 @@ export default function HunterCampaignDetail({ campaign, runs, agentId, lang, us
         </div>
         <div className="flex items-center gap-2">
           {isActive && (
-            <button onClick={handleRunNow} disabled={isRunning} className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50">
+            <button onClick={handleRunNow} disabled={isRunning} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-50" style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}>
               {isRunning ? <><Loader2 size={16} className="animate-spin" />{ui.running}</> : <><Zap size={16} />{ui.runNow}</>}
             </button>
           )}
           {(isActive || isPaused) && (
-            <button onClick={handleToggleStatus} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-              isActive ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
-            }`}>
+            <button onClick={handleToggleStatus} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors border" style={
+              isActive ? { background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', borderColor: 'var(--color-accent)' } : { background: 'var(--color-success-subtle)', color: 'var(--color-success)', borderColor: 'var(--color-success)' }
+            }>
               {isActive ? <PauseCircle size={16} /> : <PlayCircle size={16} />}
               {isActive ? ui.pause : ui.resume}
             </button>
@@ -270,11 +271,11 @@ export default function HunterCampaignDetail({ campaign, runs, agentId, lang, us
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-[#0a0a0a] rounded-xl p-1 border border-white/10 w-fit">
+      <div className="flex rounded-xl p-1 border w-fit" style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border)' }}>
         {(['overview', 'runs', 'config'] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            activeTab === tab ? 'bg-white text-black' : 'text-gray-400 hover:text-white'
-          }`}>
+          <button key={tab} onClick={() => setActiveTab(tab)} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all" style={
+            activeTab === tab ? { background: 'var(--color-text-primary)', color: 'var(--color-bg-base)' } : { color: 'var(--color-text-tertiary)' }
+          }>
             {tab === 'overview' && <BarChart3 size={14} />}
             {tab === 'runs' && <Activity size={14} />}
             {tab === 'config' && <Settings size={14} />}
@@ -293,21 +294,21 @@ export default function HunterCampaignDetail({ campaign, runs, agentId, lang, us
             <StatCard icon={Calendar} label={ui.nextRun} value={campaign.next_run_at ? format(new Date(campaign.next_run_at), 'dd/MM HH:mm') : ui.never} color="amber" />
           </div>
           {target && (
-            <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5">
+            <div className="border rounded-xl p-5" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-white">{ui.progress}</h3>
-                <span className="text-sm text-gray-400">{captured} / {target} {ui.leads}</span>
+                <h3 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{ui.progress}</h3>
+                <span className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{captured} / {target} {ui.leads}</span>
               </div>
-              <div className="h-4 bg-gray-800 rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-500" style={{ width: `${progress}%` }} />
+              <div className="h-4 rounded-full overflow-hidden" style={{ background: 'var(--color-bg-hover)' }}>
+                <div className="h-full rounded-full transition-all duration-500" style={{ background: 'var(--gradient-brand)', width: `${progress}%` }} />
               </div>
             </div>
           )}
           {runs.length > 0 && (
-            <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5">
+            <div className="border rounded-xl p-5" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2"><Activity size={14} />Execuções recentes</h3>
-                <button onClick={() => setActiveTab('runs')} className="text-xs text-blue-400 hover:text-blue-300">Ver todas →</button>
+                <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}><Activity size={14} />Execuções recentes</h3>
+                <button onClick={() => setActiveTab('runs')} className="text-xs" style={{ color: 'var(--color-primary)' }}>Ver todas &rarr;</button>
               </div>
               <div className="space-y-2">
                 {runs.slice(0, 3).map(run => <RunRow key={run.id} run={run} ui={ui} dateLocale={dateLocale} />)}
@@ -319,13 +320,13 @@ export default function HunterCampaignDetail({ campaign, runs, agentId, lang, us
 
       {/* Runs */}
       {activeTab === 'runs' && (
-        <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4"><Activity size={14} />{ui.runs} ({runs.length})</h3>
+        <div className="border rounded-xl p-5" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
+          <h3 className="text-sm font-bold flex items-center gap-2 mb-4" style={{ color: 'var(--color-text-primary)' }}><Activity size={14} />{ui.runs} ({runs.length})</h3>
           {runs.length === 0 ? (
             <div className="text-center py-12">
-              <Zap size={32} className="mx-auto text-gray-600 mb-3" />
-              <p className="text-gray-400 font-medium">{ui.noRuns}</p>
-              <p className="text-xs text-gray-500 mt-1">{ui.noRunsHint}</p>
+              <Zap size={32} className="mx-auto mb-3" style={{ color: 'var(--color-text-muted)' }} />
+              <p className="font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{ui.noRuns}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{ui.noRunsHint}</p>
             </div>
           ) : (
             <div className="space-y-2">{runs.map(run => <RunRow key={run.id} run={run} ui={ui} dateLocale={dateLocale} />)}</div>
@@ -335,34 +336,34 @@ export default function HunterCampaignDetail({ campaign, runs, agentId, lang, us
 
       {/* Config */}
       {activeTab === 'config' && (
-        <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4"><Settings size={14} />{ui.configuration}</h3>
+        <div className="border rounded-xl p-5" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
+          <h3 className="text-sm font-bold flex items-center gap-2 mb-4" style={{ color: 'var(--color-text-primary)' }}><Settings size={14} />{ui.configuration}</h3>
           <div className="space-y-4">
             {Object.entries(campaign.config || {}).map(([key, value]) => (
-              <div key={key} className="flex items-start justify-between py-3 border-b border-white/5 last:border-0">
-                <span className="text-sm text-gray-400 capitalize">{key.replace(/_/g, ' ')}</span>
-                <span className="text-sm text-white text-right max-w-[60%]">
+              <div key={key} className="flex items-start justify-between py-3 border-b last:border-0" style={{ borderColor: 'var(--color-border-subtle)' }}>
+                <span className="text-sm capitalize" style={{ color: 'var(--color-text-tertiary)' }}>{key.replace(/_/g, ' ')}</span>
+                <span className="text-sm text-right max-w-[60%]" style={{ color: 'var(--color-text-primary)' }}>
                   {Array.isArray(value) ? (
                     <div className="flex flex-wrap gap-1 justify-end">
-                      {value.map((v, i) => <span key={i} className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-xs">{v}</span>)}
+                      {value.map((v, i) => <span key={i} className="px-2 py-0.5 rounded text-xs" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>{v}</span>)}
                     </div>
                   ) : typeof value === 'boolean' ? (value ? '✓ Sí' : '✗ No') : String(value)}
                 </span>
               </div>
             ))}
-            <div className="pt-4 mt-4 border-t border-white/10">
+            <div className="pt-4 mt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500">{ui.schedule}:</span>
-                  <span className="text-white ml-2">{scheduleLabels[campaign.schedule_frequency]} {ui.at} {campaign.schedule_time}</span>
+                  <span style={{ color: 'var(--color-text-muted)' }}>{ui.schedule}:</span>
+                  <span className="ml-2" style={{ color: 'var(--color-text-primary)' }}>{scheduleLabels[campaign.schedule_frequency]} {ui.at} {campaign.schedule_time}</span>
                 </div>
                 <div>
-                  <span className="text-gray-500">{ui.target}:</span>
-                  <span className="text-white ml-2">{campaign.target_leads || ui.unlimited}</span>
+                  <span style={{ color: 'var(--color-text-muted)' }}>{ui.target}:</span>
+                  <span className="ml-2" style={{ color: 'var(--color-text-primary)' }}>{campaign.target_leads || ui.unlimited}</span>
                 </div>
                 <div>
-                  <span className="text-gray-500">{ui.createdAt}:</span>
-                  <span className="text-white ml-2">{format(new Date(campaign.created_at), 'dd/MM/yyyy HH:mm', { locale: dateLocale })}</span>
+                  <span style={{ color: 'var(--color-text-muted)' }}>{ui.createdAt}:</span>
+                  <span className="ml-2" style={{ color: 'var(--color-text-primary)' }}>{format(new Date(campaign.created_at), 'dd/MM/yyyy HH:mm', { locale: dateLocale })}</span>
                 </div>
               </div>
             </div>

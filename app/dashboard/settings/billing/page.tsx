@@ -321,11 +321,11 @@ const PLAN_COLORS: Record<PlanName, { bg: string; border: string; text: string; 
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function StatusBadge({ status, t }: { status: string; t: any }) {
-  const styles: Record<string, string> = {
-    active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-    trial: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-    past_due: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-    canceled: 'bg-red-500/10 text-red-400 border-red-500/30',
+  const statusStyles: Record<string, React.CSSProperties> = {
+    active: { background: 'var(--color-success-subtle)', color: 'var(--color-success)', border: '1px solid var(--color-success)' },
+    trial: { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)' },
+    past_due: { background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' },
+    canceled: { background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid var(--color-error)' },
   }
   
   const labels: Record<string, string> = {
@@ -336,7 +336,7 @@ function StatusBadge({ status, t }: { status: string; t: any }) {
   }
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${styles[status] || styles.active}`}>
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold" style={statusStyles[status] || statusStyles.active}>
       {status === 'active' && <CheckCircle2 size={12} />}
       {status === 'trial' && <Clock size={12} />}
       {status === 'past_due' && <AlertTriangle size={12} />}
@@ -371,9 +371,7 @@ function PlanCard({
   const isEnterprise = planName === 'enterprise'
 
   return (
-    <div className={`relative bg-[#111] border rounded-2xl p-6 flex flex-col transition-all hover:border-white/20 ${
-      isCurrentPlan ? `${colors.border} ring-2 ring-offset-2 ring-offset-black ${colors.border.replace('border-', 'ring-')}` : 'border-white/10'
-    } ${isPopular ? 'md:-mt-4 md:mb-4' : ''}`}>
+    <div className={`relative rounded-2xl p-6 flex flex-col transition-all ${isPopular ? 'md:-mt-4 md:mb-4' : ''}`} style={{ background: 'var(--color-bg-surface)', border: isCurrentPlan ? undefined : '1px solid var(--color-border-subtle)' }}>
       
       {/* Popular badge */}
       {isPopular && (
@@ -384,7 +382,7 @@ function PlanCard({
       
       {/* Current plan badge */}
       {isCurrentPlan && (
-        <div className="absolute -top-3 right-4 bg-emerald-500 text-black text-xs font-bold px-3 py-1 rounded-full">
+        <div className="absolute -top-3 right-4 text-xs font-bold px-3 py-1 rounded-full" style={{ background: 'var(--color-success)', color: 'var(--color-bg-base)' }}>
           {t.currentPlanBadge}
         </div>
       )}
@@ -395,8 +393,8 @@ function PlanCard({
           {icon}
         </div>
         <div>
-          <h3 className="text-lg font-bold text-white">{config.displayName}</h3>
-          <p className="text-xs text-gray-500">
+          <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{config.displayName}</h3>
+          <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
             {config.limits.maxUsers === -1 ? t.unlimitedUsers : `${config.limits.maxUsers} ${t.users}`}
           </p>
         </div>
@@ -405,24 +403,24 @@ function PlanCard({
       {/* Price */}
       <div className="mb-6">
         {isEnterprise ? (
-          <div className="text-2xl font-bold text-white">{t.enterprise}</div>
+          <div className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.enterprise}</div>
         ) : (
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-black text-white">{currencySymbol}{price}</span>
-            <span className="text-gray-500 text-sm">{t.perMonth}</span>
+            <span className="text-3xl font-black" style={{ color: 'var(--color-text-primary)' }}>{currencySymbol}{price}</span>
+            <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{t.perMonth}</span>
           </div>
         )}
-        <p className="text-xs text-gray-600 mt-1">
+        <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
           {config.limits.maxActiveLeads === -1 ? t.unlimitedLeads : `${config.limits.maxActiveLeads.toLocaleString()} ${t.leads}`}
         </p>
       </div>
 
       {/* Features */}
       <div className="flex-1 mb-6">
-        <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 font-bold">{t.features}</p>
+        <p className="text-xs uppercase tracking-wider mb-3 font-bold" style={{ color: 'var(--color-text-muted)' }}>{t.features}</p>
         <ul className="space-y-2">
           {features.map((feature) => (
-            <li key={feature} className="flex items-center gap-2 text-sm text-gray-300">
+            <li key={feature} className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
               <Check size={14} className={colors.text} />
               {t[feature] || feature}
             </li>
@@ -436,25 +434,27 @@ function PlanCard({
           href={`https://wa.me/5551998388409?text=${encodeURIComponent(t.whatsappMessage)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full py-3 px-4 rounded-xl text-sm font-bold text-center transition-all bg-white/5 hover:bg-white/10 text-white border border-white/10 block"
+          className="w-full py-3 px-4 rounded-xl text-sm font-bold text-center transition-all block"
+          style={{ background: 'var(--color-bg-hover)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border-subtle)' }}
         >
           {t.contactSales}
         </a>
       ) : isCurrentPlan ? (
         <button
           disabled
-          className="w-full py-3 px-4 rounded-xl text-sm font-bold bg-white/5 text-gray-500 cursor-not-allowed"
+          className="w-full py-3 px-4 rounded-xl text-sm font-bold cursor-not-allowed"
+          style={{ background: 'var(--color-bg-hover)', color: 'var(--color-text-muted)' }}
         >
           {t.currentPlanBadge}
         </button>
       ) : (
         <button
           onClick={() => onSelect(planName)}
-          className={`w-full py-3 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-            isPopular 
-              ? `bg-gradient-to-r ${colors.gradient} text-black hover:opacity-90 shadow-lg shadow-amber-500/25` 
-              : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
-          }`}
+          className="w-full py-3 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
+          style={isPopular
+            ? { background: `linear-gradient(to right, var(--color-accent), var(--color-accent))`, color: 'var(--color-bg-base)' }
+            : { background: 'var(--color-bg-hover)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border-subtle)' }
+          }
         >
           {t.upgrade}
           <ArrowRight size={16} />
@@ -579,52 +579,52 @@ function BillingPageContent() {
   const isUpgrade = selectedPlan && PLAN_CONFIGS[selectedPlan].priceUsd > planConfig.priceUsd
 
   return (
-    <div className="min-h-[calc(100vh-100px)] bg-[#0A0A0A] p-4 sm:p-6 animate-in fade-in duration-300">
+    <div className="min-h-[calc(100vh-100px)] p-4 sm:p-6 animate-in fade-in duration-300" style={{ background: 'var(--color-bg-base)' }}>
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* Header */}
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
-            <CreditCard className="text-blue-500" />
+          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>
+            <CreditCard style={{ color: 'var(--color-primary)' }} />
             {t.title}
           </h1>
-          <p className="text-gray-500 mt-2">{t.subtitle}</p>
+          <p className="mt-2" style={{ color: 'var(--color-text-muted)' }}>{t.subtitle}</p>
         </div>
 
         {/* Alerts */}
         {activePlanStatus === 'trial' && (
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-center gap-3">
-            <Clock className="text-blue-400 shrink-0" />
-            <p className="text-blue-200 text-sm">
+          <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: 'var(--color-primary-subtle)', border: '1px solid var(--color-primary)' }}>
+            <Clock className="shrink-0" style={{ color: 'var(--color-primary)' }} />
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
               {t.trialEnds} <strong>{trialDaysLeft} {t.days}</strong>
             </p>
           </div>
         )}
         
         {activePlanStatus === 'past_due' && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center gap-3">
-            <AlertTriangle className="text-amber-400 shrink-0" />
-            <p className="text-amber-200 text-sm">{t.pastDueAlert}</p>
+          <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: 'var(--color-accent-subtle)', border: '1px solid var(--color-accent)' }}>
+            <AlertTriangle className="shrink-0" style={{ color: 'var(--color-accent)' }} />
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{t.pastDueAlert}</p>
           </div>
         )}
         
         {activePlanStatus === 'canceled' && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-3">
-            <X className="text-red-400 shrink-0" />
-            <p className="text-red-200 text-sm">{t.canceledAlert}</p>
+          <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: 'var(--color-error-subtle)', border: '1px solid var(--color-error)' }}>
+            <X className="shrink-0" style={{ color: 'var(--color-error)' }} />
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{t.canceledAlert}</p>
           </div>
         )}
 
         {/* Success message */}
         {successMessage && (
-          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 flex items-center gap-3">
-            <CheckCircle2 className="text-emerald-400 shrink-0" />
-            <p className="text-emerald-200 text-sm">{successMessage}</p>
+          <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: 'var(--color-success-subtle)', border: '1px solid var(--color-success)' }}>
+            <CheckCircle2 className="shrink-0" style={{ color: 'var(--color-success)' }} />
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{successMessage}</p>
           </div>
         )}
 
         {/* Current Plan Summary */}
-        <div className={`bg-[#111] border ${colors.border} rounded-2xl p-6`}>
+        <div className="rounded-2xl p-6" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className={`p-3 rounded-xl ${colors.bg} ${colors.text}`}>
@@ -632,10 +632,10 @@ function BillingPageContent() {
               </div>
               <div>
                 <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-bold text-white">{planConfig.displayName}</h2>
+                  <h2 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{planConfig.displayName}</h2>
                   <StatusBadge status={activePlanStatus} t={t} />
                 </div>
-                <p className="text-gray-500 text-sm mt-1">
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
                   {planConfig.limits.maxUsers === -1 ? t.unlimitedUsers : `${planConfig.limits.maxUsers} ${t.users}`}
                   {' • '}
                   {planConfig.limits.maxActiveLeads === -1 ? t.unlimitedLeads : `${planConfig.limits.maxActiveLeads.toLocaleString()} ${t.leads}`}
@@ -644,13 +644,13 @@ function BillingPageContent() {
             </div>
             
             <div className="text-right">
-              <div className="text-2xl font-black text-white">
+              <div className="text-2xl font-black" style={{ color: 'var(--color-text-primary)' }}>
                 {userCurrency === 'BRL' ? 'R$' : '$'}
                 {userCurrency === 'BRL' ? planConfig.priceBrl : planConfig.priceUsd}
-                <span className="text-sm font-normal text-gray-500">{t.perMonth}</span>
+                <span className="text-sm font-normal" style={{ color: 'var(--color-text-muted)' }}>{t.perMonth}</span>
               </div>
               {org?.plan_started_at && (
-                <p className="text-xs text-gray-600 mt-1">
+                <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
                   {t.startedAt}: {new Date(org.plan_started_at).toLocaleDateString()}
                 </p>
               )}
@@ -659,7 +659,8 @@ function BillingPageContent() {
                 <button
                   onClick={handleManageSubscription}
                   disabled={loading}
-                  className="mt-3 text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 ml-auto"
+                  className="mt-3 text-xs font-medium flex items-center gap-1 ml-auto"
+                  style={{ color: 'var(--color-primary)' }}
                 >
                   {loading ? <Loader2 size={12} className="animate-spin" /> : <ExternalLink size={12} />}
                   {t.manageSubscription}
@@ -671,7 +672,7 @@ function BillingPageContent() {
 
         {/* Plans Grid */}
         <div>
-          <h2 className="text-lg font-bold text-white mb-6">{t.comparePlans}</h2>
+          <h2 className="text-lg font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>{t.comparePlans}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             {(['basic', 'gold', 'diamond', 'enterprise'] as PlanName[]).map((planName) => (
               <PlanCard
@@ -687,20 +688,20 @@ function BillingPageContent() {
         </div>
 
         {/* FAQ */}
-        <div className="bg-[#111] border border-white/5 rounded-2xl p-6">
-          <h2 className="text-lg font-bold text-white mb-6">{t.faqTitle}</h2>
+        <div className="rounded-2xl p-6" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+          <h2 className="text-lg font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>{t.faqTitle}</h2>
           <div className="grid md:grid-cols-3 gap-6">
             <div>
-              <h3 className="text-white font-medium mb-2">{t.faq1q}</h3>
-              <p className="text-gray-500 text-sm">{t.faq1a}</p>
+              <h3 className="font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>{t.faq1q}</h3>
+              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{t.faq1a}</p>
             </div>
             <div>
-              <h3 className="text-white font-medium mb-2">{t.faq2q}</h3>
-              <p className="text-gray-500 text-sm">{t.faq2a}</p>
+              <h3 className="font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>{t.faq2q}</h3>
+              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{t.faq2a}</p>
             </div>
             <div>
-              <h3 className="text-white font-medium mb-2">{t.faq3q}</h3>
-              <p className="text-gray-500 text-sm">{t.faq3a}</p>
+              <h3 className="font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>{t.faq3q}</h3>
+              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{t.faq3a}</p>
             </div>
           </div>
         </div>
@@ -708,20 +709,21 @@ function BillingPageContent() {
         {/* Confirm Modal */}
         {showConfirmModal && selectedPlan && (
           <div 
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4"
+            style={{ background: 'var(--color-bg-overlay)' }}
             onClick={(e) => e.target === e.currentTarget && setShowConfirmModal(false)}
           >
-            <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-md animate-in fade-in zoom-in-95">
+            <div className="rounded-2xl p-6 w-full max-w-md animate-in fade-in zoom-in-95" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
               <div className="flex items-center gap-3 mb-4">
                 <div className={`p-2 rounded-lg ${PLAN_COLORS[selectedPlan].bg} ${PLAN_COLORS[selectedPlan].text}`}>
                   {PLAN_ICONS[selectedPlan]}
                 </div>
-                <h3 className="text-lg font-bold text-white">
+                <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
                   {isUpgrade ? t.confirmUpgrade : t.confirmDowngrade}
                 </h3>
               </div>
               
-              <p className="text-gray-400 text-sm mb-6">
+              <p className="text-sm mb-6" style={{ color: 'var(--color-text-tertiary)' }}>
                 {isUpgrade ? t.upgradeDesc : t.downgradeDesc} <strong>{PLAN_CONFIGS[selectedPlan].displayName}</strong>
               </p>
               
@@ -729,7 +731,8 @@ function BillingPageContent() {
                 <button
                   onClick={() => setShowConfirmModal(false)}
                   disabled={loading}
-                  className="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-white transition-colors rounded-xl hover:bg-white/5"
+                  className="flex-1 py-3 text-sm font-medium transition-colors rounded-xl"
+                  style={{ color: 'var(--color-text-tertiary)' }}
                 >
                   {t.cancelAction}
                 </button>
@@ -755,7 +758,7 @@ export default function BillingPage() {
   return (
     <Suspense fallback={
       <div className="min-h-[calc(100vh-100px)] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
       </div>
     }>
       <BillingPageContent />

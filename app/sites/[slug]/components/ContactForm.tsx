@@ -55,13 +55,13 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
   if (status === 'success') {
     return (
       <div className="text-center py-8">
-        <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--color-success-subtle)' }}>
           <svg width="28" height="28" fill="none" stroke="#10b981" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-lg font-bold text-gray-900 mb-1">Mensagem enviada!</h3>
-        <p className="text-sm text-gray-500">Entraremos em contato em breve.</p>
+        <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>Mensagem enviada!</h3>
+        <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Entraremos em contato em breve.</p>
       </div>
     )
   }
@@ -80,48 +80,52 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
       />
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Nome *</label>
+        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Nome *</label>
         <input
           type="text"
           value={form.name}
           onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
           required
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+          className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all"
+          style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
           placeholder="Seu nome"
         />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Telefone *</label>
+          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Telefone *</label>
           <input
             type="tel"
             value={form.phone}
             onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))}
             required
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+            className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all"
+            style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
             placeholder="(00) 00000-0000"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>E-mail</label>
           <input
             type="email"
             value={form.email}
             onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+            className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all"
+            style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
             placeholder="seu@email.com"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Mensagem</label>
+        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Mensagem</label>
         <textarea
           value={form.message}
           onChange={(e) => setForm(prev => ({ ...prev, message: e.target.value }))}
           rows={3}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all resize-none"
+          className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all resize-none"
+          style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
           placeholder="Como posso ajudar?"
         />
       </div>
@@ -129,14 +133,14 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
       <button
         type="submit"
         disabled={status === 'sending'}
-        className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-60 shadow-sm"
-        style={{ background: 'var(--site-primary)' }}
+        className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 disabled:opacity-60 shadow-sm"
+        style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
       >
         {status === 'sending' ? 'Enviando...' : 'Enviar Mensagem'}
       </button>
 
       {status === 'error' && (
-        <p className="text-sm text-red-500 text-center">Erro ao enviar. Tente novamente.</p>
+        <p className="text-sm text-center" style={{ color: 'var(--color-error)' }}>Erro ao enviar. Tente novamente.</p>
       )}
     </form>
   )

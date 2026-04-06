@@ -15,10 +15,11 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
   return (
     <Link
       href={`/sites/${slug}/properties/${property.slug || property.id}`}
-      className="group rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300"
+      className="group rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+      style={{ background: 'var(--color-bg-elevated)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}
     >
       {/* Imagem */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+      <div className="relative aspect-[4/3] overflow-hidden" style={{ background: 'var(--color-bg-surface)' }}>
         {cover ? (
           <img
             src={cover}
@@ -28,7 +29,7 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <svg width="40" height="40" className="text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width="40" height="40" style={{ color: 'var(--color-text-tertiary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
             </svg>
           </div>
@@ -36,15 +37,15 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
 
         {/* Transaction badge */}
         <div
-          className="absolute top-3 left-3 px-3 py-1 rounded-lg text-xs font-bold text-white"
-          style={{ background: 'var(--site-primary)' }}
+          className="absolute top-3 left-3 px-3 py-1 rounded-lg text-xs font-bold"
+          style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
         >
           {TRANSACTION_TYPES[property.transaction_type]?.pt || property.transaction_type}
         </div>
 
         {/* Price */}
         {property.price && (
-          <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-black/70 backdrop-blur-sm text-white font-bold text-sm">
+          <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg backdrop-blur-sm font-bold text-sm" style={{ background: 'var(--color-bg-overlay)', color: 'var(--color-text-primary)' }}>
             {formatPrice(property.price, currency)}
           </div>
         )}
@@ -52,16 +53,16 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
 
       {/* Info */}
       <div className="p-4">
-        <p className="text-xs font-medium text-gray-500 mb-1">
+        <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>
           {PROPERTY_TYPES[property.property_type]?.pt || property.property_type}
           {property.address_neighborhood && ` • ${property.address_neighborhood}`}
         </p>
-        <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-3 group-hover:text-blue-600 transition-colors">
+        <h3 className="font-semibold text-sm line-clamp-2 mb-3 transition-colors" style={{ color: 'var(--color-text-primary)' }}>
           {property.title}
         </h3>
 
         {/* Features */}
-        <div className="flex items-center gap-4 text-xs text-gray-500">
+        <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>
           {property.bedrooms > 0 && (
             <span className="flex items-center gap-1">
               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>

@@ -47,14 +47,14 @@ const TRANSLATIONS = {
 
 export default function AcceptInvitePage() {
   const router = useRouter()
-  
+
   // Estado do Idioma
   const [lang, setLang] = useState<'pt' | 'en' | 'es'>('pt')
   const [showLangMenu, setShowLangMenu] = useState(false)
   const t = TRANSLATIONS[lang]
 
   const [password, setPassword] = useState('')
-  const [fullName, setFullName] = useState('') 
+  const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
@@ -80,7 +80,7 @@ export default function AcceptInvitePage() {
       }
 
       // 2. Define a senha definitiva
-      const { error: authError } = await supabase.auth.updateUser({ 
+      const { error: authError } = await supabase.auth.updateUser({
         password: password,
         data: { full_name: fullName } // Atualiza meta-dados também
       })
@@ -90,8 +90,8 @@ export default function AcceptInvitePage() {
       // 3. Atualiza tabela pública 'users' E SALVA O IDIOMA ESCOLHIDO
       const { error: dbError } = await supabase
         .from('users')
-        .update({ 
-          full_name: fullName, 
+        .update({
+          full_name: fullName,
           status: 'active',
           language: lang, // <--- SALVANDO PREFERÊNCIA AQUI
           currency: lang === 'pt' ? 'BRL' : 'USD',
@@ -102,7 +102,7 @@ export default function AcceptInvitePage() {
       if (dbError) throw dbError
 
       setDone(true)
-      
+
       // Redireciona
       setTimeout(() => router.push('/dashboard'), 2000)
 
@@ -116,32 +116,33 @@ export default function AcceptInvitePage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4 text-center">
+      <div className="min-h-screen flex items-center justify-center p-4 text-center" style={{ background: 'var(--color-bg-base)' }}>
         <div className="space-y-4 animate-in zoom-in duration-500">
-          <CheckCircle2 className="text-emerald-500 w-16 h-16 mx-auto" />
-          <h1 className="text-2xl font-bold text-white">{t.successTitle}</h1>
-          <p className="text-gray-400">{t.successMsg}</p>
+          <CheckCircle2 className="w-16 h-16 mx-auto" style={{ color: 'var(--color-success)' }} />
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.successTitle}</h1>
+          <p style={{ color: 'var(--color-text-tertiary)' }}>{t.successMsg}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-4 relative">
-      
+    <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ background: 'var(--color-bg-base)' }}>
+
       {/* SELETOR DE IDIOMA (Canto Superior Direito) */}
       <div className="absolute top-6 right-6 z-50">
         <div className="relative">
-          <button 
+          <button
             onClick={() => setShowLangMenu(!showLangMenu)}
-            className="flex items-center gap-2 bg-black border border-white/10 hover:border-white/20 text-gray-300 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+            style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
           >
             <Globe size={16} />
             <span className="uppercase">{lang}</span>
           </button>
 
           {showLangMenu && (
-            <div className="absolute right-0 mt-2 w-40 bg-[#111] border border-white/10 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="absolute right-0 mt-2 w-40 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
               {languages.map((item) => (
                 <button
                   key={item.code}
@@ -149,12 +150,15 @@ export default function AcceptInvitePage() {
                     setLang(item.code as any)
                     setShowLangMenu(false)
                   }}
-                  className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white flex items-center justify-between group"
+                  className="w-full text-left px-4 py-3 text-sm flex items-center justify-between group transition-colors"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-secondary)' }}
                 >
                   <span className="flex items-center gap-2">
                     <span>{item.flag}</span> {item.label}
                   </span>
-                  {lang === item.code && <Check size={14} className="text-blue-500" />}
+                  {lang === item.code && <Check size={14} style={{ color: 'var(--color-primary)' }} />}
                 </button>
               ))}
             </div>
@@ -162,49 +166,55 @@ export default function AcceptInvitePage() {
         </div>
       </div>
 
-      <div className="w-full max-w-md bg-[#111] border border-white/10 p-8 rounded-3xl shadow-2xl">
+      <div className="w-full max-w-md p-8 rounded-3xl shadow-2xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(37,99,235,0.4)]">
-            <Bot className="text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-white">{t.title}</h1>
-          <p className="text-gray-500 text-sm">{t.subtitle}</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-icon.svg" alt="Oryen" className="h-12 w-12 mb-4" />
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>{t.title}</h1>
+          <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{t.subtitle}</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs text-center">
+          <div className="mb-4 p-3 rounded-lg text-xs text-center" style={{ background: 'var(--color-error-subtle)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--color-error)' }}>
             {error}
           </div>
         )}
 
         <form onSubmit={handleFinalize} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{t.labelName}</label>
-            <input 
+            <label className="block text-xs font-bold uppercase mb-1" style={{ color: 'var(--color-text-muted)' }}>{t.labelName}</label>
+            <input
               required
-              type="text" 
+              type="text"
               value={fullName}
               onChange={e => setFullName(e.target.value)}
-              className="w-full bg-black border border-white/10 rounded-xl p-3 text-white outline-none focus:border-blue-500 transition-colors"
+              className="w-full rounded-xl p-3 outline-none transition-all"
+              style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79, 111, 255, 0.1)' }}
+              onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
               placeholder={t.placeholderName}
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{t.labelPass}</label>
-            <input 
+            <label className="block text-xs font-bold uppercase mb-1" style={{ color: 'var(--color-text-muted)' }}>{t.labelPass}</label>
+            <input
               required
-              type="password" 
+              type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full bg-black border border-white/10 rounded-xl p-3 text-white outline-none focus:border-blue-500 transition-colors"
+              className="w-full rounded-xl p-3 outline-none transition-all"
+              style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79, 111, 255, 0.1)' }}
+              onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
               placeholder="••••••••"
               minLength={6}
             />
           </div>
-          <button 
+          <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/20"
+            className="w-full py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(79, 111, 255, 0.25)' }}
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : t.btnActivate}
           </button>

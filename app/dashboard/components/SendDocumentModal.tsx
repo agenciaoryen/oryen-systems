@@ -602,23 +602,26 @@ export default function SendDocumentModal({
   if (!isOpen) return null
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4"
+      style={{ background: 'var(--color-bg-overlay)' }}
       onClick={onClose}
     >
-      <div 
-        className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden"
+      <div
+        className="border rounded-2xl w-full max-w-md overflow-hidden"
+        style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <Send className="text-blue-400" size={20} />
+        <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
+          <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+            <Send style={{ color: 'var(--color-primary)' }} size={20} />
             {t.title}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--color-text-muted)' }}
           >
             <X size={20} />
           </button>
@@ -627,13 +630,13 @@ export default function SendDocumentModal({
         {/* Content */}
         <div className="p-4 space-y-4">
           {/* Document info */}
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-3 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
+          <div className="border rounded-xl p-3 flex items-center gap-3" style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border-subtle)' }}>
+            <div className="p-2 rounded-lg" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
               <FileText size={20} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white font-medium truncate">{document.name}</p>
-              <p className="text-gray-500 text-xs">{leadData.name}</p>
+              <p className="font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{document.name}</p>
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{leadData.name}</p>
             </div>
           </div>
 
@@ -643,7 +646,8 @@ export default function SendDocumentModal({
               <button
                 onClick={handleGeneratePdf}
                 disabled={generating}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
               >
                 {generating ? (
                   <>
@@ -658,22 +662,24 @@ export default function SendDocumentModal({
                 )}
               </button>
             ) : (
-              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3">
-                <div className="flex items-center gap-2 text-emerald-400 mb-3">
+              <div className="border rounded-xl p-3" style={{ background: 'var(--color-success-subtle)', borderColor: 'var(--color-success)' }}>
+                <div className="flex items-center gap-2 mb-3" style={{ color: 'var(--color-success)' }}>
                   <CheckCircle2 size={18} />
                   <span className="font-medium">{t.pdfReady}</span>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={handleDownload}
-                    className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                    className="flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                    style={{ background: 'var(--color-success)', color: 'var(--color-text-primary)' }}
                   >
                     <Download size={14} />
                     {t.download}
                   </button>
                   <button
                     onClick={handleCopyLink}
-                    className="py-2 px-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors border border-white/10"
+                    className="py-2 px-3 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors border"
+                    style={{ background: 'var(--color-bg-hover)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
                     title={t.copyLink}
                   >
                     <Copy size={14} />
@@ -687,28 +693,28 @@ export default function SendDocumentModal({
           {pdfUrl && (
             <>
               <div className="pt-2">
-                <p className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-2">
+                <p className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
                   {t.sendVia}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setSendMethod('whatsapp')}
-                    className={`py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all border ${
-                      sendMethod === 'whatsapp'
-                        ? 'bg-emerald-600 text-white border-emerald-500'
-                        : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                    }`}
+                    className="py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all border"
+                    style={sendMethod === 'whatsapp'
+                      ? { background: 'var(--color-success)', color: 'var(--color-text-primary)', borderColor: 'var(--color-success)' }
+                      : { background: 'var(--color-bg-hover)', color: 'var(--color-text-secondary)', borderColor: 'var(--color-border)' }
+                    }
                   >
                     <MessageCircle size={18} />
                     {t.whatsapp}
                   </button>
                   <button
                     onClick={() => setSendMethod('email')}
-                    className={`py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all border ${
-                      sendMethod === 'email'
-                        ? 'bg-blue-600 text-white border-blue-500'
-                        : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                    }`}
+                    className="py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all border"
+                    style={sendMethod === 'email'
+                      ? { background: 'var(--color-primary)', color: 'var(--color-text-primary)', borderColor: 'var(--color-primary)' }
+                      : { background: 'var(--color-bg-hover)', color: 'var(--color-text-secondary)', borderColor: 'var(--color-border)' }
+                    }
                   >
                     <Mail size={18} />
                     {t.email}
@@ -720,7 +726,7 @@ export default function SendDocumentModal({
               {sendMethod === 'whatsapp' && (
                 <div className="pt-2 space-y-3">
                   {!leadData.phone ? (
-                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center gap-2 text-amber-400">
+                    <div className="border rounded-xl p-3 flex items-center gap-2" style={{ background: 'var(--color-accent-subtle)', borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}>
                       <AlertCircle size={16} />
                       <span className="text-sm">{t.noPhone}</span>
                     </div>
@@ -728,7 +734,8 @@ export default function SendDocumentModal({
                     <button
                       onClick={handleSendWhatsApp}
                       disabled={sending}
-                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ background: 'var(--color-success)', color: 'var(--color-text-primary)' }}
                     >
                       {sending ? (
                         <>
@@ -750,7 +757,7 @@ export default function SendDocumentModal({
               {sendMethod === 'email' && (
                 <div className="pt-2 space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1">
+                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-tertiary)' }}>
                       {t.emailTo}
                     </label>
                     <input
@@ -758,22 +765,24 @@ export default function SendDocumentModal({
                       value={emailTo}
                       onChange={(e) => setEmailTo(e.target.value)}
                       placeholder={t.emailPlaceholder}
-                      className="w-full px-3 py-2.5 bg-[#0a0a0a] border border-white/10 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-3 py-2.5 border rounded-lg focus:outline-none transition-colors"
+                      style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1">
+                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-tertiary)' }}>
                       {t.subject}
                     </label>
                     <input
                       type="text"
                       value={emailSubject}
                       onChange={(e) => setEmailSubject(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-[#0a0a0a] border border-white/10 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-3 py-2.5 border rounded-lg focus:outline-none transition-colors"
+                      style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1">
+                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-tertiary)' }}>
                       {t.message}
                     </label>
                     <textarea
@@ -781,13 +790,15 @@ export default function SendDocumentModal({
                       onChange={(e) => setEmailMessage(e.target.value)}
                       placeholder={t.messagePlaceholder}
                       rows={3}
-                      className="w-full px-3 py-2.5 bg-[#0a0a0a] border border-white/10 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors resize-none"
+                      className="w-full px-3 py-2.5 border rounded-lg focus:outline-none transition-colors resize-none"
+                      style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                     />
                   </div>
                   <button
                     onClick={handleSendEmail}
                     disabled={sending || !emailTo}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
                   >
                     {sending ? (
                       <>
@@ -808,10 +819,11 @@ export default function SendDocumentModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/10 bg-[#0a0a0a]">
+        <div className="p-4 border-t" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg-base)' }}>
           <button
             onClick={onClose}
-            className="w-full py-2 text-gray-400 hover:text-white transition-colors text-sm"
+            className="w-full py-2 transition-colors text-sm"
+            style={{ color: 'var(--color-text-tertiary)' }}
           >
             {t.cancel}
           </button>
