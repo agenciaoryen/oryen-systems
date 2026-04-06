@@ -1021,7 +1021,7 @@ export default function LeadProfilePage() {
                   value={lead.tipo_contato || ''}
                   onChange={(e) => handleUpdateField('tipo_contato', e.target.value)}
                   className="w-full rounded-xl p-3 text-sm outline-none transition-all cursor-pointer"
-                  style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
+                  style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
                 >
                   <option value="">{t.contactTypePlaceholder}</option>
                   <option value="comprador">{t.typeBuyer}</option>
@@ -1040,7 +1040,7 @@ export default function LeadProfilePage() {
                   value={lead.interesse || ''}
                   onChange={(e) => handleUpdateField('interesse', e.target.value)}
                   className="w-full rounded-xl p-3 text-sm outline-none transition-all cursor-pointer"
-                  style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
+                  style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
                 >
                   <option value="">{t.interestPlaceholder}</option>
                   <option value="compra">{t.intPurchase}</option>

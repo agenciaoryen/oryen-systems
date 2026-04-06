@@ -311,7 +311,7 @@ export default function SiteSettingsPage() {
 
   // ─── STYLES ───
   const inputClass = "w-full px-3 py-2.5 rounded-xl text-sm border transition-all focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]/50"
-  const inputStyle = { background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }
+  const inputStyle = { backgroundColor: 'var(--color-bg-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }
   const labelClass = "block text-xs font-semibold mb-1.5"
   const labelStyle = { color: 'var(--color-text-secondary)' }
   const sectionClass = "rounded-2xl border p-6 space-y-4"

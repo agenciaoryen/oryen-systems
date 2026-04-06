@@ -851,7 +851,7 @@ export default function CrmPage() {
               value={daysFilter}
               onChange={(e) => setDaysFilter(e.target.value)}
               className="appearance-none text-sm rounded-lg pl-3 pr-8 py-2 outline-none focus:ring-1 focus:ring-blue-500/50 transition-all cursor-pointer"
-              style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+              style={{ backgroundColor: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
             >
               <option value="7">{t.days7}</option>
               <option value="30">{t.days30}</option>

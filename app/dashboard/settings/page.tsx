@@ -1055,7 +1055,7 @@ export default function SettingsPage() {
                       <select
                         value={language}
                         onChange={(e) => setLanguage(e.target.value)}
-                        className="w-full rounded-lg p-3 outline-none appearance-none" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
+                        className="w-full rounded-lg p-3 outline-none appearance-none" style={{ backgroundColor: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                       >
                         <option value="pt">🇧🇷 Português</option>
                         <option value="en">🇺🇸 English</option>
@@ -1067,7 +1067,7 @@ export default function SettingsPage() {
                       <select
                         value={currency}
                         onChange={(e) => setCurrency(e.target.value)}
-                        className="w-full rounded-lg p-3 outline-none appearance-none" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
+                        className="w-full rounded-lg p-3 outline-none appearance-none" style={{ backgroundColor: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                       >
                         <option value="BRL">R$ (BRL)</option>
                         <option value="USD">$ (USD)</option>
@@ -1084,7 +1084,7 @@ export default function SettingsPage() {
                       <select
                         value={timezone}
                         onChange={(e) => setTimezone(e.target.value)}
-                        className="w-full rounded-lg p-3 outline-none appearance-none" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
+                        className="w-full rounded-lg p-3 outline-none appearance-none" style={{ backgroundColor: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                       >
                         <option value="America/Sao_Paulo">🇧🇷 São Paulo</option>
                         <option value="America/New_York">🇺🇸 New York</option>
@@ -1452,7 +1452,7 @@ export default function SettingsPage() {
                           value={stage.color}
                           onChange={(e) => handleUpdateStage(stage.id, { color: e.target.value })}
                           className="rounded-lg px-3 py-2 text-sm outline-none appearance-none"
-                          style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
+                          style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                         >
                           {AVAILABLE_COLORS.map(color => (
                             <option key={color.name} value={color.name}>{color.label}</option>
@@ -1514,7 +1514,7 @@ export default function SettingsPage() {
                     value={newStageColor}
                     onChange={(e) => setNewStageColor(e.target.value)}
                     className="rounded-lg px-3 py-2 text-sm outline-none appearance-none w-full sm:w-32"
-                    style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
+                    style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                   >
                     {AVAILABLE_COLORS.map(color => (
                       <option key={color.name} value={color.name}>{color.label}</option>
@@ -1595,7 +1595,7 @@ export default function SettingsPage() {
                     value={newTagColor}
                     onChange={(e) => setNewTagColor(e.target.value)}
                     className="rounded-lg px-3 py-2 text-sm outline-none appearance-none w-full sm:w-32"
-                    style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
+                    style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                   >
                     {AVAILABLE_COLORS.map(color => (
                       <option key={color.name} value={color.name}>{color.label}</option>

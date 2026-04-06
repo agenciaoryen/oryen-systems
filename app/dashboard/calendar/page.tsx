@@ -577,7 +577,7 @@ function CreateEventModal({
   }
 
   const selectClass = "w-full mt-1 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none appearance-none [&>option]:bg-[var(--color-bg-elevated)] [&>option]:text-[var(--color-text-primary)]"
-  const selectStyle: React.CSSProperties = { background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }
+  const selectStyle: React.CSSProperties = { backgroundColor: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }
   const inputClass = "w-full mt-1 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none [color-scheme:dark]"
   const inputStyle: React.CSSProperties = { background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }
 

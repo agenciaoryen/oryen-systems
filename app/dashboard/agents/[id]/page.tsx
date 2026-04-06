@@ -418,7 +418,7 @@ function CreateCampaignModal({
   const renderField = (field: ConfigField) => {
     const fieldError = errors[field.name]
     const borderStyle = fieldError ? 'var(--color-error)' : 'var(--color-border-subtle)'
-    const baseInputStyle = { background: 'var(--color-bg-base)', border: `1px solid ${borderStyle}`, color: 'var(--color-text-primary)' }
+    const baseInputStyle = { backgroundColor: 'var(--color-bg-base)', border: `1px solid ${borderStyle}`, color: 'var(--color-text-primary)' }
 
     switch (field.type) {
       case 'text':
@@ -663,7 +663,7 @@ function CreateCampaignModal({
                 value={scheduleFrequency}
                 onChange={(e) => setScheduleFrequency(e.target.value)}
                 className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
-                style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
+                style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
               >
                 <option value="daily">{ui.daily}</option>
                 <option value="weekly">{ui.weekly}</option>

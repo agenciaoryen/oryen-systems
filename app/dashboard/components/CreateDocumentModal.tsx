@@ -657,7 +657,7 @@ export default function CreateDocumentModal({
                       value={formData[variable.key] || ''}
                       onChange={(e) => handleInputChange(variable.key, e.target.value)}
                       className="w-full px-3 py-2.5 border rounded-lg focus:outline-none transition-colors"
-                      style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-primary)', borderColor: errors[variable.key] ? 'var(--color-error)' : 'var(--color-border-subtle)' }}
+                      style={{ backgroundColor: 'var(--color-bg-base)', color: 'var(--color-text-primary)', borderColor: errors[variable.key] ? 'var(--color-error)' : 'var(--color-border-subtle)' }}
                     >
                       <option value="">Seleccionar...</option>
                       {variable.options.map(opt => (

@@ -651,7 +651,7 @@ export default function ReportsPage() {
                       value={formData.frequency}
                       onChange={e => setFormData({...formData, frequency: e.target.value})}
                       className="w-full rounded-xl p-3 text-sm outline-none transition-all appearance-none cursor-pointer"
-                      style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+                      style={{ backgroundColor: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
                     >
                       <option value="daily">{t.freqDaily}</option>
                       <option value="weekly">{t.freqWeekly}</option>
@@ -680,7 +680,7 @@ export default function ReportsPage() {
                         value={formData.send_day}
                         onChange={e => setFormData({...formData, send_day: e.target.value})}
                         className="w-full rounded-xl p-3 text-sm outline-none transition-all appearance-none cursor-pointer"
-                        style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+                        style={{ backgroundColor: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
                       >
                         {daysOfWeek.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                       </select>
