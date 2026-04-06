@@ -384,63 +384,56 @@ const GoalsModal = ({ isOpen, onClose, currentGoals, onSave, loading, t, currenc
   }
 
   return (
-    <div 
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      style={{ background: 'var(--color-bg-overlay)', backdropFilter: 'blur(8px)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-[#111] border border-white/10 p-6 rounded-2xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="w-full max-w-md p-6 rounded-2xl"
+        style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-xl)' }}>
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg sm:text-xl font-bold text-white">{t.goalsModalTitle}</h3>
-          <button 
-            onClick={onClose} 
-            className="text-gray-500 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-lg"
-            aria-label="Fechar"
-          >
+          <h3 className="text-lg sm:text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>{t.goalsModalTitle}</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg transition-colors"
+            style={{ color: 'var(--color-text-tertiary)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-bg-hover)'; e.currentTarget.style.color = 'var(--color-text-primary)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-tertiary)' }}>
             <X size={20} />
           </button>
         </div>
-        
+
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wide">
+            <label className="block text-xs font-medium mb-2" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.03em' }}>
               {t.revenueGoal} ({currencyCode})
             </label>
-            <input 
-              type="number" 
-              value={revenue}
-              onChange={(e) => setRevenue(Number(e.target.value))}
-              className="w-full bg-black border border-white/10 rounded-lg p-3 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
-              placeholder="Ex: 50000"
-              min={0}
-            />
+            <input type="number" value={revenue} onChange={(e) => setRevenue(Number(e.target.value))}
+              className="w-full rounded-xl p-3 text-sm outline-none transition-all duration-150"
+              style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79, 111, 255, 0.1)' }}
+              onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
+              placeholder="Ex: 50000" min={0} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wide">
+            <label className="block text-xs font-medium mb-2" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.03em' }}>
               {t.adsBudget} ({currencyCode})
             </label>
-            <input 
-              type="number" 
-              value={ads}
-              onChange={(e) => setAds(Number(e.target.value))}
-              className="w-full bg-black border border-white/10 rounded-lg p-3 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
-              placeholder="Ex: 1500"
-              min={0}
-            />
+            <input type="number" value={ads} onChange={(e) => setAds(Number(e.target.value))}
+              className="w-full rounded-xl p-3 text-sm outline-none transition-all duration-150"
+              style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79, 111, 255, 0.1)' }}
+              onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
+              placeholder="Ex: 1500" min={0} />
           </div>
         </div>
 
         <div className="mt-8 flex gap-3">
-          <button 
-            onClick={onClose} 
-            className="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
-          >
+          <button onClick={onClose} className="flex-1 py-3 text-sm font-medium rounded-xl transition-colors"
+            style={{ color: 'var(--color-text-secondary)' }}>
             {t.cancel}
           </button>
-          <button 
-            onClick={handleSubmit}
-            disabled={loading}
-            className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
+          <button onClick={handleSubmit} disabled={loading}
+            className="flex-1 py-3 rounded-xl text-sm font-bold transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(79, 111, 255, 0.25)' }}>
             {loading && <Loader2 size={16} className="animate-spin" />}
             {loading ? t.saving : t.save}
           </button>
@@ -455,13 +448,13 @@ const GoalsModal = ({ isOpen, onClose, currentGoals, onSave, loading, t, currenc
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const DashboardSkeleton = ({ message }: { message: string }) => (
-  <div className="min-h-screen bg-black flex items-center justify-center">
+  <div className="flex items-center justify-center py-32">
     <div className="flex flex-col items-center gap-4">
       <div className="relative">
-        <div className="w-12 h-12 border-4 border-blue-600/30 rounded-full" />
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin absolute inset-0" />
+        <div className="w-12 h-12 rounded-full" style={{ border: '4px solid var(--color-border)' }} />
+        <div className="w-12 h-12 rounded-full animate-spin absolute inset-0" style={{ border: '4px solid var(--color-primary)', borderTopColor: 'transparent' }} />
       </div>
-      <p className="text-gray-500 text-sm animate-pulse">{message}</p>
+      <p className="text-sm animate-pulse" style={{ color: 'var(--color-text-tertiary)' }}>{message}</p>
     </div>
   </div>
 )
@@ -816,68 +809,63 @@ export default function DashboardPage() {
 
       {/* Erro */}
       {error && (
-        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-xl flex items-center justify-between">
-          <span>{error}</span>
-          <button onClick={loadData} className="hover:text-white transition-colors">
+        <div className="px-4 py-3 rounded-xl flex items-center justify-between"
+          style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error-subtle-fg)', border: '1px solid rgba(239,68,68,0.15)' }}>
+          <span className="text-sm">{error}</span>
+          <button onClick={loadData} className="transition-colors" style={{ color: 'var(--color-error)' }}>
             <RefreshCw size={16} />
           </button>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4 border-b border-white/5 pb-6">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4 pb-6"
+        style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
         <div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">{t.overview}</h1>
-          <p className="text-gray-400 mt-2 flex items-center gap-2 text-sm sm:text-base">
-            <Activity size={16} className="text-emerald-500 shrink-0" />
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.025em' }}>{t.overview}</h1>
+          <p className="mt-2 flex items-center gap-2 text-sm sm:text-base" style={{ color: 'var(--color-text-secondary)' }}>
+            <Activity size={16} style={{ color: 'var(--color-success)' }} className="shrink-0" />
             <span className="truncate max-w-[200px] sm:max-w-[400px]">
-              {t.performance} <span className="text-white font-medium">{activeOrgName}</span>
+              {t.performance} <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{activeOrgName}</span>
             </span>
           </p>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto mt-2 lg:mt-0">
-          {/* Botão Metas */}
-          <button 
-            onClick={() => setIsGoalsModalOpen(true)}
-            className="flex-1 lg:flex-none justify-center flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors border border-white/10"
-          >
-            <Settings size={16} /> 
+          <button onClick={() => setIsGoalsModalOpen(true)}
+            className="flex-1 lg:flex-none justify-center flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-150"
+            style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-border-strong)'; e.currentTarget.style.color = 'var(--color-text-primary)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}>
+            <Settings size={16} />
             <span className="hidden sm:inline">{t.goals}</span>
           </button>
 
-          {/* Seletor de Range */}
-          <div className="bg-[#111] border border-white/10 rounded-lg p-1 flex overflow-x-auto hide-scrollbar w-full sm:w-auto order-last sm:order-none mt-2 sm:mt-0">
+          <div className="rounded-lg p-1 flex overflow-x-auto hide-scrollbar w-full sm:w-auto order-last sm:order-none mt-2 sm:mt-0"
+            style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
             {RANGE_OPTIONS.map((d) => (
-              <button 
-                key={d}
-                onClick={() => setRange(d)}
-                className={`flex-1 sm:flex-none px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap ${
-                  range === d ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'
-                }`}
-              >
+              <button key={d} onClick={() => setRange(d)}
+                className="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap"
+                style={{
+                  background: range === d ? 'var(--color-primary-subtle)' : 'transparent',
+                  color: range === d ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+                }}>
                 {d}D
               </button>
             ))}
           </div>
 
-          {/* Botão Refresh */}
-          <button 
-            onClick={loadData}
-            disabled={loading}
-            className="p-2 sm:p-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors border border-white/10 disabled:opacity-50"
-            title={t.refresh}
-          >
+          <button onClick={loadData} disabled={loading}
+            className="p-2 sm:p-2.5 rounded-lg transition-all duration-150 disabled:opacity-50"
+            style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
+            title={t.refresh}>
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
 
-          {/* Botão Exportar */}
-          <button 
-            onClick={handleExport}
-            disabled={leadsCreatedInPeriod.length === 0}
-            className="flex-1 lg:flex-none justify-center flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download size={16} /> 
+          <button onClick={handleExport} disabled={leadsCreatedInPeriod.length === 0}
+            className="flex-1 lg:flex-none justify-center flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 active:scale-95 disabled:opacity-50"
+            style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(79, 111, 255, 0.2)' }}>
+            <Download size={16} />
             <span className="hidden sm:inline">{t.export}</span>
           </button>
         </div>
