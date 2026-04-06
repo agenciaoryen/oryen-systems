@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "../outputs/design-tokens.css";
+@import "../outputs/design-tokens-v2.css";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    ESTILOS BASE
@@ -87,7 +87,7 @@ html.theme-transitioning * {
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 ::selection {
-  background: rgba(45, 126, 248, 0.3);
+  background: rgba(79, 111, 255, 0.3);
   color: var(--color-text-primary);
 }
 
@@ -176,17 +176,15 @@ input[type="number"] {
 }
 
 .glass {
-  background: rgba(17, 17, 23, 0.8);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-}
-
-[data-theme="light"] .glass {
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #8b5cf6 100%);
+  background: var(--gradient-brand-text);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -197,8 +195,7 @@ input[type="number"] {
 }
 
 .focus-ring:focus-visible {
-  outline: 2px solid rgba(45, 126, 248, 0.5);
-  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-bg-base), 0 0 0 4px var(--color-border-focus);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════

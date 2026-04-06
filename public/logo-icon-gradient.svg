@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!--
+    Oryen — Icon v2 Gradient (marketing / social media)
+    Uso: marketing materials, social media avatars, hero sections
+    Versao: 2.0
+  -->
+
+  <defs>
+    <linearGradient id="icon-bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E0E1C"/>
+      <stop offset="100%" stop-color="#0A0A14"/>
+    </linearGradient>
+    <linearGradient id="icon-stroke-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F6FFF"/>
+      <stop offset="50%" stop-color="#6E5FFF"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <!-- Glow effect sutil -->
+    <radialGradient id="glow" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="rgba(79, 111, 255, 0.12)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Fundo com gradiente sutil -->
+  <rect width="48" height="48" rx="10.5" fill="url(#icon-bg-gradient)"/>
+
+  <!-- Glow background -->
+  <rect width="48" height="48" rx="10.5" fill="url(#glow)"/>
+
+  <!-- Arco orbital principal -->
+  <path
+    d="M 36.26 13.72 A 16 16 0 1 1 16.00 37.86"
+    stroke="url(#icon-stroke-gradient)"
+    stroke-width="4.5"
+    stroke-linecap="round"
+    fill="none"
+  />
+
+  <!-- Terminal node com glow -->
+  <circle
+    cx="36.26"
+    cy="13.72"
+    r="4"
+    fill="#4F6FFF"
+    opacity="0.3"
+  />
+  <circle
+    cx="36.26"
+    cy="13.72"
+    r="2.5"
+    fill="#4F6FFF"
+  />
+
+</svg>

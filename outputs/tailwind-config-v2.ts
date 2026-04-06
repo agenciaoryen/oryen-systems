@@ -1,3 +1,16 @@
+/**
+ * Tailwind Config v2 — Atualizado para Branding Book v2
+ *
+ * Mudancas:
+ * - Adicionadas cores indigo (extended brand)
+ * - Adicionados tokens de glass effect
+ * - Adicionadas sombras glow
+ * - Adicionados valores de letter-spacing (tracking)
+ * - Adicionada transicao smooth
+ *
+ * Para aplicar: copiar este conteudo para tailwind.config.ts na raiz
+ */
+
 import type { Config } from "tailwindcss";
 
 const config: Config = {

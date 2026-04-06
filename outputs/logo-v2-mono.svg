@@ -1,21 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
   <!--
-    Oryen — Logo v2 (horizontal, light theme)
+    Oryen — Logo v2 (horizontal, monocromatico branco)
+    Uso: sobre fotos, backgrounds complexos, situacoes de baixo contraste
     Versao: 2.0
   -->
-
-  <defs>
-    <linearGradient id="brand-gradient-light" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#3451DB"/>
-      <stop offset="50%" stop-color="#5B4FE0"/>
-      <stop offset="100%" stop-color="#7C5CDB"/>
-    </linearGradient>
-  </defs>
 
   <!-- Arco orbital principal -->
   <path
     d="M 36.26 13.72 A 16 16 0 1 1 16.00 37.86"
-    stroke="url(#brand-gradient-light)"
+    stroke="#FFFFFF"
     stroke-width="5"
     stroke-linecap="round"
     fill="none"
@@ -26,7 +19,7 @@
     cx="36.26"
     cy="13.72"
     r="3"
-    fill="#3451DB"
+    fill="#FFFFFF"
   />
 
   <!-- Wordmark -->
@@ -37,7 +30,7 @@
     font-size="26"
     font-weight="600"
     letter-spacing="-0.02em"
-    fill="#0C0C1E"
+    fill="#FFFFFF"
   >oryen</text>
 
 </svg>

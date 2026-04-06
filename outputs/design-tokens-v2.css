@@ -1,0 +1,384 @@
+/*
+ * Oryen — Design Tokens v2.0
+ * Branding Book v2: Cobalt + Indigo + Amber
+ * "Orbital Intelligence" — premium, dark-first, tech-forward
+ *
+ * Uso:
+ *   - Importar via @import no globals.css
+ *   - Tema escuro e o padrao (:root)
+ *   - Tema claro ativado via [data-theme="light"] no <html>
+ *
+ * Versao: 2.0
+ * Data: 2026-04-06
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TEMA ESCURO — padrao
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+
+  /* --- Cor primaria (Cobalt) --- */
+  --color-primary:             #4F6FFF;
+  --color-primary-hover:       #3D5AEC;
+  --color-primary-active:      #2D46D4;
+  --color-primary-subtle:      #161D45;
+  --color-primary-subtle-fg:   #8DA4FF;
+
+  /* --- Cor secundaria --- */
+  --color-secondary:           #7585B0;
+  --color-secondary-hover:     #90A0C8;
+
+  /* --- Cor de acento (Amber Gold) --- */
+  --color-accent:              #F0A030;
+  --color-accent-hover:        #F5B550;
+  --color-accent-active:       #D88E20;
+  --color-accent-subtle:       #2D2008;
+  --color-accent-subtle-fg:    #FCD078;
+
+  /* --- Cor estendida (Indigo) --- */
+  --color-indigo:              #6E5FFF;
+  --color-indigo-hover:        #5A4BED;
+  --color-indigo-active:       #4A3CDB;
+  --color-indigo-subtle:       #1A1640;
+  --color-indigo-subtle-fg:    #A89CFF;
+
+  /* --- Fundos --- */
+  --color-bg-base:             #06060C;
+  --color-bg-surface:          #0C0C16;
+  --color-bg-elevated:         #141420;
+  --color-bg-hover:            #1A1A2C;
+  --color-bg-selected:         #161D45;
+  --color-bg-overlay:          rgba(0, 0, 0, 0.75);
+
+  /* --- Bordas --- */
+  --color-border:              #1E1E34;
+  --color-border-subtle:       #15152A;
+  --color-border-strong:       #2A2A4A;
+  --color-border-focus:        #4F6FFF;
+
+  /* --- Textos --- */
+  --color-text-primary:        #EDEDF5;
+  --color-text-secondary:      #8888AA;
+  --color-text-tertiary:       #555572;
+  --color-text-disabled:       #333348;
+  --color-text-on-primary:     #FFFFFF;
+  --color-text-on-accent:      #0C0800;
+  --color-text-inverse:        #0C0C1E;
+
+  /* --- Semanticas: Sucesso --- */
+  --color-success:             #22C55E;
+  --color-success-hover:       #16A34A;
+  --color-success-subtle:      #061F12;
+  --color-success-subtle-fg:   #4ADE80;
+
+  /* --- Semanticas: Alerta --- */
+  --color-warning:             #F59E0B;
+  --color-warning-hover:       #D97706;
+  --color-warning-subtle:      #1F1800;
+  --color-warning-subtle-fg:   #FCD34D;
+
+  /* --- Semanticas: Erro --- */
+  --color-error:               #EF4444;
+  --color-error-hover:         #DC2626;
+  --color-error-subtle:        #200808;
+  --color-error-subtle-fg:     #FCA5A5;
+
+  /* --- Semanticas: Info --- */
+  --color-info:                #38BDF8;
+  --color-info-hover:          #0284C7;
+  --color-info-subtle:         #081820;
+  --color-info-subtle-fg:      #7DD3FC;
+
+  /* --- Gradientes --- */
+  --gradient-brand:            linear-gradient(135deg, #4F6FFF 0%, #6E5FFF 50%, #8B5CF6 100%);
+  --gradient-brand-subtle:     linear-gradient(135deg, rgba(79, 111, 255, 0.08) 0%, rgba(110, 95, 255, 0.08) 100%);
+  --gradient-brand-text:       linear-gradient(135deg, #4F6FFF 0%, #8B5CF6 100%);
+  --gradient-accent:           linear-gradient(135deg, #F0A030 0%, #FF8C42 100%);
+  --gradient-dark:             linear-gradient(180deg, #0C0C16 0%, #06060C 100%);
+  --gradient-glow:             radial-gradient(ellipse at 50% 0%, rgba(79, 111, 255, 0.15) 0%, transparent 70%);
+  --gradient-glow-accent:      radial-gradient(ellipse at 50% 0%, rgba(240, 160, 48, 0.10) 0%, transparent 70%);
+
+  /* --- Glass effects --- */
+  --glass-bg:                  rgba(12, 12, 22, 0.7);
+  --glass-blur:                16px;
+  --glass-border:              rgba(255, 255, 255, 0.06);
+  --glass-shadow:              0 8px 32px rgba(0, 0, 0, 0.3);
+
+  /* --- Sombras --- */
+  --shadow-sm:                 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md:                 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-lg:                 0 8px 24px rgba(0, 0, 0, 0.65);
+  --shadow-xl:                 0 20px 50px rgba(0, 0, 0, 0.75);
+  --shadow-primary:            0 4px 20px rgba(79, 111, 255, 0.25);
+  --shadow-accent:             0 4px 20px rgba(240, 160, 48, 0.20);
+  --shadow-glow:               0 0 40px rgba(79, 111, 255, 0.15);
+
+  /* --- Tipografia --- */
+  --font-display:              var(--font-plus-jakarta), 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body:                 var(--font-inter), 'Inter', system-ui, sans-serif;
+  --font-mono:                 var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+
+  /* --- Escala tipografica --- */
+  --text-display:              3rem;
+  --text-h1:                   2.25rem;
+  --text-h2:                   1.75rem;
+  --text-h3:                   1.375rem;
+  --text-h4:                   1.125rem;
+  --text-h5:                   0.9375rem;
+  --text-h6:                   0.8125rem;
+  --text-body-lg:              1rem;
+  --text-body:                 0.875rem;
+  --text-body-sm:              0.8125rem;
+  --text-small:                0.75rem;
+  --text-caption:              0.6875rem;
+  --text-mono:                 0.8125rem;
+
+  /* --- Line heights --- */
+  --leading-display:           1.05;
+  --leading-h1:                1.10;
+  --leading-h2:                1.15;
+  --leading-h3:                1.25;
+  --leading-h4:                1.30;
+  --leading-tight:             1.10;
+  --leading-snug:              1.25;
+  --leading-normal:            1.55;
+  --leading-relaxed:           1.60;
+  --leading-loose:             1.75;
+
+  /* --- Letter spacing --- */
+  --tracking-display:          -0.03em;
+  --tracking-h1:               -0.025em;
+  --tracking-h2:               -0.02em;
+  --tracking-h3:               -0.015em;
+  --tracking-h4:               -0.01em;
+  --tracking-h5:               -0.005em;
+  --tracking-body:             0em;
+  --tracking-small:            0.01em;
+  --tracking-caption:          0.02em;
+  --tracking-uppercase:        0.05em;
+
+  /* --- Pesos tipograficos --- */
+  --font-regular:              400;
+  --font-medium:               500;
+  --font-semibold:             600;
+  --font-bold:                 700;
+
+  /* --- Espacamento (base 4px) --- */
+  --space-1:                   0.25rem;
+  --space-2:                   0.5rem;
+  --space-3:                   0.75rem;
+  --space-4:                   1rem;
+  --space-5:                   1.25rem;
+  --space-6:                   1.5rem;
+  --space-8:                   2rem;
+  --space-10:                  2.5rem;
+  --space-12:                  3rem;
+  --space-16:                  4rem;
+  --space-20:                  5rem;
+  --space-24:                  6rem;
+
+  /* --- Border radius --- */
+  --radius-sm:                 0.25rem;
+  --radius-md:                 0.5rem;
+  --radius-lg:                 0.75rem;
+  --radius-xl:                 1rem;
+  --radius-2xl:                1.5rem;
+  --radius-full:               9999px;
+
+  /* --- Transicoes --- */
+  --transition-fast:           100ms ease;
+  --transition-base:           150ms ease;
+  --transition-slow:           250ms ease-out;
+  --transition-spring:         200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-smooth:         300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* --- Z-index --- */
+  --z-base:                    0;
+  --z-raised:                  10;
+  --z-dropdown:                100;
+  --z-sticky:                  200;
+  --z-overlay:                 300;
+  --z-modal:                   400;
+  --z-toast:                   500;
+  --z-tooltip:                 600;
+
+  /* --- Layout --- */
+  --sidebar-width:             240px;
+  --sidebar-collapsed:         64px;
+  --content-max-width:         1440px;
+  --page-padding-x:            2rem;
+  --page-padding-x-mobile:     1.5rem;
+  --page-padding-x-compact:    1rem;
+
+  /* --- Grid --- */
+  --grid-gap:                  1rem;
+  --grid-gap-lg:               1.5rem;
+
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TEMA CLARO
+   Ativado via data-theme="light" no elemento <html>
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="light"] {
+
+  /* --- Cor primaria (Cobalt profundo) --- */
+  --color-primary:             #3451DB;
+  --color-primary-hover:       #2940B8;
+  --color-primary-active:      #1F3299;
+  --color-primary-subtle:      #EEF1FE;
+  --color-primary-subtle-fg:   #3451DB;
+
+  /* --- Cor secundaria --- */
+  --color-secondary:           #4D5E85;
+  --color-secondary-hover:     #3A4B6E;
+
+  /* --- Cor de acento (Amber escurecido) --- */
+  --color-accent:              #C48820;
+  --color-accent-hover:        #A87318;
+  --color-accent-active:       #8B5E10;
+  --color-accent-subtle:       #FFF8EA;
+  --color-accent-subtle-fg:    #8B5E10;
+
+  /* --- Cor estendida (Indigo) --- */
+  --color-indigo:              #5B4FE0;
+  --color-indigo-hover:        #4A3ECF;
+  --color-indigo-active:       #3D32BD;
+  --color-indigo-subtle:       #F0EEFE;
+  --color-indigo-subtle-fg:    #5B4FE0;
+
+  /* --- Fundos --- */
+  --color-bg-base:             #F2F2FA;
+  --color-bg-surface:          #FFFFFF;
+  --color-bg-elevated:         #FFFFFF;
+  --color-bg-hover:            #EAEAF3;
+  --color-bg-selected:         #EEF1FE;
+  --color-bg-overlay:          rgba(0, 0, 0, 0.45);
+  --color-bg-input:            #F5F5FC;
+  --color-bg-card:             #FFFFFF;
+
+  /* --- Bordas --- */
+  --color-border:              #D8D8E6;
+  --color-border-subtle:       #E4E4F0;
+  --color-border-strong:       #B8B8D0;
+  --color-border-focus:        #3451DB;
+
+  /* --- Textos --- */
+  --color-text-primary:        #0C0C1E;
+  --color-text-secondary:      #4A4A68;
+  --color-text-tertiary:       #8282A0;
+  --color-text-disabled:       #B8B8CC;
+  --color-text-on-primary:     #FFFFFF;
+  --color-text-on-accent:      #FFFFFF;
+  --color-text-inverse:        #EDEDF5;
+
+  /* --- Semanticas: Sucesso --- */
+  --color-success:             #16A34A;
+  --color-success-hover:       #15803D;
+  --color-success-subtle:      #ECFDF5;
+  --color-success-subtle-fg:   #15803D;
+
+  /* --- Semanticas: Alerta --- */
+  --color-warning:             #D97706;
+  --color-warning-hover:       #B45309;
+  --color-warning-subtle:      #FFFBEB;
+  --color-warning-subtle-fg:   #92400E;
+
+  /* --- Semanticas: Erro --- */
+  --color-error:               #DC2626;
+  --color-error-hover:         #B91C1C;
+  --color-error-subtle:        #FEF2F2;
+  --color-error-subtle-fg:     #991B1B;
+
+  /* --- Semanticas: Info --- */
+  --color-info:                #0369A1;
+  --color-info-hover:          #075985;
+  --color-info-subtle:         #F0F9FF;
+  --color-info-subtle-fg:      #075985;
+
+  /* --- Gradientes (ajustados para light) --- */
+  --gradient-brand:            linear-gradient(135deg, #3451DB 0%, #5B4FE0 50%, #7C5CDB 100%);
+  --gradient-brand-subtle:     linear-gradient(135deg, rgba(52, 81, 219, 0.06) 0%, rgba(91, 79, 224, 0.06) 100%);
+  --gradient-brand-text:       linear-gradient(135deg, #3451DB 0%, #7C5CDB 100%);
+  --gradient-accent:           linear-gradient(135deg, #C48820 0%, #D97706 100%);
+  --gradient-dark:             linear-gradient(180deg, #FFFFFF 0%, #F2F2FA 100%);
+  --gradient-glow:             radial-gradient(ellipse at 50% 0%, rgba(52, 81, 219, 0.08) 0%, transparent 70%);
+  --gradient-glow-accent:      radial-gradient(ellipse at 50% 0%, rgba(196, 136, 32, 0.06) 0%, transparent 70%);
+
+  /* --- Glass effects --- */
+  --glass-bg:                  rgba(255, 255, 255, 0.7);
+  --glass-blur:                16px;
+  --glass-border:              rgba(0, 0, 0, 0.06);
+  --glass-shadow:              0 8px 32px rgba(0, 0, 0, 0.08);
+
+  /* --- Sombras (sutis para light mode) --- */
+  --shadow-sm:                 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-md:                 0 4px 12px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg:                 0 8px 24px rgba(0, 0, 0, 0.07), 0 4px 8px rgba(0, 0, 0, 0.03);
+  --shadow-xl:                 0 20px 50px rgba(0, 0, 0, 0.09), 0 8px 16px rgba(0, 0, 0, 0.03);
+  --shadow-primary:            0 4px 20px rgba(52, 81, 219, 0.15);
+  --shadow-accent:             0 4px 20px rgba(196, 136, 32, 0.12);
+  --shadow-glow:               0 0 40px rgba(52, 81, 219, 0.10);
+
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   UTILITY CLASSES
+   Classes auxiliares para aplicar tokens diretamente
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Gradient text */
+.text-gradient-brand {
+  background: var(--gradient-brand-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass morphism */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Gradient border card */
+.gradient-border {
+  position: relative;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--gradient-brand);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Glow effect (apply to a container, adds glow at top) */
+.glow-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 400px;
+  background: var(--gradient-glow);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Focus ring */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-bg-base), 0 0 0 4px var(--color-border-focus);
+}
