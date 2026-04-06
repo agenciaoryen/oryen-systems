@@ -7,7 +7,7 @@ import {
   User, Shield, Building, Globe, Bell, Save, UserPlus, Trash2,
   X, Loader2, AlertCircle, Lock, Mail, Smartphone, MapPin, Copy, Check,
   Tag, Plus, GripVertical, Pencil, LayoutGrid, ChevronUp, ChevronDown,
-  Sun, Moon, CreditCard, Eye, RotateCcw
+  Sun, Moon, CreditCard, Eye, RotateCcw, Clock, Play, Calendar
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
 
@@ -162,6 +162,7 @@ const TRANSLATIONS = {
         show_stale_indicator: 'Lead parado (sem atualização há 5+ dias)',
         show_ai_status: 'Status do agente de IA',
       },
+      preview: 'Pré-visualização',
       save: 'Salvar Configuração',
       saved: 'Configuração salva!',
       reset: 'Restaurar padrão',
@@ -293,6 +294,7 @@ const TRANSLATIONS = {
         show_stale_indicator: 'Stale lead (no update in 5+ days)',
         show_ai_status: 'AI agent status',
       },
+      preview: 'Preview',
       save: 'Save Configuration',
       saved: 'Configuration saved!',
       reset: 'Restore defaults',
@@ -424,6 +426,7 @@ const TRANSLATIONS = {
         show_stale_indicator: 'Lead inactivo (sin actualización en 5+ días)',
         show_ai_status: 'Estado del agente de IA',
       },
+      preview: 'Vista previa',
       save: 'Guardar Configuración',
       saved: '¡Configuración guardada!',
       reset: 'Restaurar predeterminados',
@@ -1683,6 +1686,122 @@ export default function SettingsPage() {
                       </span>
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Pré-visualização */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-secondary)' }}>{t.leadCard.preview}</h3>
+                <div className="flex justify-center p-6 rounded-xl" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
+                  <div className="w-[260px]">
+                    <div
+                      className="relative p-3 rounded-lg"
+                      style={{
+                        background: 'var(--color-bg-surface)',
+                        border: '1px solid var(--color-border)',
+                        borderLeft: `3px solid ${leadCardIndicators.show_stale_indicator ? '#F59E0B' : '#22C55E'}`,
+                      }}
+                    >
+                      {/* Indicadores no canto superior direito */}
+                      <div className="absolute -top-1.5 -right-1.5 flex items-center gap-1">
+                        {leadCardIndicators.show_stale_indicator && (
+                          <div className="rounded-full p-1 shadow-lg" style={{ background: 'var(--color-accent)', color: '#111' }} title="7 dias parado">
+                            <Clock size={10} />
+                          </div>
+                        )}
+                        {leadCardIndicators.show_ai_status && (
+                          <div
+                            className="w-5 h-5 rounded-full flex items-center justify-center"
+                            style={{ background: 'var(--color-success)', boxShadow: '0 0 8px rgba(34, 197, 94, 0.6)' }}
+                          >
+                            <Play size={10} className="text-white" style={{ marginLeft: 1 }} />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Nome e Empresa */}
+                      <div className="flex items-start gap-2 mb-2 pr-6">
+                        <div className="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>
+                          JS
+                        </div>
+                        <div className="overflow-hidden min-w-0 flex-1">
+                          <h4 className="font-semibold text-sm leading-tight truncate" style={{ color: 'var(--color-text-primary)' }}>
+                            João Silva
+                          </h4>
+                          {leadCardFields.includes('nome_empresa') && (
+                            <p className="text-[10px] truncate" style={{ color: 'var(--color-text-muted)' }}>Imóveis Premium Ltda</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Valor, Telefone e Email */}
+                      {(leadCardFields.includes('total_em_vendas') || leadCardFields.includes('email') || leadCardFields.includes('phone')) && (
+                        <div className="space-y-1 mb-2">
+                          {leadCardFields.includes('total_em_vendas') && (
+                            <div className="text-[11px] font-bold flex items-center gap-1" style={{ color: 'var(--color-success)' }}>
+                              R$ 150.000,00
+                            </div>
+                          )}
+                          {leadCardFields.includes('phone') && (
+                            <div className="flex items-center gap-1.5 text-[10px] truncate" style={{ color: 'var(--color-text-muted)' }}>
+                              <Smartphone size={10} />
+                              <span className="truncate">(51) 99838-8409</span>
+                            </div>
+                          )}
+                          {leadCardFields.includes('email') && (
+                            <div className="flex items-center gap-1.5 text-[10px] truncate" style={{ color: 'var(--color-text-muted)' }}>
+                              <Mail size={10} />
+                              <span className="truncate">joao@email.com</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Tags */}
+                      {leadCardFields.includes('tags') && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-medium border bg-red-500/10 text-red-400 border-red-500/20">
+                            <Tag size={8} />Quente
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-medium border bg-blue-500/10 text-blue-400 border-blue-500/20">
+                            <Tag size={8} />Apartamento
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-medium border bg-green-500/10 text-green-400 border-green-500/20">
+                            <Tag size={8} />VIP
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Origem e Nicho */}
+                      {(leadCardFields.includes('source') || leadCardFields.includes('nicho')) && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {leadCardFields.includes('source') && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] truncate" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border)' }}>
+                              Instagram
+                            </span>
+                          )}
+                          {leadCardFields.includes('nicho') && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] truncate" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(79, 111, 255, 0.2)' }}>
+                              Imobiliário
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Rodapé */}
+                      {leadCardFields.includes('created_at') && (
+                        <div className="flex justify-between items-center pt-2" style={{ borderTop: '1px solid var(--color-border)' }}>
+                          <div className="flex items-center gap-1.5 text-[9px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
+                            <Calendar size={10} />
+                            06/04/2026
+                          </div>
+                          <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                            Prioridade
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 

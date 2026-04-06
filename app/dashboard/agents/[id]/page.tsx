@@ -76,7 +76,10 @@ const UI = {
     creating: 'Criando...',
     created: 'Campanha criada!',
     cancel: 'Cancelar',
-    required: 'Campo obrigatório'
+    required: 'Campo obrigatório',
+    managementTitle: 'Gerenciamento do Agente',
+    managementDesc: 'A tela de gerenciamento deste agente está em desenvolvimento. Em breve você poderá configurar e acompanhar o desempenho aqui.',
+    comingSoon: 'Em breve'
   },
   en: {
     back: 'Back',
@@ -124,7 +127,10 @@ const UI = {
     creating: 'Creating...',
     created: 'Campaign created!',
     cancel: 'Cancel',
-    required: 'Required field'
+    required: 'Required field',
+    managementTitle: 'Agent Management',
+    managementDesc: 'The management screen for this agent is under development. Soon you will be able to configure and track performance here.',
+    comingSoon: 'Coming soon'
   },
   es: {
     back: 'Volver',
@@ -172,7 +178,10 @@ const UI = {
     creating: 'Creando...',
     created: '¡Campaña creada!',
     cancel: 'Cancelar',
-    required: 'Campo requerido'
+    required: 'Campo requerido',
+    managementTitle: 'Gestión del Agente',
+    managementDesc: 'La pantalla de gestión de este agente está en desarrollo. Pronto podrás configurar y monitorear el rendimiento aquí.',
+    comingSoon: 'Próximamente'
   }
 }
 
@@ -794,6 +803,17 @@ export default function AgentDetailPage() {
 
   const solution = agent.solution
   const usage = calculateUsage(agent)
+  const isFollowUp = agent.solution_slug?.includes('followup')
+
+  // Follow-up agents redirect to their dedicated management page
+  if (isFollowUp) {
+    router.replace('/dashboard/follow-up')
+    return (
+      <div className="min-h-[calc(100vh-100px)] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
