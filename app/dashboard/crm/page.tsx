@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { formatPrice } from '@/lib/format'
+import { usePlan } from '@/lib/usePlan'
 import {
   Search,
   Plus,
@@ -118,6 +119,8 @@ const TRANSLATIONS = {
     priority: 'Prioridade',
     stale: 'dias parado',
     contactLabel: 'Contato:',
+    pauseAi: 'Pausar IA',
+    activateAi: 'Ativar IA',
     filterByTags: 'Filtrar por tags',
     allTags: 'Todas as tags',
     clearFilters: 'Limpar filtros',
@@ -176,6 +179,8 @@ const TRANSLATIONS = {
     priority: 'Priority',
     stale: 'days stale',
     contactLabel: 'Contact:',
+    pauseAi: 'Pause AI',
+    activateAi: 'Activate AI',
     filterByTags: 'Filter by tags',
     allTags: 'All tags',
     clearFilters: 'Clear filters',
@@ -234,6 +239,8 @@ const TRANSLATIONS = {
     priority: 'Prioridad',
     stale: 'días sin actualización',
     contactLabel: 'Contacto:',
+    pauseAi: 'Pausar IA',
+    activateAi: 'Activar IA',
     filterByTags: 'Filtrar por tags',
     allTags: 'Todas las tags',
     clearFilters: 'Limpiar filtros',
@@ -362,6 +369,7 @@ export default function CrmPage() {
   const router = useRouter()
   const { user } = useAuth()
   const orgId = useActiveOrgId()
+  const { canUseAiAgents } = usePlan()
 
   // Configurações do usuário
   const userLang = (user?.language as Language) || 'pt'
@@ -686,6 +694,22 @@ export default function CrmPage() {
   // ─── NAVEGAÇÃO ───
   const handleOpenLead = (leadId: string) => {
     router.push(`/dashboard/crm/${leadId}`)
+  }
+
+  // ─── TOGGLE IA NO CARD ───
+  const handleToggleAi = async (e: React.MouseEvent, leadId: string, currentValue: boolean) => {
+    e.stopPropagation() // não abre o lead
+    const newValue = !currentValue
+    // Atualizar otimisticamente
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, conversa_finalizada: newValue } : l))
+    const { error } = await supabase
+      .from('leads')
+      .update({ conversa_finalizada: newValue })
+      .eq('id', leadId)
+    if (error) {
+      // Rollback
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, conversa_finalizada: currentValue } : l))
+    }
   }
 
   // ─── OBTER TAGS DO LEAD ───
@@ -1069,7 +1093,20 @@ export default function CrmPage() {
                                   <Clock size={10} />
                                 </div>
                               )}
-                              {cardShowAiStatus && <AiStatusBadge isActive={isAiActive} />}
+                              {cardShowAiStatus && canUseAiAgents && (
+                                <button
+                                  onClick={(e) => handleToggleAi(e, lead.id, lead.conversa_finalizada ?? false)}
+                                  className={`w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-110 ${
+                                    isAiActive
+                                      ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] hover:bg-red-500'
+                                      : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] hover:bg-emerald-500'
+                                  }`}
+                                  title={isAiActive ? (t.pauseAi || 'Pausar IA') : (t.activateAi || 'Ativar IA')}
+                                >
+                                  {isAiActive ? <Pause size={10} className="text-white" /> : <Play size={10} className="text-white" />}
+                                </button>
+                              )}
+                              {cardShowAiStatus && !canUseAiAgents && <AiStatusBadge isActive={isAiActive} />}
                             </div>
 
                             <div className="absolute top-2 right-6 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">
