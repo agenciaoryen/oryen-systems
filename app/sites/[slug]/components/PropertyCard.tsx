@@ -6,9 +6,10 @@ import { formatPrice, formatArea, PROPERTY_TYPES, TRANSACTION_TYPES } from '@/li
 interface PropertyCardProps {
   property: any
   slug: string
+  currency?: string
 }
 
-export default function PropertyCard({ property, slug }: PropertyCardProps) {
+export default function PropertyCard({ property, slug, currency }: PropertyCardProps) {
   const cover = property.images?.find((img: any) => img.is_cover)?.url || property.images?.[0]?.url || null
 
   return (
@@ -44,7 +45,7 @@ export default function PropertyCard({ property, slug }: PropertyCardProps) {
         {/* Price */}
         {property.price && (
           <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-black/70 backdrop-blur-sm text-white font-bold text-sm">
-            {formatPrice(property.price)}
+            {formatPrice(property.price, currency)}
           </div>
         )}
       </div>

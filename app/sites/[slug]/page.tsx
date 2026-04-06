@@ -119,7 +119,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {properties.map((prop: any) => (
-                <PropertyCard key={prop.id} property={prop} slug={site.slug} />
+                <PropertyCard key={prop.id} property={prop} slug={site.slug} currency={site.currency} />
               ))}
             </div>
 

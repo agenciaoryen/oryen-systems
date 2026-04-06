@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   return {
     title: `${property.title} | ${site.site_name || 'Imóveis'}`,
-    description: property.description?.slice(0, 160) || `${PROPERTY_TYPES[property.property_type]?.pt} - ${formatPrice(property.price)}`,
+    description: property.description?.slice(0, 160) || `${PROPERTY_TYPES[property.property_type]?.pt} - ${formatPrice(property.price, site.currency)}`,
     openGraph: {
       title: property.title,
       description: property.description?.slice(0, 160) || '',
@@ -156,7 +156,7 @@ export default async function PropertyDetailPage({
               <div className="rounded-2xl bg-gray-50 p-6 border border-gray-100">
                 {property.price && (
                   <p className="text-3xl font-bold text-gray-900 mb-4">
-                    {formatPrice(property.price)}
+                    {formatPrice(property.price, site.currency)}
                     {property.transaction_type === 'rent' && <span className="text-sm font-normal text-gray-500">/mês</span>}
                   </p>
                 )}
@@ -204,13 +204,13 @@ export default async function PropertyDetailPage({
                   )}
                   {property.condo_fee && (
                     <div className="text-center p-3 bg-white rounded-xl">
-                      <p className="text-lg font-bold text-gray-900">{formatPrice(property.condo_fee)}</p>
+                      <p className="text-lg font-bold text-gray-900">{formatPrice(property.condo_fee, site.currency)}</p>
                       <p className="text-xs text-gray-500">Condomínio</p>
                     </div>
                   )}
                   {property.iptu && (
                     <div className="text-center p-3 bg-white rounded-xl">
-                      <p className="text-lg font-bold text-gray-900">{formatPrice(property.iptu)}</p>
+                      <p className="text-lg font-bold text-gray-900">{formatPrice(property.iptu, site.currency)}</p>
                       <p className="text-xs text-gray-500">IPTU</p>
                     </div>
                   )}
@@ -282,7 +282,7 @@ export default async function PropertyDetailPage({
               <h2 className="text-xl font-bold text-gray-900 mb-6">Imóveis Semelhantes</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {related.map((prop: any) => (
-                  <PropertyCard key={prop.id} property={prop} slug={params.slug} />
+                  <PropertyCard key={prop.id} property={prop} slug={site.slug} currency={site.currency} />
                 ))}
               </div>
             </div>

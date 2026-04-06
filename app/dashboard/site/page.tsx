@@ -115,6 +115,7 @@ export default function SiteSettingsPage() {
     cover_image_url: '',
     primary_color: '#4B6BFB',
     accent_color: '#F0A030',
+    currency: 'BRL',
     bio: '',
     avatar_url: '',
     creci: '',
@@ -152,6 +153,7 @@ export default function SiteSettingsPage() {
           cover_image_url: data.site.cover_image_url || '',
           primary_color: data.site.primary_color || '#4B6BFB',
           accent_color: data.site.accent_color || '#F0A030',
+          currency: data.site.currency || 'BRL',
           bio: data.site.bio || '',
           avatar_url: data.site.avatar_url || '',
           creci: data.site.creci || '',
@@ -491,6 +493,31 @@ export default function SiteSettingsPage() {
               />
             </div>
           </div>
+        </div>
+
+        {/* Moeda */}
+        <div className="mt-4">
+          <label className={labelClass} style={labelStyle}>Moeda dos preços</label>
+          <select
+            value={form.currency}
+            onChange={(e) => updateField('currency', e.target.value)}
+            className={inputClass}
+            style={inputStyle}
+          >
+            <option value="BRL">R$ — Real Brasileiro (BRL)</option>
+            <option value="USD">$ — Dólar Americano (USD)</option>
+            <option value="EUR">€ — Euro (EUR)</option>
+            <option value="CLP">$ — Peso Chileno (CLP)</option>
+            <option value="ARS">$ — Peso Argentino (ARS)</option>
+            <option value="MXN">$ — Peso Mexicano (MXN)</option>
+            <option value="COP">$ — Peso Colombiano (COP)</option>
+            <option value="PEN">S/ — Sol Peruano (PEN)</option>
+            <option value="UYU">$ — Peso Uruguaio (UYU)</option>
+            <option value="PYG">₲ — Guarani Paraguaio (PYG)</option>
+          </select>
+          <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+            Esta moeda será exibida nos preços do seu site público.
+          </p>
         </div>
       </div>
 

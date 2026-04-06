@@ -138,6 +138,7 @@ export async function PUT(request: NextRequest) {
           meta_title: body.meta_title || null,
           meta_description: body.meta_description || null,
           og_image_url: body.og_image_url || null,
+          currency: body.currency || 'BRL',
           is_published: false,
           custom_domain: null,
         })

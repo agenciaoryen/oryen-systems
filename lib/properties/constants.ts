@@ -80,10 +80,19 @@ export function slugify(text: string): string {
     .slice(0, 80)
 }
 
-export function formatPrice(value: number | null, lang: Lang = 'pt'): string {
+export function formatPrice(value: number | null, currency?: string): string {
   if (!value) return '—'
-  if (lang === 'en') return `$${value.toLocaleString('en-US', { minimumFractionDigits: 0 })}`
-  return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
+  const cur = currency || 'BRL'
+  const localeMap: Record<string, string> = {
+    BRL: 'pt-BR', USD: 'en-US', EUR: 'de-DE', CLP: 'es-CL', ARS: 'es-AR',
+    MXN: 'es-MX', COP: 'es-CO', PEN: 'es-PE', UYU: 'es-UY', PYG: 'es-PY',
+  }
+  const locale = localeMap[cur] || 'pt-BR'
+  try {
+    return new Intl.NumberFormat(locale, { style: 'currency', currency: cur, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value)
+  } catch {
+    return `${cur} ${value.toLocaleString()}`
+  }
 }
 
 export function formatArea(value: number | null): string {

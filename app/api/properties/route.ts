@@ -120,6 +120,16 @@ export async function POST(request: NextRequest) {
       slug = `${slug}-${Date.now().toString(36)}`
     }
 
+    // Gerar código de referência automático (REF-1001, REF-1002, ...)
+    let externalCode = body.external_code
+    if (!externalCode) {
+      const { count } = await supabase
+        .from('properties')
+        .select('id', { count: 'exact', head: true })
+        .eq('org_id', org_id)
+      externalCode = `REF-${1001 + (count || 0)}`
+    }
+
     const { data, error } = await supabase
       .from('properties')
       .insert({
@@ -153,7 +163,7 @@ export async function POST(request: NextRequest) {
         virtual_tour_url: body.virtual_tour_url || null,
         status: body.status || 'draft',
         is_featured: body.is_featured || false,
-        external_code: body.external_code || null,
+        external_code: externalCode,
       })
       .select()
       .single()

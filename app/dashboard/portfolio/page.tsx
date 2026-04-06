@@ -375,9 +375,16 @@ export default function PortfolioPage() {
 
                 {/* Info */}
                 <div className="p-4">
-                  <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-text-tertiary)' }}>
-                    {PROPERTY_TYPES[prop.property_type]?.[lang]} • {TRANSACTION_TYPES[prop.transaction_type]?.[lang]}
-                  </p>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                      {PROPERTY_TYPES[prop.property_type]?.[lang]} • {TRANSACTION_TYPES[prop.transaction_type]?.[lang]}
+                    </p>
+                    {prop.external_code && (
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-tertiary)' }}>
+                        {prop.external_code}
+                      </span>
+                    )}
+                  </div>
                   <h3 className="font-semibold text-sm truncate mb-2" style={{ color: 'var(--color-text-primary)' }}>
                     {prop.title}
                   </h3>

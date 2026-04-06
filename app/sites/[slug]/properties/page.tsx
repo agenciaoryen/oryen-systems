@@ -24,7 +24,7 @@ async function getData(slug: string, searchParams: SearchParams) {
   // Site settings
   const { data: site } = await supabase
     .from('site_settings')
-    .select('org_id, slug, site_name')
+    .select('org_id, slug, site_name, currency')
     .eq('slug', slug)
     .single()
 
@@ -94,7 +94,7 @@ export default async function PropertiesListPage({
         {properties.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mt-6">
             {properties.map((prop: any) => (
-              <PropertyCard key={prop.id} property={prop} slug={site.slug} />
+              <PropertyCard key={prop.id} property={prop} slug={site.slug} currency={site.currency} />
             ))}
           </div>
         ) : (

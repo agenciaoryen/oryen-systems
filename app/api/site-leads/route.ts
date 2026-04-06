@@ -78,19 +78,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
-    // Buscar org_id pelo slug do site
+    // Buscar org_id pelo slug do site (sem filtro is_published para funcionar em preview)
     const { data: site } = await supabase
       .from('site_settings')
-      .select('org_id')
+      .select('org_id, site_name')
       .eq('slug', site_slug)
-      .eq('is_published', true)
       .single()
 
     if (!site) {
       return NextResponse.json({ error: 'Site not found' }, { status: 404 })
     }
 
-    const { data, error } = await supabase
+    // 1. Salvar na tabela site_leads
+    const { data: siteLead, error } = await supabase
       .from('site_leads')
       .insert({
         org_id: site.org_id,
@@ -111,7 +111,71 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, lead: data })
+    // 2. Criar/atualizar lead no CRM (tabela leads)
+    let crmLeadId: string | null = null
+    try {
+      // Verificar se já existe lead com esse telefone na org
+      const { data: existingLead } = await supabase
+        .from('leads')
+        .select('id')
+        .eq('org_id', site.org_id)
+        .eq('phone', phone)
+        .single()
+
+      if (existingLead) {
+        crmLeadId = existingLead.id
+      } else {
+        // Criar novo lead no CRM
+        const { data: newLead } = await supabase
+          .from('leads')
+          .insert({
+            org_id: site.org_id,
+            name,
+            phone,
+            email: body.email || null,
+            source: 'site',
+            stage: 'new',
+            created_at: new Date().toISOString(),
+          })
+          .select('id')
+          .single()
+
+        crmLeadId = newLead?.id || null
+      }
+
+      // Atualizar site_lead com referência ao CRM
+      if (crmLeadId) {
+        await supabase
+          .from('site_leads')
+          .update({ synced_to_crm: true, lead_id: crmLeadId })
+          .eq('id', siteLead.id)
+      }
+    } catch (e) {
+      console.error('[SiteLeads] Erro ao sincronizar com CRM:', e)
+    }
+
+    // 3. Criar alerta para o corretor
+    try {
+      const propertyInfo = body.property_id
+        ? await supabase.from('properties').select('title').eq('id', body.property_id).single().then(r => r.data?.title)
+        : null
+
+      await supabase.from('alerts').insert({
+        org_id: site.org_id,
+        lead_id: crmLeadId,
+        type: 'new_site_lead',
+        title: `Novo lead do site: ${name}`,
+        body: propertyInfo
+          ? `${name} (${phone}) demonstrou interesse no imóvel "${propertyInfo}". ${body.message || ''}`
+          : `${name} (${phone}) enviou uma mensagem pelo site. ${body.message || ''}`,
+        priority: 'high',
+        status: 'unread',
+      })
+    } catch (e) {
+      console.error('[SiteLeads] Erro ao criar alerta:', e)
+    }
+
+    return NextResponse.json({ success: true, lead: siteLead })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

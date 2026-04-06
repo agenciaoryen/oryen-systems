@@ -70,7 +70,7 @@ const T = {
     status: 'Status',
     isFeatured: 'Imóvel destaque',
     featuredHint: 'Aparece em destaque no site e listagens',
-    externalCode: 'Código externo (MLS)',
+    externalCode: 'Código de referência',
     videoUrl: 'URL do vídeo',
     virtualTourUrl: 'URL do tour virtual',
     // Ações
@@ -680,7 +680,10 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
 
           <div>
             <label className={labelClass} style={labelStyle}>{t.externalCode}</label>
-            <input type="text" value={form.external_code} onChange={(e) => updateField('external_code', e.target.value)} className={inputClass} style={inputStyle} />
+            <input type="text" value={form.external_code} onChange={(e) => updateField('external_code', e.target.value)} className={inputClass} style={inputStyle} placeholder="Gerado automaticamente (ex: REF-1001)" />
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+              Código usado pelo agente SDR para identificar o imóvel. Gerado automaticamente ao salvar.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

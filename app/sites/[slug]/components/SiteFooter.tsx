@@ -6,6 +6,22 @@ interface SiteFooterProps {
   site: any
 }
 
+function buildSocialUrl(platform: string, value: string): string {
+  if (!value) return ''
+  // Se já é URL completa, retornar como está
+  if (value.startsWith('http://') || value.startsWith('https://')) return value
+  // Remover @ do início se houver
+  const handle = value.replace(/^@/, '')
+  const bases: Record<string, string> = {
+    instagram: `https://instagram.com/${handle}`,
+    facebook: `https://facebook.com/${handle}`,
+    linkedin: `https://linkedin.com/in/${handle}`,
+    youtube: `https://youtube.com/@${handle}`,
+    tiktok: `https://tiktok.com/@${handle}`,
+  }
+  return bases[platform] || value
+}
+
 export default function SiteFooter({ site }: SiteFooterProps) {
   const social = site.social_links || {}
 
@@ -35,27 +51,27 @@ export default function SiteFooter({ site }: SiteFooterProps) {
             <h4 className="text-white text-sm font-semibold mb-3">Redes Sociais</h4>
             <div className="flex flex-wrap gap-3">
               {social.instagram && (
-                <a href={social.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm">
+                <a href={buildSocialUrl('instagram', social.instagram)} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm">
                   Instagram
                 </a>
               )}
               {social.facebook && (
-                <a href={social.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm">
+                <a href={buildSocialUrl('facebook', social.facebook)} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm">
                   Facebook
                 </a>
               )}
               {social.linkedin && (
-                <a href={social.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm">
+                <a href={buildSocialUrl('linkedin', social.linkedin)} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm">
                   LinkedIn
                 </a>
               )}
               {social.youtube && (
-                <a href={social.youtube} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm">
+                <a href={buildSocialUrl('youtube', social.youtube)} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm">
                   YouTube
                 </a>
               )}
               {social.tiktok && (
-                <a href={social.tiktok} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm">
+                <a href={buildSocialUrl('tiktok', social.tiktok)} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm">
                   TikTok
                 </a>
               )}
