@@ -90,12 +90,12 @@ interface Goals {
 // CONSTANTES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const COLORS = { 
-  success: '#10B981', 
-  danger: '#F43F5E', 
-  text: '#9CA3AF',
-  blue: '#3B82F6',
-  purple: '#8B5CF6'
+const COLORS = {
+  success: '#22C55E',
+  danger: '#EF4444',
+  text: '#8888AA',
+  blue: '#4F6FFF',
+  purple: '#6E5FFF'
 } as const
 
 const DATE_LOCALES: Record<string, Locale> = { pt: ptBR, en: enUS, es }
@@ -324,8 +324,9 @@ interface CardProps {
 }
 
 const Card = ({ children, className = '', onClick }: CardProps) => (
-  <div 
-    className={`bg-[#0A0A0A]/60 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden shadow-2xl shadow-black/50 ${onClick ? 'cursor-pointer' : ''} ${className}`}
+  <div
+    className={`rounded-2xl overflow-hidden transition-all duration-200 ${onClick ? 'cursor-pointer' : ''} ${className}`}
+    style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}
     onClick={onClick}
   >
     {children}
@@ -340,11 +341,11 @@ interface StatBadgeProps {
 
 const StatBadge = ({ value, label, trend }: StatBadgeProps) => (
   <div className="flex flex-col">
-    <p className="text-gray-400 text-[10px] sm:text-xs font-medium uppercase tracking-widest">{label}</p>
+    <p className="text-[10px] sm:text-xs font-medium uppercase" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.05em' }}>{label}</p>
     <div className="flex items-end gap-2 mt-1">
-      <span className="text-xl sm:text-2xl font-bold text-white tracking-tight">{value}</span>
+      <span className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>{value}</span>
       {trend !== undefined && (
-        <span className={`text-[10px] sm:text-xs flex items-center mb-1 ${trend >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+        <span className="text-[10px] sm:text-xs flex items-center mb-1" style={{ color: trend >= 0 ? 'var(--color-success)' : 'var(--color-error)' }}>
           {trend >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
           {Math.abs(trend)}%
         </span>
