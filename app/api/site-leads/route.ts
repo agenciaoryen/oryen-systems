@@ -187,22 +187,32 @@ export async function POST(request: NextRequest) {
       console.error('[SiteLeads] Erro ao sincronizar com CRM:', e)
     }
 
-    // 4. Criar alerta para o corretor
+    // 4. Criar alerta para todos os membros da org
     try {
       const refCode = propertyData?.external_code ? ` (${propertyData.external_code})` : ''
       const propertyTitle = propertyData?.title
+      const alertDescription = propertyTitle
+        ? `${name} (${phone}) demonstrou interesse no imóvel "${propertyTitle}"${refCode}. ${body.message || ''}`
+        : `${name} (${phone}) enviou uma mensagem pelo site. ${body.message || ''}`
 
-      await supabase.from('alerts').insert({
-        org_id: site.org_id,
-        lead_id: crmLeadId,
-        type: 'new_site_lead',
-        title: `Novo lead do site: ${name}`,
-        body: propertyTitle
-          ? `${name} (${phone}) demonstrou interesse no imóvel "${propertyTitle}"${refCode}. ${body.message || ''}`
-          : `${name} (${phone}) enviou uma mensagem pelo site. ${body.message || ''}`,
-        priority: 'high',
-        status: 'unread',
-      })
+      // Buscar todos os usuários da org
+      const { data: orgUsers } = await supabase
+        .from('users')
+        .select('id')
+        .eq('org_id', site.org_id)
+
+      if (orgUsers && orgUsers.length > 0) {
+        const alertRows = orgUsers.map((u: any) => ({
+          user_id: u.id,
+          type: 'urgent',
+          title: `Novo lead do site: ${name}`,
+          description: alertDescription,
+          action_link: crmLeadId ? `/dashboard/crm/${crmLeadId}` : null,
+          action_label: 'Ver lead',
+          is_read: false,
+        }))
+        await supabase.from('alerts').insert(alertRows)
+      }
     } catch (e) {
       console.error('[SiteLeads] Erro ao criar alerta:', e)
     }
