@@ -647,7 +647,7 @@ export default function SendDocumentModal({
                 onClick={handleGeneratePdf}
                 disabled={generating}
                 className="w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+                style={{ background: 'var(--color-primary)', color: '#fff' }}
               >
                 {generating ? (
                   <>
@@ -712,7 +712,7 @@ export default function SendDocumentModal({
                     onClick={() => setSendMethod('email')}
                     className="py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all border"
                     style={sendMethod === 'email'
-                      ? { background: 'var(--color-primary)', color: 'var(--color-text-primary)', borderColor: 'var(--color-primary)' }
+                      ? { background: 'var(--color-primary)', color: '#fff', borderColor: 'var(--color-primary)' }
                       : { background: 'var(--color-bg-hover)', color: 'var(--color-text-secondary)', borderColor: 'var(--color-border)' }
                     }
                   >
@@ -798,7 +798,7 @@ export default function SendDocumentModal({
                     onClick={handleSendEmail}
                     disabled={sending || !emailTo}
                     className="w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+                    style={{ background: 'var(--color-primary)', color: '#fff' }}
                   >
                     {sending ? (
                       <>

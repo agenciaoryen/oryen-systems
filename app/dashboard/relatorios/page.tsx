@@ -456,7 +456,7 @@ export default function ReportsPage() {
         <button
           onClick={() => handleOpenModal()}
           className="w-full sm:w-auto px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all shrink-0"
-          style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)' }}
+          style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)' }}
         >
           <Plus size={18} /> {t.newReport}
         </button>
@@ -808,7 +808,7 @@ export default function ReportsPage() {
                   type="submit"
                   disabled={isSaving}
                   className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)' }}
+                  style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)' }}
                 >
                   {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                   {isSaving ? t.saving : t.save}

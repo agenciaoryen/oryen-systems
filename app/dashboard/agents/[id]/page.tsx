@@ -701,7 +701,7 @@ function CreateCampaignModal({
             onClick={handleCreate}
             disabled={creating}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+            style={{ background: 'var(--color-primary)', color: '#fff' }}
           >
             {creating ? (
               <>
@@ -825,7 +825,7 @@ export default function AgentDetailPage() {
         <button
           onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors"
-          style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+          style={{ background: 'var(--color-primary)', color: '#fff' }}
         >
           <Plus size={16} />
           {ui.newCampaign}
@@ -899,7 +899,7 @@ export default function AgentDetailPage() {
             <button
               onClick={() => setShowCreateModal(true)}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+              style={{ background: 'var(--color-primary)', color: '#fff' }}
             >
               <Plus size={14} />
               {ui.createFirst}

@@ -721,7 +721,7 @@ export default function LeadProfilePage() {
         <button
           onClick={() => router.push('/dashboard/crm')}
           className="px-6 py-2 rounded-lg transition-colors font-bold shadow-lg"
-          style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
+          style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
         >
           {t.backToCrm}
         </button>
@@ -820,7 +820,7 @@ export default function LeadProfilePage() {
                       <button
                         onClick={handleSaveName}
                         className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                        style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+                        style={{ background: 'var(--color-primary)', color: '#fff' }}
                       >
                         <Check size={16} />
                       </button>
@@ -914,7 +914,7 @@ export default function LeadProfilePage() {
                   <button
                     onClick={openChat}
                     className="flex-1 px-4 py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 transition-all shadow-lg text-sm"
-                    style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
+                    style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
                   >
                     <MessageSquare size={16} />
                     {t.openChat}
@@ -1188,7 +1188,7 @@ export default function LeadProfilePage() {
               onClick={handleSaveNote}
               disabled={savingNote || !note.trim()}
               className="w-full mt-4 font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2 shadow-lg disabled:opacity-50 disabled:shadow-none"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
+              style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
             >
               {savingNote ? (
                 <Loader2 size={16} className="animate-spin" />

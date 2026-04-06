@@ -639,7 +639,7 @@ export default function AgentsPage() {
               <button
                 onClick={() => setActiveTab('marketplace')}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+                style={{ background: 'var(--color-primary)', color: '#fff' }}
               >
                 {ui.explore}
                 <ArrowRight size={14} />

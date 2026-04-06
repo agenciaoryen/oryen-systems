@@ -255,7 +255,7 @@ export default function HunterCampaignDetail({ campaign, runs, agentId, lang, us
         </div>
         <div className="flex items-center gap-2">
           {isActive && (
-            <button onClick={handleRunNow} disabled={isRunning} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-50" style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}>
+            <button onClick={handleRunNow} disabled={isRunning} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-50" style={{ background: 'var(--color-primary)', color: '#fff' }}>
               {isRunning ? <><Loader2 size={16} className="animate-spin" />{ui.running}</> : <><Zap size={16} />{ui.runNow}</>}
             </button>
           )}

@@ -279,7 +279,7 @@ function EmptyState({ t, onNewDocument, onUpload }: { t: any; onNewDocument: () 
         <button
           onClick={onNewDocument}
           className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-          style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+          style={{ background: 'var(--color-primary)', color: '#fff' }}
         >
           <Plus size={16} />
           {t.newDocument}
@@ -371,7 +371,7 @@ export default function DocumentsPage() {
             <button
               onClick={() => setShowCreateModal(true)}
               className="px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors shadow-lg"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+              style={{ background: 'var(--color-primary)', color: '#fff' }}
             >
               <Plus size={16} />
               {t.newDocument}
@@ -400,7 +400,7 @@ export default function DocumentsPage() {
               onClick={() => setStatusFilter('all')}
               className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
               style={statusFilter === 'all'
-                ? { background: 'var(--color-primary)', color: 'var(--color-text-primary)' }
+                ? { background: 'var(--color-primary)', color: '#fff' }
                 : { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)' }
               }
             >
@@ -484,7 +484,7 @@ export default function DocumentsPage() {
               <Link
                 href="/dashboard/crm"
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+                style={{ background: 'var(--color-primary)', color: '#fff' }}
               >
                 {lang === 'pt' ? 'Ir para CRM' : lang === 'es' ? 'Ir al CRM' : 'Go to CRM'}
               </Link>

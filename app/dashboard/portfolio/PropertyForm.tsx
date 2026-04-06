@@ -366,7 +366,7 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
           onClick={handleSave}
           disabled={saving}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
-          style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)' }}
+          style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)' }}
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? t.saving : t.save}

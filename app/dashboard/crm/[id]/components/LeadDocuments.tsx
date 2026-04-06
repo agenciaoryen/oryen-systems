@@ -481,7 +481,7 @@ export default function LeadDocuments({ leadId, leadData }: LeadDocumentsProps) 
         <div className="flex gap-2">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors" style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors" style={{ background: 'var(--color-primary)', color: '#fff' }}
           >
             <Plus size={14} />
             {t.newDocument}
@@ -502,7 +502,7 @@ export default function LeadDocuments({ leadId, leadData }: LeadDocumentsProps) 
           <button
             onClick={() => setShowCreateModal(true)}
             className="mt-4 px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 transition-colors"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+            style={{ background: 'var(--color-primary)', color: '#fff' }}
           >
             <Plus size={14} />
             {t.newDocument}

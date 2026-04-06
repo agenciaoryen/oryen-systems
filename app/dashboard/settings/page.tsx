@@ -973,7 +973,7 @@ export default function SettingsPage() {
                 type="submit"
                 disabled={inviteLoading}
                 className="w-full py-3 rounded-lg text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+                style={{ background: 'var(--color-primary)', color: '#fff' }}
               >
                 {inviteLoading ? <Loader2 className="animate-spin" size={16} /> : <UserPlus size={18} />}
                 {t.modal.submit}
@@ -1002,7 +1002,7 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all"
                 style={activeTab === tab.id
-                  ? { background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }
+                  ? { background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }
                   : { color: 'var(--color-text-tertiary)' }
                 }
               >
@@ -1103,7 +1103,7 @@ export default function SettingsPage() {
                   onClick={handleSaveProfile}
                   disabled={profileLoading}
                   className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg w-full md:w-auto justify-center"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
+                  style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
                 >
                   {profileLoading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                   {t.profile.save}
@@ -1291,7 +1291,7 @@ export default function SettingsPage() {
                     onClick={handleSaveOrg}
                     disabled={loading}
                     className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all"
-                    style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+                    style={{ background: 'var(--color-primary)', color: '#fff' }}
                   >
                     {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                     {t.company.updateBtn}
@@ -1605,7 +1605,7 @@ export default function SettingsPage() {
                     onClick={handleAddTag}
                     disabled={!newTagName.trim()}
                     className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50"
-                    style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+                    style={{ background: 'var(--color-primary)', color: '#fff' }}
                   >
                     <Plus size={16} /> {t.tags.addTag}
                   </button>
@@ -1692,7 +1692,7 @@ export default function SettingsPage() {
                   onClick={handleSaveLeadCardConfig}
                   disabled={leadCardLoading}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+                  style={{ background: 'var(--color-primary)', color: '#fff' }}
                 >
                   {leadCardLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                   {t.leadCard.save}

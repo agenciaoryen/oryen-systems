@@ -341,7 +341,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 h-[calc(100vh-130px)]">
+    <div className="flex flex-col gap-4 h-[calc(100vh-160px)]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.title}</h1>
@@ -665,7 +665,7 @@ function CreateEventModal({
         {/* Footer */}
         <div className="flex justify-end gap-3 px-5 py-3" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
           <button onClick={onClose} className="px-4 py-2 text-sm transition-colors" style={{ color: 'var(--color-text-tertiary)' }}>{t.cancel}</button>
-          <button onClick={handleSave} disabled={saving || !title.trim()} className="px-5 py-2 disabled:opacity-50 rounded-xl font-medium text-sm transition-colors flex items-center gap-2" style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}>
+          <button onClick={handleSave} disabled={saving || !title.trim()} className="px-5 py-2 disabled:opacity-50 rounded-xl font-medium text-sm transition-colors flex items-center gap-2" style={{ background: 'var(--color-primary)', color: '#fff' }}>
             {saving && <Loader2 size={14} className="animate-spin" />}
             {t.save}
           </button>

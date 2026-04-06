@@ -805,7 +805,7 @@ export default function CreateDocumentModal({
               <button
                 onClick={handleNext}
                 className="px-6 py-2.5 rounded-lg font-medium flex items-center gap-2 transition-colors"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+                style={{ background: 'var(--color-primary)', color: '#fff' }}
               >
                 <Eye size={16} />
                 {t.preview}

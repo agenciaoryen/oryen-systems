@@ -417,7 +417,7 @@ export default function WhatsAppPage() {
             onClick={() => canCreateMore ? setShowCreate(true) : null}
             disabled={!canCreateMore}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+            style={{ background: 'var(--color-primary)', color: '#fff' }}
             title={!canCreateMore ? t.limitReached : ''}
           >
             <Plus size={16} />
@@ -510,7 +510,7 @@ export default function WhatsAppPage() {
                   onClick={handleCreate}
                   disabled={creating}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+                  style={{ background: 'var(--color-primary)', color: '#fff' }}
                 >
                   {creating ? (
                     <><Loader2 size={14} className="animate-spin" /> {t.creating}</>
@@ -603,7 +603,7 @@ export default function WhatsAppPage() {
           <button
             onClick={() => setShowCreate(true)}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+            style={{ background: 'var(--color-primary)', color: '#fff' }}
           >
             <Plus size={16} />
             {t.addNew}

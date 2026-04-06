@@ -355,7 +355,7 @@ export default function SiteSettingsPage() {
             onClick={handleSave}
             disabled={saving}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+            style={{ background: 'var(--color-primary)', color: '#fff' }}
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {saving ? T.saving : T.save}
@@ -704,7 +704,7 @@ export default function SiteSettingsPage() {
                 onClick={() => handlePublish(true)}
                 disabled={publishing || !hasSaved}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+                style={{ background: 'var(--color-primary)', color: '#fff' }}
               >
                 {publishing ? <Loader2 size={15} className="animate-spin" /> : <Globe size={15} />}
                 {publishing ? T.publishing : T.publishBtn}

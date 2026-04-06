@@ -213,7 +213,7 @@ export default function PortfolioPage() {
         <button
           onClick={() => router.push('/dashboard/portfolio/new')}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shrink-0"
-          style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)' }}
+          style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)' }}
         >
           <Plus size={18} />
           {t.newProperty}
@@ -327,7 +327,7 @@ export default function PortfolioPage() {
             <button
               onClick={() => router.push('/dashboard/portfolio/new')}
               className="mt-4 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+              style={{ background: 'var(--color-primary)', color: '#fff' }}
             >
               <Plus size={18} />
               {t.newProperty}
