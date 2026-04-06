@@ -597,7 +597,7 @@ function CreateEventModal({
           </div>
 
           {/* Type + Date + Times em uma linha */}
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid gap-2" style={{ gridTemplateColumns: '1fr 1.3fr 0.85fr 0.85fr' }}>
             <div>
               <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.eventType}</label>
               <select value={eventType} onChange={e => setEventType(e.target.value)} className={selectClass} style={selectStyle}>
