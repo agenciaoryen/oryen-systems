@@ -923,7 +923,7 @@ export default function LeadProfilePage() {
                     onClick={openWhatsApp}
                     disabled={!lead.phone}
                     className="flex-1 px-4 py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 transition-all shadow-lg text-sm disabled:opacity-50"
-                    style={{ background: 'var(--color-success)', color: 'var(--color-text-primary)' }}
+                    style={{ background: 'var(--color-success)', color: '#fff' }}
                   >
                     <ExternalLink size={16} />
                     {t.whatsapp}
