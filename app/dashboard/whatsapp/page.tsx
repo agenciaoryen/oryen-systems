@@ -18,9 +18,12 @@ import {
   Trash2,
   Bot,
   X,
-  AlertTriangle
+  AlertTriangle,
+  Shield,
+  FileText
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
+import EmbeddedSignup from './components/EmbeddedSignup'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -36,6 +39,8 @@ interface WhatsAppInstance {
   status: 'connected' | 'disconnected' | 'qr_pending' | 'banned'
   connected_at: string | null
   created_at: string
+  api_type?: 'uazapi' | 'cloud_api'
+  waba_id?: string | null
 }
 
 interface Agent {
@@ -82,7 +87,16 @@ const T = {
     agentLinked: 'SDR ativo',
     setupWebhook: 'Ativar SDR',
     webhookOk: 'SDR Ativado!',
-    webhookFail: 'Erro ao ativar'
+    webhookFail: 'Erro ao ativar',
+    connectOfficial: 'Conectar Oficial (Meta)',
+    official: 'Oficial',
+    unofficial: 'Não-oficial',
+    templates: 'Templates',
+    chooseType: 'Como deseja conectar?',
+    chooseUazapi: 'Não-Oficial (QR Code)',
+    chooseUazapiDesc: 'Conecte via QR Code. Rápido, mas sujeito a bloqueios.',
+    chooseCloud: 'Oficial (Meta API)',
+    chooseCloudDesc: 'API oficial, co-existente, templates aprovados.',
   },
   en: {
     title: 'WhatsApp',
@@ -117,7 +131,16 @@ const T = {
     agentLinked: 'SDR active',
     setupWebhook: 'Activate SDR',
     webhookOk: 'SDR Activated!',
-    webhookFail: 'Activation error'
+    webhookFail: 'Activation error',
+    connectOfficial: 'Connect Official (Meta)',
+    official: 'Official',
+    unofficial: 'Unofficial',
+    templates: 'Templates',
+    chooseType: 'How do you want to connect?',
+    chooseUazapi: 'Unofficial (QR Code)',
+    chooseUazapiDesc: 'Connect via QR Code. Fast but subject to blocks.',
+    chooseCloud: 'Official (Meta API)',
+    chooseCloudDesc: 'Official API, co-existing, approved templates.'
   },
   es: {
     title: 'WhatsApp',
@@ -152,7 +175,16 @@ const T = {
     agentLinked: 'SDR activo',
     setupWebhook: 'Activar SDR',
     webhookOk: 'SDR Activado!',
-    webhookFail: 'Error al activar'
+    webhookFail: 'Error al activar',
+    connectOfficial: 'Conectar Oficial (Meta)',
+    official: 'Oficial',
+    unofficial: 'No oficial',
+    templates: 'Templates',
+    chooseType: '¿Cómo deseas conectar?',
+    chooseUazapi: 'No Oficial (QR Code)',
+    chooseUazapiDesc: 'Conecta vía QR Code. Rápido pero sujeto a bloqueos.',
+    chooseCloud: 'Oficial (Meta API)',
+    chooseCloudDesc: 'API oficial, co-existente, templates aprobados.'
   }
 }
 
@@ -180,6 +212,10 @@ export default function WhatsAppPage() {
   const [agents, setAgents] = useState<Agent[]>([])
   const [configuringWebhook, setConfiguringWebhook] = useState<string | null>(null)
   const [webhookResult, setWebhookResult] = useState<Record<string, 'success' | 'error'>>({})
+
+  // Connection type state
+  const [showTypeSelector, setShowTypeSelector] = useState(false)
+  const [showEmbeddedSignup, setShowEmbeddedSignup] = useState(false)
 
   // QR state
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -415,7 +451,7 @@ export default function WhatsAppPage() {
             {t.instancesCount(instances.length, maxInstances)}
           </span>
           <button
-            onClick={() => canCreateMore ? setShowCreate(true) : null}
+            onClick={() => canCreateMore ? setShowTypeSelector(true) : null}
             disabled={!canCreateMore}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: 'var(--color-primary)', color: '#fff' }}
@@ -454,7 +490,83 @@ export default function WhatsAppPage() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          MODAL CRIAR INSTÂNCIA
+          MODAL SELETOR DE TIPO
+          ═══════════════════════════════════════════════════════════════════════ */}
+      {showTypeSelector && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" style={{ background: 'var(--color-bg-overlay)' }}>
+          <div className="w-full max-w-md mx-4 rounded-2xl p-6" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                {t.chooseType}
+              </h2>
+              <button onClick={() => setShowTypeSelector(false)} className="p-1 rounded-lg">
+                <X size={18} style={{ color: 'var(--color-text-secondary)' }} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {/* Opção Oficial (Meta) */}
+              <button
+                onClick={() => { setShowTypeSelector(false); setShowEmbeddedSignup(true) }}
+                className="w-full flex items-start gap-4 p-4 rounded-xl text-left transition-all hover:opacity-90"
+                style={{ background: 'rgba(37,211,102,0.06)', border: '1px solid rgba(37,211,102,0.25)' }}
+              >
+                <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'rgba(37,211,102,0.15)' }}>
+                  <Shield size={20} style={{ color: '#25D366' }} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                    {t.chooseCloud}
+                  </h3>
+                  <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                    {t.chooseCloudDesc}
+                  </p>
+                  <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: 'rgba(37,211,102,0.15)', color: '#25D366' }}>
+                    RECOMENDADO
+                  </span>
+                </div>
+              </button>
+
+              {/* Opção Não-oficial (QR Code) */}
+              <button
+                onClick={() => { setShowTypeSelector(false); setShowCreate(true) }}
+                className="w-full flex items-start gap-4 p-4 rounded-xl text-left transition-all hover:opacity-90"
+                style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}
+              >
+                <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'var(--color-bg-elevated)' }}>
+                  <QrCode size={20} style={{ color: 'var(--color-text-secondary)' }} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                    {t.chooseUazapi}
+                  </h3>
+                  <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                    {t.chooseUazapiDesc}
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          MODAL EMBEDDED SIGNUP (Cloud API)
+          ═══════════════════════════════════════════════════════════════════════ */}
+      {showEmbeddedSignup && orgId && (
+        <EmbeddedSignup
+          orgId={orgId}
+          lang={lang}
+          onSuccess={(instance) => {
+            setShowEmbeddedSignup(false)
+            setInstances(prev => [instance, ...prev])
+          }}
+          onClose={() => setShowEmbeddedSignup(false)}
+        />
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          MODAL CRIAR INSTÂNCIA (uazapi)
           ═══════════════════════════════════════════════════════════════════════ */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" style={{ background: 'var(--color-bg-overlay)' }}>
@@ -602,7 +714,7 @@ export default function WhatsAppPage() {
             {t.noInstancesDesc}
           </p>
           <button
-            onClick={() => setShowCreate(true)}
+            onClick={() => setShowTypeSelector(true)}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
             style={{ background: 'var(--color-primary)', color: '#fff' }}
           >
@@ -646,6 +758,17 @@ export default function WhatsAppPage() {
                         {instance.display_name || instance.instance_name}
                       </h3>
                       <StatusBadge status={instance.status} />
+                      {/* Badge API type */}
+                      <span
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                        style={instance.api_type === 'cloud_api'
+                          ? { background: 'rgba(37,211,102,0.1)', color: '#25D366', border: '1px solid rgba(37,211,102,0.3)' }
+                          : { background: 'rgba(251,191,36,0.1)', color: 'rgb(217,160,15)', border: '1px solid rgba(251,191,36,0.3)' }
+                        }
+                      >
+                        {instance.api_type === 'cloud_api' ? <Shield size={10} /> : <QrCode size={10} />}
+                        {instance.api_type === 'cloud_api' ? t.official : t.unofficial}
+                      </span>
                     </div>
                     <div className="flex items-center gap-4 mt-1">
                       {instance.phone_number && (
@@ -680,8 +803,20 @@ export default function WhatsAppPage() {
                     />
                   </div>
 
-                  {/* Webhook setup button */}
-                  {instance.status === 'connected' && (
+                  {/* Templates link (Cloud API only) */}
+                  {instance.api_type === 'cloud_api' && instance.waba_id && (
+                    <Link
+                      href={`/dashboard/whatsapp/templates?waba_id=${instance.waba_id}`}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all"
+                      style={{ background: 'rgba(37,211,102,0.08)', color: '#25D366', border: '1px solid rgba(37,211,102,0.2)' }}
+                    >
+                      <FileText size={13} />
+                      {t.templates}
+                    </Link>
+                  )}
+
+                  {/* Webhook setup button (uazapi only) */}
+                  {instance.status === 'connected' && instance.api_type !== 'cloud_api' && (
                     <button
                       onClick={() => handleSetupWebhook(instance.id)}
                       disabled={configuringWebhook === instance.id}
