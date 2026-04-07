@@ -205,10 +205,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'instance_id required' }, { status: 400 })
     }
 
-    // Buscar instância para desconectar na UAZAPI antes de excluir
+    // Buscar instância para desconectar antes de excluir
     const { data: instance } = await supabase
       .from('whatsapp_instances')
-      .select('api_url, instance_token, status')
+      .select('api_url, instance_token, status, api_type, phone_number_id')
       .eq('id', instance_id)
       .single()
 
@@ -216,8 +216,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Instance not found' }, { status: 404 })
     }
 
-    // Se estava conectada, desconectar na UAZAPI
-    if (instance.status === 'connected' && instance.api_url && instance.instance_token) {
+    // Se uazapi conectada, desconectar na UAZAPI
+    if (instance.api_type !== 'cloud_api' && instance.status === 'connected' && instance.api_url && instance.instance_token) {
       try {
         await fetch(`${instance.api_url}/instance/disconnect`, {
           method: 'POST',
@@ -228,6 +228,23 @@ export async function DELETE(request: NextRequest) {
         })
       } catch (err: any) {
         console.warn('[WhatsApp:Delete] Disconnect error (non-fatal):', err.message)
+      }
+    }
+
+    // Se Cloud API, deregistrar phone number (opcional, não bloqueia)
+    if (instance.api_type === 'cloud_api' && instance.phone_number_id) {
+      try {
+        const GRAPH_API = `https://graph.facebook.com/${process.env.CLOUD_API_VERSION || 'v21.0'}`
+        await fetch(`${GRAPH_API}/${instance.phone_number_id}/deregister`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.META_SYSTEM_USER_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ messaging_product: 'whatsapp' })
+        })
+      } catch (err: any) {
+        console.warn('[WhatsApp:Delete] Cloud API deregister error (non-fatal):', err.message)
       }
     }
 

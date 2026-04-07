@@ -106,34 +106,77 @@ export class CloudApiTransport implements WhatsAppTransport {
     })
   }
 
-  // ─── Chamada genérica ao Graph API ───
+  // ─── Chamada genérica ao Graph API com retry ───
 
-  private async callApi(body: Record<string, any>): Promise<any> {
+  private async callApi(body: Record<string, any>, retries = 2): Promise<any> {
     const url = `${GRAPH_API_BASE}/${this.phoneNumberId}/messages`
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
-      },
-      body: JSON.stringify(body),
-    })
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.token}`,
+        },
+        body: JSON.stringify(body),
+      })
 
-    const data = await response.json().catch(() => ({}))
+      const data = await response.json().catch(() => ({}))
 
-    if (!response.ok) {
+      if (response.ok) return data
+
+      const errorCode = data?.error?.code || 0
       const errorMsg = data?.error?.message || `HTTP ${response.status}`
-      const errorCode = data?.error?.code || 'unknown'
-      console.error(`[CloudAPI] Error ${errorCode}: ${errorMsg}`, JSON.stringify(data?.error || {}))
-      throw new Error(`CloudAPI error ${errorCode}: ${errorMsg}`)
-    }
 
-    return data
+      // Erros retentáveis: rate limit (80007), temporário (2), throttle (130429)
+      const retryableCodes = [80007, 2, 130429, 131048]
+      const isRetryable = retryableCodes.includes(errorCode) || response.status === 429 || response.status >= 500
+
+      if (isRetryable && attempt < retries) {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 8000) // 1s, 2s, 4s, max 8s
+        console.warn(`[CloudAPI] Retry ${attempt + 1}/${retries} after ${delay}ms — error ${errorCode}: ${errorMsg}`)
+        await new Promise(r => setTimeout(r, delay))
+        continue
+      }
+
+      // Erro não retentável ou esgotou retries
+      console.error(`[CloudAPI] Error ${errorCode}: ${errorMsg}`, JSON.stringify(data?.error || {}))
+      throw new CloudApiError(errorCode, errorMsg, data?.error)
+    }
   }
 }
 
 // ─── Helpers ───
+
+/**
+ * Erro tipado da Cloud API com código e detalhes
+ */
+export class CloudApiError extends Error {
+  code: number
+  details: any
+
+  constructor(code: number, message: string, details?: any) {
+    super(`CloudAPI error ${code}: ${message}`)
+    this.name = 'CloudApiError'
+    this.code = code
+    this.details = details
+  }
+
+  /** Mensagem fora da janela 24h — precisa usar template */
+  get isOutsideWindow(): boolean {
+    return this.code === 131047
+  }
+
+  /** Rate limit atingido */
+  get isRateLimited(): boolean {
+    return this.code === 80007 || this.code === 130429
+  }
+
+  /** Número inválido ou não registrado no WhatsApp */
+  get isInvalidNumber(): boolean {
+    return this.code === 131026
+  }
+}
 
 /**
  * Formata telefone para Cloud API.

@@ -153,6 +153,11 @@ async function sendViaCloudApi(
     console.log(`[SDR:Send:cloud] ✓ Enviado para ${ctx.phone}`)
     return { sent: 1, failed: 0, total_time_ms: Date.now() - startTime, details }
   } catch (err: any) {
+    // Auto-fallback: se erro 131047 (fora da janela), tentar template
+    if (err.code === 131047 || err.isOutsideWindow) {
+      console.warn(`[SDR:Send:cloud] Janela expirada para ${ctx.phone} — fallback para template`)
+      return sendTemplateMessage(transport, ctx, startTime)
+    }
     console.error(`[SDR:Send:cloud] ✗ Erro ao enviar para ${ctx.phone}:`, err.message)
     details.push({ text: fullText, status: 'failed', error: err.message })
     return { sent: 0, failed: 1, total_time_ms: Date.now() - startTime, details }
