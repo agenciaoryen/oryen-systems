@@ -17,6 +17,7 @@
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 :root {
+  color-scheme: dark;
 
   /* --- Cor primaria (Cobalt — suavizado) --- */
   --color-primary:             #5A7AE6;
@@ -235,6 +236,7 @@
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 [data-theme="light"] {
+  color-scheme: light;
 
   /* --- Cor primaria (Cobalt — suavizado) --- */
   --color-primary:             #4060CC;

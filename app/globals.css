@@ -46,6 +46,22 @@ select {
   padding-right: 36px !important;
 }
 
+/* Estiliza as opções do dropdown nativo */
+select option {
+  background-color: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  padding: 8px 12px;
+}
+
+select option:checked {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+select option:hover {
+  background-color: var(--color-bg-hover);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════════
    SCROLLBAR CUSTOMIZADO
    ═══════════════════════════════════════════════════════════════════════════════ */
