@@ -131,40 +131,42 @@ export default function EmbeddedSignup({ orgId, onSuccess, onClose, lang = 'pt' 
 
     try {
       FB.login(
-        async (response: any) => {
+        function (response: any) {
           console.log('[EmbeddedSignup] FB.login response:', JSON.stringify(response))
 
           if (response.authResponse?.code) {
             // Enviar auth_code pro backend
-            try {
-              const res = await fetch('/api/whatsapp/cloud/embedded-signup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  auth_code: response.authResponse.code,
-                  org_id: orgId,
-                }),
+            fetch('/api/whatsapp/cloud/embedded-signup', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                auth_code: response.authResponse.code,
+                org_id: orgId,
+              }),
+            })
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  setStatus('success')
+                  setTimeout(() => onSuccess(data.instance), 1500)
+                } else {
+                  setStatus('error')
+                  setErrorMessage(data.details || data.error || 'Unknown error')
+                }
+                setConnecting(false)
               })
-              const data = await res.json()
-
-              if (data.success) {
-                setStatus('success')
-                setTimeout(() => onSuccess(data.instance), 1500)
-              } else {
+              .catch(err => {
                 setStatus('error')
-                setErrorMessage(data.details || data.error || 'Unknown error')
-              }
-            } catch (err: any) {
-              setStatus('error')
-              setErrorMessage(err.message)
-            }
+                setErrorMessage(err.message)
+                setConnecting(false)
+              })
           } else {
             // User cancelled or error
             console.warn('[EmbeddedSignup] No auth code. Response:', response)
             setStatus('error')
             setErrorMessage(response.status === 'unknown' ? 'Login cancelado ou popup bloqueado' : 'Login cancelled')
+            setConnecting(false)
           }
-          setConnecting(false)
         },
         {
           config_id: configId,
