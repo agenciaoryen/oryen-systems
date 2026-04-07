@@ -55,6 +55,7 @@ const T = {
     bedrooms: 'quartos',
     bathrooms: 'banheiros',
     parking: 'vagas',
+    cancel: 'Cancelar',
   },
   en: {
     title: 'Property Portfolio',
@@ -77,6 +78,7 @@ const T = {
     bedrooms: 'bedrooms',
     bathrooms: 'bathrooms',
     parking: 'parking',
+    cancel: 'Cancel',
   },
   es: {
     title: 'Portafolio de Inmuebles',
@@ -99,6 +101,7 @@ const T = {
     bedrooms: 'habitaciones',
     bathrooms: 'baños',
     parking: 'estacionamiento',
+    cancel: 'Cancelar',
   },
 }
 
@@ -125,8 +128,8 @@ export default function PortfolioPage() {
   const orgId = useActiveOrgId()
   const { user } = useAuth()
   const currency = (user as any)?.currency || 'BRL'
-  const lang: Lang = 'pt'
-  const t = T[lang]
+  const lang: Lang = ((user as any)?.language as Lang) || 'pt'
+  const t = T[lang] || T.pt
 
   // States
   const [properties, setProperties] = useState<any[]>([])
@@ -590,7 +593,7 @@ export default function PortfolioPage() {
                 className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
                 style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
               >
-                Cancelar
+                {t.cancel}
               </button>
               <button
                 onClick={confirmDelete}

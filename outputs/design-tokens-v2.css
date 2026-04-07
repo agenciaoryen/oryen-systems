@@ -90,6 +90,18 @@
   --color-info-subtle:         #0A161E;
   --color-info-subtle-fg:      #7EC4E0;
 
+  /* --- Tags (dark: texto claro sobre fundo escuro) --- */
+  --tag-blue-bg:     rgba(90, 122, 230, 0.15);  --tag-blue-text:     #93B0F5; --tag-blue-border:     rgba(90, 122, 230, 0.30);
+  --tag-green-bg:    rgba(52, 179, 104, 0.15);  --tag-green-text:    #6FD69A; --tag-green-border:    rgba(52, 179, 104, 0.30);
+  --tag-red-bg:      rgba(217, 84, 84, 0.15);   --tag-red-text:      #E89090; --tag-red-border:      rgba(217, 84, 84, 0.30);
+  --tag-yellow-bg:   rgba(221, 160, 50, 0.15);  --tag-yellow-text:   #E8C878; --tag-yellow-border:   rgba(221, 160, 50, 0.30);
+  --tag-purple-bg:   rgba(149, 104, 208, 0.15); --tag-purple-text:   #B898E0; --tag-purple-border:   rgba(149, 104, 208, 0.30);
+  --tag-pink-bg:     rgba(208, 96, 144, 0.15);  --tag-pink-text:     #E09ABE; --tag-pink-border:     rgba(208, 96, 144, 0.30);
+  --tag-indigo-bg:   rgba(110, 107, 214, 0.15); --tag-indigo-text:   #A09DE0; --tag-indigo-border:   rgba(110, 107, 214, 0.30);
+  --tag-cyan-bg:     rgba(74, 170, 214, 0.15);  --tag-cyan-text:     #88CCE8; --tag-cyan-border:     rgba(74, 170, 214, 0.30);
+  --tag-orange-bg:   rgba(217, 138, 48, 0.15);  --tag-orange-text:   #E8B870; --tag-orange-border:   rgba(217, 138, 48, 0.30);
+  --tag-gray-bg:     rgba(107, 114, 128, 0.15); --tag-gray-text:     #9CA3AF; --tag-gray-border:     rgba(107, 114, 128, 0.30);
+
   /* --- Gradientes --- */
   --gradient-brand:            linear-gradient(135deg, #5A7AE6 0%, #6E6BD6 50%, #7E6DC8 100%);
   --gradient-brand-subtle:     linear-gradient(135deg, rgba(90, 122, 230, 0.08) 0%, rgba(110, 107, 214, 0.08) 100%);
@@ -297,6 +309,18 @@
   --color-info-hover:          #075985;
   --color-info-subtle:         #F0F9FF;
   --color-info-subtle-fg:      #075985;
+
+  /* --- Tags (light: texto escuro sobre fundo claro) --- */
+  --tag-blue-bg:     rgba(64, 96, 204, 0.10);   --tag-blue-text:     #2B4A99; --tag-blue-border:     rgba(64, 96, 204, 0.25);
+  --tag-green-bg:    rgba(42, 154, 88, 0.10);   --tag-green-text:    #1A7040; --tag-green-border:    rgba(42, 154, 88, 0.25);
+  --tag-red-bg:      rgba(196, 62, 62, 0.10);   --tag-red-text:      #8B2020; --tag-red-border:      rgba(196, 62, 62, 0.25);
+  --tag-yellow-bg:   rgba(196, 138, 32, 0.10);  --tag-yellow-text:   #7A5010; --tag-yellow-border:   rgba(196, 138, 32, 0.25);
+  --tag-purple-bg:   rgba(120, 80, 180, 0.10);  --tag-purple-text:   #5A3590; --tag-purple-border:   rgba(120, 80, 180, 0.25);
+  --tag-pink-bg:     rgba(180, 70, 120, 0.10);  --tag-pink-text:     #8B2860; --tag-pink-border:     rgba(180, 70, 120, 0.25);
+  --tag-indigo-bg:   rgba(88, 80, 196, 0.10);   --tag-indigo-text:   #3A3580; --tag-indigo-border:   rgba(88, 80, 196, 0.25);
+  --tag-cyan-bg:     rgba(48, 144, 184, 0.10);  --tag-cyan-text:     #186080; --tag-cyan-border:     rgba(48, 144, 184, 0.25);
+  --tag-orange-bg:   rgba(184, 122, 24, 0.10);  --tag-orange-text:   #7A5010; --tag-orange-border:   rgba(184, 122, 24, 0.25);
+  --tag-gray-bg:     rgba(107, 114, 128, 0.10); --tag-gray-text:     #4B5563; --tag-gray-border:     rgba(107, 114, 128, 0.25);
 
   /* --- Gradientes (ajustados para light) --- */
   --gradient-brand:            linear-gradient(135deg, #4060CC 0%, #5850C4 50%, #6E5CB8 100%);

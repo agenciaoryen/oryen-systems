@@ -277,17 +277,17 @@ const STAGE_COLORS: Record<string, { text: string; bg: string; border: string; d
   rose: { text: 'text-rose-300', bg: 'bg-rose-500/10', border: 'border-rose-500/60', dot: 'bg-rose-500' },
 }
 
-const TAG_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  blue: { bg: 'bg-blue-500/20', text: 'text-blue-300', border: 'border-blue-500/30' },
-  green: { bg: 'bg-green-500/20', text: 'text-green-300', border: 'border-green-500/30' },
-  red: { bg: 'bg-red-500/20', text: 'text-red-300', border: 'border-red-500/30' },
-  yellow: { bg: 'bg-yellow-500/20', text: 'text-yellow-300', border: 'border-yellow-500/30' },
-  purple: { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/30' },
-  pink: { bg: 'bg-pink-500/20', text: 'text-pink-300', border: 'border-pink-500/30' },
-  indigo: { bg: 'bg-indigo-500/20', text: 'text-indigo-300', border: 'border-indigo-500/30' },
-  cyan: { bg: 'bg-cyan-500/20', text: 'text-cyan-300', border: 'border-cyan-500/30' },
-  orange: { bg: 'bg-orange-500/20', text: 'text-orange-300', border: 'border-orange-500/30' },
-  gray: { bg: 'bg-gray-500/20', text: 'text-gray-300', border: 'border-gray-500/30' },
+const TAG_COLORS: Record<string, { bg: string; text: string; border: string; dot: string }> = {
+  blue:   { bg: 'var(--tag-blue-bg)',   text: 'var(--tag-blue-text)',   border: 'var(--tag-blue-border)',   dot: '#5A7AE6' },
+  green:  { bg: 'var(--tag-green-bg)',  text: 'var(--tag-green-text)',  border: 'var(--tag-green-border)',  dot: '#34B368' },
+  red:    { bg: 'var(--tag-red-bg)',    text: 'var(--tag-red-text)',    border: 'var(--tag-red-border)',    dot: '#D95454' },
+  yellow: { bg: 'var(--tag-yellow-bg)', text: 'var(--tag-yellow-text)', border: 'var(--tag-yellow-border)', dot: '#DDA032' },
+  purple: { bg: 'var(--tag-purple-bg)', text: 'var(--tag-purple-text)', border: 'var(--tag-purple-border)', dot: '#9568D0' },
+  pink:   { bg: 'var(--tag-pink-bg)',   text: 'var(--tag-pink-text)',   border: 'var(--tag-pink-border)',   dot: '#D06090' },
+  indigo: { bg: 'var(--tag-indigo-bg)', text: 'var(--tag-indigo-text)', border: 'var(--tag-indigo-border)', dot: '#6E6BD6' },
+  cyan:   { bg: 'var(--tag-cyan-bg)',   text: 'var(--tag-cyan-text)',   border: 'var(--tag-cyan-border)',   dot: '#4AAAD6' },
+  orange: { bg: 'var(--tag-orange-bg)', text: 'var(--tag-orange-text)', border: 'var(--tag-orange-border)', dot: '#D98A30' },
+  gray:   { bg: 'var(--tag-gray-bg)',   text: 'var(--tag-gray-text)',   border: 'var(--tag-gray-border)',   dot: '#6B7280' },
 }
 
 const getStageColor = (color: string) => STAGE_COLORS[color] || STAGE_COLORS.gray
@@ -971,7 +971,8 @@ export default function LeadProfilePage() {
                   return (
                     <span
                       key={tag.id}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${tagColor.bg} ${tagColor.text} ${tagColor.border} group`}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium group"
+                      style={{ background: tagColor.bg, color: tagColor.text, border: `1px solid ${tagColor.border}` }}
                     >
                       {tag.name}
                       <button
@@ -1009,8 +1010,8 @@ export default function LeadProfilePage() {
                               onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
                               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                             >
-                              <span className={`w-2 h-2 rounded-full ${tagColor.bg.replace('/20', '')}`} />
-                              <span className={tagColor.text}>{tag.name}</span>
+                              <span className="w-2 h-2 rounded-full" style={{ background: tagColor.dot }} />
+                              <span style={{ color: tagColor.text }}>{tag.name}</span>
                             </button>
                           )
                         })

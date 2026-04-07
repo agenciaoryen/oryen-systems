@@ -80,6 +80,122 @@ const T = {
     created: 'Imóvel criado com sucesso!',
     updated: 'Imóvel atualizado com sucesso!',
     errorRequired: 'Preencha título, tipo de imóvel e tipo de transação.',
+    draftRestored: 'Rascunho restaurado automaticamente',
+    draftSaved: 'Rascunho salvo automaticamente',
+    unsavedChanges: 'Você tem alterações não salvas. Deseja sair mesmo assim?',
+    exitWithoutSave: 'Sair sem salvar',
+    cancel: 'Cancelar',
+    refCodeHint: 'Código usado pelo agente SDR para identificar o imóvel. Gerado automaticamente ao salvar.',
+    refCodePlaceholder: 'Gerado automaticamente (ex: REF-1001)',
+    ogRecommended: '1200×630 recomendado',
+  },
+  en: {
+    newTitle: 'New Property',
+    editTitle: 'Edit Property',
+    tabs: { basic: 'Basic', location: 'Location', features: 'Features', photos: 'Photos', publish: 'Publishing' },
+    title: 'Property title',
+    titlePlaceholder: 'E.g.: 3 bedroom apartment downtown',
+    description: 'Description',
+    descriptionPlaceholder: 'Describe the property in detail...',
+    propertyType: 'Property type',
+    transactionType: 'Transaction type',
+    price: 'Price',
+    condoFee: 'Condo fee',
+    iptu: 'Property tax',
+    street: 'Street',
+    number: 'Number',
+    complement: 'Unit/Suite',
+    neighborhood: 'Neighborhood',
+    city: 'City',
+    state: 'State',
+    zip: 'ZIP code',
+    bedrooms: 'Bedrooms',
+    suites: 'Suites',
+    bathrooms: 'Bathrooms',
+    parkingSpots: 'Parking',
+    totalArea: 'Total area (m²)',
+    privateArea: 'Private area (m²)',
+    amenities: 'Amenities',
+    uploadPhotos: 'Drag photos here or click to select',
+    uploadHint: 'JPG, PNG or WebP • Max 5MB • Up to 20 photos',
+    setCover: 'Set as cover',
+    isCover: 'Cover',
+    removePhoto: 'Remove',
+    uploading: 'Uploading...',
+    status: 'Status',
+    isFeatured: 'Featured property',
+    featuredHint: 'Appears highlighted on your site and listings',
+    externalCode: 'Reference code',
+    videoUrl: 'Video URL',
+    virtualTourUrl: 'Virtual tour URL',
+    save: 'Save',
+    saving: 'Saving...',
+    back: 'Back',
+    created: 'Property created successfully!',
+    updated: 'Property updated successfully!',
+    errorRequired: 'Please fill in title, property type and transaction type.',
+    draftRestored: 'Draft restored automatically',
+    draftSaved: 'Draft saved automatically',
+    unsavedChanges: 'You have unsaved changes. Leave anyway?',
+    exitWithoutSave: 'Leave without saving',
+    cancel: 'Cancel',
+    refCodeHint: 'Code used by the SDR agent to identify the property. Auto-generated on save.',
+    refCodePlaceholder: 'Auto-generated (e.g.: REF-1001)',
+    ogRecommended: '1200×630 recommended',
+  },
+  es: {
+    newTitle: 'Nuevo Inmueble',
+    editTitle: 'Editar Inmueble',
+    tabs: { basic: 'Básico', location: 'Ubicación', features: 'Características', photos: 'Fotos', publish: 'Publicación' },
+    title: 'Título del inmueble',
+    titlePlaceholder: 'Ej: Apartamento 3 habitaciones en el Centro',
+    description: 'Descripción',
+    descriptionPlaceholder: 'Describa el inmueble detalladamente...',
+    propertyType: 'Tipo de inmueble',
+    transactionType: 'Tipo de transacción',
+    price: 'Precio',
+    condoFee: 'Expensas',
+    iptu: 'Impuesto predial',
+    street: 'Calle',
+    number: 'Número',
+    complement: 'Departamento',
+    neighborhood: 'Barrio',
+    city: 'Ciudad',
+    state: 'Estado/Provincia',
+    zip: 'Código postal',
+    bedrooms: 'Habitaciones',
+    suites: 'Suites',
+    bathrooms: 'Baños',
+    parkingSpots: 'Estacionamiento',
+    totalArea: 'Área total (m²)',
+    privateArea: 'Área privada (m²)',
+    amenities: 'Amenidades',
+    uploadPhotos: 'Arrastra fotos aquí o haz clic para seleccionar',
+    uploadHint: 'JPG, PNG o WebP • Máx 5MB • Hasta 20 fotos',
+    setCover: 'Definir como portada',
+    isCover: 'Portada',
+    removePhoto: 'Eliminar',
+    uploading: 'Subiendo...',
+    status: 'Estado',
+    isFeatured: 'Inmueble destacado',
+    featuredHint: 'Aparece destacado en su sitio y listados',
+    externalCode: 'Código de referencia',
+    videoUrl: 'URL del video',
+    virtualTourUrl: 'URL del tour virtual',
+    save: 'Guardar',
+    saving: 'Guardando...',
+    back: 'Volver',
+    created: '¡Inmueble creado con éxito!',
+    updated: '¡Inmueble actualizado con éxito!',
+    errorRequired: 'Complete título, tipo de inmueble y tipo de transacción.',
+    draftRestored: 'Borrador restaurado automáticamente',
+    draftSaved: 'Borrador guardado automáticamente',
+    unsavedChanges: 'Tiene cambios sin guardar. ¿Desea salir de todos modos?',
+    exitWithoutSave: 'Salir sin guardar',
+    cancel: 'Cancelar',
+    refCodeHint: 'Código usado por el agente SDR para identificar el inmueble. Se genera automáticamente al guardar.',
+    refCodePlaceholder: 'Generado automáticamente (ej: REF-1001)',
+    ogRecommended: '1200×630 recomendado',
   },
 }
 
@@ -103,8 +219,8 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
   const { user } = useAuth()
   const currency = (user as any)?.currency || 'BRL'
   const currencySymbol = currency === 'BRL' ? 'R$' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency
-  const lang: Lang = 'pt'
-  const t = T[lang]
+  const lang: Lang = ((user as any)?.language as Lang) || 'pt'
+  const t = T[lang] || T.pt
   const isEditing = !!propertyId
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -194,7 +310,7 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
         try {
           const parsed = JSON.parse(saved)
           setForm(parsed)
-          toast.info('Rascunho restaurado automaticamente')
+          toast.info(t.draftRestored)
         } catch {}
       }
     }
@@ -427,7 +543,7 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
             </h1>
             {isDirty && (
               <p className="text-[10px] font-medium mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
-                Rascunho salvo automaticamente
+                {t.draftSaved}
               </p>
             )}
           </div>
@@ -753,9 +869,9 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
 
           <div>
             <label className={labelClass} style={labelStyle}>{t.externalCode}</label>
-            <input type="text" value={form.external_code} onChange={(e) => updateField('external_code', e.target.value)} className={inputClass} style={inputStyle} placeholder="Gerado automaticamente (ex: REF-1001)" />
+            <input type="text" value={form.external_code} onChange={(e) => updateField('external_code', e.target.value)} className={inputClass} style={inputStyle} placeholder={t.refCodePlaceholder} />
             <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
-              Código usado pelo agente SDR para identificar o imóvel. Gerado automaticamente ao salvar.
+              {t.refCodeHint}
             </p>
           </div>
 
@@ -777,7 +893,7 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
         <div className="fixed inset-0 z-[70] flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }}>
           <div className="p-6 rounded-2xl w-full max-w-sm shadow-2xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
             <p className="text-sm leading-relaxed mb-6" style={{ color: 'var(--color-text-secondary)' }}>
-              Você tem alterações não salvas. Deseja sair mesmo assim?
+              {t.unsavedChanges}
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -785,7 +901,7 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
                 className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
                 style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
               >
-                Cancelar
+                {t.cancel}
               </button>
               <button
                 onClick={() => {
@@ -796,7 +912,7 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
                 className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
                 style={{ background: 'var(--color-error)', color: '#fff' }}
               >
-                Sair sem salvar
+                {t.exitWithoutSave}
               </button>
             </div>
           </div>
