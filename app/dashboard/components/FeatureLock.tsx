@@ -157,7 +157,7 @@ export function FeatureLock({
         {/* Overlay com lock */}
         <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm rounded-xl" style={{ background: 'var(--color-bg-overlay)' }}>
           <div className="text-center p-6 max-w-sm">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(240, 160, 48, 0.3)' }}>
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(221, 160, 50, 0.3)' }}>
               <Lock className="w-6 h-6" style={{ color: 'var(--color-accent)' }} />
             </div>
             <h3 className="font-bold text-lg mb-2" style={{ color: 'var(--color-text-primary)' }}>
@@ -170,7 +170,7 @@ export function FeatureLock({
               <button
                 onClick={handleUpgrade}
                 className="font-bold px-6 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2 mx-auto"
-                style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)', color: '#000', boxShadow: '0 4px 16px rgba(240, 160, 48, 0.25)' }}
+                style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)', color: '#000', boxShadow: '0 4px 16px rgba(221, 160, 50, 0.25)' }}
               >
                 <Sparkles size={16} />
                 {t.upgradeButton}
@@ -187,7 +187,7 @@ export function FeatureLock({
   if (variant === 'replace') {
     return (
       <div className={`rounded-2xl p-8 text-center ${className}`} style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
-        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(221, 160, 50, 0.2)' }}>
           <Lock className="w-7 h-7" style={{ color: 'var(--color-accent)' }} />
         </div>
         <h3 className="font-bold text-xl mb-2" style={{ color: 'var(--color-text-primary)' }}>
@@ -200,7 +200,7 @@ export function FeatureLock({
           <button
             onClick={handleUpgrade}
             className="font-bold px-8 py-3 rounded-xl text-sm transition-all inline-flex items-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)', color: '#000', boxShadow: '0 4px 16px rgba(240, 160, 48, 0.25)' }}
+            style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)', color: '#000', boxShadow: '0 4px 16px rgba(221, 160, 50, 0.25)' }}
           >
             <Crown size={18} />
             {t.upgradeButton}
@@ -216,7 +216,7 @@ export function FeatureLock({
   // ─── VARIANT: INLINE ───
   if (variant === 'inline') {
     return (
-      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${className}`} style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
+      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${className}`} style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(221, 160, 50, 0.2)' }}>
         <Lock size={14} style={{ color: 'var(--color-accent)' }} />
         <span className="text-xs font-medium" style={{ color: 'var(--color-accent)' }}>{upgradePlan?.displayName || 'Gold'}</span>
       </div>
@@ -264,7 +264,7 @@ export function UpgradeBanner({
   // ─── VARIANT: FULL ───
   if (variant === 'full') {
     return (
-      <div className={`rounded-2xl p-6 ${className}`} style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
+      <div className={`rounded-2xl p-6 ${className}`} style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(221, 160, 50, 0.2)' }}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)' }}>
@@ -280,7 +280,7 @@ export function UpgradeBanner({
           <button
             onClick={handleUpgrade}
             className="w-full sm:w-auto font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)', color: '#000', boxShadow: '0 4px 16px rgba(240, 160, 48, 0.25)' }}
+            style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)', color: '#000', boxShadow: '0 4px 16px rgba(221, 160, 50, 0.25)' }}
           >
             <Crown size={18} />
             Upgrade para {upgradePlan?.displayName}
@@ -293,7 +293,7 @@ export function UpgradeBanner({
   // ─── VARIANT: COMPACT ───
   if (variant === 'compact') {
     return (
-      <div className={`rounded-xl px-4 py-3 flex items-center justify-between gap-3 ${className}`} style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
+      <div className={`rounded-xl px-4 py-3 flex items-center justify-between gap-3 ${className}`} style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(221, 160, 50, 0.2)' }}>
         <div className="flex items-center gap-3">
           <Lock size={16} className="shrink-0" style={{ color: 'var(--color-accent)' }} />
           <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
@@ -334,9 +334,9 @@ export function PlanBadge({ className = '' }: PlanBadgeProps) {
 
   const badgeStyles: Record<string, React.CSSProperties> = {
     basic: { background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)', borderColor: 'var(--color-border)' },
-    gold: { background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', borderColor: 'rgba(240, 160, 48, 0.3)' },
+    gold: { background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', borderColor: 'rgba(221, 160, 50, 0.3)' },
     diamond: { background: 'var(--color-indigo-subtle)', color: 'var(--color-indigo)', borderColor: 'rgba(110, 95, 255, 0.3)' },
-    enterprise: { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', borderColor: 'rgba(79, 111, 255, 0.3)' },
+    enterprise: { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', borderColor: 'rgba(90, 122, 230, 0.3)' },
   }
 
   const icons: Record<string, ReactNode> = {
@@ -379,7 +379,7 @@ export function LimitWarning({ current, limit, label, lang = 'pt', className = '
   if (!isNearLimit) return null
 
   return (
-    <div className={`rounded-xl px-4 py-3 ${className}`} style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
+    <div className={`rounded-xl px-4 py-3 ${className}`} style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(221, 160, 50, 0.2)' }}>
       <div className="flex items-center justify-between gap-3 mb-2">
         <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>{label}</span>
         <span className="text-sm font-bold" style={{ color: isAtLimit ? 'var(--color-error)' : 'var(--color-accent)' }}>

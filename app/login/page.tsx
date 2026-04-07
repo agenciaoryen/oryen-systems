@@ -183,7 +183,7 @@ export default function LoginPage() {
                   border: '1px solid var(--color-border)',
                   color: 'var(--color-text-primary)',
                 }}
-                onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79, 111, 255, 0.1)' }}
+                onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
                 onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
               />
             </div>
@@ -205,7 +205,7 @@ export default function LoginPage() {
                   border: '1px solid var(--color-border)',
                   color: 'var(--color-text-primary)',
                 }}
-                onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79, 111, 255, 0.1)' }}
+                onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
                 onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
               />
             </div>
@@ -217,11 +217,11 @@ export default function LoginPage() {
               style={{
                 background: 'var(--gradient-brand)',
                 color: '#fff',
-                boxShadow: '0 4px 16px rgba(79, 111, 255, 0.25)',
+                boxShadow: '0 4px 16px rgba(90, 122, 230, 0.25)',
                 marginTop: '24px',
               }}
-              onMouseEnter={e => { if (!loading) { e.currentTarget.style.boxShadow = '0 6px 24px rgba(79, 111, 255, 0.35)'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(79, 111, 255, 0.25)'; e.currentTarget.style.transform = 'translateY(0)' }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.boxShadow = '0 6px 24px rgba(90, 122, 230, 0.35)'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(90, 122, 230, 0.25)'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
               {loading ? (
                 <><Loader2 size={16} className="animate-spin" /> {t.loadingBtn}</>

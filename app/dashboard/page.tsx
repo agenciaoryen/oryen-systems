@@ -91,11 +91,11 @@ interface Goals {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const COLORS = {
-  success: '#22C55E',
-  danger: '#EF4444',
+  success: '#34B368',
+  danger: '#D95454',
   text: '#8888AA',
-  blue: '#4F6FFF',
-  purple: '#6E5FFF'
+  blue: '#5A7AE6',
+  purple: '#6E6BD6'
 } as const
 
 const DATE_LOCALES: Record<string, Locale> = { pt: ptBR, en: enUS, es }
@@ -460,7 +460,7 @@ const GoalsModal = ({ isOpen, onClose, currentGoals, onSave, loading, t, currenc
             <input type="number" value={revenue} onChange={(e) => setRevenue(Number(e.target.value))}
               className="w-full rounded-xl p-3 text-sm outline-none transition-all duration-150"
               style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79, 111, 255, 0.1)' }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
               onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
               placeholder="Ex: 50000" min={0} />
           </div>
@@ -471,7 +471,7 @@ const GoalsModal = ({ isOpen, onClose, currentGoals, onSave, loading, t, currenc
             <input type="number" value={ads} onChange={(e) => setAds(Number(e.target.value))}
               className="w-full rounded-xl p-3 text-sm outline-none transition-all duration-150"
               style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79, 111, 255, 0.1)' }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
               onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
               placeholder="Ex: 1500" min={0} />
           </div>
@@ -484,7 +484,7 @@ const GoalsModal = ({ isOpen, onClose, currentGoals, onSave, loading, t, currenc
           </button>
           <button onClick={handleSubmit} disabled={loading}
             className="flex-1 py-3 rounded-xl text-sm font-bold transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
-            style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(79, 111, 255, 0.25)' }}>
+            style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(90, 122, 230, 0.25)' }}>
             {loading && <Loader2 size={16} className="animate-spin" />}
             {loading ? t.saving : t.save}
           </button>
@@ -915,7 +915,7 @@ export default function DashboardPage() {
 
           <button onClick={handleExport} disabled={leadsCreatedInPeriod.length === 0}
             className="flex-1 lg:flex-none justify-center flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 active:scale-95 disabled:opacity-50"
-            style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(79, 111, 255, 0.2)' }}>
+            style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(90, 122, 230, 0.2)' }}>
             <Download size={16} />
             <span className="hidden sm:inline">{t.export}</span>
           </button>
@@ -930,12 +930,12 @@ export default function DashboardPage() {
           className="col-span-12 md:col-span-5 lg:col-span-4 p-5 sm:p-6 relative group"
           onClick={() => setIsGoalsModalOpen(true)}
         >
-          <div className="absolute inset-0 opacity-50 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(to bottom right, rgba(79, 111, 255, 0.1), transparent, transparent)' }} />
+          <div className="absolute inset-0 opacity-50 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(to bottom right, rgba(90, 122, 230, 0.1), transparent, transparent)' }} />
           <div className="flex items-center justify-between mb-4 relative">
-            <div className="p-2.5 sm:p-3 rounded-xl" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(79, 111, 255, 0.2)' }}>
+            <div className="p-2.5 sm:p-3 rounded-xl" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
               <DollarSign size={20} className="sm:w-6 sm:h-6" />
             </div>
-            <span className="text-[10px] sm:text-xs font-mono px-2 py-1 rounded flex items-center gap-1" style={{ color: 'var(--color-success)', background: 'var(--color-success-subtle)', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+            <span className="text-[10px] sm:text-xs font-mono px-2 py-1 rounded flex items-center gap-1" style={{ color: 'var(--color-success)', background: 'var(--color-success-subtle)', border: '1px solid rgba(52, 179, 104, 0.2)' }}>
               Meta: {formatPrice(goals.revenue, userCurrency, userLang)}
             </span>
           </div>
@@ -946,7 +946,7 @@ export default function DashboardPage() {
           <div className="mt-4 w-full rounded-full overflow-hidden h-1.5 sm:h-2 relative" style={{ background: 'var(--color-border)' }}>
             <div
               className="h-full transition-all duration-1000"
-              style={{ width: `${Math.min(kpis.metaAtingida, 100)}%`, background: 'var(--color-primary)', boxShadow: '0 0 10px rgba(79, 111, 255, 0.5)' }}
+              style={{ width: `${Math.min(kpis.metaAtingida, 100)}%`, background: 'var(--color-primary)', boxShadow: '0 0 10px rgba(90, 122, 230, 0.5)' }}
             />
           </div>
           <p className="text-[10px] sm:text-xs mt-2 flex justify-between font-medium relative" style={{ color: 'var(--color-text-muted)' }}>
@@ -961,7 +961,7 @@ export default function DashboardPage() {
           <Card className="p-4 sm:p-6 flex flex-col justify-between transition-colors" style={{ borderColor: 'transparent' }} onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border-hover)' }} onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'transparent' }}>
             <div className="flex justify-between items-start">
               <StatBadge value={kpis.leadsTotal} label={t.leadsCaptured} trend={5.2} />
-              <div className="p-2 rounded-lg" style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
+              <div className="p-2 rounded-lg" style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', border: '1px solid rgba(221, 160, 50, 0.2)' }}>
                 <Users size={16} className="sm:w-5 sm:h-5" />
               </div>
             </div>
@@ -996,7 +996,7 @@ export default function DashboardPage() {
           <Card className="p-4 sm:p-6 flex flex-col justify-between transition-colors" style={{ borderColor: 'transparent' }} onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border-hover)' }} onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'transparent' }}>
             <div className="flex justify-between items-start">
               <StatBadge value={kpis.leadsQualificados} label={t.activePipeline} trend={15} />
-              <div className="p-2 rounded-lg" style={{ background: 'var(--color-success-subtle)', color: 'var(--color-success)', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+              <div className="p-2 rounded-lg" style={{ background: 'var(--color-success-subtle)', color: 'var(--color-success)', border: '1px solid rgba(52, 179, 104, 0.2)' }}>
                 <TrendingUp size={16} className="sm:w-5 sm:h-5" />
               </div>
             </div>
@@ -1013,11 +1013,11 @@ export default function DashboardPage() {
             <h3 className="text-base sm:text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>{t.flowTitle}</h3>
             <div className="flex gap-4 text-[10px] sm:text-xs font-medium px-3 py-1.5 rounded-full" style={{ background: 'var(--color-bg-hover)' }}>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-primary)', boxShadow: '0 0 8px rgba(79, 111, 255, 0.8)' }} />
+                <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-primary)', boxShadow: '0 0 8px rgba(90, 122, 230, 0.8)' }} />
                 {t.sales} ({userCurrency})
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-success)', boxShadow: '0 0 8px rgba(34, 197, 94, 0.8)' }} />
+                <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-success)', boxShadow: '0 0 8px rgba(52, 179, 104, 0.8)' }} />
                 Leads
               </div>
             </div>
@@ -1089,14 +1089,14 @@ export default function DashboardPage() {
             <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
               <div className="flex justify-between text-xs sm:text-sm items-center p-2 rounded-lg" style={{ background: 'var(--color-bg-hover)' }}>
                 <span className="flex items-center gap-2 font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-                  <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-success)', boxShadow: '0 0 5px rgba(34, 197, 94, 0.8)' }} />
+                  <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-success)', boxShadow: '0 0 5px rgba(52, 179, 104, 0.8)' }} />
                   {t.positive}
                 </span>
                 <span className="font-mono font-bold" style={{ color: 'var(--color-text-primary)' }}>{sentimentData[0]?.value || 0}</span>
               </div>
               <div className="flex justify-between text-xs sm:text-sm items-center p-2 rounded-lg" style={{ background: 'var(--color-bg-hover)' }}>
                 <span className="flex items-center gap-2 font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-                  <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-error)', boxShadow: '0 0 5px rgba(239, 68, 68, 0.8)' }} />
+                  <div className="w-2 h-2 rounded-full" style={{ background: 'var(--color-error)', boxShadow: '0 0 5px rgba(217, 84, 84, 0.8)' }} />
                   {t.negative}
                 </span>
                 <span className="font-mono font-bold" style={{ color: 'var(--color-text-primary)' }}>{sentimentData[2]?.value || 0}</span>
@@ -1129,7 +1129,7 @@ export default function DashboardPage() {
                 <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--color-border)' }}>
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${kpis.leadsTotal > 0 ? (kpis.leadsQualificados / kpis.leadsTotal) * 100 : 0}%`, background: 'var(--color-primary)', boxShadow: '0 0 8px rgba(79, 111, 255, 0.6)' }}
+                    style={{ width: `${kpis.leadsTotal > 0 ? (kpis.leadsQualificados / kpis.leadsTotal) * 100 : 0}%`, background: 'var(--color-primary)', boxShadow: '0 0 8px rgba(90, 122, 230, 0.6)' }}
                   />
                 </div>
               </div>
@@ -1141,7 +1141,7 @@ export default function DashboardPage() {
                 <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--color-border)' }}>
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${kpis.taxaConversao}%`, background: 'var(--color-success)', boxShadow: '0 0 8px rgba(34, 197, 94, 0.8)' }}
+                    style={{ width: `${kpis.taxaConversao}%`, background: 'var(--color-success)', boxShadow: '0 0 8px rgba(52, 179, 104, 0.8)' }}
                   />
                 </div>
               </div>
@@ -1161,7 +1161,7 @@ export default function DashboardPage() {
                 </h3>
                 <p className="text-[10px] sm:text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.stalledLeads}</p>
               </div>
-              <span className="text-[10px] font-bold px-2 py-1 rounded" style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', border: '1px solid rgba(240, 160, 48, 0.2)' }}>
+              <span className="text-[10px] font-bold px-2 py-1 rounded" style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', border: '1px solid rgba(221, 160, 50, 0.2)' }}>
                 {stalledLeads.length} {t.alerts}
               </span>
             </div>
@@ -1253,7 +1253,7 @@ export default function DashboardPage() {
                         style={{
                           width: `${Math.min(Number(source.rate) * 3, 100)}%`,
                           background: Number(source.rate) > 10 ? 'var(--color-success)' : 'var(--color-primary)',
-                          boxShadow: Number(source.rate) > 10 ? '0 0 5px rgba(34, 197, 94, 0.8)' : 'none',
+                          boxShadow: Number(source.rate) > 10 ? '0 0 5px rgba(52, 179, 104, 0.8)' : 'none',
                         }}
                       />
                     </div>
@@ -1319,9 +1319,9 @@ export default function DashboardPage() {
                         <td className="px-4 sm:px-6 py-3 sm:py-4">
                           <span className="px-2 py-1 rounded text-[9px] sm:text-[10px] font-bold uppercase" style={
                             lead.stage === 'venda'
-                              ? { background: 'var(--color-success-subtle)', color: 'var(--color-success)', border: '1px solid rgba(34, 197, 94, 0.2)' }
+                              ? { background: 'var(--color-success-subtle)', color: 'var(--color-success)', border: '1px solid rgba(52, 179, 104, 0.2)' }
                               : lead.stage === 'qualificado'
-                                ? { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(79, 111, 255, 0.2)' }
+                                ? { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }
                                 : { background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border)' }
                           }>
                             {lead.stage}

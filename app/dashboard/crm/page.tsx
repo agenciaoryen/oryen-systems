@@ -306,9 +306,9 @@ const getStageColor = (color: string) => STAGE_COLORS[color] || STAGE_COLORS.gra
 const getTagColor = (color: string) => TAG_COLORS[color] || TAG_COLORS.gray
 
 const STAGE_HEX: Record<string, string> = {
-  gray: '#6B7280', blue: '#3B82F6', orange: '#F97316', purple: '#A855F7',
-  indigo: '#6366F1', emerald: '#10B981', rose: '#F43F5E', pink: '#EC4899',
-  yellow: '#EAB308', green: '#22C55E', red: '#EF4444',
+  gray: '#6B7280', blue: '#5A7AE6', orange: '#D98A30', purple: '#9568D0',
+  indigo: '#6E6BD6', emerald: '#34B368', rose: '#D4506A', pink: '#D06090',
+  yellow: '#D4A420', green: '#34B368', red: '#D95454',
 }
 
 const getStageHex = (color: string) => STAGE_HEX[color] || STAGE_HEX.gray
@@ -352,7 +352,7 @@ function AiStatusBadge({ isActive, size = 'sm' }: { isActive: boolean; size?: 's
       className={`${sizeClasses} rounded-full flex items-center justify-center`}
       style={{
         background: isActive ? 'var(--color-success)' : 'var(--color-accent)',
-        boxShadow: isActive ? '0 0 8px rgba(34, 197, 94, 0.6)' : '0 0 8px rgba(240, 160, 48, 0.6)',
+        boxShadow: isActive ? '0 0 8px rgba(52, 179, 104, 0.6)' : '0 0 8px rgba(221, 160, 50, 0.6)',
       }}
       title={isActive ? 'IA Ativa' : 'IA Pausada'}
     >
@@ -745,7 +745,7 @@ export default function CrmPage() {
           <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-            style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
+            style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(90, 122, 230, 0.25)' }}
           >
             <Plus size={16} />
             <span className="hidden sm:inline">{t.newLead}</span>
@@ -761,7 +761,7 @@ export default function CrmPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full text-sm rounded-lg pl-9 pr-8 py-2 outline-none transition-all"
               style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79, 111, 255, 0.1)' }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
               onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
             />
             {searchQuery && (
@@ -781,7 +781,7 @@ export default function CrmPage() {
               onClick={() => setIsTagFilterOpen(!isTagFilterOpen)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all"
               style={selectedTags.length > 0
-                ? { background: 'var(--color-primary-subtle)', border: '1px solid rgba(79, 111, 255, 0.3)', color: 'var(--color-primary)' }
+                ? { background: 'var(--color-primary-subtle)', border: '1px solid rgba(90, 122, 230, 0.3)', color: 'var(--color-primary)' }
                 : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }
               }
             >
@@ -942,9 +942,9 @@ export default function CrmPage() {
                         key={lead.id}
                         onClick={() => handleOpenLead(lead.id)}
                         className="group transition-colors cursor-pointer"
-                        style={{ borderBottom: '1px solid var(--color-border)', background: isStale ? 'rgba(240, 160, 48, 0.03)' : 'transparent' }}
+                        style={{ borderBottom: '1px solid var(--color-border)', background: isStale ? 'rgba(221, 160, 50, 0.03)' : 'transparent' }}
                         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)' }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isStale ? 'rgba(240, 160, 48, 0.03)' : 'transparent' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isStale ? 'rgba(221, 160, 50, 0.03)' : 'transparent' }}
                       >
                         <td className="px-4 md:px-6 py-3">
                           <div className="flex items-center gap-3">
@@ -1089,7 +1089,7 @@ export default function CrmPage() {
                             style={{
                               background: 'var(--color-bg-surface)',
                               border: '1px solid var(--color-border)',
-                              borderLeft: `3px solid ${isStale ? '#F59E0B' : getStageHex(stage.color)}`,
+                              borderLeft: `3px solid ${isStale ? '#DDA032' : getStageHex(stage.color)}`,
                             }}
                           >
                             {/* Indicadores no canto superior direito */}
@@ -1105,7 +1105,7 @@ export default function CrmPage() {
                                   className="w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-110"
                                   style={{
                                     background: isAiActive ? 'var(--color-success)' : 'var(--color-accent)',
-                                    boxShadow: isAiActive ? '0 0 8px rgba(34, 197, 94, 0.6)' : '0 0 8px rgba(240, 160, 48, 0.6)',
+                                    boxShadow: isAiActive ? '0 0 8px rgba(52, 179, 104, 0.6)' : '0 0 8px rgba(221, 160, 50, 0.6)',
                                   }}
                                   title={isAiActive ? (t.pauseAi || 'Pausar IA') : (t.activateAi || 'Ativar IA')}
                                 >
@@ -1187,7 +1187,7 @@ export default function CrmPage() {
                                   </span>
                                 )}
                                 {cardFields.includes('nicho') && lead.nicho && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] truncate max-w-[100px]" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(79, 111, 255, 0.2)' }}>
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] truncate max-w-[100px]" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
                                     {lead.nicho}
                                   </span>
                                 )}
@@ -1202,7 +1202,7 @@ export default function CrmPage() {
                                 {formatDate(lead.created_at, userLang, userTimezone)}
                               </div>
                               {index === 0 && count > 2 && (
-                                <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                                <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid rgba(217, 84, 84, 0.2)' }}>
                                   {t.priority}
                                 </span>
                               )}

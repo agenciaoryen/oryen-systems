@@ -1082,7 +1082,7 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all"
                 style={activeTab === tab.id
-                  ? { background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }
+                  ? { background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(90, 122, 230, 0.25)' }
                   : { color: 'var(--color-text-tertiary)' }
                 }
               >
@@ -1183,7 +1183,7 @@ export default function SettingsPage() {
                   onClick={handleSaveProfile}
                   disabled={profileLoading}
                   className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg w-full md:w-auto justify-center"
-                  style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.25)' }}
+                  style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(90, 122, 230, 0.25)' }}
                 >
                   {profileLoading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                   {t.profile.save}
@@ -1785,7 +1785,7 @@ export default function SettingsPage() {
                       style={{
                         background: 'var(--color-bg-surface)',
                         border: '1px solid var(--color-border)',
-                        borderLeft: `3px solid ${leadCardIndicators.show_stale_indicator ? '#F59E0B' : '#22C55E'}`,
+                        borderLeft: `3px solid ${leadCardIndicators.show_stale_indicator ? '#DDA032' : '#34B368'}`,
                       }}
                     >
                       {/* Indicadores no canto superior direito */}
@@ -1798,7 +1798,7 @@ export default function SettingsPage() {
                         {leadCardIndicators.show_ai_status && (
                           <div
                             className="w-5 h-5 rounded-full flex items-center justify-center"
-                            style={{ background: 'var(--color-success)', boxShadow: '0 0 8px rgba(34, 197, 94, 0.6)' }}
+                            style={{ background: 'var(--color-success)', boxShadow: '0 0 8px rgba(52, 179, 104, 0.6)' }}
                           >
                             <Play size={10} className="text-white" style={{ marginLeft: 1 }} />
                           </div>
@@ -1867,7 +1867,7 @@ export default function SettingsPage() {
                             </span>
                           )}
                           {leadCardFields.includes('nicho') && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] truncate" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(79, 111, 255, 0.2)' }}>
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] truncate" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
                               Imobiliário
                             </span>
                           )}
@@ -1881,7 +1881,7 @@ export default function SettingsPage() {
                             <Calendar size={10} />
                             06/04/2026
                           </div>
-                          <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                          <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid rgba(217, 84, 84, 0.2)' }}>
                             Prioridade
                           </span>
                         </div>

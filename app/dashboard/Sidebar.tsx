@@ -548,7 +548,7 @@ export default function Sidebar() {
                         onClick={() => setIsMobileOpen(false)}
                         className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 group"
                         style={isActive
-                          ? { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(79, 111, 255, 0.2)' }
+                          ? { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }
                           : { color: 'var(--color-text-tertiary)', border: '1px solid transparent' }
                         }
                         onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)' } }}
@@ -566,7 +566,7 @@ export default function Sidebar() {
 
                         {/* Badge de notificação */}
                         {link.badge && !isActive && (
-                          <span className="w-2 h-2 rounded-full animate-pulse shrink-0" style={{ background: 'var(--color-error)', boxShadow: '0 0 8px rgba(239, 68, 68, 0.6)' }} />
+                          <span className="w-2 h-2 rounded-full animate-pulse shrink-0" style={{ background: 'var(--color-error)', boxShadow: '0 0 8px rgba(217, 84, 84, 0.6)' }} />
                         )}
                       </Link>
                     )
@@ -615,7 +615,7 @@ export default function Sidebar() {
             onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all"
             style={{ color: 'var(--color-text-muted)', border: '1px solid transparent' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-error-subtle)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-error)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(239, 68, 68, 0.2)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-error-subtle)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-error)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(217, 84, 84, 0.2)' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'transparent' }}
           >
             <LogOut size={18} />

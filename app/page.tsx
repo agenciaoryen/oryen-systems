@@ -469,7 +469,7 @@ const styles = {
       color: #fff;
     }
     .plan-glow {
-      box-shadow: 0 0 80px rgba(79, 111, 255, 0.15), 0 0 30px rgba(110, 95, 255, 0.1);
+      box-shadow: 0 0 80px rgba(90, 122, 230, 0.15), 0 0 30px rgba(110, 95, 255, 0.1);
     }
   `,
 }
@@ -576,14 +576,14 @@ export default function LandingPage() {
                 style={{
                   background: 'var(--gradient-brand)',
                   color: '#fff',
-                  boxShadow: '0 2px 12px rgba(79, 111, 255, 0.25)',
+                  boxShadow: '0 2px 12px rgba(90, 122, 230, 0.25)',
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(79, 111, 255, 0.4)'
+                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(90, 122, 230, 0.4)'
                   e.currentTarget.style.transform = 'translateY(-1px)'
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.boxShadow = '0 2px 12px rgba(79, 111, 255, 0.25)'
+                  e.currentTarget.style.boxShadow = '0 2px 12px rgba(90, 122, 230, 0.25)'
                   e.currentTarget.style.transform = 'translateY(0)'
                 }}
               >
@@ -648,7 +648,7 @@ export default function LandingPage() {
 
         {/* Glow effects */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] hero-glow" style={{
-          background: 'radial-gradient(ellipse at center, rgba(79, 111, 255, 0.15) 0%, rgba(110, 95, 255, 0.08) 40%, transparent 70%)',
+          background: 'radial-gradient(ellipse at center, rgba(90, 122, 230, 0.15) 0%, rgba(110, 95, 255, 0.08) 40%, transparent 70%)',
         }} />
         <div className="absolute top-40 right-[10%] w-[300px] h-[300px] rounded-full opacity-20 blur-[100px]" style={{ background: '#6E5FFF' }} />
         <div className="absolute top-60 left-[5%] w-[200px] h-[200px] rounded-full opacity-10 blur-[80px]" style={{ background: '#F0A030' }} />
@@ -693,7 +693,7 @@ export default function LandingPage() {
                   boxShadow: 'var(--shadow-glow)',
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.boxShadow = '0 0 60px rgba(79, 111, 255, 0.3), 0 8px 32px rgba(79, 111, 255, 0.25)'
+                  e.currentTarget.style.boxShadow = '0 0 60px rgba(90, 122, 230, 0.3), 0 8px 32px rgba(90, 122, 230, 0.25)'
                   e.currentTarget.style.transform = 'translateY(-2px)'
                 }}
                 onMouseLeave={e => {
@@ -709,7 +709,7 @@ export default function LandingPage() {
                 onMouseEnter={e => {
                   e.currentTarget.style.borderColor = 'var(--color-primary)'
                   e.currentTarget.style.color = 'var(--color-text-primary)'
-                  e.currentTarget.style.background = 'rgba(79, 111, 255, 0.05)'
+                  e.currentTarget.style.background = 'rgba(90, 122, 230, 0.05)'
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.borderColor = 'var(--color-border)'
@@ -1036,7 +1036,7 @@ export default function LandingPage() {
                     {popular && (
                       <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
                         <span className="px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
-                          style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 12px rgba(79, 111, 255, 0.3)' }}>
+                          style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 12px rgba(90, 122, 230, 0.3)' }}>
                           {t.pricing.popular}
                         </span>
                       </div>
@@ -1062,11 +1062,11 @@ export default function LandingPage() {
                       <Link href="/register"
                         className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 mb-6"
                         style={popular
-                          ? { background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(79, 111, 255, 0.25)' }
+                          ? { background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(90, 122, 230, 0.25)' }
                           : { background: 'transparent', color: 'var(--color-text-primary)', border: '1px solid var(--color-border-strong)' }}
                         onMouseEnter={e => {
                           if (popular) {
-                            e.currentTarget.style.boxShadow = '0 6px 24px rgba(79, 111, 255, 0.35)'
+                            e.currentTarget.style.boxShadow = '0 6px 24px rgba(90, 122, 230, 0.35)'
                             e.currentTarget.style.transform = 'translateY(-1px)'
                           } else {
                             e.currentTarget.style.background = 'var(--color-bg-hover)'
@@ -1075,7 +1075,7 @@ export default function LandingPage() {
                         }}
                         onMouseLeave={e => {
                           if (popular) {
-                            e.currentTarget.style.boxShadow = '0 4px 16px rgba(79, 111, 255, 0.25)'
+                            e.currentTarget.style.boxShadow = '0 4px 16px rgba(90, 122, 230, 0.25)'
                             e.currentTarget.style.transform = 'translateY(0)'
                           } else {
                             e.currentTarget.style.background = 'transparent'
@@ -1203,14 +1203,14 @@ export default function LandingPage() {
               style={{
                 background: 'var(--gradient-brand)',
                 color: '#fff',
-                boxShadow: '0 0 60px rgba(79, 111, 255, 0.2), 0 8px 32px rgba(79, 111, 255, 0.25)',
+                boxShadow: '0 0 60px rgba(90, 122, 230, 0.2), 0 8px 32px rgba(90, 122, 230, 0.25)',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.boxShadow = '0 0 80px rgba(79, 111, 255, 0.3), 0 12px 40px rgba(79, 111, 255, 0.3)'
+                e.currentTarget.style.boxShadow = '0 0 80px rgba(90, 122, 230, 0.3), 0 12px 40px rgba(90, 122, 230, 0.3)'
                 e.currentTarget.style.transform = 'translateY(-2px)'
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.boxShadow = '0 0 60px rgba(79, 111, 255, 0.2), 0 8px 32px rgba(79, 111, 255, 0.25)'
+                e.currentTarget.style.boxShadow = '0 0 60px rgba(90, 122, 230, 0.2), 0 8px 32px rgba(90, 122, 230, 0.25)'
                 e.currentTarget.style.transform = 'translateY(0)'
               }}>
               {t.finalCta.cta}

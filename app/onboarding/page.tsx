@@ -418,7 +418,7 @@ function OnboardingPage() {
             <div className="space-y-5">
               <div className="text-center">
                 <div className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-3"
-                  style={{ background: 'var(--color-primary-subtle)', border: '1px solid rgba(79, 111, 255, 0.2)' }}>
+                  style={{ background: 'var(--color-primary-subtle)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
                   <Building2 size={24} style={{ color: 'var(--color-primary)' }} />
                 </div>
                 <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>{t.step1Title}</h1>
@@ -430,7 +430,7 @@ function OnboardingPage() {
                 <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)}
                   placeholder={t.companyNamePlaceholder} autoFocus
                   className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150" style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79, 111, 255, 0.1)' }}
+                  onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
                   onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }} />
               </div>
 
@@ -446,7 +446,7 @@ function OnboardingPage() {
 
               <button onClick={() => setStep(2)} disabled={!companyName.trim()}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-40"
-                style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(79, 111, 255, 0.25)' }}>
+                style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(90, 122, 230, 0.25)' }}>
                 {t.next} <ArrowRight size={16} />
               </button>
             </div>
@@ -505,7 +505,7 @@ function OnboardingPage() {
                 </button>
                 <button onClick={handleSubmit} disabled={saving}
                   className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-50"
-                  style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(79, 111, 255, 0.25)' }}>
+                  style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(90, 122, 230, 0.25)' }}>
                   {saving ? <><Loader2 size={16} className="animate-spin" /> {t.creating}</> : <>{t.next} <ArrowRight size={16} /></>}
                 </button>
               </div>
@@ -567,7 +567,7 @@ function OnboardingPage() {
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                             style={{
                               background: isPopular ? 'var(--color-primary-subtle)' : 'var(--color-bg-hover)',
-                              border: `1px solid ${isPopular ? 'rgba(79, 111, 255, 0.2)' : 'var(--color-border)'}`,
+                              border: `1px solid ${isPopular ? 'rgba(90, 122, 230, 0.2)' : 'var(--color-border)'}`,
                             }}>
                             <Icon size={18} style={{ color: isPopular ? 'var(--color-primary)' : 'var(--color-text-secondary)' }} />
                           </div>
@@ -616,7 +616,7 @@ function OnboardingPage() {
               <div className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center"
                 style={{
                   background: planActivated ? 'var(--color-success-subtle)' : 'var(--color-primary-subtle)',
-                  border: `1px solid ${planActivated ? 'rgba(34, 197, 94, 0.2)' : 'rgba(79, 111, 255, 0.2)'}`,
+                  border: `1px solid ${planActivated ? 'rgba(34, 197, 94, 0.2)' : 'rgba(90, 122, 230, 0.2)'}`,
                 }}>
                 {planActivated
                   ? <Sparkles size={32} style={{ color: 'var(--color-success)' }} />
