@@ -171,6 +171,23 @@ const TRANSLATIONS = {
     peakTimes: 'Picos de resposta dos contatos (Histórico)',
     conversionRate: 'Taxa de Fechamento',
     sourceBase: 'Base',
+    sourceLabels: {
+      whatsapp_inbound: 'WhatsApp (Recebido)',
+      whatsapp_outbound: 'WhatsApp (Enviado)',
+      site: 'Site',
+      site_property: 'Site (Imóvel)',
+      instagram: 'Instagram',
+      facebook: 'Facebook',
+      google: 'Google',
+      manual: 'Cadastro Manual',
+      indicacao: 'Indicação',
+      referral: 'Indicação',
+      agente_captacao: 'Agente de Captação',
+      follow_up: 'Follow-up Automático',
+      import: 'Importação',
+      other: 'Outro',
+      unknown: 'Desconhecido',
+    } as Record<string, string>,
     recentInteractions: 'Últimas Interações',
     viewAll: 'Ver todos',
     tableLead: 'Contato',
@@ -228,6 +245,23 @@ const TRANSLATIONS = {
     peakTimes: 'Contact response peaks (History)',
     conversionRate: 'Closing Rate',
     sourceBase: 'Base',
+    sourceLabels: {
+      whatsapp_inbound: 'WhatsApp (Incoming)',
+      whatsapp_outbound: 'WhatsApp (Outgoing)',
+      site: 'Website',
+      site_property: 'Website (Property)',
+      instagram: 'Instagram',
+      facebook: 'Facebook',
+      google: 'Google',
+      manual: 'Manual Entry',
+      indicacao: 'Referral',
+      referral: 'Referral',
+      agente_captacao: 'Capture Agent',
+      follow_up: 'Auto Follow-up',
+      import: 'Import',
+      other: 'Other',
+      unknown: 'Unknown',
+    } as Record<string, string>,
     recentInteractions: 'Recent Interactions',
     viewAll: 'View all',
     tableLead: 'Contact',
@@ -285,6 +319,23 @@ const TRANSLATIONS = {
     peakTimes: 'Picos de respuesta (Histórico)',
     conversionRate: 'Tasa de Cierre',
     sourceBase: 'Base',
+    sourceLabels: {
+      whatsapp_inbound: 'WhatsApp (Recibido)',
+      whatsapp_outbound: 'WhatsApp (Enviado)',
+      site: 'Sitio Web',
+      site_property: 'Sitio Web (Propiedad)',
+      instagram: 'Instagram',
+      facebook: 'Facebook',
+      google: 'Google',
+      manual: 'Registro Manual',
+      indicacao: 'Referencia',
+      referral: 'Referencia',
+      agente_captacao: 'Agente de Captación',
+      follow_up: 'Seguimiento Automático',
+      import: 'Importación',
+      other: 'Otro',
+      unknown: 'Desconocido',
+    } as Record<string, string>,
     recentInteractions: 'Últimas Interacciones',
     viewAll: 'Ver todos',
     tableLead: 'Contacto',
@@ -694,7 +745,7 @@ export default function DashboardPage() {
     const bySource: Record<string, { total: number; vendas: number }> = {}
     
     leadsCreatedInPeriod.forEach(l => {
-      const source = l.source || 'Desconhecido'
+      const source = l.source || 'unknown'
       if (!bySource[source]) bySource[source] = { total: 0, vendas: 0 }
       bySource[source].total++
       if (Number(l.total_em_vendas) > 0) bySource[source].vendas++
@@ -702,12 +753,12 @@ export default function DashboardPage() {
 
     return Object.entries(bySource)
       .map(([name, data]) => ({
-        name,
+        name: t.sourceLabels[name] || name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
         rate: data.total > 0 ? ((data.vendas / data.total) * 100).toFixed(1) : '0',
         volume: data.total
       }))
       .sort((a, b) => Number(b.rate) - Number(a.rate))
-  }, [leadsCreatedInPeriod])
+  }, [leadsCreatedInPeriod, t.sourceLabels])
 
   // Leads recentes (para tabela)
   const recentLeads = useMemo(() => {
