@@ -10,6 +10,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Shield, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 
+// Public constants (não são segredos — visíveis no frontend)
+const META_APP_ID = process.env.NEXT_PUBLIC_META_APP_ID || '2174831523321350'
+const META_CONFIG_ID = process.env.NEXT_PUBLIC_META_EMBEDDED_SIGNUP_CONFIG_ID || '954528690266383'
+const CLOUD_API_VERSION = process.env.NEXT_PUBLIC_CLOUD_API_VERSION || 'v21.0'
+
 interface Props {
   orgId: string
   onSuccess: (instance: any) => void
@@ -86,10 +91,10 @@ export default function EmbeddedSignup({ orgId, onSuccess, onClose, lang = 'pt' 
     // Configurar callback
     ;(window as any).fbAsyncInit = function () {
       ;(window as any).FB.init({
-        appId: process.env.NEXT_PUBLIC_META_APP_ID,
+        appId: META_APP_ID,
         cookie: true,
         xfbml: false,
-        version: process.env.NEXT_PUBLIC_CLOUD_API_VERSION || 'v21.0',
+        version: CLOUD_API_VERSION,
       })
       setSdkLoaded(true)
     }
@@ -115,9 +120,9 @@ export default function EmbeddedSignup({ orgId, onSuccess, onClose, lang = 'pt' 
       return
     }
 
-    const configId = process.env.NEXT_PUBLIC_META_EMBEDDED_SIGNUP_CONFIG_ID
+    const configId = META_CONFIG_ID
     console.log('[EmbeddedSignup] config_id:', configId)
-    console.log('[EmbeddedSignup] app_id:', process.env.NEXT_PUBLIC_META_APP_ID)
+    console.log('[EmbeddedSignup] app_id:', META_APP_ID)
 
     if (!configId) {
       setStatus('error')
