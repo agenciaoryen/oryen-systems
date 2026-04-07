@@ -249,10 +249,10 @@ export default function PortfolioPage() {
       </div>
 
       {/* ═══ FILTROS ═══ */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         {/* Busca */}
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
+        <div className="relative sm:flex-1 sm:max-w-md">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--color-text-muted)' }} />
           <input
             type="text"
             placeholder={t.search}
@@ -273,7 +273,7 @@ export default function PortfolioPage() {
         </div>
 
         {/* Status */}
-        <div className="w-36">
+        <div className="w-44 shrink-0">
           <CustomSelect
             value={statusFilter}
             onChange={(v) => setStatusFilter(v)}
@@ -285,7 +285,7 @@ export default function PortfolioPage() {
         </div>
 
         {/* Tipo */}
-        <div className="w-36">
+        <div className="w-44 shrink-0">
           <CustomSelect
             value={typeFilter}
             onChange={(v) => setTypeFilter(v)}
@@ -297,7 +297,7 @@ export default function PortfolioPage() {
         </div>
 
         {/* View toggle */}
-        <div className="flex rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="flex rounded-xl border overflow-hidden shrink-0 self-stretch sm:self-auto" style={{ borderColor: 'var(--color-border)' }}>
           <button
             onClick={() => setViewMode('grid')}
             className="px-3 py-2.5 transition-all"
