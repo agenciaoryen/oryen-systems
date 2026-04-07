@@ -480,9 +480,24 @@ export default function SiteSettingsPage() {
         </div>
 
         {/* Cores */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass} style={labelStyle}>{T.primaryColor}</label>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {['#4B6BFB', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#EF4444', '#F59E0B', '#10B981', '#14B8A6', '#06B6D4', '#0EA5E9', '#1E293B'].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => updateField('primary_color', c)}
+                  className="w-7 h-7 rounded-lg cursor-pointer transition-all hover:scale-110 border-2"
+                  style={{
+                    background: c,
+                    borderColor: form.primary_color === c ? '#fff' : 'transparent',
+                    boxShadow: form.primary_color === c ? `0 0 0 2px ${c}` : 'none',
+                  }}
+                  title={c}
+                />
+              ))}
+            </div>
             <div className="flex items-center gap-2">
               <input
                 type="color"
@@ -502,6 +517,21 @@ export default function SiteSettingsPage() {
           </div>
           <div>
             <label className={labelClass} style={labelStyle}>{T.accentColor}</label>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {['#F0A030', '#F59E0B', '#EAB308', '#F97316', '#EF4444', '#EC4899', '#A855F7', '#10B981', '#06B6D4', '#3B82F6', '#6366F1', '#64748B'].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => updateField('accent_color', c)}
+                  className="w-7 h-7 rounded-lg cursor-pointer transition-all hover:scale-110 border-2"
+                  style={{
+                    background: c,
+                    borderColor: form.accent_color === c ? '#fff' : 'transparent',
+                    boxShadow: form.accent_color === c ? `0 0 0 2px ${c}` : 'none',
+                  }}
+                  title={c}
+                />
+              ))}
+            </div>
             <div className="flex items-center gap-2">
               <input
                 type="color"

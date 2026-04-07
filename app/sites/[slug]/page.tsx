@@ -47,7 +47,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
       {/* ═══ HERO ═══ */}
       <section className="relative overflow-hidden">
         {/* Background */}
-        <div className="absolute inset-0" style={{ background: 'var(--gradient-brand)' }} />
+        <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, var(--site-primary) 0%, color-mix(in srgb, var(--site-primary) 70%, #000) 100%)` }} />
         {site.cover_image_url && (
           <div className="absolute inset-0">
             <img
