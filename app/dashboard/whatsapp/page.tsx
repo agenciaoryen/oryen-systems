@@ -505,11 +505,10 @@ export default function WhatsAppPage() {
             </div>
 
             <div className="space-y-3">
-              {/* Opção Oficial (Meta) */}
-              <button
-                onClick={() => { setShowTypeSelector(false); setShowEmbeddedSignup(true) }}
-                className="w-full flex items-start gap-4 p-4 rounded-xl text-left transition-all hover:opacity-90"
-                style={{ background: 'rgba(37,211,102,0.06)', border: '1px solid rgba(37,211,102,0.25)' }}
+              {/* Opção Oficial (Meta) — em breve (aguardando aprovação TP) */}
+              <div
+                className="w-full flex items-start gap-4 p-4 rounded-xl text-left opacity-50 cursor-not-allowed"
+                style={{ background: 'rgba(37,211,102,0.06)', border: '1px solid rgba(37,211,102,0.15)' }}
               >
                 <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'rgba(37,211,102,0.15)' }}>
                   <Shield size={20} style={{ color: '#25D366' }} />
@@ -521,11 +520,11 @@ export default function WhatsAppPage() {
                   <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
                     {t.chooseCloudDesc}
                   </p>
-                  <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: 'rgba(37,211,102,0.15)', color: '#25D366' }}>
-                    RECOMENDADO
+                  <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: 'rgba(59,130,246,0.15)', color: 'rgb(59,130,246)' }}>
+                    EM BREVE
                   </span>
                 </div>
-              </button>
+              </div>
 
               {/* Opção Não-oficial (QR Code) */}
               <button
