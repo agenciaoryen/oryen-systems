@@ -108,55 +108,80 @@ export default function EmbeddedSignup({ orgId, onSuccess, onClose, lang = 'pt' 
   // ─── Facebook Login → Embedded Signup ───
   const handleConnect = useCallback(() => {
     const FB = (window as any).FB
-    if (!FB) return
+    if (!FB) {
+      console.error('[EmbeddedSignup] FB SDK not loaded')
+      setStatus('error')
+      setErrorMessage('Facebook SDK não carregou. Recarregue a página.')
+      return
+    }
+
+    const configId = process.env.NEXT_PUBLIC_META_EMBEDDED_SIGNUP_CONFIG_ID
+    console.log('[EmbeddedSignup] config_id:', configId)
+    console.log('[EmbeddedSignup] app_id:', process.env.NEXT_PUBLIC_META_APP_ID)
+
+    if (!configId) {
+      setStatus('error')
+      setErrorMessage('Config ID não configurado. Verifique as variáveis de ambiente.')
+      return
+    }
 
     setConnecting(true)
     setStatus('idle')
     setErrorMessage('')
 
-    FB.login(
-      async (response: any) => {
-        if (response.authResponse?.code) {
-          // Enviar auth_code pro backend
-          try {
-            const res = await fetch('/api/whatsapp/cloud/embedded-signup', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                auth_code: response.authResponse.code,
-                org_id: orgId,
-              }),
-            })
-            const data = await res.json()
+    try {
+      FB.login(
+        async (response: any) => {
+          console.log('[EmbeddedSignup] FB.login response:', JSON.stringify(response))
 
-            if (data.success) {
-              setStatus('success')
-              setTimeout(() => onSuccess(data.instance), 1500)
-            } else {
+          if (response.authResponse?.code) {
+            // Enviar auth_code pro backend
+            try {
+              const res = await fetch('/api/whatsapp/cloud/embedded-signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  auth_code: response.authResponse.code,
+                  org_id: orgId,
+                }),
+              })
+              const data = await res.json()
+
+              if (data.success) {
+                setStatus('success')
+                setTimeout(() => onSuccess(data.instance), 1500)
+              } else {
+                setStatus('error')
+                setErrorMessage(data.details || data.error || 'Unknown error')
+              }
+            } catch (err: any) {
               setStatus('error')
-              setErrorMessage(data.details || data.error || 'Unknown error')
+              setErrorMessage(err.message)
             }
-          } catch (err: any) {
+          } else {
+            // User cancelled or error
+            console.warn('[EmbeddedSignup] No auth code. Response:', response)
             setStatus('error')
-            setErrorMessage(err.message)
+            setErrorMessage(response.status === 'unknown' ? 'Login cancelado ou popup bloqueado' : 'Login cancelled')
           }
-        } else {
-          // User cancelled or error
-          setStatus('error')
-          setErrorMessage('Login cancelled')
-        }
-        setConnecting(false)
-      },
-      {
-        config_id: process.env.NEXT_PUBLIC_META_EMBEDDED_SIGNUP_CONFIG_ID,
-        response_type: 'code',
-        override_default_response_type: true,
-        extras: {
-          feature: 'whatsapp_embedded_signup',
-          sessionInfoVersion: 2,
+          setConnecting(false)
         },
-      }
-    )
+        {
+          config_id: configId,
+          response_type: 'code',
+          override_default_response_type: true,
+          extras: {
+            feature: 'whatsapp_embedded_signup',
+            sessionInfoVersion: 3,
+          },
+        }
+      )
+    } catch (err: any) {
+      console.error('[EmbeddedSignup] FB.login threw:', err)
+      setStatus('error')
+      setErrorMessage(`Erro ao abrir popup: ${err.message}`)
+      setConnecting(false)
+    }
   }, [orgId, onSuccess])
 
   return (
