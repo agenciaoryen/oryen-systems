@@ -31,6 +31,7 @@ import {
   Play,
   Smartphone
 } from 'lucide-react'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -846,19 +847,17 @@ export default function CrmPage() {
           </div>
 
           {/* Filtro de Dias */}
-          <div className="relative">
-            <select
+          <div className="w-32">
+            <CustomSelect
               value={daysFilter}
-              onChange={(e) => setDaysFilter(e.target.value)}
-              className="appearance-none text-sm rounded-lg pl-3 pr-8 py-2 outline-none focus:ring-1 focus:ring-blue-500/50 transition-all cursor-pointer"
-              style={{ backgroundColor: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
-            >
-              <option value="7">{t.days7}</option>
-              <option value="30">{t.days30}</option>
-              <option value="90">{t.days90}</option>
-              <option value="all">{t.daysAll}</option>
-            </select>
-            <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500" />
+              onChange={(v) => setDaysFilter(v)}
+              options={[
+                { value: '7', label: t.days7 },
+                { value: '30', label: t.days30 },
+                { value: '90', label: t.days90 },
+                { value: 'all', label: t.daysAll },
+              ]}
+            />
           </div>
 
           {/* Refresh */}

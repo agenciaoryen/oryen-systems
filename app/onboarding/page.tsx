@@ -17,6 +17,7 @@ import {
   Users,
   X,
 } from 'lucide-react'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -436,12 +437,11 @@ function OnboardingPage() {
 
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>{t.niche}</label>
-                <select value={niche} onChange={e => setNiche(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150" style={inputStyle}>
-                  {Object.entries(t.nicheOptions).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
-                </select>
+                <CustomSelect
+                  value={niche}
+                  onChange={(v) => setNiche(v)}
+                  options={Object.entries(t.nicheOptions).map(([key, label]) => ({ value: key, label: label as string }))}
+                />
               </div>
 
               <button onClick={() => setStep(2)} disabled={!companyName.trim()}
@@ -466,28 +466,33 @@ function OnboardingPage() {
 
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>{t.language}</label>
-                <select value={lang} onChange={e => setLang(e.target.value as Lang)}
-                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150" style={inputStyle}>
-                  <option value="pt">Português</option>
-                  <option value="en">English</option>
-                  <option value="es">Español</option>
-                </select>
+                <CustomSelect
+                  value={lang}
+                  onChange={(v) => setLang(v as Lang)}
+                  options={[
+                    { value: 'pt', label: 'Portugues' },
+                    { value: 'en', label: 'English' },
+                    { value: 'es', label: 'Espanol' },
+                  ]}
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>{t.currency}</label>
-                <select value={currency} onChange={e => setCurrency(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150" style={inputStyle}>
-                  {CURRENCIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
+                <CustomSelect
+                  value={currency}
+                  onChange={(v) => setCurrency(v)}
+                  options={CURRENCIES.map(c => ({ value: c.value, label: c.label }))}
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>{t.timezone}</label>
-                <select value={timezone} onChange={e => setTimezone(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150" style={inputStyle}>
-                  {TIMEZONES.map(tz => <option key={tz.value} value={tz.value}>{tz.label}</option>)}
-                </select>
+                <CustomSelect
+                  value={timezone}
+                  onChange={(v) => setTimezone(v)}
+                  options={TIMEZONES.map(tz => ({ value: tz.value, label: tz.label }))}
+                />
               </div>
 
               {error && (

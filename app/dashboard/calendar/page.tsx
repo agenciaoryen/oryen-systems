@@ -21,6 +21,7 @@ import {
   Search,
   Trash2
 } from 'lucide-react'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 /* =============================================
    TRANSLATIONS
@@ -600,12 +601,16 @@ function CreateEventModal({
           <div className="grid gap-2" style={{ gridTemplateColumns: '1fr 1.3fr 0.85fr 0.85fr' }}>
             <div>
               <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.eventType}</label>
-              <select value={eventType} onChange={e => setEventType(e.target.value)} className={selectClass} style={selectStyle}>
-                <option value="visit">{t.typeVisit}</option>
-                <option value="meeting">{t.typeMeeting}</option>
-                <option value="follow_up">{t.typeFollowUp}</option>
-                <option value="other">{t.typeOther}</option>
-              </select>
+              <CustomSelect
+                value={eventType}
+                onChange={(v) => setEventType(v)}
+                options={[
+                  { value: 'visit', label: t.typeVisit },
+                  { value: 'meeting', label: t.typeMeeting },
+                  { value: 'follow_up', label: t.typeFollowUp },
+                  { value: 'other', label: t.typeOther },
+                ]}
+              />
             </div>
             <div>
               <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.date}</label>

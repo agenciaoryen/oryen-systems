@@ -4,6 +4,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { PROPERTY_TYPES, TRANSACTION_TYPES } from '@/lib/properties/constants'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 interface PropertyFiltersProps {
   slug: string
@@ -36,49 +37,40 @@ export default function PropertyFilters({ slug }: PropertyFiltersProps) {
 
   return (
     <div className="flex flex-wrap gap-3 items-end">
-      <div>
+      <div className="w-40">
         <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Tipo</label>
-        <select
+        <CustomSelect
           value={type}
-          onChange={(e) => setType(e.target.value)}
-          className="px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 cursor-pointer"
-          style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-secondary)', background: 'var(--color-bg-elevated)' }}
-        >
-          <option value="">Todos</option>
-          {Object.entries(PROPERTY_TYPES).map(([key, labels]) => (
-            <option key={key} value={key}>{labels.pt}</option>
-          ))}
-        </select>
+          onChange={(v) => setType(v)}
+          options={[
+            { value: '', label: 'Todos' },
+            ...Object.entries(PROPERTY_TYPES).map(([key, labels]) => ({ value: key, label: labels.pt })),
+          ]}
+        />
       </div>
 
-      <div>
+      <div className="w-40">
         <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Transação</label>
-        <select
+        <CustomSelect
           value={transaction}
-          onChange={(e) => setTransaction(e.target.value)}
-          className="px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 cursor-pointer"
-          style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-secondary)', background: 'var(--color-bg-elevated)' }}
-        >
-          <option value="">Todas</option>
-          {Object.entries(TRANSACTION_TYPES).map(([key, labels]) => (
-            <option key={key} value={key}>{labels.pt}</option>
-          ))}
-        </select>
+          onChange={(v) => setTransaction(v)}
+          options={[
+            { value: '', label: 'Todas' },
+            ...Object.entries(TRANSACTION_TYPES).map(([key, labels]) => ({ value: key, label: labels.pt })),
+          ]}
+        />
       </div>
 
-      <div>
+      <div className="w-36">
         <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Quartos (mín.)</label>
-        <select
+        <CustomSelect
           value={minBedrooms}
-          onChange={(e) => setMinBedrooms(e.target.value)}
-          className="px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 cursor-pointer"
-          style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-secondary)', background: 'var(--color-bg-elevated)' }}
-        >
-          <option value="">Qualquer</option>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <option key={n} value={n}>{n}+</option>
-          ))}
-        </select>
+          onChange={(v) => setMinBedrooms(v)}
+          options={[
+            { value: '', label: 'Qualquer' },
+            ...[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: `${n}+` })),
+          ]}
+        />
       </div>
 
       <button

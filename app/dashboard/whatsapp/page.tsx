@@ -20,6 +20,7 @@ import {
   X,
   AlertTriangle
 } from 'lucide-react'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -666,24 +667,17 @@ export default function WhatsAppPage() {
                   {/* Agent select */}
                   <div className="flex items-center gap-1.5">
                     <Bot size={13} style={{ color: instance.agent_id ? 'rgb(16,185,129)' : 'var(--color-text-secondary)' }} />
-                    <select
+                    <CustomSelect
                       value={instance.agent_id || ''}
-                      onChange={e => handleLinkAgent(instance.id, e.target.value)}
-                      className="text-xs rounded-lg px-2 py-1.5 outline-none cursor-pointer appearance-none"
-                      style={{
-                        backgroundColor: 'var(--color-bg-elevated)',
-                        border: '1px solid var(--color-border)',
-                        color: instance.agent_id ? 'rgb(16,185,129)' : 'var(--color-text-secondary)',
-                        colorScheme: 'dark'
-                      }}
-                    >
-                      <option value="">{t.noAgent}</option>
-                      {agents.map(ag => (
-                        <option key={ag.id} value={ag.id}>
-                          {ag.solution_slug.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(v) => handleLinkAgent(instance.id, v)}
+                      options={[
+                        { value: '', label: t.noAgent },
+                        ...agents.map(ag => ({
+                          value: ag.id,
+                          label: ag.solution_slug.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+                        })),
+                      ]}
+                    />
                   </div>
 
                   {/* Webhook setup button */}

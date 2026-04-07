@@ -23,6 +23,7 @@ import {
   CheckCircle2, AlertTriangle, ChevronRight, BarChart3, Zap,
   Search, Filter, MoreVertical, Edit2, Copy, ExternalLink
 } from 'lucide-react'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -540,19 +541,17 @@ function CreateCampaignModal({
 
       case 'select':
         return (
-          <select
+          <CustomSelect
             value={config[field.name] || field.default || ''}
-            onChange={(e) => updateConfig(field.name, e.target.value)}
-            className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
-            style={baseInputStyle}
-          >
-            <option value="">Selecione...</option>
-            {field.options?.map(opt => (
-              <option key={opt.value} value={opt.value}>
-                {typeof opt.label === 'string' ? opt.label : t(opt.label, lang)}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => updateConfig(field.name, v)}
+            options={[
+              { value: '', label: 'Selecione...' },
+              ...(field.options?.map(opt => ({
+                value: opt.value,
+                label: typeof opt.label === 'string' ? opt.label : t(opt.label, lang),
+              })) || []),
+            ]}
+          />
         )
 
       case 'boolean':
@@ -668,16 +667,15 @@ function CreateCampaignModal({
               <label className="text-xs font-bold uppercase mb-2 block" style={{ color: 'var(--color-text-tertiary)' }}>
                 {ui.schedule}
               </label>
-              <select
+              <CustomSelect
                 value={scheduleFrequency}
-                onChange={(e) => setScheduleFrequency(e.target.value)}
-                className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
-                style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
-              >
-                <option value="daily">{ui.daily}</option>
-                <option value="weekly">{ui.weekly}</option>
-                <option value="manual">{ui.manual}</option>
-              </select>
+                onChange={(v) => setScheduleFrequency(v)}
+                options={[
+                  { value: 'daily', label: ui.daily },
+                  { value: 'weekly', label: ui.weekly },
+                  { value: 'manual', label: ui.manual },
+                ]}
+              />
             </div>
             <div>
               <label className="text-xs font-bold uppercase mb-2 block" style={{ color: 'var(--color-text-tertiary)' }}>

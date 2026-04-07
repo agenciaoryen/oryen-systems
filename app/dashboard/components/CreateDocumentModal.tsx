@@ -26,6 +26,7 @@ import {
   HelpCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -653,17 +654,14 @@ export default function CreateDocumentModal({
                   </label>
                   
                   {variable.type === 'select' && variable.options ? (
-                    <select
+                    <CustomSelect
                       value={formData[variable.key] || ''}
-                      onChange={(e) => handleInputChange(variable.key, e.target.value)}
-                      className="w-full px-3 py-2.5 border rounded-lg focus:outline-none transition-colors"
-                      style={{ backgroundColor: 'var(--color-bg-base)', color: 'var(--color-text-primary)', borderColor: errors[variable.key] ? 'var(--color-error)' : 'var(--color-border-subtle)' }}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {variable.options.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => handleInputChange(variable.key, v)}
+                      options={[
+                        { value: '', label: 'Seleccionar...' },
+                        ...variable.options.map(opt => ({ value: opt, label: opt })),
+                      ]}
+                    />
                   ) : variable.type === 'boolean' ? (
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input

@@ -23,6 +23,7 @@ import {
   Camera,
   Send,
 } from 'lucide-react'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -612,19 +613,19 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass} style={labelStyle}>{t.propertyType} *</label>
-              <select value={form.property_type} onChange={(e) => updateField('property_type', e.target.value)} className={inputClass} style={inputStyle}>
-                {Object.entries(PROPERTY_TYPES).map(([key, labels]) => (
-                  <option key={key} value={key}>{labels[lang]}</option>
-                ))}
-              </select>
+              <CustomSelect
+                value={form.property_type}
+                onChange={(v) => updateField('property_type', v)}
+                options={Object.entries(PROPERTY_TYPES).map(([key, labels]) => ({ value: key, label: labels[lang] }))}
+              />
             </div>
             <div>
               <label className={labelClass} style={labelStyle}>{t.transactionType} *</label>
-              <select value={form.transaction_type} onChange={(e) => updateField('transaction_type', e.target.value)} className={inputClass} style={inputStyle}>
-                {Object.entries(TRANSACTION_TYPES).map(([key, labels]) => (
-                  <option key={key} value={key}>{labels[lang]}</option>
-                ))}
-              </select>
+              <CustomSelect
+                value={form.transaction_type}
+                onChange={(v) => updateField('transaction_type', v)}
+                options={Object.entries(TRANSACTION_TYPES).map(([key, labels]) => ({ value: key, label: labels[lang] }))}
+              />
             </div>
           </div>
 
@@ -677,12 +678,11 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
             </div>
             <div>
               <label className={labelClass} style={labelStyle}>{t.state}</label>
-              <select value={form.address_state} onChange={(e) => updateField('address_state', e.target.value)} className={inputClass} style={inputStyle} autoComplete="nope-state">
-                <option value="">—</option>
-                {BR_STATES.map((st) => (
-                  <option key={st} value={st}>{st}</option>
-                ))}
-              </select>
+              <CustomSelect
+                value={form.address_state}
+                onChange={(v) => updateField('address_state', v)}
+                options={[{ value: '', label: '—' }, ...BR_STATES.map((st) => ({ value: st, label: st }))]}
+              />
             </div>
             <div>
               <label className={labelClass} style={labelStyle}>{t.zip}</label>
@@ -846,11 +846,11 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
         <div className="rounded-2xl border p-6 space-y-5" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
           <div>
             <label className={labelClass} style={labelStyle}>{t.status}</label>
-            <select value={form.status} onChange={(e) => updateField('status', e.target.value)} className={inputClass} style={inputStyle}>
-              {Object.entries(PROPERTY_STATUSES).map(([key, labels]) => (
-                <option key={key} value={key}>{labels[lang]}</option>
-              ))}
-            </select>
+            <CustomSelect
+              value={form.status}
+              onChange={(v) => updateField('status', v)}
+              options={Object.entries(PROPERTY_STATUSES).map(([key, labels]) => ({ value: key, label: labels[lang] }))}
+            />
           </div>
 
           <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg-surface)' }}>

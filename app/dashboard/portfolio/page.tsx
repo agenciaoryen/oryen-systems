@@ -28,6 +28,7 @@ import {
   List,
   ArrowUpDown,
 } from 'lucide-react'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -272,38 +273,28 @@ export default function PortfolioPage() {
         </div>
 
         {/* Status */}
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 pr-8 py-2.5 rounded-xl text-sm border cursor-pointer"
-          style={{
-            backgroundColor: 'var(--color-bg-elevated)',
-            borderColor: 'var(--color-border)',
-            color: 'var(--color-text-primary)',
-          }}
-        >
-          <option value="">{t.allStatuses}</option>
-          {Object.entries(PROPERTY_STATUSES).map(([key, labels]) => (
-            <option key={key} value={key}>{labels[lang]}</option>
-          ))}
-        </select>
+        <div className="w-36">
+          <CustomSelect
+            value={statusFilter}
+            onChange={(v) => setStatusFilter(v)}
+            options={[
+              { value: '', label: t.allStatuses },
+              ...Object.entries(PROPERTY_STATUSES).map(([key, labels]) => ({ value: key, label: labels[lang] })),
+            ]}
+          />
+        </div>
 
         {/* Tipo */}
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-4 pr-8 py-2.5 rounded-xl text-sm border cursor-pointer"
-          style={{
-            backgroundColor: 'var(--color-bg-elevated)',
-            borderColor: 'var(--color-border)',
-            color: 'var(--color-text-primary)',
-          }}
-        >
-          <option value="">{t.allTypes}</option>
-          {Object.entries(PROPERTY_TYPES).map(([key, labels]) => (
-            <option key={key} value={key}>{labels[lang]}</option>
-          ))}
-        </select>
+        <div className="w-36">
+          <CustomSelect
+            value={typeFilter}
+            onChange={(v) => setTypeFilter(v)}
+            options={[
+              { value: '', label: t.allTypes },
+              ...Object.entries(PROPERTY_TYPES).map(([key, labels]) => ({ value: key, label: labels[lang] })),
+            ]}
+          />
+        </div>
 
         {/* View toggle */}
         <div className="flex rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>

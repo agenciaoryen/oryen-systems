@@ -11,6 +11,7 @@ import {
   Clock, Calendar, MessageCircle, BarChart3, Loader2, Info,
   CheckCircle2, XCircle, Send
 } from 'lucide-react'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -647,16 +648,15 @@ export default function ReportsPage() {
                   {/* Frequência */}
                   <div className="space-y-1.5 min-w-0">
                     <label className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.frequencyLabel}</label>
-                    <select
+                    <CustomSelect
                       value={formData.frequency}
-                      onChange={e => setFormData({...formData, frequency: e.target.value})}
-                      className="w-full rounded-xl p-3 text-sm outline-none transition-all appearance-none cursor-pointer"
-                      style={{ backgroundColor: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
-                    >
-                      <option value="daily">{t.freqDaily}</option>
-                      <option value="weekly">{t.freqWeekly}</option>
-                      <option value="monthly">{t.freqMonthly}</option>
-                    </select>
+                      onChange={(v) => setFormData({...formData, frequency: v})}
+                      options={[
+                        { value: 'daily', label: t.freqDaily },
+                        { value: 'weekly', label: t.freqWeekly },
+                        { value: 'monthly', label: t.freqMonthly },
+                      ]}
+                    />
                   </div>
 
                   {/* Horário */}
@@ -676,14 +676,11 @@ export default function ReportsPage() {
                   {formData.frequency === 'weekly' && (
                     <div className="space-y-1.5 sm:col-span-2">
                       <label className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.dayLabel}</label>
-                      <select
+                      <CustomSelect
                         value={formData.send_day}
-                        onChange={e => setFormData({...formData, send_day: e.target.value})}
-                        className="w-full rounded-xl p-3 text-sm outline-none transition-all appearance-none cursor-pointer"
-                        style={{ backgroundColor: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
-                      >
-                        {daysOfWeek.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-                      </select>
+                        onChange={(v) => setFormData({...formData, send_day: v})}
+                        options={daysOfWeek.map(d => ({ value: d.value, label: d.label }))}
+                      />
                     </div>
                   )}
 

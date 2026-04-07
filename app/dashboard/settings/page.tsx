@@ -10,6 +10,7 @@ import {
   Sun, Moon, CreditCard, Eye, RotateCcw, Clock, Play, Calendar
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -1132,49 +1133,49 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.profile.language}</label>
-                      <select
+                      <CustomSelect
                         value={language}
-                        onChange={(e) => setLanguage(e.target.value)}
-                        className="w-full rounded-lg p-3 outline-none appearance-none" style={{ backgroundColor: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
-                      >
-                        <option value="pt">🇧🇷 Português</option>
-                        <option value="en">🇺🇸 English</option>
-                        <option value="es">🇪🇸 Español</option>
-                      </select>
+                        onChange={(v) => setLanguage(v)}
+                        options={[
+                          { value: 'pt', label: 'Portugues' },
+                          { value: 'en', label: 'English' },
+                          { value: 'es', label: 'Espanol' },
+                        ]}
+                      />
                     </div>
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.profile.currency}</label>
-                      <select
+                      <CustomSelect
                         value={currency}
-                        onChange={(e) => setCurrency(e.target.value)}
-                        className="w-full rounded-lg p-3 outline-none appearance-none" style={{ backgroundColor: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
-                      >
-                        <option value="BRL">R$ (BRL)</option>
-                        <option value="USD">$ (USD)</option>
-                        <option value="EUR">€ (EUR)</option>
-                        <option value="CLP">CLP$ (Chile)</option>
-                        <option value="MXN">MX$ (México)</option>
-                        <option value="CAD">C$ (Canada)</option>
-                        <option value="ARS">ARS$ (Arg)</option>
-                        <option value="COP">COL$ (Col)</option>
-                      </select>
+                        onChange={(v) => setCurrency(v)}
+                        options={[
+                          { value: 'BRL', label: 'R$ (BRL)' },
+                          { value: 'USD', label: '$ (USD)' },
+                          { value: 'EUR', label: '€ (EUR)' },
+                          { value: 'CLP', label: 'CLP$ (Chile)' },
+                          { value: 'MXN', label: 'MX$ (Mexico)' },
+                          { value: 'CAD', label: 'C$ (Canada)' },
+                          { value: 'ARS', label: 'ARS$ (Arg)' },
+                          { value: 'COP', label: 'COL$ (Col)' },
+                        ]}
+                      />
                     </div>
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.profile.timezone}</label>
-                      <select
+                      <CustomSelect
                         value={timezone}
-                        onChange={(e) => setTimezone(e.target.value)}
-                        className="w-full rounded-lg p-3 outline-none appearance-none" style={{ backgroundColor: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
-                      >
-                        <option value="America/Sao_Paulo">🇧🇷 São Paulo</option>
-                        <option value="America/New_York">🇺🇸 New York</option>
-                        <option value="Europe/Lisbon">🇵🇹 Lisboa</option>
-                        <option value="Europe/London">🇬🇧 London</option>
-                        <option value="America/Mexico_City">🇲🇽 Mexico City</option>
-                        <option value="America/Santiago">🇨🇱 Santiago</option>
-                        <option value="America/Bogota">🇨🇴 Bogota</option>
-                        <option value="America/Argentina/Buenos_Aires">🇦🇷 Buenos Aires</option>
-                      </select>
+                        onChange={(v) => setTimezone(v)}
+                        options={[
+                          { value: 'America/Sao_Paulo', label: 'Sao Paulo' },
+                          { value: 'America/New_York', label: 'New York' },
+                          { value: 'Europe/Lisbon', label: 'Lisboa' },
+                          { value: 'Europe/London', label: 'London' },
+                          { value: 'America/Mexico_City', label: 'Mexico City' },
+                          { value: 'America/Santiago', label: 'Santiago' },
+                          { value: 'America/Bogota', label: 'Bogota' },
+                          { value: 'America/Argentina/Buenos_Aires', label: 'Buenos Aires' },
+                        ]}
+                      />
                     </div>
                   </div>
                 </div>
@@ -1537,16 +1538,11 @@ export default function SettingsPage() {
                           style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                           placeholder={t.pipeline.stageLabel}
                         />
-                        <select
+                        <CustomSelect
                           value={stage.color}
-                          onChange={(e) => handleUpdateStage(stage.id, { color: e.target.value })}
-                          className="rounded-lg px-3 py-2 text-sm outline-none appearance-none"
-                          style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
-                        >
-                          {AVAILABLE_COLORS.map(color => (
-                            <option key={color.name} value={color.name}>{color.label}</option>
-                          ))}
-                        </select>
+                          onChange={(v) => handleUpdateStage(stage.id, { color: v })}
+                          options={AVAILABLE_COLORS.map(color => ({ value: color.name, label: color.label }))}
+                        />
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -1599,16 +1595,13 @@ export default function SettingsPage() {
                     style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                     placeholder={t.pipeline.stageLabel}
                   />
-                  <select
-                    value={newStageColor}
-                    onChange={(e) => setNewStageColor(e.target.value)}
-                    className="rounded-lg px-3 py-2 text-sm outline-none appearance-none w-full sm:w-32"
-                    style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
-                  >
-                    {AVAILABLE_COLORS.map(color => (
-                      <option key={color.name} value={color.name}>{color.label}</option>
-                    ))}
-                  </select>
+                  <div className="w-full sm:w-32">
+                    <CustomSelect
+                      value={newStageColor}
+                      onChange={(v) => setNewStageColor(v)}
+                      options={AVAILABLE_COLORS.map(color => ({ value: color.name, label: color.label }))}
+                    />
+                  </div>
                   <button
                     onClick={handleAddStage}
                     disabled={!newStageLabel.trim()}
@@ -1680,16 +1673,13 @@ export default function SettingsPage() {
                     style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                     placeholder={t.tags.tagName}
                   />
-                  <select
-                    value={newTagColor}
-                    onChange={(e) => setNewTagColor(e.target.value)}
-                    className="rounded-lg px-3 py-2 text-sm outline-none appearance-none w-full sm:w-32"
-                    style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
-                  >
-                    {AVAILABLE_COLORS.map(color => (
-                      <option key={color.name} value={color.name}>{color.label}</option>
-                    ))}
-                  </select>
+                  <div className="w-full sm:w-32">
+                    <CustomSelect
+                      value={newTagColor}
+                      onChange={(v) => setNewTagColor(v)}
+                      options={AVAILABLE_COLORS.map(color => ({ value: color.name, label: color.label }))}
+                    />
+                  </div>
                   <button
                     onClick={handleAddTag}
                     disabled={!newTagName.trim()}

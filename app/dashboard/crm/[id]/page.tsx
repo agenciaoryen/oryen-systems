@@ -29,6 +29,7 @@ import {
   Trash2,
   Save
 } from 'lucide-react'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -1044,18 +1045,17 @@ export default function LeadProfilePage() {
                 <label className="text-[10px] font-bold uppercase tracking-wider ml-1 flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
                   <Tag size={10} /> {t.contactType}
                 </label>
-                <select
+                <CustomSelect
                   value={lead.tipo_contato || ''}
-                  onChange={(e) => handleUpdateField('tipo_contato', e.target.value)}
-                  className="w-full rounded-xl p-3 text-sm outline-none transition-all cursor-pointer"
-                  style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
-                >
-                  <option value="">{t.contactTypePlaceholder}</option>
-                  <option value="comprador">{t.typeBuyer}</option>
-                  <option value="vendedor">{t.typeSeller}</option>
-                  <option value="locatario">{t.typeTenant}</option>
-                  <option value="proprietario">{t.typeLandlord}</option>
-                </select>
+                  onChange={(v) => handleUpdateField('tipo_contato', v)}
+                  options={[
+                    { value: '', label: t.contactTypePlaceholder },
+                    { value: 'comprador', label: t.typeBuyer },
+                    { value: 'vendedor', label: t.typeSeller },
+                    { value: 'locatario', label: t.typeTenant },
+                    { value: 'proprietario', label: t.typeLandlord },
+                  ]}
+                />
               </div>
 
               {/* Interesse */}
@@ -1063,17 +1063,16 @@ export default function LeadProfilePage() {
                 <label className="text-[10px] font-bold uppercase tracking-wider ml-1 flex items-center gap-1" style={{ color: 'var(--color-indigo)' }}>
                   <Globe size={10} /> {t.interest}
                 </label>
-                <select
+                <CustomSelect
                   value={lead.interesse || ''}
-                  onChange={(e) => handleUpdateField('interesse', e.target.value)}
-                  className="w-full rounded-xl p-3 text-sm outline-none transition-all cursor-pointer"
-                  style={{ backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
-                >
-                  <option value="">{t.interestPlaceholder}</option>
-                  <option value="compra">{t.intPurchase}</option>
-                  <option value="locacao">{t.intRental}</option>
-                  <option value="ambos">{t.intBoth}</option>
-                </select>
+                  onChange={(v) => handleUpdateField('interesse', v)}
+                  options={[
+                    { value: '', label: t.interestPlaceholder },
+                    { value: 'compra', label: t.intPurchase },
+                    { value: 'locacao', label: t.intRental },
+                    { value: 'ambos', label: t.intBoth },
+                  ]}
+                />
               </div>
 
               {/* Cidade */}
