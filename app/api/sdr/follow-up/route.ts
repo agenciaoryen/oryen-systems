@@ -16,6 +16,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { buildFollowUpPrompt } from '@/lib/sdr/follow-up-prompt'
 import { sendWithHumanization } from '@/lib/sdr/whatsapp-sender'
 import { stopCheck } from '@/lib/sdr/redis'
+import { isWithinWindow } from '@/lib/sdr/messaging-window'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -150,7 +151,7 @@ async function processFollowUp(
   // ─── 5. Verificar instância conectada ───
   const { data: instance } = await supabase
     .from('whatsapp_instances')
-    .select('instance_name, instance_token, api_url, status')
+    .select('instance_name, instance_token, api_url, status, api_type, waba_id, phone_number_id')
     .eq('instance_name', item.instance_name)
     .eq('org_id', item.org_id)
     .single()
@@ -158,6 +159,22 @@ async function processFollowUp(
   if (!instance || instance.status !== 'connected') {
     console.warn(`[FollowUp] Instância ${item.instance_name} não conectada — pulando`)
     return 'skipped'
+  }
+
+  const isCloudApi = instance.api_type === 'cloud_api'
+
+  // ─── 5.1. Cloud API: checar janela de 24h ───
+  if (isCloudApi) {
+    const withinWindow = await isWithinWindow(item.org_id, lead.phone)
+
+    if (!withinWindow) {
+      // Fora da janela → enviar template ao invés de texto livre
+      console.log(`[FollowUp] Cloud API fora da janela 24h para ${lead.phone} — usando template`)
+      const templateResult = await sendFollowUpTemplate(item, lead, instance, now)
+      return templateResult
+    }
+    // Dentro da janela → segue fluxo normal (texto livre via Claude)
+    console.log(`[FollowUp] Cloud API dentro da janela 24h para ${lead.phone} — texto livre`)
   }
 
   // ─── 6. Buscar config da campanha ───
@@ -322,4 +339,117 @@ function getLocalHour(date: Date, timezone: string): number {
     // Fallback: assume Brasília (UTC-3)
     return (date.getUTCHours() - 3 + 24) % 24
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ENVIAR FOLLOW-UP VIA TEMPLATE (Cloud API fora da janela 24h)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function sendFollowUpTemplate(
+  item: any,
+  lead: any,
+  instance: any,
+  now: Date
+): Promise<'processed' | 'skipped'> {
+  const nextAttempt = item.attempt_number + 1
+
+  // Buscar template aprovado de follow-up
+  const { data: template } = await supabase
+    .from('whatsapp_templates')
+    .select('template_name, language, body_text')
+    .eq('waba_id', instance.waba_id)
+    .eq('meta_status', 'APPROVED')
+    .eq('purpose', 'follow_up')
+    .limit(1)
+    .single()
+
+  if (!template) {
+    console.warn(`[FollowUp] No approved follow_up template for WABA ${instance.waba_id} — skipping`)
+    return 'skipped'
+  }
+
+  // Enviar via adapter (sendWithHumanization detecta Cloud API e usa template)
+  const sendResult = await sendWithHumanization({
+    org_id: item.org_id,
+    phone: lead.phone,
+    instance_name: item.instance_name,
+    messages: [`[template:${template.template_name}]`] // Marcador — o sender detecta e envia template
+  })
+
+  if (sendResult.sent === 0) {
+    console.warn(`[FollowUp] Template send failed for ${lead.phone}`)
+    return 'skipped'
+  }
+
+  // Salvar no histórico
+  const templateBody = template.body_text.replace(/\{\{1\}\}/g, lead.name || 'Cliente')
+  await supabase.from('sdr_messages').insert({
+    org_id: item.org_id,
+    lead_id: item.lead_id,
+    campaign_id: item.campaign_id || null,
+    instance_name: item.instance_name,
+    phone: lead.phone,
+    role: 'assistant',
+    body: `[Template: ${template.template_name}] ${templateBody}`,
+    type: 'text',
+    source: 'follow_up',
+    processed_at: now.toISOString()
+  })
+
+  // Salvar no módulo de conversas
+  try {
+    await supabase.rpc('fn_insert_message', {
+      p_org_id: item.org_id,
+      p_lead_id: item.lead_id,
+      p_channel: 'whatsapp',
+      p_direction: 'outbound',
+      p_body: `[Template: ${template.template_name}] ${templateBody}`,
+      p_sender_type: 'agent_bot',
+      p_sender_name: 'Follow-up Agent',
+      p_message_type: 'text',
+      p_timestamp: now.toISOString()
+    })
+  } catch (rpcErr: any) {
+    console.warn(`[FollowUp] fn_insert_message error (non-fatal): ${rpcErr.message}`)
+  }
+
+  console.log(`[FollowUp] Template "${template.template_name}" enviado para ${lead.phone} (tentativa ${nextAttempt})`)
+
+  // Atualizar fila
+  const cadence: number[] = item.cadence_hours || [4, 24, 72, 120, 168]
+
+  if (nextAttempt >= item.max_attempts) {
+    await supabase.from('follow_up_queue').update({
+      status: 'exhausted',
+      attempt_number: nextAttempt,
+      last_attempt_at: now.toISOString(),
+      template_name: template.template_name,
+      updated_at: now.toISOString()
+    }).eq('id', item.id)
+  } else {
+    const nextCadenceHours = cadence[nextAttempt] || cadence[cadence.length - 1] || 168
+    const nextAttemptAt = new Date(now.getTime() + nextCadenceHours * 60 * 60 * 1000)
+
+    await supabase.from('follow_up_queue').update({
+      status: 'active',
+      attempt_number: nextAttempt,
+      last_attempt_at: now.toISOString(),
+      next_attempt_at: nextAttemptAt.toISOString(),
+      template_name: template.template_name,
+      updated_at: now.toISOString()
+    }).eq('id', item.id)
+  }
+
+  // Criar alerta
+  await supabase.from('alerts').insert({
+    org_id: item.org_id,
+    lead_id: item.lead_id,
+    type: 'follow_up_sent',
+    title: `Follow-up #${nextAttempt} enviado (template)`,
+    body: `Template "${template.template_name}" enviado para ${lead.name || lead.phone}. Tentativa ${nextAttempt} de ${item.max_attempts}.`,
+    priority: nextAttempt >= item.max_attempts ? 'high' : 'low',
+    status: 'unread'
+  }).then(() => {}).catch(() => {})
+
+  return 'processed'
 }
