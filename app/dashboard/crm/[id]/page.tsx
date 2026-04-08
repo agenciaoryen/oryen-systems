@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { formatPrice } from '@/lib/format'
 import LeadDocuments from './components/LeadDocuments'
+import FinancingSimulation from './components/FinancingSimulation'
 import {
   ArrowLeft,
   Mail,
@@ -1282,6 +1283,19 @@ export default function LeadProfilePage() {
               {formatPrice(lead.total_em_vendas, userCurrency, userLang)}
             </p>
           </div>
+
+          {/* Simulação de Financiamento - Apenas para imobiliárias */}
+          {activeOrg?.niche === 'real_estate' && (
+            <div className="rounded-2xl p-5 md:p-6 shadow-xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+              <FinancingSimulation
+                leadId={lead.id}
+                totalEmVendas={lead.total_em_vendas}
+                city={lead.city}
+                userId={user?.id}
+                lang={(user as any)?.language || 'pt'}
+              />
+            </div>
+          )}
 
           {/* Documentos do Lead - Apenas para nichos específicos */}
           {activeOrg?.niche === 'real_estate' && (

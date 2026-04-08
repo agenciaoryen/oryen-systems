@@ -30,6 +30,7 @@ import {
   Home,
   Globe,
   Shuffle,
+  Calculator,
   type LucideIcon
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
@@ -52,6 +53,7 @@ const TRANSLATIONS = {
       calendar: 'Agenda',
       followUp: 'Follow-up',
       distribution: 'Distribuição',
+      financing: 'Financiamento',
       portfolio: 'Portfólio',
       mySite: 'Meu Site',
       settings: 'Configurações'
@@ -84,6 +86,7 @@ const TRANSLATIONS = {
       calendar: 'Calendar',
       followUp: 'Follow-up',
       distribution: 'Distribution',
+      financing: 'Financing',
       portfolio: 'Portfolio',
       mySite: 'My Site',
       settings: 'Settings'
@@ -116,6 +119,7 @@ const TRANSLATIONS = {
       calendar: 'Agenda',
       followUp: 'Follow-up',
       distribution: 'Distribución',
+      financing: 'Financiamiento',
       portfolio: 'Portafolio',
       mySite: 'Mi Sitio',
       settings: 'Configuración'
@@ -348,6 +352,7 @@ export default function Sidebar() {
         { href: '/dashboard/whatsapp', label: t.menu.whatsapp, icon: Smartphone, requiredNiche: NICHES_WITH_DOCUMENTS },
         { href: '/dashboard/documents', label: t.menu.documents, icon: FileText, requiredNiche: NICHES_WITH_DOCUMENTS },
         { href: '/dashboard/relatorios', label: t.menu.reports, icon: BarChart3 },
+        { href: '/dashboard/financiamento', label: t.menu.financing, icon: Calculator, requiredNiche: NICHES_WITH_DOCUMENTS },
       ],
     },
     {
