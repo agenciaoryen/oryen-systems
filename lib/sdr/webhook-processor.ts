@@ -113,6 +113,18 @@ export async function processInboundMessage(msg: NormalizedInbound): Promise<Pro
 
   console.log(`[Webhook:Processor] ✓ Histórico salvo | role: ${messageRole} | lead: ${lead.id} | phone: ${phone}`)
 
+  // ─── 2b. Track activity for lead scoring (non-blocking) ───
+  if (!msg.isAttendant) {
+    after(async () => {
+      try {
+        const { trackActivity } = await import('@/lib/scoring/activity-tracker')
+        await trackActivity(orgId, lead.id, 'inbound_message')
+      } catch (err: any) {
+        console.warn(`[Webhook:Processor] Score tracking error (non-fatal): ${err.message}`)
+      }
+    })
+  }
+
   // ─── 3. Se atendente → setar STOP e parar ───
   if (msg.isAttendant) {
     await stopSet(orgId, phone)

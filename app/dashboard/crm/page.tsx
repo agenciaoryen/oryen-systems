@@ -54,6 +54,8 @@ interface Lead {
   org_id?: string
   tags?: Tag[]
   conversa_finalizada?: boolean // true = IA pausada, false = IA ativa
+  score?: number
+  score_label?: 'hot' | 'warm' | 'cold' | 'lost'
 }
 
 interface PipelineStage {
@@ -311,6 +313,13 @@ const TAG_COLORS: Record<string, { bg: string; text: string; border: string; dot
 const getStageColor = (color: string) => STAGE_COLORS[color] || STAGE_COLORS.gray
 const getTagColor = (color: string) => TAG_COLORS[color] || TAG_COLORS.gray
 
+const SCORE_CONFIG: Record<string, { label: string; bg: string; color: string; border: string }> = {
+  hot:  { label: 'HOT',  bg: 'rgba(239,68,68,0.12)',  color: 'rgb(239,68,68)',  border: 'rgba(239,68,68,0.25)' },
+  warm: { label: 'WARM', bg: 'rgba(234,179,8,0.12)',   color: 'rgb(202,138,4)',  border: 'rgba(234,179,8,0.25)' },
+  cold: { label: 'COLD', bg: 'rgba(107,114,128,0.12)', color: 'rgb(107,114,128)', border: 'rgba(107,114,128,0.25)' },
+  lost: { label: 'LOST', bg: 'rgba(107,114,128,0.08)', color: 'rgb(107,114,128)', border: 'rgba(107,114,128,0.15)' },
+}
+
 const STAGE_HEX: Record<string, string> = {
   gray: '#6B7280', blue: '#5A7AE6', orange: '#D98A30', purple: '#9568D0',
   indigo: '#6E6BD6', emerald: '#34B368', rose: '#D4506A', pink: '#D06090',
@@ -480,7 +489,7 @@ export default function CrmPage() {
       // Buscar leads — sem paginação infinita, query direta com filtro de data
       let query = supabase
         .from('leads')
-        .select('*, conversa_finalizada')
+        .select('*, conversa_finalizada, score, score_label')
         .eq('org_id', orgId)
         .order('updated_at', { ascending: false })
         .limit(500)
@@ -967,7 +976,17 @@ export default function CrmPage() {
                               {getInitials(leadDisplayName)}
                             </div>
                             <div className="flex flex-col min-w-0">
-                              <span className="font-medium truncate" style={{ color: 'var(--color-text-secondary)' }}>{leadDisplayName}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-medium truncate" style={{ color: 'var(--color-text-secondary)' }}>{leadDisplayName}</span>
+                                {lead.score_label && lead.score_label !== 'cold' && (() => {
+                                  const sc = SCORE_CONFIG[lead.score_label] || SCORE_CONFIG.cold
+                                  return (
+                                    <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
+                                      {sc.label}
+                                    </span>
+                                  )
+                                })()}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -1141,9 +1160,19 @@ export default function CrmPage() {
                                 {getInitials(leadDisplayName)}
                               </div>
                               <div className="overflow-hidden min-w-0 flex-1">
-                                <h4 className="font-semibold text-sm leading-tight truncate" style={{ color: 'var(--color-text-primary)' }} title={leadDisplayName}>
-                                  {leadDisplayName}
-                                </h4>
+                                <div className="flex items-center gap-1.5">
+                                  <h4 className="font-semibold text-sm leading-tight truncate" style={{ color: 'var(--color-text-primary)' }} title={leadDisplayName}>
+                                    {leadDisplayName}
+                                  </h4>
+                                  {lead.score_label && lead.score_label !== 'cold' && (() => {
+                                    const sc = SCORE_CONFIG[lead.score_label] || SCORE_CONFIG.cold
+                                    return (
+                                      <span className="shrink-0 px-1 py-0 rounded text-[8px] font-bold leading-tight" style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
+                                        {sc.label}
+                                      </span>
+                                    )
+                                  })()}
+                                </div>
                                 {cardFields.includes('nome_empresa') && lead.nome_empresa && (
                                   <p className="text-[10px] truncate" style={{ color: 'var(--color-text-muted)' }}>{t.contactLabel} {lead.name}</p>
                                 )}

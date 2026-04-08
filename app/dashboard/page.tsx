@@ -6,6 +6,7 @@ import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { formatPrice } from '@/lib/format'
 import NoOrganizationState from './components/NoOrganizationState'
+import DailyPriorities from './components/DailyPriorities'
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell 
@@ -1006,6 +1007,13 @@ export default function DashboardPage() {
             </div>
           </Card>
         </div>
+
+        {/* Prioridades do Dia */}
+        {activeOrgId && (
+          <div className="col-span-12">
+            <DailyPriorities orgId={activeOrgId} lang={userLang} />
+          </div>
+        )}
 
         {/* Gráfico de Área */}
         <Card className="col-span-12 lg:col-span-8 p-4 sm:p-6">
