@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/AuthContext'
 import FinancingCalculator from '@/app/dashboard/components/FinancingCalculator'
 import type { ComparisonResult, CountryCode } from '@/lib/financing/types'
-import { formatCurrency } from '@/lib/financing/constants'
-import { Calculator, Clock, Trash2, RotateCcw } from 'lucide-react'
+import { formatCurrency, RATES_LAST_UPDATED, isRatesUpdateDue } from '@/lib/financing/constants'
+import { Calculator, Clock, Trash2, RotateCcw, AlertTriangle, X } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -85,13 +85,52 @@ function fmt(value: number, country: CountryCode = 'BR'): string {
 // COMPONENTE
 // ═══════════════════════════════════════════════════════════════════════════════
 
+const STAFF_ALERT_TRANSLATIONS = {
+  pt: {
+    alertTitle: 'Taxas bancárias podem estar desatualizadas',
+    alertMsg: (date: string) => `Última atualização: ${date}. Recomendamos revisar as taxas a cada 3 meses para manter a precisão das simulações.`,
+    alertAction: 'Solicitar atualização ao suporte',
+    dismiss: 'Dispensar',
+  },
+  en: {
+    alertTitle: 'Bank rates may be outdated',
+    alertMsg: (date: string) => `Last updated: ${date}. We recommend reviewing rates every 3 months to keep simulations accurate.`,
+    alertAction: 'Request update from support',
+    dismiss: 'Dismiss',
+  },
+  es: {
+    alertTitle: 'Las tasas bancarias pueden estar desactualizadas',
+    alertMsg: (date: string) => `Última actualización: ${date}. Recomendamos revisar las tasas cada 3 meses para mantener la precisión de las simulaciones.`,
+    alertAction: 'Solicitar actualización al soporte',
+    dismiss: 'Descartar',
+  },
+}
+
+const DISMISS_KEY = 'oryen:financing:rates-alert-dismissed'
+
 export default function FinanciamentoPage() {
-  const { user } = useAuth()
+  const { user, isStaff } = useAuth()
   const lang: Lang = ((user as any)?.language as Lang) || 'pt'
   const t = TRANSLATIONS[lang]
+  const tAlert = STAFF_ALERT_TRANSLATIONS[lang]
 
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [reloadKey, setReloadKey] = useState(0)
+  const [alertDismissed, setAlertDismissed] = useState(true)
+
+  // Verificar se alerta de taxas desatualizadas deve aparecer (só para staff)
+  useEffect(() => {
+    if (!isStaff) return
+    if (!isRatesUpdateDue()) return
+    const dismissed = localStorage.getItem(DISMISS_KEY)
+    if (dismissed === RATES_LAST_UPDATED) return // já dispensou para esta versão
+    setAlertDismissed(false)
+  }, [isStaff])
+
+  const dismissAlert = () => {
+    setAlertDismissed(true)
+    localStorage.setItem(DISMISS_KEY, RATES_LAST_UPDATED)
+  }
   const [initialValues, setInitialValues] = useState<{
     propertyValue?: number
     rate?: number
@@ -153,6 +192,25 @@ export default function FinanciamentoPage() {
         </h1>
         <p className="mt-1" style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>{t.subtitle}</p>
       </div>
+
+      {/* Staff Alert: Rates outdated */}
+      {isStaff && !alertDismissed && (
+        <div className="flex items-start gap-3 p-4 rounded-xl" style={{
+          background: 'rgba(245, 158, 11, 0.08)',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+        }}>
+          <AlertTriangle size={20} style={{ color: '#f59e0b', flexShrink: 0, marginTop: '2px' }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold" style={{ color: '#f59e0b' }}>{tAlert.alertTitle}</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+              {tAlert.alertMsg(new Date(RATES_LAST_UPDATED).toLocaleDateString(lang === 'pt' ? 'pt-BR' : lang === 'es' ? 'es' : 'en'))}
+            </p>
+          </div>
+          <button onClick={dismissAlert} className="p-1 rounded-lg transition-colors hover:opacity-70" style={{ color: 'var(--color-text-muted)', flexShrink: 0 }}>
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Calculator */}
       <FinancingCalculator

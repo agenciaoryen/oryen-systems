@@ -4,6 +4,20 @@
 import type { BankPreset, CountryCode, CountryConfig } from './types'
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// CONTROLE DE ATUALIZAÇÃO — Staff recebe alerta a cada 3 meses
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const RATES_LAST_UPDATED = '2026-04-08'   // YYYY-MM-DD — atualizar aqui ao revisar taxas
+export const RATES_UPDATE_INTERVAL_DAYS = 90     // 3 meses
+
+export function isRatesUpdateDue(): boolean {
+  const last = new Date(RATES_LAST_UPDATED)
+  const now = new Date()
+  const diffDays = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24))
+  return diffDays >= RATES_UPDATE_INTERVAL_DAYS
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // COUNTRY CONFIGS
 // ═══════════════════════════════════════════════════════════════════════════════
 
