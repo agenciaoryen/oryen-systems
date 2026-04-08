@@ -293,7 +293,7 @@ function DocumentItem({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
+            <div className="flex items-center justify-between px-6 py-4 border-b relative z-10" style={{ borderColor: 'var(--color-border)' }}>
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg" style={{ background: 'var(--color-primary-subtle)' }}>
                   <FileText size={20} style={{ color: 'var(--color-primary)' }} />
@@ -351,9 +351,9 @@ function DocumentItem({
                   Imprimir
                 </button>
                 <button
-                  onClick={() => setShowPreview(false)}
-                  className="p-2 rounded-lg border transition-colors"
-                  style={{ background: 'var(--color-bg-hover)', borderColor: 'var(--color-border)', color: 'var(--color-text-tertiary)' }}
+                  onClick={(e) => { e.stopPropagation(); setShowPreview(false) }}
+                  className="p-2 rounded-lg border transition-colors cursor-pointer relative z-20"
+                  style={{ background: 'var(--color-bg-hover)', borderColor: 'var(--color-border)', color: 'var(--color-text-tertiary)', pointerEvents: 'auto' }}
                 >
                   <X size={20} />
                 </button>
@@ -361,7 +361,7 @@ function DocumentItem({
             </div>
             
             {/* Document Content */}
-            <div className="flex-1 overflow-auto p-8" style={{ background: '#f3f4f6' }}>
+            <div className="flex-1 overflow-auto p-8 relative z-0" style={{ background: '#f3f4f6' }}>
               <div 
                 className="bg-white rounded-lg shadow-lg"
                 style={{

@@ -1941,6 +1941,16 @@ export default function SettingsPage() {
             </div>
           )}
 
+          {/* VERSÃO DO SISTEMA */}
+          <div className="mt-8 pt-6 flex items-center justify-center gap-2" style={{ borderTop: '1px solid var(--color-border)' }}>
+            <span className="text-[11px] font-medium tracking-wider" style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-orbitron)' }}>
+              ORYEN
+            </span>
+            <span className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+              v2.0.0
+            </span>
+          </div>
+
         </div>
       </div>
     </div>
