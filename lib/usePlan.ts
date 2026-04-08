@@ -18,6 +18,7 @@ export interface PlanFeatures {
   hasCampaigns: boolean
   hasTrafficManager: boolean
   hasAdvancedDashboard: boolean
+  hasAiAnalytics: boolean
   hasCustomPipeline: boolean
   hasWhatsappIntegration: boolean
   hasOfficialWhatsapp: boolean
@@ -59,6 +60,7 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasCampaigns: false,
       hasTrafficManager: false,
       hasAdvancedDashboard: false,
+      hasAiAnalytics: false,
       hasCustomPipeline: true,
       hasWhatsappIntegration: true,
       hasOfficialWhatsapp: false, // disponível com +taxa
@@ -85,6 +87,7 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasCampaigns: false,
       hasTrafficManager: false,
       hasAdvancedDashboard: true,
+      hasAiAnalytics: true,
       hasCustomPipeline: true,
       hasWhatsappIntegration: true,
       hasOfficialWhatsapp: true,
@@ -111,6 +114,7 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasCampaigns: true,
       hasTrafficManager: true,
       hasAdvancedDashboard: true,
+      hasAiAnalytics: true,
       hasCustomPipeline: true,
       hasWhatsappIntegration: true,
       hasOfficialWhatsapp: true,
@@ -137,6 +141,7 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasCampaigns: true,
       hasTrafficManager: true,
       hasAdvancedDashboard: true,
+      hasAiAnalytics: true,
       hasCustomPipeline: true,
       hasWhatsappIntegration: true,
       hasOfficialWhatsapp: true,

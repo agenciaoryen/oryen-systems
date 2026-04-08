@@ -31,6 +31,7 @@ import {
   Globe,
   Shuffle,
   Calculator,
+  TrendingUp,
   type LucideIcon
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
@@ -47,6 +48,7 @@ const TRANSLATIONS = {
       crm: 'CRM & Contatos',
       conversations: 'Conversas',
       agents: 'Agentes IA',
+      analytics: 'Analytics IA',
       reports: 'Relatórios',
       documents: 'Documentos',
       whatsapp: 'WhatsApp',
@@ -80,6 +82,7 @@ const TRANSLATIONS = {
       crm: 'CRM & Contacts',
       conversations: 'Conversations',
       agents: 'AI Agents',
+      analytics: 'AI Analytics',
       reports: 'Reports',
       documents: 'Documents',
       whatsapp: 'WhatsApp',
@@ -113,6 +116,7 @@ const TRANSLATIONS = {
       crm: 'CRM & Contactos',
       conversations: 'Conversaciones',
       agents: 'Agentes IA',
+      analytics: 'Analytics IA',
       reports: 'Reportes',
       documents: 'Documentos',
       whatsapp: 'WhatsApp',
@@ -351,6 +355,7 @@ export default function Sidebar() {
         { href: '/dashboard/agents', label: t.menu.agents, icon: Bot },
         { href: '/dashboard/whatsapp', label: t.menu.whatsapp, icon: Smartphone, requiredNiche: NICHES_WITH_DOCUMENTS },
         { href: '/dashboard/documents', label: t.menu.documents, icon: FileText, requiredNiche: NICHES_WITH_DOCUMENTS },
+        { href: '/dashboard/analytics', label: t.menu.analytics, icon: TrendingUp },
         { href: '/dashboard/relatorios', label: t.menu.reports, icon: BarChart3 },
         { href: '/dashboard/financiamento', label: t.menu.financing, icon: Calculator, requiredNiche: NICHES_WITH_DOCUMENTS },
       ],

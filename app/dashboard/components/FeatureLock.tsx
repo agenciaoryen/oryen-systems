@@ -132,6 +132,7 @@ export function FeatureLock({
     hasCampaigns: t.campaigns,
     hasTrafficManager: t.trafficManager,
     hasAdvancedDashboard: t.advancedDashboard,
+    hasAiAnalytics: 'AI Analytics',
     hasCustomPipeline: 'Custom Pipeline',
     hasWhatsappIntegration: 'WhatsApp',
     hasOfficialWhatsapp: 'WhatsApp Oficial',
