@@ -2135,17 +2135,16 @@ export default function SettingsPage() {
                     {/* Strategy */}
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.distribution.strategy}</label>
-                      <select
+                      <CustomSelect
                         value={distributionConfig.strategy || 'round_robin'}
-                        onChange={(e) => setDistributionConfig((prev: any) => ({ ...prev, strategy: e.target.value }))}
-                        className="w-full rounded-lg p-3 text-sm"
-                        style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-                      >
-                        <option value="round_robin">{t.distribution.strategies.round_robin}</option>
-                        <option value="balanced_load">{t.distribution.strategies.balanced_load}</option>
-                        <option value="score_weighted">{t.distribution.strategies.score_weighted}</option>
-                        <option value="expertise_match">{t.distribution.strategies.expertise_match}</option>
-                      </select>
+                        onChange={(val) => setDistributionConfig((prev: any) => ({ ...prev, strategy: val }))}
+                        options={[
+                          { value: 'round_robin', label: t.distribution.strategies.round_robin },
+                          { value: 'balanced_load', label: t.distribution.strategies.balanced_load },
+                          { value: 'score_weighted', label: t.distribution.strategies.score_weighted },
+                          { value: 'expertise_match', label: t.distribution.strategies.expertise_match },
+                        ]}
+                      />
                     </div>
 
                     {/* Auto Reassign Toggle */}
