@@ -4,109 +4,95 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { Globe, Check, ArrowRight, Loader2, MailCheck } from 'lucide-react'
+import { Globe, Check, ArrowRight, Loader2, CheckCircle } from 'lucide-react'
 
 const TRANSLATIONS = {
   pt: {
-    title: 'Criar Nova Conta',
-    subtitle: 'Comece a usar a Oryen em 2 minutos',
-    confirmEmailTitle: 'Verifique seu e-mail',
-    confirmEmailDesc: 'Enviamos um link de confirmação para o seu e-mail. Clique nele para ativar sua conta.',
-    nameLabel: 'Nome Completo',
-    namePlaceholder: 'Ex: João Silva',
-    emailLabel: 'Email',
-    passwordLabel: 'Senha',
-    submitBtn: 'Criar conta',
-    loadingBtn: 'Criando conta...',
-    hasAccount: 'Já tem uma conta?',
-    loginLink: 'Entrar',
-    errorGeneric: 'Erro ao criar conta',
+    title: 'Nova Senha',
+    subtitle: 'Defina sua nova senha abaixo',
+    passwordLabel: 'Nova Senha',
+    confirmLabel: 'Confirmar Senha',
+    submitBtn: 'Atualizar senha',
+    loadingBtn: 'Atualizando...',
+    backToLogin: 'Voltar ao login',
+    successTitle: 'Senha atualizada',
+    successDesc: 'Sua senha foi alterada com sucesso. Voce sera redirecionado ao login.',
+    errorGeneric: 'Erro ao atualizar senha',
+    errorMismatch: 'As senhas nao coincidem',
+    errorMinLength: 'A senha deve ter no minimo 6 caracteres',
   },
   en: {
-    title: 'Create New Account',
-    subtitle: 'Start using Oryen in 2 minutes',
-    confirmEmailTitle: 'Check your email',
-    confirmEmailDesc: 'We sent a confirmation link to your email. Click it to activate your account.',
-    nameLabel: 'Full Name',
-    namePlaceholder: 'Ex: John Doe',
-    emailLabel: 'Email',
-    passwordLabel: 'Password',
-    submitBtn: 'Create account',
-    loadingBtn: 'Creating account...',
-    hasAccount: 'Already have an account?',
-    loginLink: 'Sign in',
-    errorGeneric: 'Error creating account',
+    title: 'New Password',
+    subtitle: 'Set your new password below',
+    passwordLabel: 'New Password',
+    confirmLabel: 'Confirm Password',
+    submitBtn: 'Update password',
+    loadingBtn: 'Updating...',
+    backToLogin: 'Back to login',
+    successTitle: 'Password updated',
+    successDesc: 'Your password has been changed successfully. You will be redirected to login.',
+    errorGeneric: 'Error updating password',
+    errorMismatch: 'Passwords do not match',
+    errorMinLength: 'Password must be at least 6 characters',
   },
   es: {
-    title: 'Crear Nueva Cuenta',
-    subtitle: 'Empieza a usar Oryen en 2 minutos',
-    confirmEmailTitle: 'Revisa tu correo',
-    confirmEmailDesc: 'Enviamos un enlace de confirmación a tu correo. Haz clic para activar tu cuenta.',
-    nameLabel: 'Nombre Completo',
-    namePlaceholder: 'Ej: Juan Pérez',
-    emailLabel: 'Correo Electrónico',
-    passwordLabel: 'Contraseña',
-    submitBtn: 'Crear cuenta',
-    loadingBtn: 'Creando cuenta...',
-    hasAccount: '¿Ya tienes cuenta?',
-    loginLink: 'Entrar',
-    errorGeneric: 'Error al crear cuenta',
+    title: 'Nueva Contrasena',
+    subtitle: 'Define tu nueva contrasena abajo',
+    passwordLabel: 'Nueva Contrasena',
+    confirmLabel: 'Confirmar Contrasena',
+    submitBtn: 'Actualizar contrasena',
+    loadingBtn: 'Actualizando...',
+    backToLogin: 'Volver al login',
+    successTitle: 'Contrasena actualizada',
+    successDesc: 'Tu contrasena fue cambiada exitosamente. Seras redirigido al login.',
+    errorGeneric: 'Error al actualizar contrasena',
+    errorMismatch: 'Las contrasenas no coinciden',
+    errorMinLength: 'La contrasena debe tener al menos 6 caracteres',
   },
 }
 
 type Lang = keyof typeof TRANSLATIONS
 
-export default function RegisterPage() {
+export default function UpdatePasswordPage() {
   const router = useRouter()
 
   const [lang, setLang] = useState<Lang>('pt')
   const [showLangMenu, setShowLangMenu] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' })
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [isSuccess, setIsSuccess] = useState(false)
 
   const t = TRANSLATIONS[lang]
 
   const languages = [
-    { code: 'pt' as Lang, label: 'Português' },
+    { code: 'pt' as Lang, label: 'Portugues' },
     { code: 'en' as Lang, label: 'English' },
-    { code: 'es' as Lang, label: 'Español' },
+    { code: 'es' as Lang, label: 'Espanol' },
   ]
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setErrorMsg('')
 
+    if (password.length < 6) {
+      setErrorMsg(t.errorMinLength)
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMsg(t.errorMismatch)
+      return
+    }
+
+    setLoading(true)
+
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: typeof window !== 'undefined' ? window.location.origin + '/onboarding' : undefined,
-          data: { full_name: formData.name, language: lang },
-        },
-      })
-
+      const { error } = await supabase.auth.updateUser({ password })
       if (error) throw error
-
-      if (data.user && !data.session) {
-        // Fire-and-forget welcome email
-        fetch('/api/auth/welcome-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: formData.email, name: formData.name }),
-        }).catch(() => {})
-        setIsSubmitted(true)
-      } else if (data.user) {
-        fetch('/api/auth/welcome-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: formData.email, name: formData.name }),
-        }).catch(() => {})
-        router.push('/dashboard')
-      }
+      setIsSuccess(true)
+      setTimeout(() => router.push('/login'), 3000)
     } catch (error: any) {
       setErrorMsg(error.message || t.errorGeneric)
     } finally {
@@ -120,9 +106,9 @@ export default function RegisterPage() {
 
       {/* Background effects */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] opacity-[0.08]"
-        style={{ background: 'radial-gradient(ellipse at center, var(--color-indigo), transparent 70%)' }} />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] opacity-[0.05]"
-        style={{ background: 'radial-gradient(circle, var(--color-primary), transparent 70%)' }} />
+        style={{ background: 'radial-gradient(ellipse at center, var(--color-primary), transparent 70%)' }} />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] opacity-[0.05]"
+        style={{ background: 'radial-gradient(circle, var(--color-indigo), transparent 70%)' }} />
 
       {/* Grid pattern */}
       <div className="absolute inset-0 opacity-[0.02]" style={{
@@ -181,21 +167,21 @@ export default function RegisterPage() {
         <div className="rounded-2xl p-8"
           style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-xl)' }}>
 
-          {isSubmitted ? (
+          {isSuccess ? (
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
                 style={{ background: 'var(--color-primary-subtle)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
-                <MailCheck size={28} style={{ color: 'var(--color-primary)' }} />
+                <CheckCircle size={28} style={{ color: 'var(--color-primary)' }} />
               </div>
               <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-                {t.confirmEmailTitle}
+                {t.successTitle}
               </h1>
               <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                {t.confirmEmailDesc}
+                {t.successDesc}
               </p>
               <Link href="/login" className="text-sm font-semibold transition-colors duration-150 pt-2"
                 style={{ color: 'var(--color-primary)' }}>
-                {t.loginLink}
+                {t.backToLogin}
               </Link>
             </div>
           ) : (
@@ -214,43 +200,7 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium mb-1.5"
-                    style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
-                    {t.nameLabel}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={t.namePlaceholder}
-                    value={formData.name}
-                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150"
-                    style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-                    onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
-                    onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium mb-1.5"
-                    style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
-                    {t.emailLabel}
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={formData.email}
-                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150"
-                    style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-                    onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
-                    onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
-                  />
-                </div>
-
+              <form onSubmit={handleUpdate} className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium mb-1.5"
                     style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
@@ -259,12 +209,39 @@ export default function RegisterPage() {
                   <input
                     type="password"
                     placeholder="••••••"
-                    value={formData.password}
-                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
                     required
                     minLength={6}
                     className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150"
-                    style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                    style={{
+                      background: 'var(--color-bg-elevated)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-primary)',
+                    }}
+                    onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
+                    onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium mb-1.5"
+                    style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
+                    {t.confirmLabel}
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="••••••"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150"
+                    style={{
+                      background: 'var(--color-bg-elevated)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-primary)',
+                    }}
                     onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
                     onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
                   />
@@ -291,11 +268,10 @@ export default function RegisterPage() {
                 </button>
               </form>
 
-              <p className="text-center text-sm mt-6" style={{ color: 'var(--color-text-tertiary)' }}>
-                {t.hasAccount}{' '}
+              <p className="text-center text-sm mt-6">
                 <Link href="/login" className="font-semibold transition-colors duration-150"
-                  style={{ color: 'var(--color-primary)' }}>
-                  {t.loginLink}
+                  style={{ color: 'var(--color-text-tertiary)' }}>
+                  {t.backToLogin}
                 </Link>
               </p>
             </>

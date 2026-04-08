@@ -18,6 +18,7 @@ const TRANSLATIONS = {
     noAccount: 'Não tem uma conta?',
     registerLink: 'Criar conta',
     errorGeneric: 'Erro ao realizar login',
+    forgotPassword: 'Esqueceu a senha?',
   },
   en: {
     title: 'Welcome back',
@@ -29,6 +30,7 @@ const TRANSLATIONS = {
     noAccount: 'No account?',
     registerLink: 'Create account',
     errorGeneric: 'Error signing in',
+    forgotPassword: 'Forgot password?',
   },
   es: {
     title: 'Bienvenido de nuevo',
@@ -40,6 +42,7 @@ const TRANSLATIONS = {
     noAccount: '¿No tienes cuenta?',
     registerLink: 'Crear cuenta',
     errorGeneric: 'Error al iniciar sesión',
+    forgotPassword: '¿Olvidaste tu contraseña?',
   },
 }
 
@@ -208,6 +211,14 @@ export default function LoginPage() {
                 onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
                 onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
               />
+              <div className="flex justify-end mt-1.5">
+                <Link href="/reset-password" className="text-xs font-medium transition-colors duration-150"
+                  style={{ color: 'var(--color-text-tertiary)' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-primary)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)' }}>
+                  {t.forgotPassword}
+                </Link>
+              </div>
             </div>
 
             <button

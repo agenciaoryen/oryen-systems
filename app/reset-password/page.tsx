@@ -1,112 +1,75 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { Globe, Check, ArrowRight, Loader2, MailCheck } from 'lucide-react'
+import { Globe, Check, ArrowLeft, Loader2, MailCheck } from 'lucide-react'
 
 const TRANSLATIONS = {
   pt: {
-    title: 'Criar Nova Conta',
-    subtitle: 'Comece a usar a Oryen em 2 minutos',
-    confirmEmailTitle: 'Verifique seu e-mail',
-    confirmEmailDesc: 'Enviamos um link de confirmação para o seu e-mail. Clique nele para ativar sua conta.',
-    nameLabel: 'Nome Completo',
-    namePlaceholder: 'Ex: João Silva',
+    title: 'Redefinir Senha',
+    subtitle: 'Informe seu email para receber o link de redefinicao',
     emailLabel: 'Email',
-    passwordLabel: 'Senha',
-    submitBtn: 'Criar conta',
-    loadingBtn: 'Criando conta...',
-    hasAccount: 'Já tem uma conta?',
-    loginLink: 'Entrar',
-    errorGeneric: 'Erro ao criar conta',
+    submitBtn: 'Enviar link',
+    loadingBtn: 'Enviando...',
+    backToLogin: 'Voltar ao login',
+    successTitle: 'Email enviado',
+    successDesc: 'Se uma conta com esse email existir, voce recebera um link para redefinir sua senha.',
+    errorGeneric: 'Erro ao enviar email de redefinicao',
   },
   en: {
-    title: 'Create New Account',
-    subtitle: 'Start using Oryen in 2 minutes',
-    confirmEmailTitle: 'Check your email',
-    confirmEmailDesc: 'We sent a confirmation link to your email. Click it to activate your account.',
-    nameLabel: 'Full Name',
-    namePlaceholder: 'Ex: John Doe',
+    title: 'Reset Password',
+    subtitle: 'Enter your email to receive the reset link',
     emailLabel: 'Email',
-    passwordLabel: 'Password',
-    submitBtn: 'Create account',
-    loadingBtn: 'Creating account...',
-    hasAccount: 'Already have an account?',
-    loginLink: 'Sign in',
-    errorGeneric: 'Error creating account',
+    submitBtn: 'Send link',
+    loadingBtn: 'Sending...',
+    backToLogin: 'Back to login',
+    successTitle: 'Email sent',
+    successDesc: 'If an account with that email exists, you will receive a link to reset your password.',
+    errorGeneric: 'Error sending reset email',
   },
   es: {
-    title: 'Crear Nueva Cuenta',
-    subtitle: 'Empieza a usar Oryen en 2 minutos',
-    confirmEmailTitle: 'Revisa tu correo',
-    confirmEmailDesc: 'Enviamos un enlace de confirmación a tu correo. Haz clic para activar tu cuenta.',
-    nameLabel: 'Nombre Completo',
-    namePlaceholder: 'Ej: Juan Pérez',
-    emailLabel: 'Correo Electrónico',
-    passwordLabel: 'Contraseña',
-    submitBtn: 'Crear cuenta',
-    loadingBtn: 'Creando cuenta...',
-    hasAccount: '¿Ya tienes cuenta?',
-    loginLink: 'Entrar',
-    errorGeneric: 'Error al crear cuenta',
+    title: 'Restablecer Contrasena',
+    subtitle: 'Ingresa tu correo para recibir el enlace de restablecimiento',
+    emailLabel: 'Correo Electronico',
+    submitBtn: 'Enviar enlace',
+    loadingBtn: 'Enviando...',
+    backToLogin: 'Volver al login',
+    successTitle: 'Correo enviado',
+    successDesc: 'Si existe una cuenta con ese correo, recibiras un enlace para restablecer tu contrasena.',
+    errorGeneric: 'Error al enviar correo de restablecimiento',
   },
 }
 
 type Lang = keyof typeof TRANSLATIONS
 
-export default function RegisterPage() {
-  const router = useRouter()
-
+export default function ResetPasswordPage() {
   const [lang, setLang] = useState<Lang>('pt')
   const [showLangMenu, setShowLangMenu] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' })
+  const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [isSubmitted, setIsSubmitted] = useState(false)
 
   const t = TRANSLATIONS[lang]
 
   const languages = [
-    { code: 'pt' as Lang, label: 'Português' },
+    { code: 'pt' as Lang, label: 'Portugues' },
     { code: 'en' as Lang, label: 'English' },
-    { code: 'es' as Lang, label: 'Español' },
+    { code: 'es' as Lang, label: 'Espanol' },
   ]
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setErrorMsg('')
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: typeof window !== 'undefined' ? window.location.origin + '/onboarding' : undefined,
-          data: { full_name: formData.name, language: lang },
-        },
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://oryen-systems.vercel.app/reset-password/update',
       })
-
       if (error) throw error
-
-      if (data.user && !data.session) {
-        // Fire-and-forget welcome email
-        fetch('/api/auth/welcome-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: formData.email, name: formData.name }),
-        }).catch(() => {})
-        setIsSubmitted(true)
-      } else if (data.user) {
-        fetch('/api/auth/welcome-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: formData.email, name: formData.name }),
-        }).catch(() => {})
-        router.push('/dashboard')
-      }
+      setIsSubmitted(true)
     } catch (error: any) {
       setErrorMsg(error.message || t.errorGeneric)
     } finally {
@@ -120,9 +83,9 @@ export default function RegisterPage() {
 
       {/* Background effects */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] opacity-[0.08]"
-        style={{ background: 'radial-gradient(ellipse at center, var(--color-indigo), transparent 70%)' }} />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] opacity-[0.05]"
-        style={{ background: 'radial-gradient(circle, var(--color-primary), transparent 70%)' }} />
+        style={{ background: 'radial-gradient(ellipse at center, var(--color-primary), transparent 70%)' }} />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] opacity-[0.05]"
+        style={{ background: 'radial-gradient(circle, var(--color-indigo), transparent 70%)' }} />
 
       {/* Grid pattern */}
       <div className="absolute inset-0 opacity-[0.02]" style={{
@@ -188,14 +151,15 @@ export default function RegisterPage() {
                 <MailCheck size={28} style={{ color: 'var(--color-primary)' }} />
               </div>
               <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-                {t.confirmEmailTitle}
+                {t.successTitle}
               </h1>
               <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                {t.confirmEmailDesc}
+                {t.successDesc}
               </p>
-              <Link href="/login" className="text-sm font-semibold transition-colors duration-150 pt-2"
+              <Link href="/login" className="text-sm font-semibold transition-colors duration-150 pt-2 flex items-center gap-1.5"
                 style={{ color: 'var(--color-primary)' }}>
-                {t.loginLink}
+                <ArrowLeft size={14} />
+                {t.backToLogin}
               </Link>
             </div>
           ) : (
@@ -214,25 +178,7 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium mb-1.5"
-                    style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
-                    {t.nameLabel}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={t.namePlaceholder}
-                    value={formData.name}
-                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150"
-                    style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-                    onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
-                    onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
-                  />
-                </div>
-
+              <form onSubmit={handleReset} className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium mb-1.5"
                     style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
@@ -241,30 +187,15 @@ export default function RegisterPage() {
                   <input
                     type="email"
                     placeholder="seu@email.com"
-                    value={formData.email}
-                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
                     required
                     className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150"
-                    style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-                    onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
-                    onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium mb-1.5"
-                    style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
-                    {t.passwordLabel}
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="••••••"
-                    value={formData.password}
-                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                    required
-                    minLength={6}
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150"
-                    style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                    style={{
+                      background: 'var(--color-bg-elevated)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-primary)',
+                    }}
                     onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
                     onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
                   />
@@ -286,16 +217,16 @@ export default function RegisterPage() {
                   {loading ? (
                     <><Loader2 size={16} className="animate-spin" /> {t.loadingBtn}</>
                   ) : (
-                    <>{t.submitBtn} <ArrowRight size={16} /></>
+                    <>{t.submitBtn}</>
                   )}
                 </button>
               </form>
 
-              <p className="text-center text-sm mt-6" style={{ color: 'var(--color-text-tertiary)' }}>
-                {t.hasAccount}{' '}
-                <Link href="/login" className="font-semibold transition-colors duration-150"
-                  style={{ color: 'var(--color-primary)' }}>
-                  {t.loginLink}
+              <p className="text-center text-sm mt-6">
+                <Link href="/login" className="font-semibold transition-colors duration-150 flex items-center justify-center gap-1.5"
+                  style={{ color: 'var(--color-text-tertiary)' }}>
+                  <ArrowLeft size={14} />
+                  {t.backToLogin}
                 </Link>
               </p>
             </>
