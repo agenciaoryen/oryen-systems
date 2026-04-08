@@ -3,6 +3,10 @@
     {
       "path": "/api/sdr/follow-up",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/distribution/cron",
+      "schedule": "*/15 * * * *"
     }
   ]
 }

@@ -131,36 +131,8 @@ export async function POST(request: NextRequest) {
     const interesse = propertyData ? interesseMap[propertyData.transaction_type] || null : null
     const tipoContato = propertyData ? tipoContatoMap[propertyData.transaction_type] || null : null
 
-    // 3. Determinar responsável via round-robin (ignorar staff)
+    // 3. Determinar responsável via distribution engine (Lead Roulette v2.2)
     let assignedTo: string | null = null
-    try {
-      const { data: orgUsers } = await supabase
-        .from('users')
-        .select('id, role')
-        .eq('org_id', site.org_id)
-        .neq('role', 'staff')
-
-      if (orgUsers && orgUsers.length === 1) {
-        // Corretor individual — vai direto para ele
-        assignedTo = orgUsers[0].id
-      } else if (orgUsers && orgUsers.length > 1) {
-        // Round-robin: contar leads atribuídos a cada membro e pegar o que tem menos
-        const counts = await Promise.all(
-          orgUsers.map(async (u: any) => {
-            const { count } = await supabase
-              .from('leads')
-              .select('id', { count: 'exact', head: true })
-              .eq('org_id', site.org_id)
-              .eq('assigned_to', u.id)
-            return { userId: u.id, count: count || 0 }
-          })
-        )
-        counts.sort((a, b) => a.count - b.count)
-        assignedTo = counts[0].userId
-      }
-    } catch (e) {
-      console.error('[SiteLeads] Erro ao determinar responsável:', e)
-    }
 
     // 4. Criar/atualizar lead no CRM (tabela leads)
     let crmLeadId: string | null = null
@@ -208,13 +180,31 @@ export async function POST(request: NextRequest) {
             interesse: interesse || null,
             tipo_contato: tipoContato || null,
             city: propertyData?.address_city || null,
-            assigned_to: assignedTo,
             created_at: new Date().toISOString(),
           })
           .select('id')
           .single()
 
         crmLeadId = newLead?.id || null
+
+        // Atribuir lead via distribution engine (Lead Roulette v2.2)
+        if (crmLeadId) {
+          try {
+            const { assignLead } = await import('@/lib/distribution/engine')
+            const assignment = await assignLead({
+              leadId: crmLeadId,
+              orgId: site.org_id,
+              source: 'site',
+              city: propertyData?.address_city || null,
+              propertyType: propertyData?.property_type || null,
+              transactionType: propertyData?.transaction_type || null,
+            })
+            assignedTo = assignment.assignedTo
+            console.log(`[SiteLeads] Lead ${crmLeadId} atribuído a ${assignedTo} (${assignment.strategy})`)
+          } catch (distErr: any) {
+            console.warn(`[SiteLeads] Distribution error (non-fatal): ${distErr.message}`)
+          }
+        }
       }
 
       // Atualizar site_lead com referência ao CRM

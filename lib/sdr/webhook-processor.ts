@@ -125,9 +125,20 @@ export async function processInboundMessage(msg: NormalizedInbound): Promise<Pro
     })
   }
 
-  // ─── 3. Se atendente → setar STOP e parar ───
+  // ─── 3. Se atendente → setar STOP e marcar first_response_at ───
   if (msg.isAttendant) {
     await stopSet(orgId, phone)
+
+    // Marcar primeira resposta do corretor (para métricas de tempo de resposta)
+    if (lead.assigned_to && !lead.first_response_at) {
+      await supabase
+        .from('leads')
+        .update({ first_response_at: new Date().toISOString() })
+        .eq('id', lead.id)
+        .eq('org_id', orgId)
+        .is('first_response_at', null)
+    }
+
     console.log(`[Webhook:Processor] STOP setado por atendente | lead: ${lead.id}`)
     return { success: true, saved: true, skipped: true, reason: 'attendant_message_saved', leadId: lead.id }
   }
@@ -307,5 +318,22 @@ async function findOrCreateLead(
   }
 
   console.log(`[Webhook:Processor] Novo lead criado: ${newLead.id} (${leadName})`)
+
+  // Auto-atribuir lead via distribution engine
+  try {
+    const { assignLead } = await import('@/lib/distribution/engine')
+    const assignment = await assignLead({
+      leadId: newLead.id,
+      orgId,
+      source: isAttendant ? 'whatsapp_outbound' : 'whatsapp_inbound',
+    })
+    if (assignment.assignedTo) {
+      newLead.assigned_to = assignment.assignedTo
+      console.log(`[Webhook:Processor] Lead ${newLead.id} atribuído a ${assignment.assignedTo} (${assignment.strategy})`)
+    }
+  } catch (distErr: any) {
+    console.warn(`[Webhook:Processor] Distribution error (non-fatal): ${distErr.message}`)
+  }
+
   return { ...newLead, _isNew: true }
 }

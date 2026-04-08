@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth, useActiveOrgId, useIsStaff } from '@/lib/AuthContext'
 import { supabase } from '@/lib/supabase'
 import {
-  User, Shield, Building, Globe, Bell, Save, UserPlus, Trash2,
+  User, Users, Shield, Building, Globe, Bell, Save, UserPlus, Trash2,
   X, Loader2, AlertCircle, Lock, Mail, Smartphone, MapPin, Copy, Check,
   Tag, Plus, GripVertical, Pencil, LayoutGrid, ChevronUp, ChevronDown,
   Sun, Moon, CreditCard, Eye, RotateCcw, Clock, Play, Calendar
@@ -66,7 +66,8 @@ const TRANSLATIONS = {
       pipeline: 'Pipeline',
       tags: 'Tags',
       integrations: 'Integrações',
-      leadCard: 'Card do Lead'
+      leadCard: 'Card do Lead',
+      distribution: 'Distribuição'
     },
     profile: {
       personalData: 'Dados Pessoais',
@@ -168,6 +169,32 @@ const TRANSLATIONS = {
       saved: 'Configuração salva!',
       reset: 'Restaurar padrão',
     },
+    distribution: {
+      title: 'Distribuição de Leads',
+      subtitle: 'Configure como leads são distribuídos entre os corretores.',
+      strategy: 'Estratégia',
+      strategies: {
+        round_robin: 'Round Robin (distribuição igual)',
+        balanced_load: 'Carga Balanceada',
+        score_weighted: 'Por Score do Lead',
+        expertise_match: 'Por Expertise do Corretor',
+      },
+      enabled: 'Distribuição Ativa',
+      autoReassign: 'Reatribuição Automática',
+      autoReassignTimeout: 'Timeout (minutos)',
+      staleThreshold: 'Dias para considerar estagnado',
+      maxLeadsPerBroker: 'Máx. leads por corretor',
+      workingHours: 'Horário de Funcionamento',
+      brokerConfig: 'Configuração dos Corretores',
+      available: 'Disponível',
+      capacity: 'Capacidade',
+      regions: 'Regiões',
+      propertyTypes: 'Tipos de Imóvel',
+      priceRange: 'Faixa de Preço',
+      save: 'Salvar Configuração',
+      saved: 'Configuração salva!',
+      unlimited: 'Ilimitado',
+    },
     modal: {
       title: 'Convidar Membro',
       info: 'O usuário receberá um e-mail.',
@@ -198,7 +225,8 @@ const TRANSLATIONS = {
       pipeline: 'Pipeline',
       tags: 'Tags',
       integrations: 'Integrations',
-      leadCard: 'Lead Card'
+      leadCard: 'Lead Card',
+      distribution: 'Distribution'
     },
     profile: {
       personalData: 'Personal Data',
@@ -300,6 +328,32 @@ const TRANSLATIONS = {
       saved: 'Configuration saved!',
       reset: 'Restore defaults',
     },
+    distribution: {
+      title: 'Lead Distribution',
+      subtitle: 'Configure how leads are distributed among brokers.',
+      strategy: 'Strategy',
+      strategies: {
+        round_robin: 'Round Robin (equal distribution)',
+        balanced_load: 'Balanced Load',
+        score_weighted: 'By Lead Score',
+        expertise_match: 'By Broker Expertise',
+      },
+      enabled: 'Distribution Active',
+      autoReassign: 'Auto Reassignment',
+      autoReassignTimeout: 'Timeout (minutes)',
+      staleThreshold: 'Days to consider stale',
+      maxLeadsPerBroker: 'Max leads per broker',
+      workingHours: 'Working Hours',
+      brokerConfig: 'Broker Configuration',
+      available: 'Available',
+      capacity: 'Capacity',
+      regions: 'Regions',
+      propertyTypes: 'Property Types',
+      priceRange: 'Price Range',
+      save: 'Save Configuration',
+      saved: 'Configuration saved!',
+      unlimited: 'Unlimited',
+    },
     modal: {
       title: 'Invite Member',
       info: 'The user will receive an email.',
@@ -330,7 +384,8 @@ const TRANSLATIONS = {
       pipeline: 'Pipeline',
       tags: 'Tags',
       integrations: 'Integraciones',
-      leadCard: 'Card del Lead'
+      leadCard: 'Card del Lead',
+      distribution: 'Distribución'
     },
     profile: {
       personalData: 'Datos Personales',
@@ -432,6 +487,32 @@ const TRANSLATIONS = {
       saved: '¡Configuración guardada!',
       reset: 'Restaurar predeterminados',
     },
+    distribution: {
+      title: 'Distribución de Leads',
+      subtitle: 'Configure cómo se distribuyen los leads entre los corredores.',
+      strategy: 'Estrategia',
+      strategies: {
+        round_robin: 'Round Robin (distribución igual)',
+        balanced_load: 'Carga Balanceada',
+        score_weighted: 'Por Score del Lead',
+        expertise_match: 'Por Expertise del Corredor',
+      },
+      enabled: 'Distribución Activa',
+      autoReassign: 'Reasignación Automática',
+      autoReassignTimeout: 'Timeout (minutos)',
+      staleThreshold: 'Días para considerar estancado',
+      maxLeadsPerBroker: 'Máx. leads por corredor',
+      workingHours: 'Horario de Funcionamiento',
+      brokerConfig: 'Configuración de Corredores',
+      available: 'Disponible',
+      capacity: 'Capacidad',
+      regions: 'Regiones',
+      propertyTypes: 'Tipos de Inmueble',
+      priceRange: 'Rango de Precio',
+      save: 'Guardar Configuración',
+      saved: '¡Configuración guardada!',
+      unlimited: 'Ilimitado',
+    },
     modal: {
       title: 'Invitar Miembro',
       info: 'El usuario recibirá un correo electrónico.',
@@ -521,6 +602,12 @@ export default function SettingsPage() {
   const [tagsLoading, setTagsLoading] = useState(false)
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState('blue')
+
+  // Estados para Distribuição
+  const [distributionConfig, setDistributionConfig] = useState<any>(null)
+  const [brokerConfigs, setBrokerConfigs] = useState<any[]>([])
+  const [distributionSaving, setDistributionSaving] = useState(false)
+  const [distributionSaved, setDistributionSaved] = useState(false)
 
   // Estados para Lead Card Config
   const DEFAULT_LEAD_CARD_FIELDS = ['total_em_vendas', 'phone', 'email', 'tags', 'source', 'created_at']
@@ -885,6 +972,79 @@ export default function SettingsPage() {
     setNotifSettings(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
+  // ─── DISTRIBUIÇÃO CONFIG ───
+  const loadDistributionConfig = useCallback(async () => {
+    if (!orgId) return
+    try {
+      const configRes = await fetch(`/api/distribution/config?org_id=${orgId}`)
+      if (configRes.ok) {
+        const configData = await configRes.json()
+        setDistributionConfig(configData)
+      } else {
+        setDistributionConfig({
+          enabled: false,
+          strategy: 'round_robin',
+          auto_reassign_enabled: false,
+          auto_reassign_timeout_minutes: 30,
+          stale_threshold_days: 5,
+          max_leads_per_broker: null,
+          working_hours: { start: '08:00', end: '18:00' },
+        })
+      }
+
+      const brokerRes = await fetch(`/api/distribution/broker-config?org_id=${orgId}`)
+      if (brokerRes.ok) {
+        const brokerData = await brokerRes.json()
+        setBrokerConfigs(Array.isArray(brokerData) ? brokerData : [])
+      }
+    } catch (err) {
+      console.error('Error loading distribution config:', err)
+    }
+  }, [orgId])
+
+  const saveDistributionConfig = async () => {
+    if (!orgId || !distributionConfig) return
+    setDistributionSaving(true)
+    setDistributionSaved(false)
+    try {
+      const res = await fetch('/api/distribution/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ org_id: orgId, ...distributionConfig }),
+      })
+      if (res.ok) {
+        setDistributionSaved(true)
+        setTimeout(() => setDistributionSaved(false), 3000)
+      }
+    } catch (err) {
+      console.error('Error saving distribution config:', err)
+    } finally {
+      setDistributionSaving(false)
+    }
+  }
+
+  const saveBrokerConfig = async (broker: any) => {
+    if (!orgId) return
+    try {
+      await fetch('/api/distribution/broker-config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          org_id: orgId,
+          user_id: broker.user_id,
+          is_available: broker.is_available,
+          max_active_leads: broker.max_active_leads,
+          regions: broker.regions,
+          property_types: broker.property_types,
+          price_range_min: broker.price_range_min,
+          price_range_max: broker.price_range_max,
+        }),
+      })
+    } catch (err) {
+      console.error('Error saving broker config:', err)
+    }
+  }
+
   // ─── LEAD CARD CONFIG ───
   const fetchLeadCardConfig = useCallback(async () => {
     if (!orgId) return
@@ -908,7 +1068,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (activeTab === 'leadCard') fetchLeadCardConfig()
-  }, [activeTab, fetchLeadCardConfig])
+    if (activeTab === 'distribution') loadDistributionConfig()
+  }, [activeTab, fetchLeadCardConfig, loadDistributionConfig])
 
   const handleSaveLeadCardConfig = async () => {
     if (!orgId) return
@@ -977,6 +1138,7 @@ export default function SettingsPage() {
     { id: 'tags', label: t.tabs.tags, icon: Tag, adminOnly: true },
     { id: 'leadCard', label: t.tabs.leadCard, icon: Eye, adminOnly: true },
     { id: 'integrations', label: t.tabs.integrations, icon: Globe, adminOnly: true },
+    { id: 'distribution', label: t.tabs.distribution, icon: Users, adminOnly: true },
   ]
 
   return (
@@ -1938,6 +2100,300 @@ export default function SettingsPage() {
                   <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{t.integrations.webhookHint}</p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* ABA: DISTRIBUIÇÃO */}
+          {activeTab === 'distribution' && isAdmin && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                  <Users size={20} style={{ color: 'var(--color-primary)' }} /> {t.distribution.title}
+                </h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.distribution.subtitle}</p>
+              </div>
+
+              {distributionConfig && (
+                <div className="space-y-6">
+                  {/* Configuração Geral */}
+                  <div className="p-5 rounded-xl space-y-5" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border-subtle)' }}>
+
+                    {/* Enabled Toggle */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.distribution.enabled}</p>
+                      </div>
+                      <button
+                        onClick={() => setDistributionConfig((prev: any) => ({ ...prev, enabled: !prev.enabled }))}
+                        className="w-12 h-6 rounded-full p-1 transition-colors"
+                        style={{ background: distributionConfig.enabled ? 'var(--color-primary)' : 'var(--color-bg-elevated)' }}
+                      >
+                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${distributionConfig.enabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+
+                    {/* Strategy */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.distribution.strategy}</label>
+                      <select
+                        value={distributionConfig.strategy || 'round_robin'}
+                        onChange={(e) => setDistributionConfig((prev: any) => ({ ...prev, strategy: e.target.value }))}
+                        className="w-full rounded-lg p-3 text-sm"
+                        style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                      >
+                        <option value="round_robin">{t.distribution.strategies.round_robin}</option>
+                        <option value="balanced_load">{t.distribution.strategies.balanced_load}</option>
+                        <option value="score_weighted">{t.distribution.strategies.score_weighted}</option>
+                        <option value="expertise_match">{t.distribution.strategies.expertise_match}</option>
+                      </select>
+                    </div>
+
+                    {/* Auto Reassign Toggle */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.distribution.autoReassign}</p>
+                      </div>
+                      <button
+                        onClick={() => setDistributionConfig((prev: any) => ({ ...prev, auto_reassign_enabled: !prev.auto_reassign_enabled }))}
+                        className="w-12 h-6 rounded-full p-1 transition-colors"
+                        style={{ background: distributionConfig.auto_reassign_enabled ? 'var(--color-primary)' : 'var(--color-bg-elevated)' }}
+                      >
+                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${distributionConfig.auto_reassign_enabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+
+                    {/* Auto Reassign Timeout */}
+                    {distributionConfig.auto_reassign_enabled && (
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.distribution.autoReassignTimeout}</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={distributionConfig.auto_reassign_timeout_minutes || 30}
+                          onChange={(e) => setDistributionConfig((prev: any) => ({ ...prev, auto_reassign_timeout_minutes: parseInt(e.target.value) || 30 }))}
+                          className="w-full rounded-lg p-3 text-sm"
+                          style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Stale Threshold */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.distribution.staleThreshold}</label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={distributionConfig.stale_threshold_days || 5}
+                        onChange={(e) => setDistributionConfig((prev: any) => ({ ...prev, stale_threshold_days: parseInt(e.target.value) || 5 }))}
+                        className="w-full rounded-lg p-3 text-sm"
+                        style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                      />
+                    </div>
+
+                    {/* Max Leads Per Broker */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.distribution.maxLeadsPerBroker}</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={distributionConfig.max_leads_per_broker || ''}
+                        placeholder={t.distribution.unlimited}
+                        onChange={(e) => setDistributionConfig((prev: any) => ({ ...prev, max_leads_per_broker: e.target.value ? parseInt(e.target.value) : null }))}
+                        className="w-full rounded-lg p-3 text-sm"
+                        style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                      />
+                    </div>
+
+                    {/* Working Hours */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.distribution.workingHours}</label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="time"
+                          value={distributionConfig.working_hours?.start || '08:00'}
+                          onChange={(e) => setDistributionConfig((prev: any) => ({ ...prev, working_hours: { ...prev.working_hours, start: e.target.value } }))}
+                          className="flex-1 rounded-lg p-3 text-sm"
+                          style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                        />
+                        <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>—</span>
+                        <input
+                          type="time"
+                          value={distributionConfig.working_hours?.end || '18:00'}
+                          onChange={(e) => setDistributionConfig((prev: any) => ({ ...prev, working_hours: { ...prev.working_hours, end: e.target.value } }))}
+                          className="flex-1 rounded-lg p-3 text-sm"
+                          style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                        />
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Configuração dos Corretores */}
+                  {brokerConfigs.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-secondary)' }}>{t.distribution.brokerConfig}</h3>
+                      <div className="space-y-3">
+                        {brokerConfigs.map((broker, idx) => (
+                          <div
+                            key={broker.user_id || idx}
+                            className="p-4 rounded-xl space-y-4"
+                            style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border-subtle)' }}
+                          >
+                            {/* Header: Name + Role + Available Toggle */}
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{broker.name || broker.user_id}</p>
+                                <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{broker.role || 'corretor'}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.distribution.available}</span>
+                                <button
+                                  onClick={() => {
+                                    const updated = [...brokerConfigs]
+                                    updated[idx] = { ...updated[idx], is_available: !updated[idx].is_available }
+                                    setBrokerConfigs(updated)
+                                    saveBrokerConfig(updated[idx])
+                                  }}
+                                  className="w-12 h-6 rounded-full p-1 transition-colors"
+                                  style={{ background: broker.is_available ? 'var(--color-primary)' : 'var(--color-bg-elevated)' }}
+                                >
+                                  <div className={`w-4 h-4 rounded-full bg-white transition-transform ${broker.is_available ? 'translate-x-6' : 'translate-x-0'}`} />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Capacity */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.distribution.capacity}</label>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={broker.max_active_leads || ''}
+                                  placeholder={t.distribution.unlimited}
+                                  onChange={(e) => {
+                                    const updated = [...brokerConfigs]
+                                    updated[idx] = { ...updated[idx], max_active_leads: e.target.value ? parseInt(e.target.value) : null }
+                                    setBrokerConfigs(updated)
+                                  }}
+                                  onBlur={() => saveBrokerConfig(brokerConfigs[idx])}
+                                  className="w-full rounded-lg p-2.5 text-sm"
+                                  style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                                />
+                              </div>
+
+                              {/* Regions */}
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.distribution.regions}</label>
+                                <input
+                                  type="text"
+                                  value={Array.isArray(broker.regions) ? broker.regions.join(', ') : (broker.regions || '')}
+                                  placeholder="Centro, Zona Sul, ..."
+                                  onChange={(e) => {
+                                    const updated = [...brokerConfigs]
+                                    updated[idx] = { ...updated[idx], regions: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean) }
+                                    setBrokerConfigs(updated)
+                                  }}
+                                  onBlur={() => saveBrokerConfig(brokerConfigs[idx])}
+                                  className="w-full rounded-lg p-2.5 text-sm"
+                                  style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Property Types */}
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.distribution.propertyTypes}</label>
+                              <div className="flex flex-wrap gap-2">
+                                {['apartment', 'house', 'commercial', 'land'].map((type) => {
+                                  const selected = Array.isArray(broker.property_types) && broker.property_types.includes(type)
+                                  return (
+                                    <button
+                                      key={type}
+                                      onClick={() => {
+                                        const updated = [...brokerConfigs]
+                                        const current = Array.isArray(updated[idx].property_types) ? updated[idx].property_types : []
+                                        updated[idx] = {
+                                          ...updated[idx],
+                                          property_types: selected ? current.filter((t: string) => t !== type) : [...current, type]
+                                        }
+                                        setBrokerConfigs(updated)
+                                        saveBrokerConfig(updated[idx])
+                                      }}
+                                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                                      style={{
+                                        background: selected ? 'var(--color-primary-subtle)' : 'var(--color-bg-elevated)',
+                                        border: `1px solid ${selected ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                                        color: selected ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                                      }}
+                                    >
+                                      {type === 'apartment' ? 'Apartamento' : type === 'house' ? 'Casa' : type === 'commercial' ? 'Comercial' : 'Terreno'}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Price Range */}
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>{t.distribution.priceRange}</label>
+                              <div className="grid grid-cols-2 gap-3">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={broker.price_range_min || ''}
+                                  placeholder="Min"
+                                  onChange={(e) => {
+                                    const updated = [...brokerConfigs]
+                                    updated[idx] = { ...updated[idx], price_range_min: e.target.value ? parseInt(e.target.value) : null }
+                                    setBrokerConfigs(updated)
+                                  }}
+                                  onBlur={() => saveBrokerConfig(brokerConfigs[idx])}
+                                  className="w-full rounded-lg p-2.5 text-sm"
+                                  style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                                />
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={broker.price_range_max || ''}
+                                  placeholder="Max"
+                                  onChange={(e) => {
+                                    const updated = [...brokerConfigs]
+                                    updated[idx] = { ...updated[idx], price_range_max: e.target.value ? parseInt(e.target.value) : null }
+                                    setBrokerConfigs(updated)
+                                  }}
+                                  onBlur={() => saveBrokerConfig(brokerConfigs[idx])}
+                                  className="w-full rounded-lg p-2.5 text-sm"
+                                  style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                                />
+                              </div>
+                            </div>
+
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Save Button */}
+                  <div className="flex items-center gap-3 pt-2">
+                    <button
+                      onClick={saveDistributionConfig}
+                      disabled={distributionSaving}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+                      style={{ background: 'var(--color-primary)', color: '#fff' }}
+                    >
+                      {distributionSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                      {t.distribution.save}
+                    </button>
+                    {distributionSaved && (
+                      <span className="text-sm font-medium flex items-center gap-1" style={{ color: 'var(--color-success)' }}>
+                        <Check size={14} /> {t.distribution.saved}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

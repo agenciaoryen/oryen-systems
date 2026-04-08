@@ -56,6 +56,8 @@ interface Lead {
   conversa_finalizada?: boolean // true = IA pausada, false = IA ativa
   score?: number
   score_label?: 'hot' | 'warm' | 'cold' | 'lost'
+  assigned_to?: string
+  assigned_to_name?: string
 }
 
 interface PipelineStage {
@@ -147,6 +149,10 @@ const TRANSLATIONS = {
     aiPausedOnly: 'IA Pausada',
     aiStatus: 'Status IA',
     importCsv: 'Importar CSV',
+    filterAssigned: 'Responsável',
+    allBrokers: 'Todos',
+    tableAssigned: 'Responsável',
+    unassigned: 'Não atribuído',
   },
   en: {
     title: 'Business Pipeline',
@@ -208,6 +214,10 @@ const TRANSLATIONS = {
     aiPausedOnly: 'AI Paused',
     aiStatus: 'AI Status',
     importCsv: 'Import CSV',
+    filterAssigned: 'Assigned To',
+    allBrokers: 'All',
+    tableAssigned: 'Assigned To',
+    unassigned: 'Unassigned',
   },
   es: {
     title: 'Pipeline de Negocios',
@@ -268,7 +278,11 @@ const TRANSLATIONS = {
     aiActiveOnly: 'IA Activa',
     aiPausedOnly: 'IA Pausada',
     aiStatus: 'Estado IA',
-    importCsv: 'Importar CSV'
+    importCsv: 'Importar CSV',
+    filterAssigned: 'Responsable',
+    allBrokers: 'Todos',
+    tableAssigned: 'Responsable',
+    unassigned: 'Sin asignar',
   }
 }
 
@@ -413,6 +427,8 @@ export default function CrmPage() {
   const [isTagFilterOpen, setIsTagFilterOpen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [aiFilter, setAiFilter] = useState<'all' | 'active' | 'paused'>('all')
+  const [filterAssigned, setFilterAssigned] = useState<string>('all')
+  const [teamMembers, setTeamMembers] = useState<{ id: string; full_name: string }[]>([])
 
   // Estados de Drag & Drop
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null)
@@ -501,10 +517,27 @@ export default function CrmPage() {
       const { data: allLeads, error: leadsErr } = await query
       if (leadsErr) throw leadsErr
 
+      // Fetch assigned user names
+      const leadsWithNames = allLeads || []
+      const assignedIds = [...new Set(leadsWithNames.filter(l => l.assigned_to).map(l => l.assigned_to))]
+      if (assignedIds.length > 0) {
+        const { data: users } = await supabase.from('users').select('id, full_name').in('id', assignedIds)
+        const userMap = new Map(users?.map(u => [u.id, u.full_name]) || [])
+        leadsWithNames.forEach(l => { if (l.assigned_to) l.assigned_to_name = userMap.get(l.assigned_to) || undefined })
+      }
+
+      // Fetch team members for the org (for Responsavel filter)
+      const { data: members } = await supabase
+        .from('users')
+        .select('id, full_name')
+        .eq('org_id', orgId)
+        .order('full_name')
+      setTeamMembers(members || [])
+
       setPipelineStages(stagesRes.data || [])
       setTags(tagsRes.data || [])
       setLeadTags(leadTagsRes.data || [])
-      setLeads(allLeads || [])
+      setLeads(leadsWithNames)
 
       // Carregar config do card do lead
       const config = orgConfigRes.data?.lead_card_config as any
@@ -556,6 +589,15 @@ export default function CrmPage() {
       const isAiActive = lead.conversa_finalizada === false
       if (aiFilter === 'active' && !isAiActive) return false
       if (aiFilter === 'paused' && isAiActive) return false
+    }
+
+    // Filtro de Responsável
+    if (filterAssigned !== 'all') {
+      if (filterAssigned === 'unassigned') {
+        if (lead.assigned_to) return false
+      } else {
+        if (lead.assigned_to !== filterAssigned) return false
+      }
     }
 
     return true
@@ -885,6 +927,21 @@ export default function CrmPage() {
             />
           </div>
 
+          {/* Filtro de Responsável */}
+          {teamMembers.length > 0 && (
+            <div className="w-40">
+              <CustomSelect
+                value={filterAssigned}
+                onChange={(v) => setFilterAssigned(v)}
+                options={[
+                  { value: 'all', label: t.allBrokers },
+                  { value: 'unassigned', label: t.unassigned },
+                  ...teamMembers.map(m => ({ value: m.id, label: m.full_name }))
+                ]}
+              />
+            </div>
+          )}
+
           {/* Refresh */}
           <button
             onClick={loadData}
@@ -947,6 +1004,7 @@ export default function CrmPage() {
                     <th className="px-4 md:px-6 py-4 font-medium">{t.stage}</th>
                     <th className="px-4 md:px-6 py-4 font-medium">Tags</th>
                     <th className="px-4 md:px-6 py-4 font-medium">{t.source}</th>
+                    <th className="px-4 md:px-6 py-4 font-medium">{t.tableAssigned}</th>
                     <th className="px-4 md:px-6 py-4 font-medium">{t.contact}</th>
                     <th className="px-4 md:px-6 py-4 font-medium text-right">{t.entryDate}</th>
                   </tr>
@@ -1032,6 +1090,18 @@ export default function CrmPage() {
                         </td>
                         <td className="px-4 md:px-6 py-3 text-xs truncate max-w-[100px]" style={{ color: 'var(--color-text-muted)' }}>
                           {lead.source || '-'}
+                        </td>
+                        <td className="px-4 md:px-6 py-3">
+                          {lead.assigned_to_name ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
+                                {getInitials(lead.assigned_to_name)}
+                              </div>
+                              <span className="text-xs truncate max-w-[100px]" style={{ color: 'var(--color-text-secondary)' }}>{lead.assigned_to_name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>-</span>
+                          )}
                         </td>
                         <td className="px-4 md:px-6 py-3 text-xs truncate max-w-[150px]" style={{ color: 'var(--color-text-muted)' }}>
                           {lead.email || '-'}
@@ -1247,11 +1317,22 @@ export default function CrmPage() {
                                 <Calendar size={10} />
                                 {formatDate(lead.created_at, userLang, userTimezone)}
                               </div>
-                              {index === 0 && count > 2 && (
-                                <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid rgba(217, 84, 84, 0.2)' }}>
-                                  {t.priority}
-                                </span>
-                              )}
+                              <div className="flex items-center gap-1.5">
+                                {index === 0 && count > 2 && (
+                                  <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid rgba(217, 84, 84, 0.2)' }}>
+                                    {t.priority}
+                                  </span>
+                                )}
+                                {lead.assigned_to_name && (
+                                  <div
+                                    className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+                                    style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }}
+                                    title={lead.assigned_to_name}
+                                  >
+                                    {getInitials(lead.assigned_to_name)}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             )}
                           </div>

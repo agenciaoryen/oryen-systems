@@ -29,6 +29,7 @@ import {
   Moon,
   Home,
   Globe,
+  Shuffle,
   type LucideIcon
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
@@ -50,6 +51,7 @@ const TRANSLATIONS = {
       whatsapp: 'WhatsApp',
       calendar: 'Agenda',
       followUp: 'Follow-up',
+      distribution: 'Distribuição',
       portfolio: 'Portfólio',
       mySite: 'Meu Site',
       settings: 'Configurações'
@@ -81,6 +83,7 @@ const TRANSLATIONS = {
       whatsapp: 'WhatsApp',
       calendar: 'Calendar',
       followUp: 'Follow-up',
+      distribution: 'Distribution',
       portfolio: 'Portfolio',
       mySite: 'My Site',
       settings: 'Settings'
@@ -112,6 +115,7 @@ const TRANSLATIONS = {
       whatsapp: 'WhatsApp',
       calendar: 'Agenda',
       followUp: 'Follow-up',
+      distribution: 'Distribución',
       portfolio: 'Portafolio',
       mySite: 'Mi Sitio',
       settings: 'Configuración'
@@ -323,6 +327,7 @@ export default function Sidebar() {
         { href: '/dashboard/messages', label: t.menu.conversations, icon: MessageSquare },
         { href: '/dashboard/calendar', label: t.menu.calendar, icon: CalendarDays },
         { href: '/dashboard/follow-up', label: t.menu.followUp, icon: RefreshCw },
+        { href: '/dashboard/distribuicao', label: t.menu.distribution, icon: Shuffle },
       ],
     },
     {
