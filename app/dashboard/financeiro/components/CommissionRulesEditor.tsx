@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { formatPrice } from '@/lib/format'
 import { useAuth } from '@/lib/AuthContext'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 interface CommissionRule {
   id: string
@@ -361,18 +362,14 @@ export default function CommissionRulesEditor({ orgId, currency, lang }: Props) 
           {/* Broker */}
           <div style={{ marginBottom: 12 }}>
             <label style={labelStyle}>{t.broker}</label>
-            <select
+            <CustomSelect
               value={form.broker_id || ''}
-              onChange={(e) => setForm({ ...form, broker_id: e.target.value || null })}
-              style={{ ...inputStyle, cursor: 'pointer' }}
-            >
-              <option value="">{t.defaultAll}</option>
-              {brokers.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setForm({ ...form, broker_id: val || null })}
+              options={[
+                { value: '', label: t.defaultAll },
+                ...brokers.map((b) => ({ value: b.id, label: b.name })),
+              ]}
+            />
           </div>
 
           {/* Tiers */}

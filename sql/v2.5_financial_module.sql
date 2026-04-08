@@ -276,7 +276,7 @@ BEGIN
   NEW.commission_generated := true;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS trg_lead_won ON leads;
 CREATE TRIGGER trg_lead_won

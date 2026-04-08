@@ -9,6 +9,7 @@ import {
   CATEGORY_LABELS,
   TRANSACTION_STATUS_COLORS,
 } from '@/lib/financial/constants'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -566,17 +567,14 @@ export default function ExpensesPanel({
 
             {/* Category */}
             <label style={labelStyle}>{t.category}</label>
-            <select
+            <CustomSelect
               value={formCategory}
-              onChange={(e) => setFormCategory(e.target.value)}
-              style={inputStyle}
-            >
-              {EXPENSE_CATEGORIES.map((c) => (
-                <option key={c.key} value={c.key}>
-                  {c.icon} {CATEGORY_LABELS[lang]?.[c.key] ?? c.key}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setFormCategory(val)}
+              options={EXPENSE_CATEGORIES.map((c) => ({
+                value: c.key,
+                label: `${c.icon} ${CATEGORY_LABELS[lang]?.[c.key] ?? c.key}`,
+              }))}
+            />
 
             {/* Description */}
             <label style={labelStyle}>{t.description}</label>

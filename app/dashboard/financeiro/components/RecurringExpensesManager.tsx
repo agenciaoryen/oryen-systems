@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { formatPrice } from '@/lib/format'
 import { useAuth } from '@/lib/AuthContext'
 import { EXPENSE_CATEGORIES, CATEGORY_LABELS } from '@/lib/financial/constants'
+import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -474,17 +475,14 @@ export default function RecurringExpensesManager({ orgId, currency, lang }: Prop
 
             {/* Category */}
             <label style={labelStyle}>{t.category}</label>
-            <select
+            <CustomSelect
               value={formCategory}
-              onChange={(e) => setFormCategory(e.target.value)}
-              style={inputStyle}
-            >
-              {EXPENSE_CATEGORIES.map((c) => (
-                <option key={c.key} value={c.key}>
-                  {c.icon} {CATEGORY_LABELS[lang]?.[c.key] ?? c.key}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setFormCategory(val)}
+              options={EXPENSE_CATEGORIES.map((c) => ({
+                value: c.key,
+                label: `${c.icon} ${CATEGORY_LABELS[lang]?.[c.key] ?? c.key}`,
+              }))}
+            />
 
             {/* Description */}
             <label style={labelStyle}>{t.description}</label>
