@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oryen — Playbook Comercial | Entrenamiento Equipo de Ventas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap');
+
+  :root {
+    --bg-base: #06060C;
+    --bg-surface: #0D0D15;
+    --bg-elevated: #13131F;
+    --bg-hover: #1A1A2E;
+    --text-primary: #E8E8F0;
+    --text-secondary: #9494B0;
+    --text-tertiary: #6A6A88;
+    --text-disabled: #44445E;
+    --border: #1E1E32;
+    --border-strong: #2A2A44;
+    --primary: #5A7AE6;
+    --primary-subtle: rgba(90, 122, 230, 0.08);
+    --accent: #F0A030;
+    --accent-subtle: rgba(240, 160, 48, 0.08);
+    --success: #34B368;
+    --success-subtle: rgba(52, 179, 104, 0.08);
+    --error: #D95454;
+    --error-subtle: rgba(217, 84, 84, 0.08);
+    --indigo: #6E5FFF;
+    --gradient-brand: linear-gradient(135deg, #4F6FFF 0%, #6E5FFF 50%, #8B5CF6 100%);
+    --gradient-accent: linear-gradient(135deg, #F0A030 0%, #FF8C42 100%);
+    --shadow-xl: 0 20px 60px rgba(0,0,0,0.5);
+    --font-display: 'Plus Jakarta Sans', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg-base);
+    color: var(--text-primary);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(6,6,12,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'Orbitron', var(--font-display);
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 0.2em;
+    background: linear-gradient(180deg, #BFCAD3, #7C8A96);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .nav-title {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── TOC ── */
+  .toc {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    width: 260px;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 1rem;
+    font-size: 0.82rem;
+    z-index: 90;
+  }
+  .toc::-webkit-scrollbar { width: 4px; }
+  .toc::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .toc h3 {
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-tertiary);
+    margin-bottom: 0.75rem;
+    margin-top: 1.25rem;
+  }
+  .toc h3:first-child { margin-top: 0; }
+  .toc a {
+    display: block;
+    padding: 0.35rem 0.75rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+  .toc a:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: 260px;
+    margin-top: 56px;
+    padding: 3rem 3rem 6rem;
+    max-width: 900px;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    text-align: center;
+    padding: 4rem 2rem;
+    margin-bottom: 4rem;
+    border-radius: 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 400px;
+    background: radial-gradient(ellipse, var(--primary), transparent 70%);
+    opacity: 0.06;
+    pointer-events: none;
+  }
+  .cover-badge {
+    display: inline-block;
+    padding: 0.3rem 1rem;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    background: var(--primary-subtle);
+    color: var(--primary);
+    border: 1px solid rgba(90,122,230,0.15);
+    margin-bottom: 1.5rem;
+  }
+  .cover h1 {
+    font-family: var(--font-display);
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+  .cover h1 span { color: var(--primary); }
+  .cover p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  /* ── SECTIONS ── */
+  .module {
+    margin-bottom: 4rem;
+    scroll-margin-top: 80px;
+  }
+  .module-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .module-number {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .module-header h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  h3 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 2rem 0 1rem;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+  h4 {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.75rem;
+    color: var(--primary);
+  }
+
+  p { margin-bottom: 0.75rem; color: var(--text-secondary); }
+
+  strong { color: var(--text-primary); font-weight: 600; }
+
+  ul, ol {
+    margin: 0.5rem 0 1rem 1.5rem;
+    color: var(--text-secondary);
+  }
+  li { margin-bottom: 0.4rem; }
+  li strong { color: var(--text-primary); }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin: 1rem 0;
+  }
+  .card-accent {
+    border-left: 3px solid var(--accent);
+  }
+  .card-primary {
+    border-left: 3px solid var(--primary);
+  }
+  .card-success {
+    border-left: 3px solid var(--success);
+  }
+  .card-error {
+    border-left: 3px solid var(--error);
+  }
+
+  /* ── SCRIPT BLOCKS ── */
+  .script {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin: 1rem 0;
+    font-family: var(--font-body);
+    position: relative;
+  }
+  .script::before {
+    content: 'SCRIPT';
+    position: absolute;
+    top: -10px;
+    left: 16px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 0.15rem 0.6rem;
+    border-radius: 4px;
+    background: var(--gradient-brand);
+    color: #fff;
+  }
+  .script .speaker {
+    font-weight: 700;
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+  }
+  .script .speaker.you { color: var(--primary); }
+  .script .speaker.lead { color: var(--accent); }
+  .script .line {
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    padding-left: 0;
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+  .script .note {
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+    font-style: italic;
+    margin-bottom: 0.5rem;
+  }
+
+  /* ── FRAMEWORK BOXES ── */
+  .framework {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .framework-item {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+  }
+  .framework-item .letter {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+  }
+  .framework-item .label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+  }
+  .framework-item .desc {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+  }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+  }
+  th {
+    background: var(--bg-elevated);
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+  tr:hover td { background: rgba(90,122,230,0.03); }
+
+  /* ── DO / DON'T ── */
+  .dos-donts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .do-box, .dont-box {
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+  }
+  .do-box {
+    background: var(--success-subtle);
+    border-color: rgba(52,179,104,0.2);
+  }
+  .dont-box {
+    background: var(--error-subtle);
+    border-color: rgba(217,84,84,0.2);
+  }
+  .do-box h4 { color: var(--success); margin-top: 0; }
+  .dont-box h4 { color: var(--error); margin-top: 0; }
+  .do-box li, .dont-box li { font-size: 0.88rem; }
+
+  /* ── PHASE STEPS ── */
+  .phase-step {
+    display: flex;
+    gap: 1rem;
+    margin: 1.25rem 0;
+    align-items: flex-start;
+  }
+  .phase-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.8rem;
+    color: #fff;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .phase-content { flex: 1; }
+  .phase-content h4 { margin-top: 0; margin-bottom: 0.35rem; }
+
+  /* ── TAGS ── */
+  .tag {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .tag-primary { background: var(--primary-subtle); color: var(--primary); }
+  .tag-accent { background: var(--accent-subtle); color: var(--accent); }
+  .tag-success { background: var(--success-subtle); color: var(--success); }
+  .tag-error { background: var(--error-subtle); color: var(--error); }
+
+  /* ── DIVIDERS ── */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    .nav, .toc { display: none; }
+    .main { margin: 0; padding: 1.5rem; max-width: 100%; }
+    body { background: #fff; color: #1a1a2e; font-size: 11pt; }
+    .cover, .card, .script, .framework-item, .do-box, .dont-box { border-color: #ddd; background: #f8f9fa; }
+    h2, h3, h4, strong, .speaker.you { color: #1a1a2e; }
+    p, li, td { color: #333; }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .toc { display: none; }
+    .main { margin-left: 0; padding: 2rem 1.25rem 4rem; }
+    .dos-donts { grid-template-columns: 1fr; }
+    .framework { grid-template-columns: 1fr; }
+    .cover h1 { font-size: 1.8rem; }
+  }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- NAV -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<nav class="nav">
+  <div class="nav-logo">ORYEN</div>
+  <div class="nav-title">Playbook Comercial &mdash; Entrenamiento Equipo de Ventas</div>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- TABLE OF CONTENTS -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<aside class="toc">
+  <h3>Fundamentos</h3>
+  <a href="#cover">Portada</a>
+  <a href="#identidad">1. Identidad del Vendedor</a>
+  <a href="#producto">2. Conoce el Producto</a>
+  <a href="#avatar">3. Avatar y Dolores</a>
+
+  <h3>Frameworks</h3>
+  <a href="#icuva">4. ICUVA + DI Adaptado</a>
+  <a href="#rpq">5. Framework RPQ</a>
+  <a href="#snd">6. Mantra SND</a>
+
+  <h3>Proceso Comercial</h3>
+  <a href="#prospeccion">7. Prospección</a>
+  <a href="#precalificacion">8. Pre-calificación</a>
+  <a href="#demo">9. Sesión Estratégica / Demo</a>
+  <a href="#propuesta">10. Presentación de Propuesta</a>
+  <a href="#inversion">11. Inversión y Negociación</a>
+  <a href="#objeciones">12. Manejo de Objeciones</a>
+  <a href="#followup">13. Follow-up</a>
+  <a href="#onboarding">14. Onboarding</a>
+
+  <h3>Operación</h3>
+  <a href="#metricas">15. Métricas y Pipeline</a>
+  <a href="#agenda">16. Agenda Ataque vs Defensa</a>
+  <a href="#dosdonts">17. Do's and Don'ts</a>
+  <a href="#frases">18. Frases de Poder</a>
+</aside>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- MAIN CONTENT -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div class="main">
+
+<!-- ─── COVER ─── -->
+<section class="cover" id="cover">
+  <div class="cover-badge">Documento Interno &mdash; Confidencial</div>
+  <h1>Playbook <span>Comercial</span></h1>
+  <p>Guía completa de entrenamiento para el equipo de ventas de Oryen. Metodología Smart Sales adaptada para venta consultiva de SaaS inmobiliario.</p>
+  <br>
+  <p style="font-size:0.8rem; color:var(--text-disabled);">Versión 1.0 &mdash; Abril 2026</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 1: IDENTIDAD DEL VENDEDOR -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="identidad">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-brand)">1</div>
+    <h2>Identidad del Vendedor Oryen</h2>
+  </div>
+
+  <h3>Quién eres</h3>
+  <p>No eres un vendedor de software. Eres un <strong>consultor de transformación digital para el mercado inmobiliario</strong>. Tu misión es ayudar a corredores e inmobiliarias a vender más propiedades, trabajar menos y dejar de perder leads.</p>
+
+  <div class="card card-primary">
+    <p style="margin:0"><strong>Frase de identidad:</strong> "Yo ayudo a corredores de bienes raíces y agencias inmobiliarias a dejar de perder clientes por no responder a tiempo, usando inteligencia artificial que trabaja 24 horas."</p>
+  </div>
+
+  <h3>Las 3 certezas antes de cada llamada</h3>
+  <ol>
+    <li><strong>Buena intención</strong> &mdash; genuinamente quiero que este corredor venda más</li>
+    <li><strong>Buen producto</strong> &mdash; Oryen resuelve problemas reales que los corredores enfrentan todos los días</li>
+    <li><strong>Interés genuino</strong> &mdash; quiero conocer SU realidad antes de proponer nada</li>
+  </ol>
+
+  <h3>Método SND (Corazón de las ventas)</h3>
+  <div class="framework">
+    <div class="framework-item">
+      <div class="letter" style="color:var(--primary)">S</div>
+      <div class="label">Sé valioso</div>
+      <div class="desc">No vendas por debajo de tu valor. No trabajes con quien no te respeta. Tu tiempo vale. Oryen vale. No ofrezcas descuentos por miedo.</div>
+    </div>
+    <div class="framework-item">
+      <div class="letter" style="color:var(--accent)">N</div>
+      <div class="label">No insistas en quien no quiere</div>
+      <div class="desc">No es desdén, es filtro. "Voy a ayudar a quien quiere ser ayudado." Si el corredor no tiene interés ni humildad para pedir ayuda, siguiente.</div>
+    </div>
+    <div class="framework-item">
+      <div class="letter" style="color:var(--success)">D</div>
+      <div class="label">Déjalo en tu mano</div>
+      <div class="desc">Define el próximo paso. Acuerdo de decisión. Las personas QUIEREN recibir instrucción. "Yo te guío, tú decides."</div>
+    </div>
+  </div>
+
+  <h3>Inteligencia Emocional</h3>
+  <ul>
+    <li><strong>Emoción es inevitable pero manejable</strong>: si tú estás calmado, el lead se calma. 3 respiraciones antes de cada llamada</li>
+    <li><strong>No dependas de una sola oportunidad</strong>: vendedor desesperado = lead que se va. Diversifica pipeline</li>
+    <li><strong>Pausas intencionales</strong>: 3 segundos antes de responder. Al presentar inversión: SILENCIO</li>
+    <li><strong>Espejeo emocional</strong>: "De 0 a 10, ¿cómo te sientes con lo que te mostré?" Si &lt;10: "¿Qué falta para el 10?"</li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 2: CONOCE EL PRODUCTO -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="producto">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-accent)">2</div>
+    <h2>Conoce el Producto</h2>
+  </div>
+
+  <h3>Elevator Pitch (30 segundos)</h3>
+  <div class="card card-primary">
+    <p style="margin:0"><strong>"Oryen es la plataforma todo-en-uno de CRM, automatización y agentes de IA hecha exclusivamente para corredores de bienes raíces e inmobiliarias. El agente de IA atiende leads por WhatsApp 24 horas, califica, busca propiedades en tu portafolio y agenda visitas &mdash; mientras tú te enfocas en cerrar. Todo en un solo lugar."</strong></p>
+  </div>
+
+  <h3>Los 10 Módulos</h3>
+  <table>
+    <thead>
+      <tr><th>Módulo</th><th>Qué hace</th><th>Dolor que resuelve</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>CRM Inmobiliario</strong></td><td>Pipeline visual drag-and-drop con etapas del mercado</td><td>"Pierdo leads porque no sé en qué etapa están"</td></tr>
+      <tr><td><strong>Agente IA SDR</strong></td><td>Atiende leads por WhatsApp 24h, califica con ICUVA, agenda visitas</td><td>"No puedo responder rápido y pierdo el lead"</td></tr>
+      <tr><td><strong>Follow-up Automático</strong></td><td>5 intentos progresivos con estrategias diferentes</td><td>"Me olvido de hacer seguimiento"</td></tr>
+      <tr><td><strong>WhatsApp Integrado</strong></td><td>Bidireccional, historial completo, detección de sentimiento</td><td>"Mis conversaciones están dispersas en 5 celulares"</td></tr>
+      <tr><td><strong>Portafolio de Propiedades</strong></td><td>Registro completo con fotos, amenidades, precios</td><td>"No tengo mis propiedades organizadas"</td></tr>
+      <tr><td><strong>Sitio Profesional</strong></td><td>Generado automáticamente del portafolio, SEO, formulario &rarr; CRM</td><td>"No tengo presencia digital profesional"</td></tr>
+      <tr><td><strong>Documentos Inteligentes</strong></td><td>Templates de propuestas/contratos con variables dinámicas, PDF</td><td>"Hago todo manual en Word, pierdo tiempo"</td></tr>
+      <tr><td><strong>Dashboard + Reportes</strong></td><td>KPIs en tiempo real, reportes automatizados por WhatsApp</td><td>"No sé cuánto estoy convirtiendo"</td></tr>
+      <tr><td><strong>Agenda</strong></td><td>Visitas, reuniones, follow-ups vinculados a leads</td><td>"Pierdo citas, me desorganizo"</td></tr>
+      <tr><td><strong>Alertas Inteligentes</strong></td><td>IA prioriza tu día: lead caliente, visita pendiente</td><td>"No sé qué priorizar cada mañana"</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Planes y Precios</h3>
+  <table>
+    <thead>
+      <tr><th>Plan</th><th>Precio</th><th>Para quién</th><th>Incluye</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Basic</strong></td>
+        <td>$19/mes USD</td>
+        <td>Corredor autónomo</td>
+        <td>1 usuario, 1.000 leads, CRM, 1 WhatsApp, sitio, documentos</td>
+      </tr>
+      <tr>
+        <td><strong>Gold</strong> <span class="tag tag-primary">Más popular</span></td>
+        <td>$219/mes USD</td>
+        <td>Equipos en crecimiento</td>
+        <td>5 usuarios, 5.000 leads, IA (SDR+Hunter), 5 WhatsApp, automaciones, reportes, 10k msgs IA/mes</td>
+      </tr>
+      <tr>
+        <td><strong>Diamond</strong></td>
+        <td>$329/mes USD</td>
+        <td>Inmobiliarias completas</td>
+        <td>15 usuarios, 10.000 leads, todo de Gold + campañas masivas, API, soporte prioritario, 50k msgs IA/mes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Flujo Integrado del Lead (tu argumento estrella)</h3>
+  <div class="phase-step">
+    <div class="phase-dot" style="background:var(--primary)">1</div>
+    <div class="phase-content">
+      <h4 style="color:var(--primary)">Lead llega</h4>
+      <p>Por sitio web, WhatsApp, prospección, referido o tráfico pago</p>
+    </div>
+  </div>
+  <div class="phase-step">
+    <div class="phase-dot" style="background:var(--indigo)">2</div>
+    <div class="phase-content">
+      <h4 style="color:var(--indigo)">IA atiende en segundos</h4>
+      <p>El agente SDR responde por WhatsApp, suena como humano, hace preguntas inteligentes</p>
+    </div>
+  </div>
+  <div class="phase-step">
+    <div class="phase-dot" style="background:var(--accent)">3</div>
+    <div class="phase-content">
+      <h4 style="color:var(--accent)">Califica progresivamente</h4>
+      <p>ICUVA: qué busca, presupuesto, urgencia, quién decide &mdash; todo en conversación natural</p>
+    </div>
+  </div>
+  <div class="phase-step">
+    <div class="phase-dot" style="background:var(--success)">4</div>
+    <div class="phase-content">
+      <h4 style="color:var(--success)">Busca propiedades y agenda visita</h4>
+      <p>Cruza el perfil del lead con el portafolio real, presenta opciones, agenda visita con el corredor</p>
+    </div>
+  </div>
+  <div class="phase-step">
+    <div class="phase-dot" style="background:var(--error)">5</div>
+    <div class="phase-content">
+      <h4 style="color:var(--error)">Corredor cierra</h4>
+      <p>Hace la visita presencial, negocia, genera documentos &rarr; cierre. Dashboard muestra todo en tiempo real</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 3: AVATAR Y DOLORES -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="avatar">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-brand)">3</div>
+    <h2>Avatar: El Corredor que Sufre</h2>
+  </div>
+
+  <h3>Quién es nuestro cliente ideal</h3>
+  <p><strong>NO es demográfico</strong> (hombre, 35 años, clase media). Es <strong>comportamiento + problema</strong>.</p>
+
+  <div class="card card-accent">
+    <p><strong>Avatar principal:</strong> Corredor o dueño de inmobiliaria que genera leads (orgánico o pago) pero los pierde porque no responde rápido, no tiene proceso, y hace todo manual. Factura entre $2.000 y $50.000 USD/mes. Tiene entre 1 y 15 personas en el equipo.</p>
+  </div>
+
+  <h3>Los 7 Dolores Principales</h3>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Dolor visible (lo que dicen)</th><th>Dolor real (lo que sienten)</th><th>Módulo que resuelve</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>"Pierdo leads porque no respondo rápido"</td><td>Ansiedad de saber que cada minuto sin responder es dinero perdido</td><td>Agente IA SDR</td></tr>
+      <tr><td>2</td><td>"No sé en qué etapa está cada lead"</td><td>Caos operativo, leads olvidados, oportunidades muertas</td><td>CRM Pipeline</td></tr>
+      <tr><td>3</td><td>"Mis conversaciones están en 5 celulares distintos"</td><td>No tiene historial, repite preguntas, el cliente se irrita</td><td>WhatsApp Integrado</td></tr>
+      <tr><td>4</td><td>"No tengo sitio web profesional"</td><td>Pierde credibilidad frente a la competencia que sí tiene</td><td>Sitio de Propiedades</td></tr>
+      <tr><td>5</td><td>"Hago propuestas en Word, una por una"</td><td>Desperdicia horas en trabajo repetitivo que no genera venta</td><td>Documentos Inteligentes</td></tr>
+      <tr><td>6</td><td>"No sé cuánto estoy convirtiendo"</td><td>Toma decisiones a ciegas, no sabe qué funciona</td><td>Dashboard + Reportes</td></tr>
+      <tr><td>7</td><td>"Me olvido de hacer seguimiento"</td><td>Leads que dijeron "sí" se enfrían y se van con otro</td><td>Follow-up Automático</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Excusas Comunes (Barrera Mental)</h3>
+  <ul>
+    <li>"Mi mercado es diferente" &mdash; <em>Cada mercado dice lo mismo. Oryen se personaliza por país/idioma/moneda</em></li>
+    <li>"Ya tengo un CRM" &mdash; <em>¿Pero tiene IA que atiende WhatsApp 24h? ¿Sitio integrado? ¿Follow-up automático?</em></li>
+    <li>"No tengo tiempo para aprender otra herramienta" &mdash; <em>Setup en 2 minutos. Si tiene tiempo para perder leads, tiene tiempo para dejar de perderlos</em></li>
+    <li>"Es muy caro" &mdash; <em>¿Cuánto te cuesta un SDR humano? ¿Cuántas ventas pierdes al mes? Haz la cuenta</em></li>
+    <li>"Mi equipo no va a usar" &mdash; <em>La IA hace el trabajo pesado. Tu equipo solo necesita cerrar</em></li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 4: ICUVA + DI ADAPTADO -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="icuva">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-accent)">4</div>
+    <h2>ICUVA + DI para Vender Oryen</h2>
+  </div>
+
+  <p>6 puertas que debes cerrar ANTES de presentar la inversión. Si una queda abierta, la venta se cae.</p>
+
+  <div class="framework">
+    <div class="framework-item">
+      <div class="letter" style="color:#4F6FFF">I</div>
+      <div class="label">Interés</div>
+      <div class="desc">"¿Qué te motivó a buscar una solución?" / "¿Qué problema quieres resolver primero?"</div>
+    </div>
+    <div class="framework-item">
+      <div class="letter" style="color:#6E5FFF">C</div>
+      <div class="label">Confianza</div>
+      <div class="desc">"¿Crees que la tecnología puede ayudar a vender más propiedades?" Construir durante toda la llamada con demos en vivo.</div>
+    </div>
+    <div class="framework-item">
+      <div class="letter" style="color:#F0A030">U</div>
+      <div class="label">Urgencia</div>
+      <div class="desc">"¿Cuántos leads perdiste este mes por no responder rápido?" / "¿Qué pasa si no resuelves esto en los próximos 3 meses?"</div>
+    </div>
+    <div class="framework-item">
+      <div class="letter" style="color:#34B368">V</div>
+      <div class="label">Valor</div>
+      <div class="desc">"¿Cuánto inviertes hoy en herramientas separadas?" / "¿Cuánto facturas al mes?" &mdash; ingeniería inversa para validar presupuesto.</div>
+    </div>
+    <div class="framework-item">
+      <div class="letter" style="color:#D95454">A</div>
+      <div class="label">Autoridad</div>
+      <div class="desc">"¿Tomas la decisión solo o hay un socio/director que necesita estar presente?"</div>
+    </div>
+    <div class="framework-item">
+      <div class="letter" style="color:#8B5CF6">DI</div>
+      <div class="label">Decisión Inmediata</div>
+      <div class="desc">"Esta reunión es para que decidas: sí o no. ¿Puedo contar con tu objetividad?"</div>
+    </div>
+  </div>
+
+  <h3>Preguntas por Puerta (Kit del Closer)</h3>
+  <div class="card card-primary">
+    <h4 style="margin-top:0">I &mdash; Interés</h4>
+    <ul>
+      <li>"¿Qué te hizo buscar una herramienta como esta?"</li>
+      <li>"Si pudieras resolver UN problema en tu operación, ¿cuál sería?"</li>
+      <li>"¿Hace cuánto enfrentas esto?"</li>
+    </ul>
+
+    <h4>C &mdash; Confianza</h4>
+    <ul>
+      <li>"¿Alguna vez usaste un CRM o herramienta de automatización?"</li>
+      <li>"¿Qué funcionó y qué no?" (entender experiencias previas)</li>
+      <li><em>Construir con demo en vivo: "Déjame mostrarte en tu pantalla cómo funciona con TUS propiedades"</em></li>
+    </ul>
+
+    <h4>U &mdash; Urgencia</h4>
+    <ul>
+      <li>"De 0 a 10, ¿qué tan urgente es resolver esto?"</li>
+      <li>"¿Cuántas ventas estimas que perdiste el último trimestre por falta de proceso?"</li>
+      <li>"Si seguimos hablando en 6 meses y nada cambió, ¿cómo te sentirías?"</li>
+    </ul>
+
+    <h4>V &mdash; Valor (Presupuesto)</h4>
+    <ul>
+      <li>"¿Cuánto facturas al mes en comisiones?" (ingeniería inversa)</li>
+      <li>"¿Cuánto gastas hoy en herramientas separadas? ¿CRM? ¿WhatsApp? ¿Sitio web?"</li>
+      <li>"Si Oryen te ayuda a cerrar 1 venta extra al mes, ¿cuánto representaría eso?"</li>
+    </ul>
+
+    <h4>A &mdash; Autoridad</h4>
+    <ul>
+      <li>"Cuando decidas implementar esto, ¿la decisión es solo tuya?"</li>
+      <li>"¿Hay alguien más que necesite ver la plataforma antes de decidir?"</li>
+      <li>Si sí: "Perfecto, agendemos con esa persona presente."</li>
+    </ul>
+
+    <h4>DI &mdash; Decisión Inmediata</h4>
+    <ul>
+      <li>"Para que no pierdas tu tiempo ni yo el mío: esta reunión es para decidir. Sí o no. ¿Puedo contar con eso?"</li>
+      <li>Si resiste: "Llevas X meses postergando esto. Cada mes sin proceso son leads perdidos."</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 5: RPQ -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="rpq">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-brand)">5</div>
+    <h2>Framework RPQ</h2>
+  </div>
+
+  <p>Usa esto en <strong>CADA respuesta</strong>. Es lo que hace que la conversación sea fluida, no un interrogatorio.</p>
+
+  <div class="framework">
+    <div class="framework-item">
+      <div class="letter" style="color:var(--primary)">R</div>
+      <div class="label">Reconocer</div>
+      <div class="desc">"Entiendo", "Tiene sentido", "Eso es súper común" &mdash; validar lo que el lead dijo</div>
+    </div>
+    <div class="framework-item">
+      <div class="letter" style="color:var(--accent)">P</div>
+      <div class="label">Personalizar</div>
+      <div class="desc">Usar la información que el lead acaba de dar como puente. "Me dijiste que facturas $10k, entonces..."</div>
+    </div>
+    <div class="framework-item">
+      <div class="letter" style="color:var(--success)">Q</div>
+      <div class="label">Cuestionar</div>
+      <div class="desc">UNA pregunta conectada al contexto. No saltar a otro tema. La próxima pregunta nace de lo que el lead ACABA de decir.</div>
+    </div>
+  </div>
+
+  <h3>Ejemplo aplicado a Oryen</h3>
+  <div class="script">
+    <div class="speaker lead">Lead:</div>
+    <div class="line">"Tenemos 3 corredores y el problema es que nadie responde rápido. Perdemos muchos leads."</div>
+    <div class="speaker you">Tú (RPQ):</div>
+    <div class="line"><strong>[R]</strong> "Eso es exactamente lo que escucho de la mayoría de inmobiliarias con equipos pequeños. <strong>[P]</strong> Con 3 corredores manejando leads manualmente, es imposible responder en menos de 5 minutos &mdash; y sabemos que después de 5 minutos la probabilidad de conversión cae 80%. <strong>[Q]</strong> ¿Tienes idea de cuántos leads reciben al mes entre los tres?"</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 6: MANTRA SND -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="snd">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-accent)">6</div>
+    <h2>Mantra SND + Señales vs Ruidos</h2>
+  </div>
+
+  <h3>Señales vs Ruidos</h3>
+  <div class="dos-donts">
+    <div class="do-box">
+      <h4>Señales (mueven resultados)</h4>
+      <ul>
+        <li>Hacer llamadas de pre-calificación</li>
+        <li>Agendar y ejecutar demos</li>
+        <li>Hacer follow-up a leads calientes</li>
+        <li>Prospectar activamente</li>
+        <li>Cerrar ventas</li>
+      </ul>
+    </div>
+    <div class="dont-box">
+      <h4>Ruidos (parecen productivos)</h4>
+      <ul>
+        <li>Organizar planillas perfectas</li>
+        <li>Reuniones internas innecesarias</li>
+        <li>"Investigar" sin actuar</li>
+        <li>Responder DMs sin intención</li>
+        <li>Agenda llena que no genera ingreso</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Frecuencia de Venta</h3>
+  <div class="card card-primary">
+    <p style="margin:0">Entrar en el <strong>flow de venta es adictivo</strong> &mdash; una vez en ritmo, vender se vuelve natural. Salir del flow cuesta MUCHO para volver. Cada día sin prospectar/vender es un día de inercia acumulada. Por eso los bloques fijos de venta en la agenda son <strong>innegociables</strong>.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 7: PROSPECCIÓN -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="prospeccion">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-brand)">7</div>
+    <h2>Prospección</h2>
+  </div>
+
+  <h3>Deber moral de vender</h3>
+  <p>Prospectar = servir, no incomodar. Si Oryen puede ayudar a un corredor a dejar de perder leads y tú no lo contactas, el desservicio es tuyo.</p>
+
+  <h3>5 Tipos de Lead</h3>
+  <table>
+    <thead>
+      <tr><th>Tipo</th><th>Comportamiento</th><th>Cómo abordar</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Comprador</strong></td><td>Levantó la mano: formulario, demo, referido</td><td>Responder en &lt;1 minuto. Pre-calificar igual. LLAMAR</td></tr>
+      <tr><td><strong>Vitrina</strong></td><td>Sigue, da like, comenta pero no pide</td><td>Social selling: "Después de 3 likes ya somos amigos! Me cuenta..."</td></tr>
+      <tr><td><strong>Sanguijuela</strong></td><td>Pide tips gratis, audios, análisis sin pagar</td><td>Corte elegante: "No conozco tu operación, cualquier tip sería irresponsable. ¿Buscas tip o resolver definitivamente?"</td></tr>
+      <tr><td><strong>Frío</strong></td><td>No te conoce</td><td>Investigación + personalización + descalificación reversa</td></tr>
+      <tr><td><strong>Upsell</strong></td><td>Ya es cliente (Basic quiere Gold)</td><td>Mapear resultado actual + próximo paso lógico</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Canales de Prospección para Oryen</h3>
+
+  <h4>1. LinkedIn (B2B &mdash; canal principal)</h4>
+  <ol>
+    <li>Buscar: "corredor de bienes raíces", "director inmobiliaria", "broker inmobiliario"</li>
+    <li>Engajar 2-3 posts antes de conectar (comentarios relevantes, no genéricos)</li>
+    <li>Conexión con nota personalizada</li>
+    <li>DM post-conexión usando datos del perfil</li>
+  </ol>
+
+  <div class="script">
+    <div class="speaker you">DM LinkedIn (Lead Frío):</div>
+    <div class="line">"Hola [Nombre], vi que lideras [Inmobiliaria X] desde hace [Y años]. Trabajo con inmobiliarias que estaban perdiendo leads por responder tarde y lograron automatizar el primer contacto con IA. No sé si es tu caso &mdash; si ya tienes todo resuelto, ignórame. Pero si pierdes leads por velocidad de respuesta, me encantaría conversar 15 minutos. ¿Estás abierto?"</div>
+    <div class="note">Estructura: contexto + personalización + descalificación reversa + CTA</div>
+  </div>
+
+  <h4>2. Instagram / Redes Sociales</h4>
+  <ol>
+    <li>Seguir corredores activos que publican propiedades</li>
+    <li>Comentar con valor en sus publicaciones</li>
+    <li>DM con contexto: "Vi que publicaste [propiedad]. ¿Cuántas consultas recibes por publicación?"</li>
+  </ol>
+
+  <h4>3. WhatsApp Directo</h4>
+  <div class="script">
+    <div class="speaker you">Mensaje de prospección WhatsApp:</div>
+    <div class="line">"Hola [Nombre]! Soy [Tu nombre] de Oryen. Antes de que pienses que es spam random &mdash; entré a tu perfil, vi que trabajas con propiedades en [zona]. Trabajo con corredores que tenían el problema de perder leads por no responder rápido. Creamos un agente de IA que atiende WhatsApp 24h y agenda visitas por ti. Si ya lo tienes resuelto, genial. Si no, te dejo mi calendario para una conversación de 15 min."</div>
+  </div>
+
+  <h4>4. Referidos</h4>
+  <ul>
+    <li><strong>Post-venta</strong>: "¿Conoces otro corredor que tenga el mismo problema que tú tenías? Mándame su contacto, la parte difícil la hago yo."</li>
+    <li><strong>Post-resultado</strong>: cuando el cliente reporta éxito &mdash; "¡Increíble! ¿Ayudamos a más personas? Abre tu WhatsApp."</li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 8: PRE-CALIFICACIÓN -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="precalificacion">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-accent)">8</div>
+    <h2>Pre-calificación (Llamada 15 min)</h2>
+  </div>
+
+  <div class="card card-accent">
+    <p style="margin:0"><strong>Regla de oro</strong>: Pre-calificación difícil = demo fácil. Pre-calificación fácil = demo llena de objeciones.</p>
+  </div>
+
+  <h3>Objetivo</h3>
+  <p>Que la persona <strong>VERBALICE su pedido de ayuda</strong>. Si no lo verbaliza, pregunta de nuevo: "No entendí bien, ¿cómo puedo ayudarte?" Tiene que decirlo con sus propias palabras.</p>
+
+  <h3>Script Completo de Pre-calificación</h3>
+
+  <div class="script">
+    <div class="note">FASE 1: Conexión + Quiebre de hielo (30 seg)</div>
+    <div class="speaker you">Tú:</div>
+    <div class="line">"¡[Nombre]! ¡Por fin nos conectamos! Estábamos como gato y ratón jaja. Qué bueno que llegamos aquí. ¿Cómo va tu día?"</div>
+    <div class="note">Ir más allá del clima. Energía + ánimo = la persona no te ignora después.</div>
+  </div>
+
+  <div class="script">
+    <div class="note">FASE 2: Nivel de conciencia</div>
+    <div class="speaker you">Tú:</div>
+    <div class="line">"Solo para entender &mdash; ¿ya conoces algo de Oryen o es la primera vez que escuchas de nosotros?"</div>
+    <div class="note">Si poco tiempo de pantalla = necesitas más valor. Si ya te sigue = confianza alta.</div>
+  </div>
+
+  <div class="script">
+    <div class="note">FASE 3: Mini pitch de autoridad (15 seg, no más)</div>
+    <div class="speaker you">Tú:</div>
+    <div class="line">"Perfecto. En resumen: Oryen es la plataforma de CRM y agentes de IA hecha exclusivamente para corredores e inmobiliarias. Tenemos agentes que atienden leads por WhatsApp 24 horas, califican y agendan visitas sin que toques un dedo. Pero esta conversación es CERO sobre mí. Cuéntame: ¿qué necesitas resolver?"</div>
+  </div>
+
+  <div class="script">
+    <div class="note">FASE 4: Cerrar puertas ICUVA (navegar, no secuencial)</div>
+
+    <div class="speaker you">Interés:</div>
+    <div class="line">"¿Qué te motivó a agendar esta conversación?" / "¿Cuál es el TOP 1 desafío de tu operación hoy?"</div>
+
+    <div class="speaker you">Urgencia (0-10):</div>
+    <div class="line">"De 0 a 10, ¿qué tan urgente es resolver esto? Pregunto porque si es una piedra en el zapato que incomoda pero se convive, es una cosa. Pero si ya es asfalto caliente con ampolla en el pie, es otra."</div>
+
+    <div class="speaker you">Valor (ingeniería inversa):</div>
+    <div class="line">"¿Cuántas propiedades vendes al mes en promedio? ¿Cuál es el ticket promedio de comisión? Entonces tu facturación está en torno a $X. ¿Cuánto quieres llegar? ¿Cuál es tu plan para ir de A a B?"</div>
+
+    <div class="speaker you">Autoridad:</div>
+    <div class="line">"Cuando tomemos una decisión financiera, ¿quién necesita estar presente? ¿Tu socio sabe de este proyecto? ¿Te apoya?"</div>
+
+    <div class="speaker you">Decisión Inmediata:</div>
+    <div class="line">"Quiero ser transparente: la reunión que vamos a agendar es de toma de decisión. Sí o no. No es para 'ver y pensar'. ¿Puedo contar con tu objetividad?"</div>
+
+    <div class="speaker you">Compromiso final:</div>
+    <div class="line">"Reservo mi horario para estar 100% contigo. No cancelo a no ser que haya un apocalipsis zombie. ¿Puedo contar con tu compromiso?"</div>
+  </div>
+
+  <h3>Red Flags en la Pre-calificación</h3>
+  <ul>
+    <li>Respuestas monosilábicas constantes</li>
+    <li>No verbaliza problema ("solo estoy viendo")</li>
+    <li>"Mándame un PDF con todo" (quiere evitar conversar)</li>
+    <li>No tiene 10 minutos (¿cómo va a dedicar tiempo a implementar?)</li>
+    <li>Marca inversión mínima pero meta altísima</li>
+  </ul>
+
+  <h3>Si se está convirtiendo 80%+</h3>
+  <div class="card card-success">
+    <p style="margin:0">Señal de que estás <strong>vendiendo barato</strong>. Subir precio. Si todo el mundo dice sí fácil, no estás estirando lo suficiente.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 9: SESIÓN ESTRATÉGICA / DEMO -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="demo">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-brand)">9</div>
+    <h2>Sesión Estratégica / Demo de Ventas</h2>
+  </div>
+
+  <h3>Estructura (45-60 min)</h3>
+  <table>
+    <thead>
+      <tr><th>Fase</th><th>Tiempo</th><th>Objetivo</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1. Rapport / Conexión</td><td>30 seg - 1 min</td><td>Energía, presencia, no friendzone</td></tr>
+      <tr><td>2. Alineación de expectativas</td><td>30 seg</td><td>Enmarcar la reunión</td></tr>
+      <tr><td>3. Diagnóstico</td><td>20-25 min</td><td>Que el lead sienta su dolor y pida ayuda</td></tr>
+      <tr><td>4. Demo + Propuesta</td><td>15 min</td><td>Mostrar cómo Oryen resuelve SUS problemas</td></tr>
+      <tr><td>5. Temp Check + Inversión</td><td>5-10 min</td><td>Validar y presentar precio</td></tr>
+    </tbody>
+  </table>
+
+  <h3>FASE 1: Rapport (máximo 1 minuto)</h3>
+  <div class="script">
+    <div class="speaker you">Tú:</div>
+    <div class="line">"¡[Nombre]! Qué bueno verte. ¿Cómo va tu semana HASTA AHORA?"</div>
+    <div class="note">Rapport largo (&gt;10 min) = friendzone total. Difícil cobrar después.</div>
+    <div class="note">Leer energía: ¿directo? ¿entusiasta? ¿tímido? Adaptar tu ritmo.</div>
+    <div class="speaker you">Transición (colectar primer "sí"):</div>
+    <div class="line">"Con respeto a mi tiempo y al tuyo, ¿te parece si vamos directo a los puntos clave?"</div>
+  </div>
+
+  <h3>FASE 2: Alineación (30 seg)</h3>
+  <div class="script">
+    <div class="speaker you">Tú:</div>
+    <div class="line">"Perfecto [Nombre]. Revisé lo que conversamos en nuestra primera llamada sobre [dolor específico que mencionó]. Lo que quiero hacer hoy es: primero, entender en detalle tu situación actual. Segundo, mostrarte una estrategia concreta con Oryen. Y tercero, hablar de inversión. ¿Todo bien?"</div>
+  </div>
+
+  <h3>FASE 3: Diagnóstico (20-25 min)</h3>
+  <p>Este es TU momento de escuchar. El lead habla 80%, tú 20%. Caderno en mano (no teclado).</p>
+
+  <h4>6 Preguntas Clave (cartas en la manga, no orden fijo)</h4>
+
+  <div class="script">
+    <div class="speaker you">1. Motivo real (gota de agua):</div>
+    <div class="line">"¿Cuál fue la gota que derramó el vaso? ¿Qué pasó que te hizo buscar una solución AHORA y no hace 3 meses?"</div>
+
+    <div class="speaker you">2. Factor tiempo:</div>
+    <div class="line">"¿Hace cuánto enfrentas esto?"</div>
+
+    <div class="speaker you">3. Intentos anteriores:</div>
+    <div class="line">"¿Qué ya probaste? ¿CRM? ¿Chatbot? ¿Equipo de SDR? ¿Qué funcionó y qué no?"</div>
+
+    <div class="speaker you">4. Espejeo (recapitular):</div>
+    <div class="line">"Déjame ver si entendí: tienes [X corredores], recibes [Y leads/mes], pero pierdes muchos porque nadie responde en menos de [Z minutos], y el seguimiento es manual. ¿Es eso?"</div>
+
+    <div class="speaker you">5. Escenario ideal:</div>
+    <div class="line">"Si pudieras diseñar el resultado perfecto en los próximos 90 días, ¿cómo sería? ¿Cuántas ventas más? ¿Cuánto tiempo ahorrado?"</div>
+
+    <div class="speaker you">6. Barreras anticipadas:</div>
+    <div class="line">"¿Existe algo que podría impedirte implementar una solución hoy?" (tratar EN EL MOMENTO)</div>
+  </div>
+
+  <div class="card card-accent">
+    <p><strong>Técnica "niño de 2 años"</strong>: Pregunta "¿por qué?" hasta 5 veces. El motivo REAL solo aparece en el 4° o 5° porqué.</p>
+    <p style="margin:0">"Quiero más ventas" &rarr; "¿Por qué?" &rarr; "Pagar deudas" &rarr; "¿Por qué importa?" &rarr; "Mi familia" = motivo real.</p>
+  </div>
+
+  <h3>FASE 4: Demo + Propuesta (Golden Circle)</h3>
+  <p>Estructura: <strong>POR QUÉ &rarr; CÓMO &rarr; QUÉ</strong></p>
+
+  <div class="script">
+    <div class="speaker you">Transición al demo:</div>
+    <div class="line">"Ahora que entendí tu situación, déjame mostrarte exactamente cómo Oryen resuelve esto. ¿Me permites compartir pantalla?"</div>
+  </div>
+
+  <h4>POR QUÉ (2 min)</h4>
+  <div class="script">
+    <div class="speaker you">Tú:</div>
+    <div class="line">"[Nombre], me contaste que [recapitular dolor con SUS palabras]. Tu objetivo es [meta que verbalizó]. Oryen existe exactamente para esto: ayudar corredores como tú a dejar de perder leads y vender más propiedades usando inteligencia artificial."</div>
+  </div>
+
+  <h4>CÓMO &mdash; 3 Pilares Personalizados (10 min con demo en vivo)</h4>
+  <p>Cada pilar conecta a un dolor que el lead VERBALIZÓ en el diagnóstico.</p>
+
+  <div class="card card-primary">
+    <h4 style="margin-top:0">Pilar 1: Respuesta inmediata 24/7</h4>
+    <p><strong>Tu dolor:</strong> "Pierdo leads porque no respondo rápido"</p>
+    <p><strong>Cómo resolvemos:</strong> El agente IA SDR atiende cada lead en segundos por WhatsApp. Califica, busca propiedades en tu portafolio, y agenda visitas &mdash; mientras duermes.</p>
+    <p style="margin:0"><em>&rarr; [Mostrar demo: conversación del agente IA en WhatsApp]</em></p>
+  </div>
+
+  <div class="card card-primary">
+    <h4 style="margin-top:0">Pilar 2: Organización sin esfuerzo</h4>
+    <p><strong>Tu dolor:</strong> "No sé en qué etapa está cada lead / mis conversaciones están dispersas"</p>
+    <p><strong>Cómo resolvemos:</strong> CRM visual con pipeline inmobiliario + todas las conversaciones de WhatsApp centralizadas. Todo el historial en un lugar.</p>
+    <p style="margin:0"><em>&rarr; [Mostrar demo: CRM pipeline + mensajes + timeline del lead]</em></p>
+  </div>
+
+  <div class="card card-primary">
+    <h4 style="margin-top:0">Pilar 3: Presencia profesional integrada</h4>
+    <p><strong>Tu dolor:</strong> "No tengo sitio web / hago todo manual"</p>
+    <p><strong>Cómo resolvemos:</strong> Sitio generado automáticamente de tu portafolio. Documentos inteligentes con templates. Lead del sitio cae directo al CRM y la IA atiende.</p>
+    <p style="margin:0"><em>&rarr; [Mostrar demo: sitio de propiedades + documentos + flujo integrado]</em></p>
+  </div>
+
+  <p>Después de cada pilar: <strong>"¿Tiene sentido para ti?"</strong> (colectar micro-sí)</p>
+
+  <h3>FASE 5: Temp Check + Inversión</h3>
+
+  <div class="script">
+    <div class="speaker you">Temp Check:</div>
+    <div class="line">"[Nombre], de 0 a 10, ¿dónde estás en relación a todo lo que te mostré?"</div>
+    <div class="note">10 = avanzar a inversión. 8-9 = "¿Qué falta para el 10?" y resolver. &lt;7 = volver al diagnóstico.</div>
+    <div class="note">REGLA: NO presentar inversión con nota abajo de 10.</div>
+  </div>
+
+  <div class="script">
+    <div class="speaker you">Presentar inversión:</div>
+    <div class="line">"Perfecto. La inversión para [Plan Gold] es de $219 dólares mensuales."</div>
+    <div class="note">SILENCIO. No justificar. No ofrecer descuento. Dejar digerir.</div>
+    <div class="note">Después del silencio: "La mayoría de nuestros clientes activan el plan en la reunión para comenzar el onboarding inmediatamente."</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 10: PROPUESTA -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="propuesta">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-accent)">10</div>
+    <h2>Presentación de la Propuesta</h2>
+  </div>
+
+  <h3>Secuencia de Inversión</h3>
+  <ol>
+    <li>Presentar <strong>valor lleno</strong> primero, sin opciones de pago</li>
+    <li><strong>SILENCIO</strong> &mdash; no justificar, no explicar</li>
+    <li>Anclaje social: "La mayoría de nuestros clientes paga de contado"</li>
+    <li>Si el lead pide opciones de pago: ahí sí negociar</li>
+    <li>Nunca empezar por la opción más barata</li>
+  </ol>
+
+  <h3>Cálculo de ROI (usar en la conversación)</h3>
+  <div class="card card-success">
+    <h4 style="margin-top:0; color:var(--success)">Ejemplo para Gold ($219/mes)</h4>
+    <ul>
+      <li>Comisión promedio de una venta: $3.000 - $15.000 USD</li>
+      <li>Si Oryen ayuda a cerrar <strong>1 venta extra al trimestre</strong> = ROI de 4x a 20x</li>
+      <li>Costo de un SDR humano: $800 - $1.500/mes + cargas sociales</li>
+      <li>Costo de Oryen con IA SDR 24h: $219/mes (6x-10x más barato que un humano)</li>
+      <li>Herramientas que reemplaza: CRM ($50) + WhatsApp Business API ($100) + Sitio web ($30) + Follow-up tool ($30) = $210/mes en herramientas separadas</li>
+    </ul>
+    <p style="margin:0"><strong>Bottom line:</strong> "Por menos de lo que pagas hoy en herramientas separadas, tienes todo unificado + un empleado de IA que trabaja 24 horas."</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 11: INVERSIÓN Y NEGOCIACIÓN -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="inversion">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-brand)">11</div>
+    <h2>Inversión y Negociación</h2>
+  </div>
+
+  <h3>Mentalidad de Negociación</h3>
+  <ol>
+    <li><strong>No seas "fiscal" de cuenta bancaria</strong> &mdash; ofrece solución, no juzgues finanzas</li>
+    <li><strong>Cambia de lado de la mesa</strong>: "Vamos a pensar juntos cómo hacerlo funcionar"</li>
+    <li><strong>Nunca salgas sin próximo paso</strong>: pago, contrato, fecha de activación</li>
+    <li><strong>Venta ética</strong>: si puedes ayudar y lo dejas ir sin solución, fallaste en la misión</li>
+  </ol>
+
+  <h3>Qué negociar vs Qué NO negociar</h3>
+  <div class="dos-donts">
+    <div class="do-box">
+      <h4>SÍ se negocia</h4>
+      <ul>
+        <li>Forma de pago (mensual, trimestral, anual)</li>
+        <li>Fecha de cobro</li>
+        <li>Plan inicial (empezar Basic, subir después)</li>
+        <li>Período de prueba extendido</li>
+      </ul>
+    </div>
+    <div class="dont-box">
+      <h4>NO se negocia</h4>
+      <ul>
+        <li>El precio del plan (valor posiciona)</li>
+        <li>Descuentos arbitrarios</li>
+        <li>"Te hago precio especial" (mata percepción de valor)</li>
+        <li>Dejar sin fecha definida para empezar</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Script de Transición al Pago</h3>
+  <div class="script">
+    <div class="speaker you">Tú:</div>
+    <div class="line">"Perfecto [Nombre]. Mis clientes generalmente activan la cuenta durante la reunión así los guío personalmente en el onboarding. ¿Quieres que lo configuremos ahora?"</div>
+    <div class="note">Foco en el SIGUIENTE PASO (onboarding), no en el dinero.</div>
+    <div class="note">Si el lead paga: MUDO, notificar equipo internamente, preparar onboarding. No silencio incómodo &mdash; hablar del primer paso.</div>
+  </div>
+
+  <h3>Cash Collected vs Facturación</h3>
+  <div class="card card-error">
+    <p style="margin:0"><strong>Comisión basada en cash collected</strong>, no en suscripción creada. Cliente que se suscribió pero canceló en el mes 1 = no es venta. Por eso la calidad de la venta importa: venta mal hecha = churn temprano.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 12: OBJECIONES -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="objeciones">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-accent)">12</div>
+    <h2>Manejo de Objeciones</h2>
+  </div>
+
+  <h3>Obstáculos vs Objeciones</h3>
+  <div class="dos-donts">
+    <div class="do-box">
+      <h4>Obstáculo (ANTES del precio)</h4>
+      <ul>
+        <li>Lead abierto, quiere entender más</li>
+        <li>Resolver en el momento</li>
+        <li>Si no resuelves ahora, se convierte en objeción después</li>
+      </ul>
+    </div>
+    <div class="dont-box">
+      <h4>Objeción (DESPUÉS del precio)</h4>
+      <ul>
+        <li>Lead en modo protección/miedo</li>
+        <li>3 pasos: Silencio &rarr; Preguntas &rarr; Aislar variable</li>
+        <li>Nunca aceptar de cara &mdash; investigar raíz</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Framework de 3 Pasos para Objeciones</h3>
+  <ol>
+    <li><strong>Silencio</strong>: callar después del precio, dejar digerir</li>
+    <li><strong>Preguntas de esclarecimiento</strong>: "¿Cómo así?" / "¿Puedes darme más detalle?"</li>
+    <li><strong>Aislar la variable</strong>: "Si quitamos el tema del precio, ¿hay algo más que te impediría avanzar?"</li>
+  </ol>
+
+  <hr>
+
+  <h3>"Es muy caro" / "No tengo presupuesto"</h3>
+  <div class="script">
+    <div class="speaker you">Validar:</div>
+    <div class="line">"Tiene sentido sentir eso. Si no lo sintieras, no sería una decisión importante."</div>
+    <div class="speaker you">Aislar:</div>
+    <div class="line">"Si el precio no fuera un tema, ¿te gustaría empezar con Oryen?"</div>
+    <div class="speaker you">Costo de la inercia:</div>
+    <div class="line">"¿Cuántos leads perdiste este mes? Si cada lead perdido es una comisión de $[X], ¿cuánto te está costando NO tener Oryen?"</div>
+    <div class="speaker you">Comparación:</div>
+    <div class="line">"Un SDR humano cuesta $800-$1.500 al mes más cargas. Oryen con IA 24h cuesta $219. ¿Ves la diferencia?"</div>
+    <div class="speaker you">Si realmente no puede:</div>
+    <div class="line">"Entiendo. Tenemos el plan Basic a $19/mes sin IA. Puedes empezar con el CRM y sitio, y cuando crezca tu operación subimos al Gold."</div>
+  </div>
+
+  <h3>"Necesito pensarlo"</h3>
+  <div class="script">
+    <div class="speaker you">Pregunta binaria:</div>
+    <div class="line">"Perfecto. ¿Necesitas pensar sobre CÓMO pagar o necesitas más INFORMACIÓN sobre lo que te mostré?"</div>
+    <div class="note">Si información: resolver AHORA. "Estoy aquí, dime qué quedó confuso."</div>
+    <div class="note">Si financiero: negociar forma de pago, plan menor.</div>
+    <div class="note">Si ninguno: la objeción real es otra &mdash; investigar más profundo.</div>
+    <div class="speaker you">Anti-procrastinación:</div>
+    <div class="line">"Llevas [X meses/años] con este problema. Cada mes que pasa sin solución son leads perdidos que no vuelven. ¿Qué va a cambiar en una semana que no puedas decidir hoy?"</div>
+  </div>
+
+  <h3>"Necesito hablar con mi socio"</h3>
+  <div class="script">
+    <div class="speaker you">Pregunta de oro:</div>
+    <div class="line">"¿Y si tu socio dice que no?"</div>
+    <div class="note">"Lo haría igual" = no es tema de autoridad. Sugiere asegurar lugar.</div>
+    <div class="note">"No lo haría" = explorar: "¿Por qué estaría en contra? ¿Qué no sabe de tu situación?"</div>
+    <div class="speaker you">Inclusión inmediata:</div>
+    <div class="line">"¿Puedes llamarlo ahora? Le explico en 5 minutos."</div>
+    <div class="speaker you">Si necesita presentar solo:</div>
+    <div class="line">"Vamos a ensayar. ¿Qué va a preguntar tu socio? Preparémonos juntos."</div>
+  </div>
+
+  <h3>"¿Me puedes enviar una propuesta?"</h3>
+  <div class="script">
+    <div class="speaker you">Tú:</div>
+    <div class="line">"Puedo enviarte un resumen, pero sería imposible poner la transformación en un PDF. Ya que estamos aquí y tengo todas las respuestas, ¿qué te gustaría analizar? Lo resolvemos ahora."</div>
+    <div class="speaker you">Dar permiso para decir no:</div>
+    <div class="line">"Prefiero que me digas 'no' ahora a que desperdicies tu tiempo esperando un documento."</div>
+  </div>
+
+  <h3>"No tengo tiempo para implementar"</h3>
+  <div class="script">
+    <div class="speaker you">Tú:</div>
+    <div class="line">"Justamente por eso: la IA hace el trabajo pesado. Tu equipo no necesita aprender a prospectar &mdash; la IA lo hace sola. El setup toma 2 minutos."</div>
+    <div class="speaker you">Organizar calendario junto:</div>
+    <div class="line">"¿Abrimos tu calendario ahora? Necesitas dedicar 30 minutos al onboarding y después la IA trabaja sola. ¿Cuándo tienes esos 30 minutos esta semana?"</div>
+  </div>
+
+  <h3>"Ya tengo un CRM / Ya uso otra herramienta"</h3>
+  <div class="script">
+    <div class="speaker you">Tú:</div>
+    <div class="line">"Genial, eso demuestra que entiendes la importancia de tener proceso. [R] Pregunta: ¿tu CRM actual tiene un agente de IA que atiende WhatsApp 24 horas, califica leads y agenda visitas por ti? [Q]"</div>
+    <div class="note">No es desCalificación &mdash; es calificación. Ya invierte en herramientas = mentalidad correcta.</div>
+    <div class="speaker you">Si dice que sí tiene chatbot:</div>
+    <div class="line">"¿Y el chatbot busca propiedades en tu portafolio real? ¿Agenda visitas con horario concreto? ¿Hace follow-up con 5 estrategias diferentes? La diferencia es que el nuestro no es un chatbot &mdash; es un agente inteligente que PIENSA."</div>
+  </div>
+
+  <h3>"Mi mercado es diferente"</h3>
+  <div class="script">
+    <div class="speaker you">Tú:</div>
+    <div class="line">"Cada mercado dice lo mismo. Y tienen razón &mdash; cada mercado ES diferente. Por eso Oryen se personaliza: idioma, moneda, tono del agente, etapas del pipeline, plantillas de documentos. Todo se adapta a TU operación. ¿Qué específicamente te preocupa?"</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 13: FOLLOW-UP -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="followup">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-brand)">13</div>
+    <h2>Follow-up</h2>
+  </div>
+
+  <div class="card card-error">
+    <p style="margin:0"><strong>"Follow-up no debería existir"</strong> &mdash; el objetivo es cerrar la venta en la reunión. Follow-up es plan B, no plan A.</p>
+  </div>
+
+  <h3>BAMFAM: Book a Meeting From a Meeting</h3>
+  <p><strong>NUNCA colgar sin próximo paso agendado</strong> con día y hora. "Voy a ver" no es aceptable.</p>
+
+  <h3>Plazos Cortos (24-48h)</h3>
+  <table>
+    <thead>
+      <tr><th>Escenario</th><th>Plazo</th><th>Acción</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Límite bancario / tarjeta</td><td>24h</td><td>Agendar call post-banco</td></tr>
+      <tr><td>Hablar con socio/cónyuge</td><td>Mismo día</td><td>Call a 3 o preparar al lead</td></tr>
+      <tr><td>"Necesito pensar"</td><td>24h máximo</td><td>No dar más tiempo del necesario</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Nutrir entre retornos</h3>
+  <ul>
+    <li>Audio/video corto hablando del caso específico del lead</li>
+    <li>Print de resultado de cliente similar (mismo tamaño de equipo, mismo mercado)</li>
+    <li>Artículo relevante al desafío mapeado</li>
+    <li><strong>NO enviar contenido genérico</strong> &mdash; todo personalizado al contexto</li>
+  </ul>
+
+  <h3>Anti-cancelación</h3>
+  <div class="script">
+    <div class="speaker you">Si cancela reunión de follow-up:</div>
+    <div class="line">"¿Qué cambió desde nuestra reunión hasta hoy?"</div>
+    <div class="line">"Odio dejar cosas por la mitad, y sé que tú también."</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 14: ONBOARDING -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="onboarding">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-accent)">14</div>
+    <h2>Onboarding del Cliente</h2>
+  </div>
+
+  <h3>Velocidad = Retención</h3>
+  <p>Onboarding rápido para evitar arrepentimiento. El cliente necesita ver valor en las primeras 48 horas.</p>
+
+  <h3>Checklist de Onboarding Oryen</h3>
+  <ol>
+    <li><strong>Activar cuenta</strong>: verificar que el pago fue procesado</li>
+    <li><strong>Conectar WhatsApp</strong>: QR Code o Meta Cloud API</li>
+    <li><strong>Configurar pipeline</strong>: confirmar etapas o personalizar</li>
+    <li><strong>Subir primeras propiedades</strong>: mínimo 5 para que la IA tenga qué ofrecer</li>
+    <li><strong>Personalizar agente IA</strong>: nombre, tono, contexto de la empresa</li>
+    <li><strong>Activar SDR</strong>: poner el agente en modo activo</li>
+    <li><strong>Configurar sitio</strong>: logo, colores, bio, CRECI, redes</li>
+    <li><strong>Publicar sitio</strong>: las propiedades aparecen automáticamente</li>
+    <li><strong>Test de flujo</strong>: enviar mensaje de prueba y ver el agente responder</li>
+    <li><strong>Alinear expectativas</strong>: "30% es la plataforma, 70% es tu uso. Nosotros te damos la herramienta, tú la alimentas."</li>
+  </ol>
+
+  <h3>Primera Semana: Check-in</h3>
+  <div class="card card-success">
+    <p style="margin:0">Llamada de 15 minutos en la primera semana para validar: ¿el agente está respondiendo bien? ¿Los leads están llegando al CRM? ¿Alguna duda? Este check-in <strong>previene churn temprano</strong>.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 15: MÉTRICAS -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="metricas">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-brand)">15</div>
+    <h2>Métricas y Pipeline</h2>
+  </div>
+
+  <h3>Métricas del Closer</h3>
+  <table>
+    <thead>
+      <tr><th>Métrica</th><th>Qué mide</th><th>Referencia</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Prospecciones/día</td><td>Volumen de abordajes</td><td>Mínimo 20</td></tr>
+      <tr><td>Tasa de respuesta</td><td>Calidad del script</td><td>&gt;15%</td></tr>
+      <tr><td>Pre-calificaciones/semana</td><td>Pipeline entrando</td><td>Mínimo 10</td></tr>
+      <tr><td>Demos/semana</td><td>Reuniones de venta</td><td>Mínimo 5</td></tr>
+      <tr><td>Tasa de conversión demo→venta</td><td>Calidad del closer</td><td>&gt;25%</td></tr>
+      <tr><td>Ticket promedio</td><td>Plan vendido</td><td>Gold ($219)</td></tr>
+      <tr><td>Cash collected/mes</td><td>Dinero real en caja</td><td>Meta individual</td></tr>
+      <tr><td>Churn 30 días</td><td>Calidad de la venta</td><td>&lt;10%</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Embudo de Ventas Oryen</h3>
+  <p>Prospección &rarr; Respuesta &rarr; Pre-calificación &rarr; Demo agendada &rarr; Demo realizada &rarr; Propuesta &rarr; Cierre &rarr; Onboarding</p>
+  <p>Cada etapa tiene tasa de conversión propia. Identifica tu cuello de botella: ¿no llegan leads? ¿no convierten a demo? ¿no cierran?</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 16: AGENDA ATAQUE VS DEFENSA -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="agenda">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-accent)">16</div>
+    <h2>Agenda: Ataque vs Defensa</h2>
+  </div>
+
+  <div class="dos-donts">
+    <div class="do-box">
+      <h4>Ataque (PRIORIDAD &mdash; hacer primero)</h4>
+      <ul>
+        <li>Bloque de prospección (Golden Hour)</li>
+        <li>Llamadas de pre-calificación</li>
+        <li>Demos / sesiones estratégicas</li>
+        <li>Follow-up a leads calientes</li>
+        <li>Cerrar ventas pendientes</li>
+      </ul>
+    </div>
+    <div class="dont-box">
+      <h4>Defensa (después del ataque)</h4>
+      <ul>
+        <li>Actualizar CRM / notas</li>
+        <li>Preparar materiales</li>
+        <li>Reuniones internas</li>
+        <li>Estudiar producto</li>
+        <li>Responder emails internos</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Golden Hour</h3>
+  <p>Bloque innegociable de prospección activa. Estar online cuando el cliente está online. Alerta en el celular: "Golden Hour &mdash; prospección activa". No agendar reuniones en este bloque.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 17: DO'S AND DON'TS -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="dosdonts">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-brand)">17</div>
+    <h2>Do's and Don'ts</h2>
+  </div>
+
+  <div class="dos-donts">
+    <div class="do-box">
+      <h4>SIEMPRE hacer</h4>
+      <ul>
+        <li>Investigar el perfil del lead ANTES de contactar</li>
+        <li>Usar RPQ en CADA respuesta</li>
+        <li>Llamar (no solo mensajear) &mdash; high ticket no se vende por texto</li>
+        <li>Cerrar las 6 puertas ICUVA+DI antes de la demo</li>
+        <li>Mostrar demo en VIVO con pantalla compartida</li>
+        <li>Conectar cada feature al dolor que el lead VERBALIZÓ</li>
+        <li>Temp check antes de presentar inversión</li>
+        <li>BAMFAM &mdash; nunca colgar sin próximo paso</li>
+        <li>Onboarding rápido (&lt;48h)</li>
+        <li>Anotar TODO lo que el lead dice (caderno, no teclado)</li>
+        <li>Respirar profundo antes de cada call</li>
+        <li>Actualizar CRM al final de cada día</li>
+      </ul>
+    </div>
+    <div class="dont-box">
+      <h4>NUNCA hacer</h4>
+      <ul>
+        <li>Vender por mensaje/DM (solo para agendar, no para cerrar)</li>
+        <li>Hablar más que el lead en el diagnóstico</li>
+        <li>Enviar propuesta por PDF sin conversar</li>
+        <li>Dar descuentos sin motivo</li>
+        <li>Saltar la pre-calificación ("parece interesado, agendo directo")</li>
+        <li>Presentar todas las features (persona confusa no compra)</li>
+        <li>Insistir después del "no" claro y definitivo</li>
+        <li>Prometer funcionalidades que no existen</li>
+        <li>Agendar follow-up sin encontrar la objeción real</li>
+        <li>Hablar mal de la competencia (posiciónate, no ataques)</li>
+        <li>Pedir disculpas por el precio</li>
+        <li>Depositar toda tu energía en una sola oportunidad</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MÓDULO 18: FRASES DE PODER -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<section class="module" id="frases">
+  <div class="module-header">
+    <div class="module-number" style="background:var(--gradient-accent)">18</div>
+    <h2>Frases de Poder</h2>
+  </div>
+
+  <h3>Para abrir conversaciones</h3>
+  <div class="card">
+    <ul style="margin:0">
+      <li>"Antes de que pienses que es spam random &mdash; entré a tu perfil y vi que..."</li>
+      <li>"No sé si es tu caso, pero la mayoría de corredores que conozco pierden leads por no responder rápido."</li>
+      <li>"Si ya tienes todo resuelto, me puedes ignorar. Pero si pierdes clientes por velocidad de respuesta..."</li>
+    </ul>
+  </div>
+
+  <h3>Para el diagnóstico</h3>
+  <div class="card">
+    <ul style="margin:0">
+      <li>"¿Cuántos leads te llegan al mes y cuántos cierras?" (gap = oportunidad)</li>
+      <li>"Si no resuelves esto en los próximos 3 meses, ¿qué pasa?"</li>
+      <li>"¿Cuánto te está costando NO tener un proceso?"</li>
+      <li>"¿Qué harías con 2 horas extra al día si la IA hiciera la calificación por ti?"</li>
+    </ul>
+  </div>
+
+  <h3>Para cerrar</h3>
+  <div class="card">
+    <ul style="margin:0">
+      <li>"No estaría aquí si no creyera que puedo ayudarte."</li>
+      <li>"¿Prefieres seguir perdiendo leads o empezamos hoy?"</li>
+      <li>"Un SDR humano cuesta $1.000/mes. La IA de Oryen trabaja 24h por $219. ¿Cuál prefieres?"</li>
+      <li>"La mayoría de nuestros clientes activa en la reunión. ¿Lo configuramos juntos?"</li>
+      <li>"Cada día sin proceso son leads que se van con tu competencia."</li>
+    </ul>
+  </div>
+
+  <h3>Para objeciones</h3>
+  <div class="card">
+    <ul style="margin:0">
+      <li>"Tiene sentido sentir eso. Si no lo sintieras, no sería una decisión importante."</li>
+      <li>"Si quitamos el tema del precio, ¿hay algo más que te impediría avanzar?"</li>
+      <li>"¿Qué va a cambiar en una semana que no puedas decidir hoy?"</li>
+      <li>"Odio dejar cosas por la mitad, y sé que tú también."</li>
+      <li>"Prefiero que me digas 'no' ahora a que desperdicies tu tiempo."</li>
+    </ul>
+  </div>
+
+  <h3>Mantras del equipo</h3>
+  <div class="card card-primary" style="text-align:center">
+    <p style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin-bottom:0.5rem">"Lo que es correcto, es correcto aunque nadie lo esté haciendo.<br>Lo que es incorrecto, es incorrecto aunque todos lo estén haciendo."</p>
+    <p style="margin:0; color:var(--text-tertiary); font-size:0.85rem">Asume tus propios problemas. Vender es servir. Prospección es estilo de vida.</p>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<hr>
+<div style="text-align:center; padding:2rem 0; color:var(--text-disabled); font-size:0.8rem">
+  <p style="font-family:'Orbitron',sans-serif; font-weight:700; letter-spacing:0.15em; margin-bottom:0.5rem; color:var(--text-tertiary)">ORYEN</p>
+  <p>Playbook Comercial &mdash; Documento Interno Confidencial</p>
+  <p>Metodología basada en Smart Sales (Gabriela Melo) adaptada para Oryen</p>
+  <p>v1.0 &mdash; Abril 2026</p>
+</div>
+
+</div><!-- .main -->
+
+</body>
+</html>
