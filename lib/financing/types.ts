@@ -1,35 +1,59 @@
 // lib/financing/types.ts
 // Tipos para a calculadora de financiamento imobiliário
 
+export type CountryCode = 'BR' | 'US' | 'UK' | 'ES' | 'PT' | 'MX' | 'CO' | 'CL'
+
+export interface CountryConfig {
+  code: CountryCode
+  name: string                    // ex: "Brasil"
+  flag: string                    // ex: "🇧🇷"
+  currency: string                // ex: "BRL"
+  currencySymbol: string          // ex: "R$"
+  locale: string                  // ex: "pt-BR"
+  maxTermMonths: number
+  minTermMonths: number
+  maxFinancingPercent: number
+  minDownPaymentPercent: number
+  hasInsuranceMIP: boolean        // seguro morte/invalidez obrigatório
+  hasInsuranceDFI: boolean        // seguro danos físicos ao imóvel
+  transferTaxRate: number         // ITBI (BR), Stamp Duty (UK), etc.
+  registryRate: number
+  evaluationFee: number           // taxa fixa de avaliação
+  propertyTaxLabel: string        // "IPTU", "Property Tax", "IBI", etc.
+  amortizationMethods: ('SAC' | 'PRICE')[]  // métodos disponíveis no país
+}
+
 export interface BankPreset {
   id: string
   name: string
   rate: number          // taxa anual (ex: 9.99 para 9.99%)
   maxFinancing: number  // % máximo financiável (ex: 80)
   fgts: boolean
+  country: CountryCode
 }
 
 export interface SimulationInput {
   propertyValue: number
-  downPayment: number            // valor absoluto em R$
-  annualInterestRate: number     // ex: 10.49
-  termMonths: number             // ex: 360
-  condoFee?: number              // condomínio mensal
-  iptu?: number                  // IPTU anual (será dividido por 12)
-  borrowerAge?: number           // para cálculo do seguro MIP
-  city?: string                  // para estimativa ITBI
+  downPayment: number
+  annualInterestRate: number
+  termMonths: number
+  condoFee?: number
+  iptu?: number                  // property tax anual
+  borrowerAge?: number
+  city?: string
+  country?: CountryCode
 }
 
 export interface MonthlyPayment {
   month: number
-  payment: number                // parcela (amortização + juros)
+  payment: number
   amortization: number
   interest: number
   outstandingBalance: number
   insuranceMIP: number
   insuranceDFI: number
-  totalWithInsurance: number     // parcela + MIP + DFI
-  totalMonthlyCost: number       // totalWithInsurance + condomínio + IPTU/12
+  totalWithInsurance: number
+  totalMonthlyCost: number
 }
 
 export interface AmortizationSchedule {
@@ -45,7 +69,7 @@ export interface AmortizationSchedule {
 }
 
 export interface ClosingCosts {
-  itbi: number
+  itbi: number       // transfer tax (ITBI, Stamp Duty, ITP, etc.)
   registry: number
   evaluation: number
   total: number
@@ -56,7 +80,7 @@ export interface ComparisonResult {
   price: AmortizationSchedule
   closingCosts: ClosingCosts
   input: SimulationInput
-  savings: number  // quanto SAC economiza vs Price em juros totais
+  savings: number
 }
 
 export interface SavedSimulation {

@@ -8,15 +8,14 @@ import type {
   AmortizationSchedule,
   ClosingCosts,
   ComparisonResult,
+  CountryCode,
 } from './types'
 import {
   MIP_RATE_BASE,
   DFI_RATE,
-  ITBI_RATE_DEFAULT,
-  ITBI_RATE_BH,
-  REGISTRY_RATE,
-  EVALUATION_FEE,
   getMIPMultiplier,
+  getCountryConfig,
+  formatCurrency,
 } from './constants'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -28,28 +27,33 @@ export function annualToMonthlyRate(annualRate: number): number {
   return Math.pow(1 + annualRate / 100, 1 / 12) - 1
 }
 
-/** Estima seguro MIP mensal */
-export function estimateInsuranceMIP(outstandingBalance: number, age?: number): number {
+/** Estima seguro MIP mensal (obrigatório em BR, PT, MX, CO, CL) */
+export function estimateInsuranceMIP(outstandingBalance: number, age?: number, country: CountryCode = 'BR'): number {
+  const config = getCountryConfig(country)
+  if (!config.hasInsuranceMIP) return 0
   const multiplier = getMIPMultiplier(age)
   return outstandingBalance * MIP_RATE_BASE * multiplier
 }
 
-/** Estima seguro DFI mensal */
-export function estimateInsuranceDFI(propertyValue: number): number {
+/** Estima seguro DFI mensal (obrigatório em BR, PT, MX, CO, CL) */
+export function estimateInsuranceDFI(propertyValue: number, country: CountryCode = 'BR'): number {
+  const config = getCountryConfig(country)
+  if (!config.hasInsuranceDFI) return 0
   return propertyValue * DFI_RATE
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TABELA PRICE (parcelas fixas)
+// TABELA PRICE (parcelas fixas / Fixed-rate mortgage)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function calculatePrice(input: SimulationInput): AmortizationSchedule {
+  const country = input.country || 'BR'
   const loanAmount = input.propertyValue - input.downPayment
   const i = annualToMonthlyRate(input.annualInterestRate)
   const n = input.termMonths
   const condoMonthly = input.condoFee || 0
   const iptuMonthly = (input.iptu || 0) / 12
-  const dfi = estimateInsuranceDFI(input.propertyValue)
+  const dfi = estimateInsuranceDFI(input.propertyValue, country)
 
   // PMT = PV × [i(1+i)^n] / [(1+i)^n - 1]
   const factor = Math.pow(1 + i, n)
@@ -66,7 +70,7 @@ export function calculatePrice(input: SimulationInput): AmortizationSchedule {
     const amortization = pmt - interest
     outstanding = Math.max(0, outstanding - amortization)
 
-    const mip = estimateInsuranceMIP(outstanding + amortization, input.borrowerAge)
+    const mip = estimateInsuranceMIP(outstanding + amortization, input.borrowerAge, country)
     const totalWithInsurance = pmt + mip + dfi
     const totalMonthlyCost = totalWithInsurance + condoMonthly + iptuMonthly
 
@@ -101,16 +105,17 @@ export function calculatePrice(input: SimulationInput): AmortizationSchedule {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TABELA SAC (amortização constante)
+// TABELA SAC (amortização constante / Constant Amortization)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function calculateSAC(input: SimulationInput): AmortizationSchedule {
+  const country = input.country || 'BR'
   const loanAmount = input.propertyValue - input.downPayment
   const i = annualToMonthlyRate(input.annualInterestRate)
   const n = input.termMonths
   const condoMonthly = input.condoFee || 0
   const iptuMonthly = (input.iptu || 0) / 12
-  const dfi = estimateInsuranceDFI(input.propertyValue)
+  const dfi = estimateInsuranceDFI(input.propertyValue, country)
 
   const amortization = loanAmount / n // constante
 
@@ -125,7 +130,7 @@ export function calculateSAC(input: SimulationInput): AmortizationSchedule {
     const payment = amortization + interest
     outstanding = Math.max(0, outstanding - amortization)
 
-    const mip = estimateInsuranceMIP(outstanding + amortization, input.borrowerAge)
+    const mip = estimateInsuranceMIP(outstanding + amortization, input.borrowerAge, country)
     const totalWithInsurance = payment + mip + dfi
     const totalMonthlyCost = totalWithInsurance + condoMonthly + iptuMonthly
 
@@ -164,18 +169,25 @@ export function calculateSAC(input: SimulationInput): AmortizationSchedule {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CUSTOS DE ENTRADA
+// CUSTOS DE ENTRADA (country-aware)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function estimateClosingCosts(propertyValue: number, city?: string): ClosingCosts {
-  const cityLower = (city || '').toLowerCase().trim()
-  const itbiRate = cityLower.includes('belo horizonte') || cityLower.includes('bh')
-    ? ITBI_RATE_BH
-    : ITBI_RATE_DEFAULT
+export function estimateClosingCosts(propertyValue: number, city?: string, country: CountryCode = 'BR'): ClosingCosts {
+  const config = getCountryConfig(country)
 
-  const itbi = propertyValue * itbiRate
-  const registry = propertyValue * REGISTRY_RATE
-  const evaluation = EVALUATION_FEE
+  let transferTaxRate = config.transferTaxRate
+
+  // Ajustes específicos por cidade (Brasil: BH tem 3%)
+  if (country === 'BR') {
+    const cityLower = (city || '').toLowerCase().trim()
+    if (cityLower.includes('belo horizonte') || cityLower.includes('bh')) {
+      transferTaxRate = 0.03
+    }
+  }
+
+  const itbi = propertyValue * transferTaxRate
+  const registry = propertyValue * config.registryRate
+  const evaluation = config.evaluationFee
 
   return {
     itbi: round(itbi),
@@ -190,9 +202,17 @@ export function estimateClosingCosts(propertyValue: number, city?: string): Clos
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function calculateComparison(input: SimulationInput): ComparisonResult {
-  const sac = calculateSAC(input)
+  const country = input.country || 'BR'
+  const config = getCountryConfig(country)
+
   const price = calculatePrice(input)
-  const closingCosts = estimateClosingCosts(input.propertyValue, input.city)
+
+  // Se o país suporta SAC, calcula; senão, usa Price como fallback
+  const sac = config.amortizationMethods.includes('SAC')
+    ? calculateSAC(input)
+    : price
+
+  const closingCosts = estimateClosingCosts(input.propertyValue, input.city, country)
   const savings = price.totalInterest - sac.totalInterest
 
   return { sac, price, closingCosts, input, savings }
@@ -222,7 +242,6 @@ export function getChartData(comparison: ComparisonResult): Array<{
   const sacPayments = comparison.sac.payments
   const pricePayments = comparison.price.payments
 
-  // Primeiro mês + a cada 12 meses + último mês
   for (let i = 0; i < sacPayments.length; i++) {
     if (i === 0 || (i + 1) % 12 === 0 || i === sacPayments.length - 1) {
       data.push({
@@ -240,26 +259,29 @@ export function getChartData(comparison: ComparisonResult): Array<{
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// VALIDAÇÃO
+// VALIDAÇÃO (country-aware)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function validateInput(input: SimulationInput): string | null {
+  const country = input.country || 'BR'
+  const config = getCountryConfig(country)
+
   if (input.propertyValue <= 0) return 'Valor do imóvel deve ser positivo'
   if (input.downPayment < 0) return 'Entrada não pode ser negativa'
   if (input.downPayment >= input.propertyValue) return 'Entrada deve ser menor que o valor do imóvel'
   if (input.annualInterestRate <= 0 || input.annualInterestRate > 30) return 'Taxa de juros inválida'
-  if (input.termMonths < 12 || input.termMonths > 420) return 'Prazo deve ser entre 12 e 420 meses'
+  if (input.termMonths < config.minTermMonths || input.termMonths > config.maxTermMonths) {
+    return `Prazo deve ser entre ${config.minTermMonths} e ${config.maxTermMonths} meses`
+  }
 
-  const minDown = input.propertyValue * 0.10
-  if (input.downPayment < minDown) return `Entrada mínima: 10% (${formatBRL(minDown)})`
+  const minDown = input.propertyValue * (config.minDownPaymentPercent / 100)
+  if (input.downPayment < minDown) {
+    return `Entrada mínima: ${config.minDownPaymentPercent}% (${formatCurrency(minDown, country)})`
+  }
 
   return null
 }
 
 function round(value: number): number {
   return Math.round(value * 100) / 100
-}
-
-function formatBRL(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }

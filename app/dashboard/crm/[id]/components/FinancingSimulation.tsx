@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import FinancingCalculator from '@/app/dashboard/components/FinancingCalculator'
+import { formatCurrency } from '@/lib/financing/constants'
 import type { ComparisonResult, SavedSimulation } from '@/lib/financing/types'
 import { Calculator, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 
@@ -57,7 +58,7 @@ const TRANSLATIONS = {
 type Lang = keyof typeof TRANSLATIONS
 
 function fmt(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  return formatCurrency(value)
 }
 
 interface Props {

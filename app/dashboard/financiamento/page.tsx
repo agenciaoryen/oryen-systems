@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/AuthContext'
 import FinancingCalculator from '@/app/dashboard/components/FinancingCalculator'
-import type { ComparisonResult } from '@/lib/financing/types'
+import type { ComparisonResult, CountryCode } from '@/lib/financing/types'
+import { formatCurrency } from '@/lib/financing/constants'
 import { Calculator, Clock, Trash2, RotateCcw } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -73,10 +74,11 @@ interface HistoryEntry {
   bank: string
   firstPaymentSac: number
   firstPaymentPrice: number
+  country?: CountryCode
 }
 
-function fmt(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+function fmt(value: number, country: CountryCode = 'BR'): string {
+  return formatCurrency(value, country)
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -116,6 +118,7 @@ export default function FinanciamentoPage() {
       bank: '',
       firstPaymentSac: result.sac.firstPayment,
       firstPaymentPrice: result.price.firstPayment,
+      country: result.input.country || 'BR',
     }
 
     const updated = [entry, ...history].slice(0, MAX_HISTORY)
@@ -190,7 +193,7 @@ export default function FinanciamentoPage() {
                 <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
                   <div>
                     <span className="text-xs block" style={{ color: 'var(--color-text-muted)' }}>{t.propertyValue}</span>
-                    <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{fmt(entry.propertyValue)}</span>
+                    <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{fmt(entry.propertyValue, entry.country)}</span>
                   </div>
                   <div>
                     <span className="text-xs block" style={{ color: 'var(--color-text-muted)' }}>{t.rate}</span>
@@ -202,11 +205,11 @@ export default function FinanciamentoPage() {
                   </div>
                   <div>
                     <span className="text-xs block" style={{ color: 'var(--color-text-muted)' }}>{t.firstPaymentSac}</span>
-                    <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{fmt(entry.firstPaymentSac)}</span>
+                    <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{fmt(entry.firstPaymentSac, entry.country)}</span>
                   </div>
                   <div>
                     <span className="text-xs block" style={{ color: 'var(--color-text-muted)' }}>{t.firstPaymentPrice}</span>
-                    <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{fmt(entry.firstPaymentPrice)}</span>
+                    <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{fmt(entry.firstPaymentPrice, entry.country)}</span>
                   </div>
                 </div>
                 <div className="shrink-0">

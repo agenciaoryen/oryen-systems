@@ -15,6 +15,7 @@ import {
   Save,
   ExternalLink,
   BadgeCheck,
+  Globe,
 } from 'lucide-react'
 import {
   AreaChart,
@@ -27,8 +28,16 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { calculateComparison, getChartData, validateInput, annualToMonthlyRate } from '@/lib/financing/calculator'
-import { BANK_PRESETS, MAX_TERM_MONTHS, MIN_TERM_MONTHS } from '@/lib/financing/constants'
-import type { ComparisonResult, SimulationInput } from '@/lib/financing/types'
+import {
+  getBankPresets,
+  getCountryConfig,
+  formatCurrency,
+  formatCurrencyCompact,
+  parseCurrencyInput,
+  formatInputValue,
+  COUNTRY_CONFIGS,
+} from '@/lib/financing/constants'
+import type { ComparisonResult, SimulationInput, CountryCode } from '@/lib/financing/types'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -39,6 +48,7 @@ interface FinancingCalculatorProps {
   initialCondoFee?: number
   initialIptu?: number
   initialCity?: string
+  initialCountry?: CountryCode
   onSave?: (result: ComparisonResult) => void
   compact?: boolean
   lang?: 'pt' | 'en' | 'es'
@@ -62,7 +72,7 @@ const TRANSLATIONS = {
     term: 'Prazo',
     age: 'Idade do comprador',
     condoFee: 'Condomínio',
-    iptu: 'IPTU anual',
+    iptu: 'Imposto Predial (anual)',
     simulate: 'Simular',
     loanAmount: 'Valor Financiado',
     payment: 'Parcela',
@@ -72,6 +82,7 @@ const TRANSLATIONS = {
     totalCost: 'Custo Total',
     savings: 'Economia',
     comparison: 'Comparativo SAC vs Price',
+    comparisonPriceOnly: 'Detalhes do Financiamento',
     amortizationTable: 'Tabela de Amortização',
     viewFull: 'Ver tabela completa',
     collapsTable: 'Recolher tabela',
@@ -93,7 +104,7 @@ const TRANSLATIONS = {
     totalPaid: 'Total Pago',
     totalInterestRow: 'Total de Juros',
     totalInsurance: 'Total Seguro',
-    itbi: 'ITBI',
+    itbi: 'Imposto de Transferência',
     registry: 'Registro',
     evaluation: 'Avaliação',
     total: 'Total',
@@ -101,19 +112,22 @@ const TRANSLATIONS = {
     costs: 'Custos',
     totalForDeed: 'Total para Escritura',
     paymentSac: 'Parcela (SAC 1ª)',
+    paymentFixed: 'Parcela Fixa',
     insuranceMip: 'Seguro MIP',
     insuranceDfi: 'Seguro DFI',
     condoFeeLabel: 'Condomínio',
-    iptuMonthly: 'IPTU/12',
+    iptuMonthly: 'Imp. Predial/12',
     totalMonthly: 'Total Mensal',
     rateLabel: 'a.a.',
     paymentEvolution: 'Evolução das Parcelas',
     sacLabel: 'SAC',
     priceLabel: 'Price',
+    fixedLabel: 'Fixa',
     year: 'Ano',
     validationError: 'Erro de validação',
     ageOptional: 'opcional',
     city: 'Cidade',
+    country: 'País',
   },
   en: {
     title: 'Financing Calculator',
@@ -130,11 +144,12 @@ const TRANSLATIONS = {
     loanAmount: 'Loan Amount',
     payment: 'Payment',
     firstPaymentSac: '1st Payment SAC',
-    paymentPrice: 'Price Payment',
+    paymentPrice: 'Fixed Payment',
     totalInterest: 'Total Interest',
     totalCost: 'Total Cost',
     savings: 'Savings',
-    comparison: 'SAC vs Price Comparison',
+    comparison: 'SAC vs Fixed Comparison',
+    comparisonPriceOnly: 'Financing Details',
     amortizationTable: 'Amortization Table',
     viewFull: 'View full table',
     collapsTable: 'Collapse table',
@@ -162,8 +177,9 @@ const TRANSLATIONS = {
     total: 'Total',
     downPaymentLabel: 'Down Payment',
     costs: 'Costs',
-    totalForDeed: 'Total for Deed',
+    totalForDeed: 'Total Upfront',
     paymentSac: 'Payment (SAC 1st)',
+    paymentFixed: 'Fixed Payment',
     insuranceMip: 'MIP Insurance',
     insuranceDfi: 'DFI Insurance',
     condoFeeLabel: 'Condo Fee',
@@ -172,11 +188,13 @@ const TRANSLATIONS = {
     rateLabel: 'p.a.',
     paymentEvolution: 'Payment Evolution',
     sacLabel: 'SAC',
-    priceLabel: 'Price',
+    priceLabel: 'Fixed',
+    fixedLabel: 'Fixed',
     year: 'Year',
     validationError: 'Validation error',
     ageOptional: 'optional',
     city: 'City',
+    country: 'Country',
   },
   es: {
     title: 'Simulador de Financiamiento',
@@ -193,11 +211,12 @@ const TRANSLATIONS = {
     loanAmount: 'Valor Financiado',
     payment: 'Cuota',
     firstPaymentSac: '1ª Cuota SAC',
-    paymentPrice: 'Cuota Price',
+    paymentPrice: 'Cuota Fija',
     totalInterest: 'Total Intereses',
     totalCost: 'Costo Total',
     savings: 'Ahorro',
-    comparison: 'Comparativo SAC vs Price',
+    comparison: 'Comparativo SAC vs Cuota Fija',
+    comparisonPriceOnly: 'Detalles del Financiamiento',
     amortizationTable: 'Tabla de Amortización',
     viewFull: 'Ver tabla completa',
     collapsTable: 'Colapsar tabla',
@@ -227,6 +246,7 @@ const TRANSLATIONS = {
     costs: 'Costos',
     totalForDeed: 'Total para Escritura',
     paymentSac: 'Cuota (SAC 1ª)',
+    paymentFixed: 'Cuota Fija',
     insuranceMip: 'Seguro MIP',
     insuranceDfi: 'Seguro DFI',
     condoFeeLabel: 'Condominio',
@@ -235,38 +255,15 @@ const TRANSLATIONS = {
     rateLabel: 'a.a.',
     paymentEvolution: 'Evolución de Cuotas',
     sacLabel: 'SAC',
-    priceLabel: 'Price',
+    priceLabel: 'Fija',
+    fixedLabel: 'Fija',
     year: 'Año',
     validationError: 'Error de validación',
     ageOptional: 'opcional',
     city: 'Ciudad',
+    country: 'País',
   },
 } as const
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function fmt(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
-function fmtCompact(value: number): string {
-  if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)}M`
-  if (value >= 1_000) return `R$ ${(value / 1_000).toFixed(0)}k`
-  return fmt(value)
-}
-
-function parseBRL(raw: string): number {
-  const cleaned = raw.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.')
-  const parsed = parseFloat(cleaned)
-  return isNaN(parsed) ? 0 : parsed
-}
-
-function formatInputBRL(value: number): string {
-  if (value === 0) return ''
-  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // STYLES
@@ -355,6 +352,7 @@ export default function FinancingCalculator({
   initialCondoFee,
   initialIptu,
   initialCity,
+  initialCountry,
   onSave,
   compact = false,
   lang = 'pt',
@@ -362,9 +360,19 @@ export default function FinancingCalculator({
   const t = TRANSLATIONS[lang]
 
   // ─── State ──────────────────────────────────────────────────────────────────
+  const [country, setCountry] = useState<CountryCode>(initialCountry || 'BR')
+  const countryConfig = useMemo(() => getCountryConfig(country), [country])
+  const bankPresets = useMemo(() => getBankPresets(country), [country])
+  const hasSAC = countryConfig.amortizationMethods.includes('SAC')
+
+  // Currency helpers bound to current country
+  const fmt = useCallback((value: number) => formatCurrency(value, country), [country])
+  const fmtCompact = useCallback((value: number) => formatCurrencyCompact(value, country), [country])
+  const fmtInput = useCallback((value: number) => formatInputValue(value, country), [country])
+
   const [propertyValue, setPropertyValue] = useState(initialPropertyValue ?? 0)
   const [propertyValueDisplay, setPropertyValueDisplay] = useState(
-    initialPropertyValue ? formatInputBRL(initialPropertyValue) : ''
+    initialPropertyValue ? formatInputValue(initialPropertyValue, initialCountry || 'BR') : ''
   )
   const [downPaymentMode, setDownPaymentMode] = useState<DownPaymentMode>('percent')
   const [downPaymentPercent, setDownPaymentPercent] = useState(20)
@@ -372,30 +380,46 @@ export default function FinancingCalculator({
     initialPropertyValue ? initialPropertyValue * 0.2 : 0
   )
   const [downPaymentDisplay, setDownPaymentDisplay] = useState(
-    initialPropertyValue ? formatInputBRL(initialPropertyValue * 0.2) : ''
+    initialPropertyValue ? formatInputValue(initialPropertyValue * 0.2, initialCountry || 'BR') : ''
   )
-  const [selectedBankId, setSelectedBankId] = useState(BANK_PRESETS[0].id)
+  const [selectedBankId, setSelectedBankId] = useState(bankPresets[0]?.id || 'custom')
   const [customRate, setCustomRate] = useState(10)
-  const [termMonths, setTermMonths] = useState(360)
+  const [termMonths, setTermMonths] = useState(Math.min(360, countryConfig.maxTermMonths))
   const [borrowerAge, setBorrowerAge] = useState<number | undefined>(undefined)
   const [condoFee, setCondoFee] = useState(initialCondoFee ?? 0)
   const [condoFeeDisplay, setCondoFeeDisplay] = useState(
-    initialCondoFee ? formatInputBRL(initialCondoFee) : ''
+    initialCondoFee ? formatInputValue(initialCondoFee, initialCountry || 'BR') : ''
   )
   const [iptu, setIptu] = useState(initialIptu ?? 0)
   const [iptuDisplay, setIptuDisplay] = useState(
-    initialIptu ? formatInputBRL(initialIptu) : ''
+    initialIptu ? formatInputValue(initialIptu, initialCountry || 'BR') : ''
   )
   const [city, setCity] = useState(initialCity ?? '')
 
   const [result, setResult] = useState<ComparisonResult | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [amortizationTab, setAmortizationTab] = useState<AmortizationTab>('SAC')
+  const [amortizationTab, setAmortizationTab] = useState<AmortizationTab>(hasSAC ? 'SAC' : 'PRICE')
   const [showFullTable, setShowFullTable] = useState(false)
+
+  // ─── Country change handler ─────────────────────────────────────────────────
+  const handleCountryChange = useCallback((newCountry: CountryCode) => {
+    setCountry(newCountry)
+    const newConfig = getCountryConfig(newCountry)
+    const newPresets = getBankPresets(newCountry)
+    setSelectedBankId(newPresets[0]?.id || 'custom')
+    setTermMonths(Math.min(360, newConfig.maxTermMonths))
+    setResult(null)
+    setError(null)
+    if (!newConfig.amortizationMethods.includes('SAC')) {
+      setAmortizationTab('PRICE')
+    } else {
+      setAmortizationTab('SAC')
+    }
+  }, [])
 
   // ─── Derived ────────────────────────────────────────────────────────────────
   const isCustomRate = selectedBankId === 'custom'
-  const selectedBank = BANK_PRESETS.find((b) => b.id === selectedBankId)
+  const selectedBank = bankPresets.find((b) => b.id === selectedBankId)
   const annualRate = isCustomRate ? customRate : (selectedBank?.rate ?? 10)
 
   const downPaymentValue = useMemo(() => {
@@ -419,14 +443,14 @@ export default function FinancingCalculator({
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
   const handlePropertyValueBlur = useCallback(() => {
-    const val = parseBRL(propertyValueDisplay)
+    const val = parseCurrencyInput(propertyValueDisplay)
     setPropertyValue(val)
-    setPropertyValueDisplay(val > 0 ? formatInputBRL(val) : '')
+    setPropertyValueDisplay(val > 0 ? fmtInput(val) : '')
     if (downPaymentMode === 'percent') {
       setDownPaymentAbsolute(val * (downPaymentPercent / 100))
-      setDownPaymentDisplay(formatInputBRL(val * (downPaymentPercent / 100)))
+      setDownPaymentDisplay(fmtInput(val * (downPaymentPercent / 100)))
     }
-  }, [propertyValueDisplay, downPaymentMode, downPaymentPercent])
+  }, [propertyValueDisplay, downPaymentMode, downPaymentPercent, fmtInput])
 
   const handleDownPaymentPercentChange = useCallback(
     (pct: number) => {
@@ -434,31 +458,31 @@ export default function FinancingCalculator({
       setDownPaymentPercent(clamped)
       const abs = propertyValue * (clamped / 100)
       setDownPaymentAbsolute(abs)
-      setDownPaymentDisplay(abs > 0 ? formatInputBRL(abs) : '')
+      setDownPaymentDisplay(abs > 0 ? fmtInput(abs) : '')
     },
-    [propertyValue]
+    [propertyValue, fmtInput]
   )
 
   const handleDownPaymentAbsoluteBlur = useCallback(() => {
-    const val = parseBRL(downPaymentDisplay)
+    const val = parseCurrencyInput(downPaymentDisplay)
     setDownPaymentAbsolute(val)
-    setDownPaymentDisplay(val > 0 ? formatInputBRL(val) : '')
+    setDownPaymentDisplay(val > 0 ? fmtInput(val) : '')
     if (propertyValue > 0) {
       setDownPaymentPercent(Math.round((val / propertyValue) * 100 * 10) / 10)
     }
-  }, [downPaymentDisplay, propertyValue])
+  }, [downPaymentDisplay, propertyValue, fmtInput])
 
   const handleCondoBlur = useCallback(() => {
-    const val = parseBRL(condoFeeDisplay)
+    const val = parseCurrencyInput(condoFeeDisplay)
     setCondoFee(val)
-    setCondoFeeDisplay(val > 0 ? formatInputBRL(val) : '')
-  }, [condoFeeDisplay])
+    setCondoFeeDisplay(val > 0 ? fmtInput(val) : '')
+  }, [condoFeeDisplay, fmtInput])
 
   const handleIptuBlur = useCallback(() => {
-    const val = parseBRL(iptuDisplay)
+    const val = parseCurrencyInput(iptuDisplay)
     setIptu(val)
-    setIptuDisplay(val > 0 ? formatInputBRL(val) : '')
-  }, [iptuDisplay])
+    setIptuDisplay(val > 0 ? fmtInput(val) : '')
+  }, [iptuDisplay, fmtInput])
 
   const handleSimulate = useCallback(() => {
     setError(null)
@@ -471,6 +495,7 @@ export default function FinancingCalculator({
       iptu: iptu || undefined,
       borrowerAge,
       city: city || undefined,
+      country,
     }
 
     const validationError = validateInput(input)
@@ -482,7 +507,7 @@ export default function FinancingCalculator({
     const comparison = calculateComparison(input)
     setResult(comparison)
     setShowFullTable(false)
-  }, [propertyValue, downPaymentValue, annualRate, termMonths, condoFee, iptu, borrowerAge, city])
+  }, [propertyValue, downPaymentValue, annualRate, termMonths, condoFee, iptu, borrowerAge, city, country])
 
   const handleSave = useCallback(() => {
     if (result && onSave) {
@@ -537,6 +562,25 @@ export default function FinancingCalculator({
             gap: '16px',
           }}
         >
+          {/* Country Selector */}
+          <div>
+            <label style={styles.label}>
+              <Globe size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+              {t.country}
+            </label>
+            <select
+              value={country}
+              onChange={(e) => handleCountryChange(e.target.value as CountryCode)}
+              style={{ ...styles.input, cursor: 'pointer', appearance: 'auto' }}
+            >
+              {Object.values(COUNTRY_CONFIGS).map((cfg) => (
+                <option key={cfg.code} value={cfg.code}>
+                  {cfg.flag} {cfg.name} ({cfg.currency})
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Property Value */}
           <div>
             <label style={styles.label}>
@@ -555,7 +599,7 @@ export default function FinancingCalculator({
                   pointerEvents: 'none',
                 }}
               >
-                R$
+                {countryConfig.currencySymbol}
               </span>
               <input
                 type="text"
@@ -564,7 +608,7 @@ export default function FinancingCalculator({
                 onChange={(e) => setPropertyValueDisplay(e.target.value)}
                 onBlur={handlePropertyValueBlur}
                 placeholder="500.000,00"
-                style={{ ...styles.input, paddingLeft: '36px' }}
+                style={{ ...styles.input, paddingLeft: `${Math.max(36, countryConfig.currencySymbol.length * 12 + 16)}px` }}
               />
             </div>
           </div>
@@ -623,14 +667,14 @@ export default function FinancingCalculator({
                     transition: 'all 0.15s',
                   }}
                 >
-                  R$
+                  {countryConfig.currencySymbol}
                 </button>
               </div>
               {/* Input */}
               {downPaymentMode === 'percent' ? (
                 <input
                   type="number"
-                  min={10}
+                  min={countryConfig.minDownPaymentPercent}
                   max={90}
                   step={1}
                   value={downPaymentPercent}
@@ -669,7 +713,7 @@ export default function FinancingCalculator({
               onChange={(e) => setSelectedBankId(e.target.value)}
               style={{ ...styles.input, cursor: 'pointer', appearance: 'auto' }}
             >
-              {BANK_PRESETS.map((bank) => (
+              {bankPresets.map((bank) => (
                 <option key={bank.id} value={bank.id}>
                   {bank.name} — {bank.rate.toFixed(2)}% {t.rateLabel}
                 </option>
@@ -700,8 +744,8 @@ export default function FinancingCalculator({
             </label>
             <input
               type="range"
-              min={MIN_TERM_MONTHS}
-              max={MAX_TERM_MONTHS}
+              min={countryConfig.minTermMonths}
+              max={countryConfig.maxTermMonths}
               step={12}
               value={termMonths}
               onChange={(e) => setTermMonths(Number(e.target.value))}
@@ -717,25 +761,27 @@ export default function FinancingCalculator({
             </span>
           </div>
 
-          {/* Buyer Age */}
-          <div>
-            <label style={styles.label}>
-              <User size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-              {t.age}{' '}
-              <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}>({t.ageOptional})</span>
-            </label>
-            <input
-              type="number"
-              min={18}
-              max={80}
-              value={borrowerAge ?? ''}
-              onChange={(e) =>
-                setBorrowerAge(e.target.value ? Number(e.target.value) : undefined)
-              }
-              placeholder="35"
-              style={styles.input}
-            />
-          </div>
+          {/* Buyer Age (only for countries with MIP insurance) */}
+          {countryConfig.hasInsuranceMIP && (
+            <div>
+              <label style={styles.label}>
+                <User size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                {t.age}{' '}
+                <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}>({t.ageOptional})</span>
+              </label>
+              <input
+                type="number"
+                min={18}
+                max={80}
+                value={borrowerAge ?? ''}
+                onChange={(e) =>
+                  setBorrowerAge(e.target.value ? Number(e.target.value) : undefined)
+                }
+                placeholder="35"
+                style={styles.input}
+              />
+            </div>
+          )}
 
           {/* Condo Fee */}
           <div>
@@ -752,7 +798,7 @@ export default function FinancingCalculator({
                   pointerEvents: 'none',
                 }}
               >
-                R$
+                {countryConfig.currencySymbol}
               </span>
               <input
                 type="text"
@@ -761,14 +807,14 @@ export default function FinancingCalculator({
                 onChange={(e) => setCondoFeeDisplay(e.target.value)}
                 onBlur={handleCondoBlur}
                 placeholder="800,00"
-                style={{ ...styles.input, paddingLeft: '36px' }}
+                style={{ ...styles.input, paddingLeft: `${Math.max(36, countryConfig.currencySymbol.length * 12 + 16)}px` }}
               />
             </div>
           </div>
 
-          {/* IPTU */}
+          {/* Property Tax */}
           <div>
-            <label style={styles.label}>{t.iptu}</label>
+            <label style={styles.label}>{countryConfig.propertyTaxLabel} ({t.iptu.includes('anual') || t.iptu.includes('annual') ? t.iptu.split('(')[1]?.replace(')', '') || 'anual' : 'anual'})</label>
             <div style={{ position: 'relative' }}>
               <span
                 style={{
@@ -781,7 +827,7 @@ export default function FinancingCalculator({
                   pointerEvents: 'none',
                 }}
               >
-                R$
+                {countryConfig.currencySymbol}
               </span>
               <input
                 type="text"
@@ -790,19 +836,19 @@ export default function FinancingCalculator({
                 onChange={(e) => setIptuDisplay(e.target.value)}
                 onBlur={handleIptuBlur}
                 placeholder="3.600,00"
-                style={{ ...styles.input, paddingLeft: '36px' }}
+                style={{ ...styles.input, paddingLeft: `${Math.max(36, countryConfig.currencySymbol.length * 12 + 16)}px` }}
               />
             </div>
           </div>
 
-          {/* City (for ITBI) */}
+          {/* City */}
           <div>
             <label style={styles.label}>{t.city}</label>
             <input
               type="text"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              placeholder="São Paulo"
+              placeholder={country === 'BR' ? 'São Paulo' : country === 'US' ? 'New York' : country === 'UK' ? 'London' : country === 'ES' ? 'Madrid' : ''}
               style={styles.input}
             />
           </div>
@@ -864,14 +910,16 @@ export default function FinancingCalculator({
             {/* 1st Payment SAC / Price */}
             <div style={styles.kpiCard}>
               <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '4px' }}>
-                {t.firstPaymentSac} / {t.paymentPrice}
+                {hasSAC ? `${t.firstPaymentSac} / ${t.paymentPrice}` : t.paymentFixed}
               </div>
               <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                {fmt(result.sac.firstPayment)}
+                {hasSAC ? fmt(result.sac.firstPayment) : fmt(result.price.firstPayment)}
               </div>
-              <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-                Price: {fmt(result.price.firstPayment)}
-              </div>
+              {hasSAC && (
+                <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+                  {t.priceLabel}: {fmt(result.price.firstPayment)}
+                </div>
+              )}
             </div>
 
             {/* Total Interest */}
@@ -880,9 +928,9 @@ export default function FinancingCalculator({
                 {t.totalInterest}
               </div>
               <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                {fmtCompact(result.sac.totalInterest)}
+                {fmtCompact(hasSAC ? result.sac.totalInterest : result.price.totalInterest)}
               </div>
-              {result.savings > 0 && (
+              {hasSAC && result.savings > 0 && (
                 <span
                   style={{
                     display: 'inline-flex',
@@ -906,10 +954,10 @@ export default function FinancingCalculator({
             {/* Total Cost */}
             <div style={styles.kpiCard}>
               <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '4px' }}>
-                {t.totalCost} (SAC)
+                {t.totalCost}{hasSAC ? ' (SAC)' : ''}
               </div>
               <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                {fmtCompact(result.sac.totalPaid)}
+                {fmtCompact(hasSAC ? result.sac.totalPaid : result.price.totalPaid)}
               </div>
             </div>
           </div>
@@ -959,23 +1007,25 @@ export default function FinancingCalculator({
                     }}
                     formatter={(value: any, name: any) => [
                       fmt(value),
-                      name === 'sac' ? t.sacLabel : t.priceLabel,
+                      name === 'sac' ? t.sacLabel : (hasSAC ? t.priceLabel : t.fixedLabel),
                     ]}
                     labelFormatter={(label: number) => `${t.year} ${label}`}
                   />
                   <Legend
                     verticalAlign="top"
-                    formatter={(value: string) => (value === 'sac' ? t.sacLabel : t.priceLabel)}
+                    formatter={(value: string) => (value === 'sac' ? t.sacLabel : (hasSAC ? t.priceLabel : t.fixedLabel))}
                     wrapperStyle={{ fontSize: '13px' }}
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="sac"
-                    stroke="#6366f1"
-                    strokeWidth={2}
-                    fill="url(#gradSAC)"
-                    name="sac"
-                  />
+                  {hasSAC && (
+                    <Area
+                      type="monotone"
+                      dataKey="sac"
+                      stroke="#6366f1"
+                      strokeWidth={2}
+                      fill="url(#gradSAC)"
+                      name="sac"
+                    />
+                  )}
                   <Area
                     type="monotone"
                     dataKey="price"
@@ -1004,15 +1054,15 @@ export default function FinancingCalculator({
                     margin: '0 0 16px 0',
                   }}
                 >
-                  {t.comparison}
+                  {hasSAC ? t.comparison : t.comparisonPriceOnly}
                 </h3>
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr>
                         <th style={styles.tableHeader}></th>
-                        <th style={{ ...styles.tableHeader, textAlign: 'right' }}>SAC</th>
-                        <th style={{ ...styles.tableHeader, textAlign: 'right' }}>Price</th>
+                        {hasSAC && <th style={{ ...styles.tableHeader, textAlign: 'right' }}>SAC</th>}
+                        <th style={{ ...styles.tableHeader, textAlign: 'right' }}>{hasSAC ? 'Price' : t.fixedLabel}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1021,37 +1071,31 @@ export default function FinancingCalculator({
                           label: t.firstPayment,
                           sac: result.sac.firstPayment,
                           price: result.price.firstPayment,
-                          lower: 'better',
                         },
                         {
                           label: t.lastPayment,
                           sac: result.sac.lastPayment,
                           price: result.price.lastPayment,
-                          lower: 'better',
                         },
                         {
                           label: t.averagePayment,
                           sac: result.sac.averagePayment,
                           price: result.price.averagePayment,
-                          lower: 'better',
                         },
                         {
                           label: t.totalPaid,
                           sac: result.sac.totalPaid,
                           price: result.price.totalPaid,
-                          lower: 'better',
                         },
                         {
                           label: t.totalInterestRow,
                           sac: result.sac.totalInterest,
                           price: result.price.totalInterest,
-                          lower: 'better',
                         },
                         {
                           label: t.totalInsurance,
                           sac: result.sac.totalInsurance,
                           price: result.price.totalInsurance,
-                          lower: 'better',
                         },
                       ].map((row) => {
                         const sacBetter = row.sac <= row.price
@@ -1059,22 +1103,24 @@ export default function FinancingCalculator({
                         return (
                           <tr key={row.label}>
                             <td style={{ ...styles.tableCell, fontWeight: 500 }}>{row.label}</td>
+                            {hasSAC && (
+                              <td
+                                style={{
+                                  ...styles.tableCell,
+                                  textAlign: 'right',
+                                  fontVariantNumeric: 'tabular-nums',
+                                  ...(sacBetter && !priceBetter ? styles.betterValue : {}),
+                                }}
+                              >
+                                {fmt(row.sac)}
+                              </td>
+                            )}
                             <td
                               style={{
                                 ...styles.tableCell,
                                 textAlign: 'right',
                                 fontVariantNumeric: 'tabular-nums',
-                                ...(sacBetter && !priceBetter ? styles.betterValue : {}),
-                              }}
-                            >
-                              {fmt(row.sac)}
-                            </td>
-                            <td
-                              style={{
-                                ...styles.tableCell,
-                                textAlign: 'right',
-                                fontVariantNumeric: 'tabular-nums',
-                                ...(priceBetter && !sacBetter ? styles.betterValue : {}),
+                                ...(hasSAC && priceBetter && !sacBetter ? styles.betterValue : {}),
                               }}
                             >
                               {fmt(row.price)}
@@ -1100,18 +1146,18 @@ export default function FinancingCalculator({
                   {t.monthlyTotalCost}
                 </h3>
                 {(() => {
-                  const firstSac = result.sac.payments[0]
-                  if (!firstSac) return null
+                  const firstPayments = hasSAC ? result.sac.payments[0] : result.price.payments[0]
+                  if (!firstPayments) return null
                   const condoMonthly = result.input.condoFee ?? 0
                   const iptuMonthly = (result.input.iptu ?? 0) / 12
-                  const totalMonthly = firstSac.payment + firstSac.insuranceMIP + firstSac.insuranceDFI + condoMonthly + iptuMonthly
+                  const totalMonthly = firstPayments.payment + firstPayments.insuranceMIP + firstPayments.insuranceDFI + condoMonthly + iptuMonthly
 
                   const rows = [
-                    { label: t.paymentSac, value: firstSac.payment },
-                    { label: t.insuranceMip, value: firstSac.insuranceMIP },
-                    { label: t.insuranceDfi, value: firstSac.insuranceDFI },
+                    { label: hasSAC ? t.paymentSac : t.paymentFixed, value: firstPayments.payment },
+                    ...(firstPayments.insuranceMIP > 0 ? [{ label: t.insuranceMip, value: firstPayments.insuranceMIP }] : []),
+                    ...(firstPayments.insuranceDFI > 0 ? [{ label: t.insuranceDfi, value: firstPayments.insuranceDFI }] : []),
                     ...(condoMonthly > 0 ? [{ label: t.condoFeeLabel, value: condoMonthly }] : []),
-                    ...(iptuMonthly > 0 ? [{ label: t.iptuMonthly, value: iptuMonthly }] : []),
+                    ...(iptuMonthly > 0 ? [{ label: `${countryConfig.propertyTaxLabel}/12`, value: iptuMonthly }] : []),
                   ]
 
                   return (
@@ -1276,41 +1322,43 @@ export default function FinancingCalculator({
                   >
                     {t.amortizationTable}
                   </h3>
-                  {/* Tabs */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      border: '1px solid var(--color-border)',
-                    }}
-                  >
-                    {(['SAC', 'PRICE'] as const).map((tab) => (
-                      <button
-                        key={tab}
-                        type="button"
-                        onClick={() => {
-                          setAmortizationTab(tab)
-                          setShowFullTable(false)
-                        }}
-                        style={{
-                          padding: '6px 16px',
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          border: 'none',
-                          cursor: 'pointer',
-                          background:
-                            amortizationTab === tab
-                              ? 'var(--color-primary)'
-                              : 'var(--color-bg-elevated)',
-                          color: amortizationTab === tab ? 'white' : 'var(--color-text-secondary)',
-                          transition: 'all 0.15s',
-                        }}
-                      >
-                        {tab === 'SAC' ? t.sacLabel : t.priceLabel}
-                      </button>
-                    ))}
-                  </div>
+                  {/* Tabs — only show if country supports SAC */}
+                  {hasSAC && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        border: '1px solid var(--color-border)',
+                      }}
+                    >
+                      {(['SAC', 'PRICE'] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          type="button"
+                          onClick={() => {
+                            setAmortizationTab(tab)
+                            setShowFullTable(false)
+                          }}
+                          style={{
+                            padding: '6px 16px',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            border: 'none',
+                            cursor: 'pointer',
+                            background:
+                              amortizationTab === tab
+                                ? 'var(--color-primary)'
+                                : 'var(--color-bg-elevated)',
+                            color: amortizationTab === tab ? 'white' : 'var(--color-text-secondary)',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          {tab === 'SAC' ? t.sacLabel : t.priceLabel}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ overflowX: 'auto' }}>
