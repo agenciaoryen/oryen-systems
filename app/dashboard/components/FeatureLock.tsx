@@ -138,6 +138,8 @@ export function FeatureLock({
     hasOfficialWhatsapp: 'WhatsApp Oficial',
     hasPrioritySupport: 'Suporte Prioritário',
     hasAccountManager: 'Gerente de Conta',
+    hasFinancialModule: lang === 'pt' ? 'Módulo Financeiro' : lang === 'es' ? 'Módulo Financiero' : 'Financial Module',
+    hasAdvancedFinancial: lang === 'pt' ? 'Financeiro Avançado' : lang === 'es' ? 'Financiero Avanzado' : 'Advanced Financial',
   }
 
   const featureName = featureNames[feature] || feature

@@ -24,6 +24,8 @@ export interface PlanFeatures {
   hasOfficialWhatsapp: boolean
   hasPrioritySupport: boolean
   hasAccountManager: boolean
+  hasFinancialModule: boolean
+  hasAdvancedFinancial: boolean
 }
 
 export interface PlanLimits {
@@ -66,6 +68,8 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasOfficialWhatsapp: false, // disponível com +taxa
       hasPrioritySupport: false,
       hasAccountManager: false,
+      hasFinancialModule: false,
+      hasAdvancedFinancial: false,
     },
     limits: {
       maxUsers: 1,
@@ -93,6 +97,8 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasOfficialWhatsapp: true,
       hasPrioritySupport: false,
       hasAccountManager: false,
+      hasFinancialModule: true,
+      hasAdvancedFinancial: false,
     },
     limits: {
       maxUsers: 5,
@@ -120,6 +126,8 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasOfficialWhatsapp: true,
       hasPrioritySupport: true,
       hasAccountManager: false,
+      hasFinancialModule: true,
+      hasAdvancedFinancial: true,
     },
     limits: {
       maxUsers: 15,
@@ -147,6 +155,8 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasOfficialWhatsapp: true,
       hasPrioritySupport: true,
       hasAccountManager: true,
+      hasFinancialModule: true,
+      hasAdvancedFinancial: true,
     },
     limits: {
       maxUsers: -1,
