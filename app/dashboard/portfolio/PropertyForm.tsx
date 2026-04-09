@@ -56,6 +56,7 @@ const T = {
     searchingZip: 'Buscando...',
     zipNotFound: 'CEP não encontrado',
     zipFilled: 'Endereço preenchido pelo CEP',
+    dontKnowZip: 'Não sei meu CEP',
     // Características
     bedrooms: 'Quartos',
     suites: 'Suítes',
@@ -118,6 +119,7 @@ const T = {
     searchingZip: 'Searching...',
     zipNotFound: 'ZIP code not found',
     zipFilled: 'Address filled from ZIP code',
+    dontKnowZip: "Don't know my ZIP",
     bedrooms: 'Bedrooms',
     suites: 'Suites',
     bathrooms: 'Bathrooms',
@@ -176,6 +178,7 @@ const T = {
     searchingZip: 'Buscando...',
     zipNotFound: 'Código postal no encontrado',
     zipFilled: 'Dirección completada por código postal',
+    dontKnowZip: 'No sé mi código postal',
     bedrooms: 'Habitaciones',
     suites: 'Suites',
     bathrooms: 'Baños',
@@ -725,6 +728,16 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
                   )}
                 </button>
               </div>
+              <a
+                href="https://buscacepinter.correios.com.br/app/endereco/index.php"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs mt-1.5 inline-flex items-center gap-1 hover:underline"
+                style={{ color: 'var(--color-text-muted)' }}
+              >
+                {t.dontKnowZip}
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+              </a>
             </div>
           </div>
 
