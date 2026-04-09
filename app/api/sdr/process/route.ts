@@ -36,8 +36,9 @@ const supabase = createClient(
 const PROCESS_SECRET = process.env.SDR_PROCESS_SECRET || 'sdr-internal-token'
 
 export async function POST(request: NextRequest) {
+  let body: any = {}
   try {
-    const body = await request.json()
+    body = await request.json()
     const {
       org_id,
       phone,
