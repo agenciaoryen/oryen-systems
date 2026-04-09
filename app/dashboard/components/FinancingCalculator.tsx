@@ -274,7 +274,8 @@ const styles = {
     background: 'var(--color-bg-surface)',
     border: '1px solid var(--color-border)',
     borderRadius: '12px',
-    padding: '20px',
+    padding: '16px',
+    overflow: 'hidden',
   } as React.CSSProperties,
   input: {
     background: 'var(--color-bg-elevated)',
@@ -537,7 +538,7 @@ export default function FinancingCalculator({
   // ═══════════════════════════════════════════════════════════════════════════════
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', overflow: 'hidden' }}>
       {/* ─── Header ──────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <Calculator size={20} style={{ color: 'var(--color-primary)' }} />
@@ -558,7 +559,7 @@ export default function FinancingCalculator({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))',
             gap: '16px',
           }}
         >
@@ -893,7 +894,7 @@ export default function FinancingCalculator({
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))',
               gap: '12px',
             }}
           >
