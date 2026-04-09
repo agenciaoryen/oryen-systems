@@ -10,10 +10,13 @@ import {
   toggleCampaignStatus,
   deleteCampaign,
   calculateUsage,
+  updateAgentConfig,
+  toggleAgentStatus,
+  SINGLE_CONFIG_SLUGS,
   t,
   tFeatures
 } from '@/lib/agents'
-import type { AgentCampaign, Language, ConfigField } from '@/lib/agents/types'
+import type { Agent, AgentCampaign, Language, ConfigField } from '@/lib/agents/types'
 import { formatDistanceToNow, format } from 'date-fns'
 import { ptBR, enUS, es } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -80,7 +83,17 @@ const UI = {
     required: 'Campo obrigatório',
     managementTitle: 'Gerenciamento do Agente',
     managementDesc: 'A tela de gerenciamento deste agente está em desenvolvimento. Em breve você poderá configurar e acompanhar o desempenho aqui.',
-    comingSoon: 'Em breve'
+    comingSoon: 'Em breve',
+    // Single-config (SDR)
+    training: 'Treinamento',
+    trainingDesc: 'Configure como seu agente deve atuar. Preencha as informações abaixo e salve.',
+    saveTraining: 'Salvar Treinamento',
+    saving: 'Salvando...',
+    saved: 'Treinamento salvo!',
+    notConfigured: 'Agente ainda não treinado',
+    notConfiguredHint: 'Preencha as informações abaixo para que seu agente comece a trabalhar',
+    agentActive: 'Ativo',
+    agentPaused: 'Pausado',
   },
   en: {
     back: 'Back',
@@ -131,7 +144,16 @@ const UI = {
     required: 'Required field',
     managementTitle: 'Agent Management',
     managementDesc: 'The management screen for this agent is under development. Soon you will be able to configure and track performance here.',
-    comingSoon: 'Coming soon'
+    comingSoon: 'Coming soon',
+    training: 'Training',
+    trainingDesc: 'Configure how your agent should operate. Fill in the information below and save.',
+    saveTraining: 'Save Training',
+    saving: 'Saving...',
+    saved: 'Training saved!',
+    notConfigured: 'Agent not yet trained',
+    notConfiguredHint: 'Fill in the information below so your agent can start working',
+    agentActive: 'Active',
+    agentPaused: 'Paused',
   },
   es: {
     back: 'Volver',
@@ -182,7 +204,16 @@ const UI = {
     required: 'Campo requerido',
     managementTitle: 'Gestión del Agente',
     managementDesc: 'La pantalla de gestión de este agente está en desarrollo. Pronto podrás configurar y monitorear el rendimiento aquí.',
-    comingSoon: 'Próximamente'
+    comingSoon: 'Próximamente',
+    training: 'Entrenamiento',
+    trainingDesc: 'Configura cómo debe actuar tu agente. Completa la información abajo y guarda.',
+    saveTraining: 'Guardar Entrenamiento',
+    saving: 'Guardando...',
+    saved: '¡Entrenamiento guardado!',
+    notConfigured: 'Agente aún no entrenado',
+    notConfiguredHint: 'Completa la información abajo para que tu agente comience a trabajar',
+    agentActive: 'Activo',
+    agentPaused: 'Pausado',
   }
 }
 
@@ -332,6 +363,262 @@ function CampaignCard({
           }
         </span>
         <ChevronRight size={12} style={{ color: 'var(--color-text-muted)' }} />
+      </div>
+    </div>
+  )
+}
+
+// Painel de Treinamento (Single-Config — SDR)
+function TrainingPanel({
+  agent,
+  configSchema,
+  lang,
+  ui,
+  onSaved
+}: {
+  agent: Agent
+  configSchema: { fields: ConfigField[] }
+  lang: Language
+  ui: typeof UI.es
+  onSaved: () => void
+}) {
+  const [config, setConfig] = useState<Record<string, any>>(agent.config || {})
+  const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<Record<string, boolean>>({})
+
+  const fields = configSchema?.fields || []
+
+  const updateConfig = (key: string, value: any) => {
+    setConfig(prev => ({ ...prev, [key]: value }))
+    if (errors[key]) setErrors(prev => ({ ...prev, [key]: false }))
+  }
+
+  const handleSave = async () => {
+    const newErrors: Record<string, boolean> = {}
+    fields.forEach(field => {
+      if (field.required) {
+        const value = config[field.name]
+        if (field.type === 'tags') {
+          if (!value || !Array.isArray(value) || value.length === 0) newErrors[field.name] = true
+        } else {
+          if (value === undefined || value === null || (typeof value === 'string' && !value.trim())) newErrors[field.name] = true
+        }
+      }
+    })
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+
+    setSaving(true)
+    const { success, error } = await updateAgentConfig(agent.id, config)
+    setSaving(false)
+
+    if (error) {
+      toast.error(`${ui.error}: ${error}`)
+      return
+    }
+
+    toast.success(ui.saved)
+    onSaved()
+  }
+
+  const renderField = (field: ConfigField) => {
+    const fieldError = errors[field.name]
+    const borderStyle = fieldError ? 'var(--color-error)' : 'var(--color-border-subtle)'
+    const baseInputStyle = { backgroundColor: 'var(--color-bg-base)', border: `1px solid ${borderStyle}`, color: 'var(--color-text-primary)' }
+
+    switch (field.type) {
+      case 'text':
+        return (
+          <input
+            type="text"
+            value={config[field.name] || ''}
+            onChange={(e) => updateConfig(field.name, e.target.value)}
+            placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+            className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
+            style={baseInputStyle}
+          />
+        )
+      case 'textarea':
+        return (
+          <div>
+            <textarea
+              value={config[field.name] || ''}
+              onChange={(e) => updateConfig(field.name, e.target.value)}
+              placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+              rows={5}
+              className="w-full rounded-xl p-3 text-sm resize-none font-mono text-xs leading-relaxed outline-none transition-colors"
+              style={baseInputStyle}
+            />
+            {field.description && (
+              <p className="text-[10px] mt-1.5" style={{ color: 'var(--color-text-muted)' }}>
+                {t(field.description, lang)}
+              </p>
+            )}
+          </div>
+        )
+      case 'number':
+        return (
+          <div>
+            <input
+              type="number"
+              value={config[field.name] ?? field.default ?? ''}
+              onChange={(e) => updateConfig(field.name, e.target.value ? Number(e.target.value) : '')}
+              placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+              min={field.min}
+              max={field.max}
+              className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
+              style={baseInputStyle}
+            />
+            {field.description && (
+              <p className="text-[10px] mt-1.5" style={{ color: 'var(--color-text-muted)' }}>
+                {t(field.description, lang)}
+              </p>
+            )}
+          </div>
+        )
+      case 'tags':
+        return (
+          <div>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+                className="w-full rounded-xl p-3 pr-16 text-sm outline-none transition-colors"
+                style={baseInputStyle}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    const input = e.target as HTMLInputElement
+                    const value = input.value.trim()
+                    if (value) {
+                      const current = config[field.name] || []
+                      updateConfig(field.name, [...current, value])
+                      input.value = ''
+                    }
+                  }
+                }}
+              />
+              <span
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] px-2 py-0.5 rounded"
+                style={{ color: 'var(--color-text-muted)', background: 'var(--color-bg-elevated)' }}
+              >
+                Enter ↵
+              </span>
+            </div>
+            {config[field.name]?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {config[field.name].map((tag: string, i: number) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg"
+                    style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid var(--color-primary-subtle)' }}
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newTags = config[field.name].filter((_: any, idx: number) => idx !== i)
+                        updateConfig(field.name, newTags)
+                      }}
+                      style={{ color: 'inherit' }}
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      case 'select':
+        return (
+          <CustomSelect
+            value={config[field.name] || field.default || ''}
+            onChange={(v) => updateConfig(field.name, v)}
+            options={[
+              { value: '', label: 'Selecione...' },
+              ...(field.options?.map(opt => ({
+                value: opt.value,
+                label: typeof opt.label === 'string' ? opt.label : t(opt.label, lang),
+              })) || []),
+            ]}
+          />
+        )
+      case 'boolean':
+        return (
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={config[field.name] ?? field.default ?? false}
+              onChange={(e) => updateConfig(field.name, e.target.checked)}
+              className="w-5 h-5 rounded"
+            />
+            <span className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+              {config[field.name] ?? field.default ? 'Sim' : 'Não'}
+            </span>
+          </label>
+        )
+      default:
+        return (
+          <input
+            type="text"
+            value={config[field.name] || ''}
+            onChange={(e) => updateConfig(field.name, e.target.value)}
+            placeholder={field.placeholder ? t(field.placeholder, lang) : ''}
+            className="w-full rounded-xl p-3 text-sm outline-none transition-colors"
+            style={baseInputStyle}
+          />
+        )
+    }
+  }
+
+  return (
+    <div
+      className="rounded-2xl p-6"
+      style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}
+    >
+      <h3 className="text-sm font-bold uppercase mb-1 flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
+        <Settings size={14} />
+        {ui.training}
+      </h3>
+      <p className="text-xs mb-5" style={{ color: 'var(--color-text-muted)' }}>
+        {ui.trainingDesc}
+      </p>
+
+      <div className="space-y-4">
+        {fields.map(field => (
+          <div key={field.name}>
+            <label className="flex items-center gap-1.5 text-xs font-bold uppercase mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
+              {t(field.label, lang)}
+              {field.required && <span style={{ color: 'var(--color-error)' }}>*</span>}
+            </label>
+            {renderField(field)}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex justify-end mt-6 pt-4" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+          style={{ background: 'var(--color-primary)', color: '#fff' }}
+        >
+          {saving ? (
+            <>
+              <Loader2 size={14} className="animate-spin" />
+              {ui.saving}
+            </>
+          ) : (
+            <>
+              <CheckCircle2 size={14} />
+              {ui.saveTraining}
+            </>
+          )}
+        </button>
       </div>
     </div>
   )
@@ -802,6 +1089,7 @@ export default function AgentDetailPage() {
   const solution = agent.solution
   const usage = calculateUsage(agent)
   const isFollowUp = agent.solution_slug?.includes('followup')
+  const isSingleConfig = SINGLE_CONFIG_SLUGS.includes(agent.solution_slug)
 
   // Follow-up agents redirect to their dedicated management page
   if (isFollowUp) {
@@ -811,6 +1099,16 @@ export default function AgentDetailPage() {
         <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
       </div>
     )
+  }
+
+  const handleToggleAgent = async () => {
+    const { success, error: err } = await toggleAgentStatus(agent.id, agent.status)
+    if (err) {
+      toast.error(`${ui.error}: ${err}`)
+      return
+    }
+    toast.success(ui.statusChanged)
+    refresh()
   }
 
   return (
@@ -840,14 +1138,30 @@ export default function AgentDetailPage() {
           </div>
         </div>
 
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors"
-          style={{ background: 'var(--color-primary)', color: '#fff' }}
-        >
-          <Plus size={16} />
-          {ui.newCampaign}
-        </button>
+        {isSingleConfig ? (
+          /* Toggle ativo/pausado para agentes single-config */
+          <button
+            onClick={handleToggleAgent}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors"
+            style={{
+              background: agent.status === 'active' ? 'var(--color-success-subtle)' : 'var(--color-accent-subtle)',
+              color: agent.status === 'active' ? 'var(--color-success)' : 'var(--color-accent)',
+              border: `1px solid ${agent.status === 'active' ? 'var(--color-success-subtle)' : 'var(--color-accent-subtle)'}`,
+            }}
+          >
+            {agent.status === 'active' ? <PlayCircle size={16} /> : <PauseCircle size={16} />}
+            {agent.status === 'active' ? ui.agentActive : ui.agentPaused}
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors"
+            style={{ background: 'var(--color-primary)', color: '#fff' }}
+          >
+            <Plus size={16} />
+            {ui.newCampaign}
+          </button>
+        )}
       </div>
 
       {/* Usage Card */}
@@ -894,65 +1208,78 @@ export default function AgentDetailPage() {
         </div>
       </div>
 
-      {/* Campaigns */}
-      <div>
-        <h3 className="text-sm font-bold uppercase mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
-          <Zap size={14} />
-          {ui.campaigns} ({campaigns.length})
-        </h3>
+      {/* ══════ SINGLE-CONFIG: Painel de Treinamento ══════ */}
+      {isSingleConfig ? (
+        <TrainingPanel
+          agent={agent}
+          configSchema={solution?.campaign_config_schema || { fields: [] }}
+          lang={lang}
+          ui={ui}
+          onSaved={refresh}
+        />
+      ) : (
+        <>
+          {/* ══════ MULTI-CONFIG: Campanhas ══════ */}
+          <div>
+            <h3 className="text-sm font-bold uppercase mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
+              <Zap size={14} />
+              {ui.campaigns} ({campaigns.length})
+            </h3>
 
-        {campaigns.length === 0 ? (
-          <div
-            className="border-dashed rounded-2xl p-12 text-center"
-            style={{ background: 'var(--color-bg-surface)', border: '1px dashed var(--color-border-subtle)' }}
-          >
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-              style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
-            >
-              <Target size={24} style={{ color: 'var(--color-text-muted)' }} />
-            </div>
-            <h4 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>{ui.noCampaigns}</h4>
-            <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>{ui.noCampaignsHint}</p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors"
-              style={{ background: 'var(--color-primary)', color: '#fff' }}
-            >
-              <Plus size={14} />
-              {ui.createFirst}
-            </button>
+            {campaigns.length === 0 ? (
+              <div
+                className="border-dashed rounded-2xl p-12 text-center"
+                style={{ background: 'var(--color-bg-surface)', border: '1px dashed var(--color-border-subtle)' }}
+              >
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                  style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
+                >
+                  <Target size={24} style={{ color: 'var(--color-text-muted)' }} />
+                </div>
+                <h4 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>{ui.noCampaigns}</h4>
+                <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>{ui.noCampaignsHint}</p>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors"
+                  style={{ background: 'var(--color-primary)', color: '#fff' }}
+                >
+                  <Plus size={14} />
+                  {ui.createFirst}
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {campaigns.map(campaign => (
+                  <CampaignCard
+                    key={campaign.id}
+                    campaign={campaign}
+                    lang={lang}
+                    ui={ui}
+                    dateLocale={dateLocale}
+                    onToggle={() => handleToggleCampaign(campaign)}
+                    onDelete={() => handleDeleteCampaign(campaign)}
+                    onClick={() => router.push(`/dashboard/agents/${agentId}/campaigns/${campaign.id}`)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {campaigns.map(campaign => (
-              <CampaignCard
-                key={campaign.id}
-                campaign={campaign}
-                lang={lang}
-                ui={ui}
-                dateLocale={dateLocale}
-                onToggle={() => handleToggleCampaign(campaign)}
-                onDelete={() => handleDeleteCampaign(campaign)}
-                onClick={() => router.push(`/dashboard/agents/${agentId}/campaigns/${campaign.id}`)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
 
-      {/* Create Modal */}
-      <CreateCampaignModal
-        isOpen={showCreateModal}
-        agentId={agentId}
-        orgId={org?.id || ''}
-        userId={user?.id || ''}
-        configSchema={solution?.campaign_config_schema || { fields: [] }}
-        lang={lang}
-        ui={ui}
-        onClose={() => setShowCreateModal(false)}
-        onCreated={refresh}
-      />
+          {/* Create Modal */}
+          <CreateCampaignModal
+            isOpen={showCreateModal}
+            agentId={agentId}
+            orgId={org?.id || ''}
+            userId={user?.id || ''}
+            configSchema={solution?.campaign_config_schema || { fields: [] }}
+            lang={lang}
+            ui={ui}
+            onClose={() => setShowCreateModal(false)}
+            onCreated={refresh}
+          />
+        </>
+      )}
     </div>
   )
 }

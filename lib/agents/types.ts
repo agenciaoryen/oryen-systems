@@ -72,6 +72,7 @@ export interface Agent {
     period_start?: string
     [key: string]: any
   }
+  config: Record<string, any> | null
   stripe_subscription_id: string | null
   billing_started_at: string | null
   current_period_start: string | null

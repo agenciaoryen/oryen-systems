@@ -13,6 +13,16 @@ import type {
 } from './types'
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// CONSTANTES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Slugs de agentes que usam config única (sem campanhas).
+ * Ex: SDR = funcionário com treinamento único.
+ */
+export const SINGLE_CONFIG_SLUGS = ['sdr_imobiliario']
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS DE TRADUÇÃO
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -381,6 +391,30 @@ export async function toggleAgentStatus(
     if (error) throw error
     return { success: true, error: null }
   } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Salvar config diretamente no agente (single-config: SDR)
+ */
+export async function updateAgentConfig(
+  agentId: string,
+  config: Record<string, any>
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const { error } = await supabase
+      .from('agents')
+      .update({
+        config,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', agentId)
+
+    if (error) throw error
+    return { success: true, error: null }
+  } catch (err: any) {
+    console.error('updateAgentConfig error:', err)
     return { success: false, error: err.message }
   }
 }

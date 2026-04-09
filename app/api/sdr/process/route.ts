@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       .eq('id', lead_id)
       .single()
 
-    // ─── 6. Buscar config da campanha (prompt, tom, instruções) ───
+    // ─── 6. Buscar config (campanha ou agente single-config) ───
     let campaignConfig = null
     if (campaign_id) {
       const { data: campaign } = await supabase
@@ -115,6 +115,16 @@ export async function POST(request: NextRequest) {
         .eq('id', campaign_id)
         .single()
       campaignConfig = campaign?.config || null
+    }
+
+    // Fallback: se não tem campaign_id, buscar config direto do agente (SDR single-config)
+    if (!campaignConfig && agent_id) {
+      const { data: agentRow } = await supabase
+        .from('agents')
+        .select('config')
+        .eq('id', agent_id)
+        .single()
+      campaignConfig = agentRow?.config || null
     }
 
     // Mensagem do lead já foi salva no webhook — não duplicar aqui

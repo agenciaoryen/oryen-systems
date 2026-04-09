@@ -9,6 +9,7 @@ import {
   useOrgAgents,
   hireAgent,
   calculateUsage,
+  SINGLE_CONFIG_SLUGS,
   t,
   tFeatures
 } from '@/lib/agents'
@@ -80,6 +81,7 @@ const UI = {
     remaining: 'restantes',
     manage: 'Gerenciar',
     viewCampaigns: 'Ver Campanhas',
+    configure: 'Configurar',
     hire: 'Contratar',
     hiring: 'Contratando...',
     perMonth: '/mês',
@@ -118,6 +120,7 @@ const UI = {
     remaining: 'remaining',
     manage: 'Manage',
     viewCampaigns: 'View Campaigns',
+    configure: 'Configure',
     hire: 'Hire',
     hiring: 'Hiring...',
     perMonth: '/mo',
@@ -156,6 +159,7 @@ const UI = {
     remaining: 'restantes',
     manage: 'Gestionar',
     viewCampaigns: 'Ver Campañas',
+    configure: 'Configurar',
     hire: 'Contratar',
     hiring: 'Contratando...',
     perMonth: '/mes',
@@ -245,9 +249,11 @@ function AgentCard({
                 {isActive ? <PlayCircle size={8} /> : <PauseCircle size={8} />}
                 {isActive ? ui.active : ui.paused}
               </span>
-              <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
-                {agent.campaigns_count || 0} {ui.campaigns}
-              </span>
+              {!SINGLE_CONFIG_SLUGS.includes(agent.solution_slug) && (
+                <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+                  {agent.campaigns_count || 0} {ui.campaigns}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -288,6 +294,11 @@ function AgentCard({
           <>
             <Activity size={14} />
             {ui.manage}
+          </>
+        ) : SINGLE_CONFIG_SLUGS.includes(agent.solution_slug) ? (
+          <>
+            <Settings size={14} />
+            {ui.configure}
           </>
         ) : (
           <>
