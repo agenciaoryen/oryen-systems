@@ -1,7 +1,8 @@
 // Site público — Formulário de contato
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { trackPropertyEvent } from '@/lib/properties/tracker'
 
 interface ContactFormProps {
   siteSlug: string
@@ -18,6 +19,14 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
     website: '', // honeypot
   })
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+  const trackedOpen = useRef(false)
+
+  const handleFormFocus = () => {
+    if (!trackedOpen.current && propertyId) {
+      trackPropertyEvent(siteSlug, propertyId, 'contact_open')
+      trackedOpen.current = true
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,6 +50,9 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
 
       if (res.ok) {
         setStatus('success')
+        if (propertyId) {
+          trackPropertyEvent(siteSlug, propertyId, 'contact_submit')
+        }
         setForm({ name: '', phone: '', email: '', message: '', website: '' })
       } else {
         const errData = await res.json().catch(() => ({}))
@@ -67,7 +79,7 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} onFocus={handleFormFocus} className="space-y-4">
       {/* Honeypot — invisível para humanos */}
       <input
         type="text"

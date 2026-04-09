@@ -2,13 +2,16 @@
 'use client'
 
 import { useState } from 'react'
+import { trackPropertyEvent } from '@/lib/properties/tracker'
 
 interface PropertyGalleryProps {
   images: { url: string; order: number; caption?: string; is_cover?: boolean }[]
   title: string
+  siteSlug?: string
+  propertyId?: string
 }
 
-export default function PropertyGallery({ images, title }: PropertyGalleryProps) {
+export default function PropertyGallery({ images, title, siteSlug, propertyId }: PropertyGalleryProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
 
@@ -21,6 +24,9 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
   const openLightbox = (index: number) => {
     setActiveIndex(index)
     setLightboxOpen(true)
+    if (siteSlug && propertyId) {
+      trackPropertyEvent(siteSlug, propertyId, 'gallery_open', { image_index: index })
+    }
   }
 
   const navigate = (dir: number) => {

@@ -1,7 +1,9 @@
 // Site público — Card de imóvel
+'use client'
 
 import Link from 'next/link'
 import { formatPrice, formatArea, PROPERTY_TYPES, TRANSACTION_TYPES } from '@/lib/properties/constants'
+import { trackPropertyEvent } from '@/lib/properties/tracker'
 
 interface PropertyCardProps {
   property: any
@@ -12,11 +14,16 @@ interface PropertyCardProps {
 export default function PropertyCard({ property, slug, currency }: PropertyCardProps) {
   const cover = property.images?.find((img: any) => img.is_cover)?.url || property.images?.[0]?.url || null
 
+  const handleClick = () => {
+    trackPropertyEvent(slug, property.id, 'click')
+  }
+
   return (
     <Link
       href={`/sites/${slug}/properties/${property.slug || property.id}`}
       className="group rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
       style={{ background: 'var(--color-bg-elevated)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}
+      onClick={handleClick}
     >
       {/* Imagem */}
       <div className="relative aspect-[4/3] overflow-hidden" style={{ background: 'var(--color-bg-surface)' }}>

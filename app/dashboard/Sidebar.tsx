@@ -61,6 +61,7 @@ const TRANSLATIONS = {
       financial: 'Financeiro',
       goals: 'Metas',
       portfolio: 'Portfólio',
+      propertyStats: 'Estatísticas',
       mySite: 'Meu Site',
       settings: 'Configurações'
     },
@@ -97,6 +98,7 @@ const TRANSLATIONS = {
       financial: 'Financial',
       goals: 'Goals',
       portfolio: 'Portfolio',
+      propertyStats: 'Statistics',
       mySite: 'My Site',
       settings: 'Settings'
     },
@@ -133,6 +135,7 @@ const TRANSLATIONS = {
       financial: 'Financiero',
       goals: 'Metas',
       portfolio: 'Portafolio',
+      propertyStats: 'Estadísticas',
       mySite: 'Mi Sitio',
       settings: 'Configuración'
     },
@@ -354,6 +357,7 @@ export default function Sidebar() {
       collapsible: true,
       items: [
         { href: '/dashboard/portfolio', label: t.menu.portfolio, icon: Home, requiredNiche: NICHES_WITH_DOCUMENTS },
+        { href: '/dashboard/portfolio/estatisticas', label: t.menu.propertyStats, icon: BarChart3, requiredNiche: NICHES_WITH_DOCUMENTS },
         { href: '/dashboard/site', label: t.menu.mySite, icon: Globe, requiredNiche: NICHES_WITH_DOCUMENTS },
       ],
     },

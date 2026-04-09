@@ -9,6 +9,7 @@ import { formatPrice, formatArea, PROPERTY_TYPES, TRANSACTION_TYPES, AMENITIES }
 import ContactForm from '../../components/ContactForm'
 import PropertyCard from '../../components/PropertyCard'
 import PropertyGallery from './PropertyGallery'
+import PropertyViewTracker from './PropertyViewTracker'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -115,10 +116,13 @@ export default async function PropertyDetailPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      {/* Tracking de view */}
+      <PropertyViewTracker siteSlug={params.slug} propertyId={property.id} />
+
       <div style={{ background: 'var(--color-bg-elevated)' }}>
         {/* ═══ GALERIA ═══ */}
         {property.images && property.images.length > 0 && (
-          <PropertyGallery images={property.images} title={property.title} />
+          <PropertyGallery images={property.images} title={property.title} siteSlug={params.slug} propertyId={property.id} />
         )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
