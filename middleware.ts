@@ -1,8 +1,10 @@
 // middleware.ts
-// Detecta domínios customizados e reescreve internamente para /sites/[slug]
+// 1. Protege rotas autenticadas (/dashboard, /onboarding) → redireciona para /login
+// 2. Detecta domínios customizados e reescreve internamente para /sites/[slug]
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createServerClient } from '@supabase/ssr'
 
 // Domínios da plataforma (não são custom domains)
 const PLATFORM_HOSTS = [
@@ -12,13 +14,17 @@ const PLATFORM_HOSTS = [
   'oryen-systems.vercel.app',
 ]
 
-// Paths que nunca devem ser reescritos (dashboard, API, assets, etc.)
-const SKIP_PREFIXES = [
+// Paths que requerem autenticação
+const AUTH_REQUIRED_PREFIXES = [
+  '/dashboard',
+  '/onboarding',
+]
+
+// Paths públicos (nunca protegidos, nunca reescritos)
+const PUBLIC_PREFIXES = [
   '/api/',
-  '/dashboard/',
   '/login',
   '/register',
-  '/onboarding',
   '/reset-password',
   '/privacy',
   '/terms',
@@ -30,19 +36,48 @@ const SKIP_PREFIXES = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const host = request.headers.get('host') || ''
-  const hostname = host.split(':')[0] // remove port
+  const hostname = host.split(':')[0]
 
-  // 1. Se é um domínio da plataforma, não faz nada
+  // ─── 1. Proteção de autenticação para rotas protegidas ───
+  if (AUTH_REQUIRED_PREFIXES.some(prefix => pathname.startsWith(prefix))) {
+    const response = NextResponse.next()
+
+    const supabaseAuth = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll().map(c => ({ name: c.name, value: c.value })),
+          setAll: (cookies) => {
+            cookies.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options)
+            })
+          },
+        },
+      }
+    )
+
+    const { data: { user } } = await supabaseAuth.auth.getUser()
+
+    if (!user) {
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    return response
+  }
+
+  // ─── 2. Paths públicos — não fazer nada ───
+  if (PUBLIC_PREFIXES.some(prefix => pathname.startsWith(prefix))) {
+    return NextResponse.next()
+  }
+
+  // ─── 3. Custom domain — se não é plataforma, reescrever ───
   if (PLATFORM_HOSTS.some(h => hostname === h || hostname.endsWith(`.${h}`))) {
     return NextResponse.next()
   }
 
-  // 2. Se é um path que não deve ser reescrito, não faz nada
-  if (SKIP_PREFIXES.some(prefix => pathname.startsWith(prefix))) {
-    return NextResponse.next()
-  }
-
-  // 3. É um domínio customizado — buscar o slug no banco
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,11 +91,9 @@ export async function middleware(request: NextRequest) {
       .single()
 
     if (!site || !site.is_published) {
-      // Domínio não encontrado ou site não publicado — redireciona para plataforma
       return NextResponse.redirect(new URL('https://oryen.ai'))
     }
 
-    // 4. Reescrever para /sites/[slug] + path original
     const url = request.nextUrl.clone()
     url.pathname = `/sites/${site.slug}${pathname === '/' ? '' : pathname}`
 

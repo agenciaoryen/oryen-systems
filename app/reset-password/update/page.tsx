@@ -16,10 +16,10 @@ const TRANSLATIONS = {
     loadingBtn: 'Atualizando...',
     backToLogin: 'Voltar ao login',
     successTitle: 'Senha atualizada',
-    successDesc: 'Sua senha foi alterada com sucesso. Voce sera redirecionado ao login.',
+    successDesc: 'Sua senha foi alterada com sucesso. Você será redirecionado ao login.',
     errorGeneric: 'Erro ao atualizar senha',
-    errorMismatch: 'As senhas nao coincidem',
-    errorMinLength: 'A senha deve ter no minimo 6 caracteres',
+    errorMismatch: 'As senhas não coincidem',
+    errorMinLength: 'A senha deve ter no mínimo 6 caracteres',
   },
   en: {
     title: 'New Password',
@@ -36,18 +36,18 @@ const TRANSLATIONS = {
     errorMinLength: 'Password must be at least 6 characters',
   },
   es: {
-    title: 'Nueva Contrasena',
-    subtitle: 'Define tu nueva contrasena abajo',
-    passwordLabel: 'Nueva Contrasena',
-    confirmLabel: 'Confirmar Contrasena',
-    submitBtn: 'Actualizar contrasena',
+    title: 'Nueva Contraseña',
+    subtitle: 'Define tu nueva contraseña abajo',
+    passwordLabel: 'Nueva Contraseña',
+    confirmLabel: 'Confirmar Contraseña',
+    submitBtn: 'Actualizar contraseña',
     loadingBtn: 'Actualizando...',
     backToLogin: 'Volver al login',
-    successTitle: 'Contrasena actualizada',
-    successDesc: 'Tu contrasena fue cambiada exitosamente. Seras redirigido al login.',
-    errorGeneric: 'Error al actualizar contrasena',
-    errorMismatch: 'Las contrasenas no coinciden',
-    errorMinLength: 'La contrasena debe tener al menos 6 caracteres',
+    successTitle: 'Contraseña actualizada',
+    successDesc: 'Tu contraseña fue cambiada exitosamente. Serás redirigido al login.',
+    errorGeneric: 'Error al actualizar contraseña',
+    errorMismatch: 'Las contraseñas no coinciden',
+    errorMinLength: 'La contraseña debe tener al menos 6 caracteres',
   },
 }
 
@@ -67,9 +67,9 @@ export default function UpdatePasswordPage() {
   const t = TRANSLATIONS[lang]
 
   const languages = [
-    { code: 'pt' as Lang, label: 'Portugues' },
+    { code: 'pt' as Lang, label: 'Português' },
     { code: 'en' as Lang, label: 'English' },
-    { code: 'es' as Lang, label: 'Espanol' },
+    { code: 'es' as Lang, label: 'Español' },
   ]
 
   const handleUpdate = async (e: React.FormEvent) => {

@@ -8,14 +8,14 @@ import { Globe, Check, ArrowLeft, Loader2, MailCheck } from 'lucide-react'
 const TRANSLATIONS = {
   pt: {
     title: 'Redefinir Senha',
-    subtitle: 'Informe seu email para receber o link de redefinicao',
-    emailLabel: 'Email',
+    subtitle: 'Informe seu e-mail para receber o link de redefinição',
+    emailLabel: 'E-mail',
     submitBtn: 'Enviar link',
     loadingBtn: 'Enviando...',
     backToLogin: 'Voltar ao login',
-    successTitle: 'Email enviado',
-    successDesc: 'Se uma conta com esse email existir, voce recebera um link para redefinir sua senha.',
-    errorGeneric: 'Erro ao enviar email de redefinicao',
+    successTitle: 'E-mail enviado',
+    successDesc: 'Se uma conta com esse e-mail existir, você receberá um link para redefinir sua senha.',
+    errorGeneric: 'Erro ao enviar e-mail de redefinição',
   },
   en: {
     title: 'Reset Password',
@@ -29,14 +29,14 @@ const TRANSLATIONS = {
     errorGeneric: 'Error sending reset email',
   },
   es: {
-    title: 'Restablecer Contrasena',
+    title: 'Restablecer Contraseña',
     subtitle: 'Ingresa tu correo para recibir el enlace de restablecimiento',
-    emailLabel: 'Correo Electronico',
+    emailLabel: 'Correo Electrónico',
     submitBtn: 'Enviar enlace',
     loadingBtn: 'Enviando...',
     backToLogin: 'Volver al login',
     successTitle: 'Correo enviado',
-    successDesc: 'Si existe una cuenta con ese correo, recibiras un enlace para restablecer tu contrasena.',
+    successDesc: 'Si existe una cuenta con ese correo, recibirás un enlace para restablecer tu contraseña.',
     errorGeneric: 'Error al enviar correo de restablecimiento',
   },
 }
@@ -54,9 +54,9 @@ export default function ResetPasswordPage() {
   const t = TRANSLATIONS[lang]
 
   const languages = [
-    { code: 'pt' as Lang, label: 'Portugues' },
+    { code: 'pt' as Lang, label: 'Português' },
     { code: 'en' as Lang, label: 'English' },
-    { code: 'es' as Lang, label: 'Espanol' },
+    { code: 'es' as Lang, label: 'Español' },
   ]
 
   const handleReset = async (e: React.FormEvent) => {
