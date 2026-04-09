@@ -140,6 +140,25 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
       const fullText = textBlocks.map(b => b.text).join('\n')
       const whatsappMessages = splitForWhatsApp(fullText)
 
+      // Se não gerou mensagens visíveis, forçar uma resposta
+      if (whatsappMessages.length === 0) {
+        console.warn(`[SDR:Agent] Loop ${loops}: IA não gerou texto visível — forçando resposta`)
+        const forcedResponse = await client.messages.create({
+          model: MODEL,
+          max_tokens: MAX_TOKENS,
+          system: systemPrompt + '\n\nIMPORTANTE: Você DEVE responder ao lead agora com uma mensagem de texto. Não use ferramentas. Baseie-se no contexto da conversa e responda de forma natural.',
+          messages
+        })
+        totalTokens += (forcedResponse.usage?.input_tokens || 0) + (forcedResponse.usage?.output_tokens || 0)
+        const forcedText = forcedResponse.content.filter((b: any) => b.type === 'text').map(b => b.text).join('\n')
+        return {
+          messages: splitForWhatsApp(forcedText),
+          toolsExecuted,
+          tokensUsed: totalTokens,
+          model: MODEL
+        }
+      }
+
       return {
         messages: whatsappMessages,
         toolsExecuted,
