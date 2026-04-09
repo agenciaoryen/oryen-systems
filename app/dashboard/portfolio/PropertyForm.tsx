@@ -52,6 +52,10 @@ const T = {
     city: 'Cidade',
     state: 'Estado',
     zip: 'CEP',
+    searchZip: 'Buscar',
+    searchingZip: 'Buscando...',
+    zipNotFound: 'CEP não encontrado',
+    zipFilled: 'Endereço preenchido pelo CEP',
     // Características
     bedrooms: 'Quartos',
     suites: 'Suítes',
@@ -110,6 +114,10 @@ const T = {
     city: 'City',
     state: 'State',
     zip: 'ZIP code',
+    searchZip: 'Search',
+    searchingZip: 'Searching...',
+    zipNotFound: 'ZIP code not found',
+    zipFilled: 'Address filled from ZIP code',
     bedrooms: 'Bedrooms',
     suites: 'Suites',
     bathrooms: 'Bathrooms',
@@ -164,6 +172,10 @@ const T = {
     city: 'Ciudad',
     state: 'Estado/Provincia',
     zip: 'Código postal',
+    searchZip: 'Buscar',
+    searchingZip: 'Buscando...',
+    zipNotFound: 'Código postal no encontrado',
+    zipFilled: 'Dirección completada por código postal',
     bedrooms: 'Habitaciones',
     suites: 'Suites',
     bathrooms: 'Baños',
@@ -350,6 +362,37 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [isDirty])
+
+  // ─── BUSCA CEP (ViaCEP) ───
+  const [searchingCep, setSearchingCep] = useState(false)
+
+  const lookupCep = async () => {
+    const raw = form.address_zip.replace(/\D/g, '')
+    if (raw.length !== 8) return
+    setSearchingCep(true)
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${raw}/json/`)
+      const data = await res.json()
+      if (data.erro) {
+        toast.error(t.zipNotFound)
+        return
+      }
+      setForm(prev => ({
+        ...prev,
+        address_street: data.logradouro || prev.address_street,
+        address_neighborhood: data.bairro || prev.address_neighborhood,
+        address_city: data.localidade || prev.address_city,
+        address_state: data.uf || prev.address_state,
+        address_complement: data.complemento || prev.address_complement,
+      }))
+      setIsDirty(true)
+      toast.success(t.zipFilled)
+    } catch {
+      toast.error(t.zipNotFound)
+    } finally {
+      setSearchingCep(false)
+    }
+  }
 
   // ─── HELPERS ───
   const updateField = (field: string, value: any) => {
@@ -649,6 +692,42 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
       {/* ═══ TAB: LOCALIZAÇÃO ═══ */}
       {activeTab === 'location' && (
         <div className="rounded-2xl border p-6 space-y-5" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
+          {/* CEP com busca */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className={labelClass} style={labelStyle}>{t.zip}</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={form.address_zip}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2')
+                    updateField('address_zip', v)
+                  }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); lookupCep() } }}
+                  className={inputClass}
+                  style={inputStyle}
+                  autoComplete="nope-zip"
+                  maxLength={9}
+                  placeholder="00000-000"
+                />
+                <button
+                  type="button"
+                  onClick={lookupCep}
+                  disabled={searchingCep || form.address_zip.replace(/\D/g, '').length !== 8}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 shrink-0 disabled:opacity-40"
+                  style={{ background: 'var(--site-primary, var(--color-primary))', color: 'var(--color-text-on-primary, #fff)' }}
+                >
+                  {searchingCep ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    t.searchZip
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2">
               <label className={labelClass} style={labelStyle}>{t.street}</label>
@@ -683,10 +762,6 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
                 onChange={(v) => updateField('address_state', v)}
                 options={[{ value: '', label: '—' }, ...BR_STATES.map((st) => ({ value: st, label: st }))]}
               />
-            </div>
-            <div>
-              <label className={labelClass} style={labelStyle}>{t.zip}</label>
-              <input type="text" value={form.address_zip} onChange={(e) => updateField('address_zip', e.target.value)} className={inputClass} style={inputStyle} autoComplete="nope-zip" maxLength={9} />
             </div>
           </div>
         </div>
