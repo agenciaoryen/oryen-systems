@@ -67,7 +67,7 @@ const TRANSLATIONS = {
     },
     sections: {
       commercial: 'Comercial',
-      properties: 'Imóveis',
+      properties: 'Propriedades',
       tools: 'Ferramentas',
     },
     comingSoon: '(Em Breve)',
@@ -141,7 +141,7 @@ const TRANSLATIONS = {
     },
     sections: {
       commercial: 'Comercial',
-      properties: 'Inmuebles',
+      properties: 'Propiedades',
       tools: 'Herramientas',
     },
     comingSoon: '(Próximamente)',

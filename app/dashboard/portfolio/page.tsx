@@ -36,23 +36,23 @@ import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 const T = {
   pt: {
-    title: 'Portfólio de Imóveis',
-    subtitle: 'Gerencie seus imóveis. Eles aparecem automaticamente no seu site.',
-    newProperty: 'Novo Imóvel',
+    title: 'Portfólio de Propriedades',
+    subtitle: 'Gerencie suas propriedades. Elas aparecem automaticamente no seu site.',
+    newProperty: 'Nova Propriedade',
     search: 'Buscar por título...',
     allStatuses: 'Todos os Status',
     allTypes: 'Todos os Tipos',
-    noProperties: 'Nenhum imóvel cadastrado',
-    noPropertiesDesc: 'Cadastre seu primeiro imóvel para começar a montar seu portfólio.',
-    noResults: 'Nenhum imóvel encontrado',
+    noProperties: 'Nenhuma propriedade cadastrada',
+    noPropertiesDesc: 'Cadastre sua primeira propriedade para começar a montar seu portfólio.',
+    noResults: 'Nenhuma propriedade encontrada',
     noResultsDesc: 'Tente mudar os filtros ou buscar outro termo.',
     featured: 'Destaque',
     edit: 'Editar',
     delete: 'Excluir',
-    confirmDelete: 'Tem certeza que deseja excluir este imóvel? Esta ação não pode ser desfeita.',
+    confirmDelete: 'Tem certeza que deseja excluir esta propriedade? Esta ação não pode ser desfeita.',
     deleting: 'Excluindo...',
     of: 'de',
-    properties: 'imóveis',
+    properties: 'propriedades',
     bedrooms: 'quartos',
     bathrooms: 'banheiros',
     parking: 'vagas',
@@ -82,23 +82,23 @@ const T = {
     cancel: 'Cancel',
   },
   es: {
-    title: 'Portafolio de Inmuebles',
-    subtitle: 'Gestione sus inmuebles. Aparecen automáticamente en su sitio.',
-    newProperty: 'Nuevo Inmueble',
+    title: 'Portafolio de Propiedades',
+    subtitle: 'Gestione sus propiedades. Aparecen automáticamente en su sitio.',
+    newProperty: 'Nueva Propiedad',
     search: 'Buscar por título...',
     allStatuses: 'Todos los Estados',
     allTypes: 'Todos los Tipos',
-    noProperties: 'Ningún inmueble registrado',
-    noPropertiesDesc: 'Registre su primer inmueble para empezar a armar su portafolio.',
-    noResults: 'Ningún inmueble encontrado',
+    noProperties: 'Ninguna propiedad registrada',
+    noPropertiesDesc: 'Registre su primera propiedad para empezar a armar su portafolio.',
+    noResults: 'Ninguna propiedad encontrada',
     noResultsDesc: 'Intente cambiar los filtros o buscar otro término.',
     featured: 'Destacado',
     edit: 'Editar',
     delete: 'Eliminar',
-    confirmDelete: '¿Está seguro que desea eliminar este inmueble? Esta acción no se puede deshacer.',
+    confirmDelete: '¿Está seguro que desea eliminar esta propiedad? Esta acción no se puede deshacer.',
     deleting: 'Eliminando...',
     of: 'de',
-    properties: 'inmuebles',
+    properties: 'propiedades',
     bedrooms: 'habitaciones',
     bathrooms: 'baños',
     parking: 'estacionamiento',
@@ -388,7 +388,7 @@ export default function PortfolioPage() {
                       background: prop.is_featured ? 'var(--color-accent)' : 'var(--color-bg-overlay)',
                       color: prop.is_featured ? '#111' : 'var(--color-text-muted)',
                     }}
-                    title={prop.is_featured ? 'Remover destaque' : 'Destacar imóvel'}
+                    title={prop.is_featured ? 'Remover destaque' : 'Destacar propriedade'}
                   >
                     <Star size={14} fill={prop.is_featured ? 'currentColor' : 'none'} />
                   </button>
@@ -496,7 +496,7 @@ export default function PortfolioPage() {
                       onClick={(e) => handleToggleFeatured(e, prop)}
                       className="shrink-0 transition-all hover:scale-110"
                       style={{ color: prop.is_featured ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
-                      title={prop.is_featured ? 'Remover destaque' : 'Destacar imóvel'}
+                      title={prop.is_featured ? 'Remover destaque' : 'Destacar propriedade'}
                     >
                       <Star size={13} fill={prop.is_featured ? 'currentColor' : 'none'} />
                     </button>

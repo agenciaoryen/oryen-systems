@@ -4,7 +4,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
-import { PROPERTY_TYPES, TRANSACTION_TYPES, PROPERTY_STATUSES, AMENITIES, BR_STATES } from '@/lib/properties/constants'
+import { PROPERTY_TYPES, TRANSACTION_TYPES, PROPERTY_STATUSES, ALL_AMENITIES, AMENITIES_BY_TYPE, NUMERIC_FIELDS_BY_TYPE, BR_STATES } from '@/lib/properties/constants'
 import { toast } from 'sonner'
 import {
   Save,
@@ -32,15 +32,15 @@ import { lookupZip, getCountryFromCurrency, getZipLookupUrl, getZipMask } from '
 
 const T = {
   pt: {
-    newTitle: 'Novo Imóvel',
-    editTitle: 'Editar Imóvel',
+    newTitle: 'Nova Propriedade',
+    editTitle: 'Editar Propriedade',
     tabs: { basic: 'Básico', location: 'Localização', features: 'Características', photos: 'Fotos', publish: 'Publicação' },
     // Básico
-    title: 'Título do imóvel',
+    title: 'Título da propriedade',
     titlePlaceholder: 'Ex: Apartamento 3 quartos no Centro',
     description: 'Descrição',
-    descriptionPlaceholder: 'Descreva o imóvel detalhadamente...',
-    propertyType: 'Tipo de imóvel',
+    descriptionPlaceholder: 'Descreva a propriedade detalhadamente...',
+    propertyType: 'Tipo de propriedade',
     transactionType: 'Tipo de transação',
     price: 'Preço',
     condoFee: 'Condomínio',
@@ -75,7 +75,7 @@ const T = {
     uploading: 'Enviando...',
     // Publicação
     status: 'Status',
-    isFeatured: 'Imóvel destaque',
+    isFeatured: 'Propriedade destaque',
     featuredHint: 'Aparece em destaque no site e listagens',
     externalCode: 'Código de referência',
     videoUrl: 'URL do vídeo',
@@ -84,15 +84,15 @@ const T = {
     save: 'Salvar',
     saving: 'Salvando...',
     back: 'Voltar',
-    created: 'Imóvel criado com sucesso!',
-    updated: 'Imóvel atualizado com sucesso!',
-    errorRequired: 'Preencha título, tipo de imóvel e tipo de transação.',
+    created: 'Propriedade criada com sucesso!',
+    updated: 'Propriedade atualizada com sucesso!',
+    errorRequired: 'Preencha título, tipo de propriedade e tipo de transação.',
     draftRestored: 'Rascunho restaurado automaticamente',
     draftSaved: 'Rascunho salvo automaticamente',
     unsavedChanges: 'Você tem alterações não salvas. Deseja sair mesmo assim?',
     exitWithoutSave: 'Sair sem salvar',
     cancel: 'Cancelar',
-    refCodeHint: 'Código usado pelo agente SDR para identificar o imóvel. Gerado automaticamente ao salvar.',
+    refCodeHint: 'Código usado pelo agente SDR para identificar a propriedade. Gerado automaticamente ao salvar.',
     refCodePlaceholder: 'Gerado automaticamente (ex: REF-1001)',
     ogRecommended: '1200×630 recomendado',
   },
@@ -156,14 +156,14 @@ const T = {
     ogRecommended: '1200×630 recommended',
   },
   es: {
-    newTitle: 'Nuevo Inmueble',
-    editTitle: 'Editar Inmueble',
+    newTitle: 'Nueva Propiedad',
+    editTitle: 'Editar Propiedad',
     tabs: { basic: 'Básico', location: 'Ubicación', features: 'Características', photos: 'Fotos', publish: 'Publicación' },
-    title: 'Título del inmueble',
+    title: 'Título de la propiedad',
     titlePlaceholder: 'Ej: Apartamento 3 habitaciones en el Centro',
     description: 'Descripción',
-    descriptionPlaceholder: 'Describa el inmueble detalladamente...',
-    propertyType: 'Tipo de inmueble',
+    descriptionPlaceholder: 'Describa la propiedad detalladamente...',
+    propertyType: 'Tipo de propiedad',
     transactionType: 'Tipo de transacción',
     price: 'Precio',
     condoFee: 'Expensas',
@@ -194,23 +194,23 @@ const T = {
     removePhoto: 'Eliminar',
     uploading: 'Subiendo...',
     status: 'Estado',
-    isFeatured: 'Inmueble destacado',
-    featuredHint: 'Aparece destacado en su sitio y listados',
+    isFeatured: 'Propiedad destacada',
+    featuredHint: 'Aparece destacada en su sitio y listados',
     externalCode: 'Código de referencia',
     videoUrl: 'URL del video',
     virtualTourUrl: 'URL del tour virtual',
     save: 'Guardar',
     saving: 'Guardando...',
     back: 'Volver',
-    created: '¡Inmueble creado con éxito!',
-    updated: '¡Inmueble actualizado con éxito!',
-    errorRequired: 'Complete título, tipo de inmueble y tipo de transacción.',
+    created: '¡Propiedad creada con éxito!',
+    updated: '¡Propiedad actualizada con éxito!',
+    errorRequired: 'Complete título, tipo de propiedad y tipo de transacción.',
     draftRestored: 'Borrador restaurado automáticamente',
     draftSaved: 'Borrador guardado automáticamente',
     unsavedChanges: 'Tiene cambios sin guardar. ¿Desea salir de todos modos?',
     exitWithoutSave: 'Salir sin guardar',
     cancel: 'Cancelar',
-    refCodeHint: 'Código usado por el agente SDR para identificar el inmueble. Se genera automáticamente al guardar.',
+    refCodeHint: 'Código usado por el agente SDR para identificar la propiedad. Se genera automáticamente al guardar.',
     refCodePlaceholder: 'Generado automáticamente (ej: REF-1001)',
     ogRecommended: '1200×630 recomendado',
   },
@@ -556,7 +556,7 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
       }
     } catch (err) {
       console.error('Save failed:', err)
-      toast.error('Erro ao salvar imóvel')
+      toast.error('Erro ao salvar propriedade')
     } finally {
       setSaving(false)
     }
@@ -782,14 +782,14 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
       {/* ═══ TAB: CARACTERÍSTICAS ═══ */}
       {activeTab === 'features' && (
         <div className="rounded-2xl border p-6 space-y-6" style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
-          {/* Números */}
+          {/* Números — dinâmico por tipo */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
               { key: 'bedrooms', label: t.bedrooms },
               { key: 'suites', label: t.suites },
               { key: 'bathrooms', label: t.bathrooms },
               { key: 'parking_spots', label: t.parkingSpots },
-            ].map(({ key, label }) => (
+            ].filter(({ key }) => (NUMERIC_FIELDS_BY_TYPE[form.property_type] || NUMERIC_FIELDS_BY_TYPE.other).includes(key)).map(({ key, label }) => (
               <div key={key}>
                 <label className={labelClass} style={labelStyle}>{label}</label>
                 <div className="flex items-center gap-2">
@@ -827,7 +827,7 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
           <div>
             <label className={labelClass} style={labelStyle}>{t.amenities}</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-              {AMENITIES.map((am) => {
+              {ALL_AMENITIES.filter((am) => (AMENITIES_BY_TYPE[form.property_type] || AMENITIES_BY_TYPE.other).includes(am.key)).map((am) => {
                 const isSelected = form.amenities.includes(am.key)
                 return (
                   <button

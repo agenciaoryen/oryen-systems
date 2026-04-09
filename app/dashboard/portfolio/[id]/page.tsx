@@ -45,7 +45,7 @@ export default function EditPropertyPage() {
   if (error || !data) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-2">
-        <p style={{ color: 'var(--color-text-secondary)' }}>Imóvel não encontrado</p>
+        <p style={{ color: 'var(--color-text-secondary)' }}>Propriedade não encontrada</p>
       </div>
     )
   }

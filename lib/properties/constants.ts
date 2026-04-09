@@ -3,7 +3,7 @@
 type Lang = 'pt' | 'en' | 'es'
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TIPOS DE IMÓVEL
+// TIPOS DE PROPRIEDADE
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const PROPERTY_TYPES: Record<string, Record<Lang, string>> = {
@@ -30,10 +30,11 @@ export const PROPERTY_STATUSES: Record<string, Record<Lang, string>> = {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// AMENIDADES
+// AMENIDADES — organizadas por tipo de propriedade
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const AMENITIES: { key: string; label: Record<Lang, string> }[] = [
+export const ALL_AMENITIES: { key: string; label: Record<Lang, string> }[] = [
+  // Residencial (apartment, house)
   { key: 'pool', label: { pt: 'Piscina', en: 'Pool', es: 'Piscina' } },
   { key: 'gym', label: { pt: 'Academia', en: 'Gym', es: 'Gimnasio' } },
   { key: 'playground', label: { pt: 'Playground', en: 'Playground', es: 'Parque infantil' } },
@@ -54,7 +55,69 @@ export const AMENITIES: { key: string; label: Record<Lang, string> }[] = [
   { key: 'fireplace', label: { pt: 'Lareira', en: 'Fireplace', es: 'Chimenea' } },
   { key: 'closet', label: { pt: 'Closet', en: 'Walk-in closet', es: 'Vestidor' } },
   { key: 'home_office', label: { pt: 'Home office', en: 'Home office', es: 'Oficina en casa' } },
+  // Terreno (land)
+  { key: 'paved_access', label: { pt: 'Acesso asfaltado', en: 'Paved access', es: 'Acceso pavimentado' } },
+  { key: 'water_supply', label: { pt: 'Água encanada', en: 'Water supply', es: 'Agua potable' } },
+  { key: 'sewage', label: { pt: 'Esgoto/Fossa', en: 'Sewage system', es: 'Alcantarillado' } },
+  { key: 'electricity', label: { pt: 'Energia elétrica', en: 'Electricity', es: 'Electricidad' } },
+  { key: 'natural_gas', label: { pt: 'Gás encanado', en: 'Natural gas', es: 'Gas natural' } },
+  { key: 'flat_terrain', label: { pt: 'Terreno plano', en: 'Flat terrain', es: 'Terreno plano' } },
+  { key: 'fenced', label: { pt: 'Cercado/Murado', en: 'Fenced', es: 'Cercado' } },
+  { key: 'corner_lot', label: { pt: 'Esquina', en: 'Corner lot', es: 'Esquina' } },
+  { key: 'gated_community', label: { pt: 'Condomínio fechado', en: 'Gated community', es: 'Comunidad cerrada' } },
+  { key: 'street_lighting', label: { pt: 'Iluminação pública', en: 'Street lighting', es: 'Alumbrado público' } },
+  // Comercial (commercial)
+  { key: 'reception', label: { pt: 'Recepção', en: 'Reception', es: 'Recepción' } },
+  { key: 'meeting_room', label: { pt: 'Sala de reunião', en: 'Meeting room', es: 'Sala de reuniones' } },
+  { key: 'loading_dock', label: { pt: 'Doca de carga', en: 'Loading dock', es: 'Muelle de carga' } },
+  { key: 'handicap_access', label: { pt: 'Acessibilidade', en: 'Handicap access', es: 'Accesibilidad' } },
+  // Rural
+  { key: 'well', label: { pt: 'Poço artesiano', en: 'Artesian well', es: 'Pozo artesiano' } },
+  { key: 'corral', label: { pt: 'Curral', en: 'Corral', es: 'Corral' } },
+  { key: 'barn', label: { pt: 'Galpão', en: 'Barn', es: 'Granero' } },
+  { key: 'fruit_trees', label: { pt: 'Pomar', en: 'Fruit trees', es: 'Frutales' } },
+  { key: 'river_access', label: { pt: 'Acesso a rio/lago', en: 'River/lake access', es: 'Acceso a río/lago' } },
 ]
+
+// Quais amenidades mostrar por tipo de propriedade
+const SHARED_AMENITIES = ['pool', 'security', 'garden', 'solar_energy', 'gated_community']
+const RESIDENTIAL_AMENITIES = [
+  ...SHARED_AMENITIES, 'gym', 'playground', 'gourmet_area', 'barbecue', 'sauna',
+  'party_room', 'elevator', 'doorman', 'balcony', 'furnished', 'air_conditioning',
+  'laundry', 'pet_friendly', 'fireplace', 'closet', 'home_office',
+]
+
+export const AMENITIES_BY_TYPE: Record<string, string[]> = {
+  apartment: RESIDENTIAL_AMENITIES,
+  house: RESIDENTIAL_AMENITIES,
+  land: [
+    'paved_access', 'water_supply', 'sewage', 'electricity', 'natural_gas',
+    'flat_terrain', 'fenced', 'corner_lot', 'gated_community', 'street_lighting',
+    'security', 'garden',
+  ],
+  commercial: [
+    ...SHARED_AMENITIES, 'elevator', 'air_conditioning', 'doorman', 'furnished',
+    'reception', 'meeting_room', 'loading_dock', 'handicap_access',
+  ],
+  rural: [
+    'paved_access', 'water_supply', 'electricity', 'fenced', 'well',
+    'corral', 'barn', 'fruit_trees', 'river_access', 'pool', 'garden', 'solar_energy',
+  ],
+  other: RESIDENTIAL_AMENITIES,
+}
+
+// Quais campos numéricos mostrar por tipo de propriedade
+export const NUMERIC_FIELDS_BY_TYPE: Record<string, string[]> = {
+  apartment: ['bedrooms', 'suites', 'bathrooms', 'parking_spots'],
+  house: ['bedrooms', 'suites', 'bathrooms', 'parking_spots'],
+  land: [],
+  commercial: ['bathrooms', 'parking_spots'],
+  rural: ['bedrooms', 'bathrooms', 'parking_spots'],
+  other: ['bedrooms', 'suites', 'bathrooms', 'parking_spots'],
+}
+
+// Retrocompatibilidade — exportar lista completa como AMENITIES
+export const AMENITIES = ALL_AMENITIES
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ESTADOS BRASILEIROS
