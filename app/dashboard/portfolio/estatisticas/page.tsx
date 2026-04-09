@@ -334,13 +334,14 @@ export default function PropertyStatsPage() {
                       border: '1px solid var(--color-border)',
                       borderRadius: '12px',
                       fontSize: '12px',
+                      color: 'var(--color-text-primary)',
                     }}
                     labelFormatter={(v: string) => {
                       const d = new Date(v + 'T00:00:00')
                       return d.toLocaleDateString(lang === 'pt' ? 'pt-BR' : lang === 'es' ? 'es' : 'en', { day: 'numeric', month: 'short' })
                     }}
                   />
-                  <Legend wrapperStyle={{ fontSize: '11px' }} />
+                  <Legend wrapperStyle={{ fontSize: '11px', color: 'var(--color-text-secondary)' }} />
                   <Line
                     type="monotone"
                     dataKey="views"
@@ -373,133 +374,212 @@ export default function PropertyStatsPage() {
             </div>
           )}
 
-          {/* ═══ TABLE ═══ */}
+          {/* ═══ PERFORMANCE POR IMÓVEL ═══ */}
           {sortedStats.length > 0 ? (
-            <div
-              className="rounded-2xl overflow-hidden"
-              style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
-            >
-              <div className="p-5 pb-3">
+            <div>
+              <div className="p-1 pb-3">
                 <h2 className="text-sm font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>
                   {t.tableTitle} ({sortedStats.length})
                 </h2>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
-                      <th className="text-left px-5 py-3 text-xs font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>
-                        {t.property}
-                      </th>
-                      <ThSortable label={t.views} column="views" icon={Eye} />
-                      <ThSortable label={t.visitors} column="unique_visitors" icon={Users} />
-                      <ThSortable label={t.leads} column="leads_count" icon={MessageSquare} />
-                      <ThSortable label={t.conversion} column="conversion_rate" icon={TrendingUp} />
-                      <ThSortable label={t.daysOnMarket} column="days_on_market" icon={Home} />
-                      <th className="text-right px-5 py-3 text-xs font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>
-                        {t.priceM2}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedStats.map((p) => (
-                      <tr
-                        key={p.property_id}
-                        className="transition-colors cursor-pointer"
-                        style={{ borderBottom: '1px solid var(--color-border-subtle)' }}
-                        onClick={() => router.push(`/dashboard/portfolio/${p.property_id}`)}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-bg-hover)' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '' }}
+              {/* ─── CARDS (mobile) ─── */}
+              <div className="flex flex-col gap-3 lg:hidden">
+                {sortedStats.map((p) => (
+                  <div
+                    key={p.property_id}
+                    className="rounded-2xl p-4 cursor-pointer transition-all active:scale-[0.98]"
+                    style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
+                    onClick={() => router.push(`/dashboard/portfolio/${p.property_id}`)}
+                  >
+                    {/* Header: foto + nome */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div
+                        className="w-12 h-12 rounded-xl overflow-hidden shrink-0"
+                        style={{ background: 'var(--color-bg-surface)' }}
                       >
-                        {/* Property info */}
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="w-10 h-10 rounded-lg overflow-hidden shrink-0"
-                              style={{ background: 'var(--color-bg-surface)' }}
-                            >
-                              {p.cover_url ? (
-                                <img src={p.cover_url} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <Home size={14} style={{ color: 'var(--color-text-muted)' }} />
-                                </div>
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold truncate max-w-[200px]" style={{ color: 'var(--color-text-primary)' }}>
-                                {p.title}
-                              </p>
-                              <p className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
-                                {p.address_neighborhood || '—'}
-                                {p.status !== 'active' && (
-                                  <span
-                                    className="ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase"
-                                    style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)' }}
-                                  >
-                                    {p.status}
-                                  </span>
-                                )}
-                              </p>
-                            </div>
+                        {p.cover_url ? (
+                          <img src={p.cover_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Home size={16} style={{ color: 'var(--color-text-muted)' }} />
                           </div>
-                        </td>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
+                          {p.title}
+                        </p>
+                        <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+                          {p.address_neighborhood || '—'}
+                          {p.status !== 'active' && (
+                            <span
+                              className="ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase"
+                              style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)' }}
+                            >
+                              {p.status}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="shrink-0" style={{ color: 'var(--color-text-muted)' }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                    {/* Métricas em grid 2x3 */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="text-center p-2 rounded-lg" style={{ background: 'var(--color-bg-surface)' }}>
+                        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.views}</p>
+                        <p className="text-sm font-bold font-mono" style={{ color: 'var(--color-text-primary)' }}>{p.views}</p>
+                      </div>
+                      <div className="text-center p-2 rounded-lg" style={{ background: 'var(--color-bg-surface)' }}>
+                        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.visitors}</p>
+                        <p className="text-sm font-bold font-mono" style={{ color: 'var(--color-text-secondary)' }}>{p.unique_visitors}</p>
+                      </div>
+                      <div className="text-center p-2 rounded-lg" style={{ background: 'var(--color-bg-surface)' }}>
+                        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.leads}</p>
+                        <p className="text-sm font-bold font-mono" style={{ color: p.leads_count > 0 ? 'var(--color-success)' : 'var(--color-text-muted)' }}>{p.leads_count}</p>
+                      </div>
+                      <div className="text-center p-2 rounded-lg" style={{ background: 'var(--color-bg-surface)' }}>
+                        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.conversion}</p>
+                        <p className="text-sm font-bold font-mono" style={{
+                          color: p.conversion_rate > 5 ? 'var(--color-success)' : p.conversion_rate > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)',
+                        }}>{p.conversion_rate}%</p>
+                      </div>
+                      <div className="text-center p-2 rounded-lg" style={{ background: 'var(--color-bg-surface)' }}>
+                        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.daysOnMarket}</p>
+                        <p className="text-sm font-bold font-mono" style={{ color: 'var(--color-text-secondary)' }}>{p.days_on_market || '—'}</p>
+                      </div>
+                      <div className="text-center p-2 rounded-lg" style={{ background: 'var(--color-bg-surface)' }}>
+                        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.priceM2}</p>
+                        <p className="text-sm font-bold font-mono" style={{ color: 'var(--color-text-secondary)' }}>{p.price_per_m2 ? formatPrice(p.price_per_m2, currency) : '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-                        {/* Views */}
-                        <td className="px-5 py-3 text-center">
-                          <span className="font-mono font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                            {p.views}
-                          </span>
-                        </td>
-
-                        {/* Unique visitors */}
-                        <td className="px-5 py-3 text-center">
-                          <span className="font-mono" style={{ color: 'var(--color-text-secondary)' }}>
-                            {p.unique_visitors}
-                          </span>
-                        </td>
-
-                        {/* Leads */}
-                        <td className="px-5 py-3 text-center">
-                          <span
-                            className="font-mono font-bold"
-                            style={{ color: p.leads_count > 0 ? 'var(--color-success)' : 'var(--color-text-muted)' }}
-                          >
-                            {p.leads_count}
-                          </span>
-                        </td>
-
-                        {/* Conversion */}
-                        <td className="px-5 py-3 text-center">
-                          <span
-                            className="font-mono text-xs px-2 py-0.5 rounded-full"
-                            style={{
-                              background: p.conversion_rate > 5 ? 'var(--color-success-subtle)' : p.conversion_rate > 0 ? 'var(--color-accent-subtle)' : 'var(--color-bg-surface)',
-                              color: p.conversion_rate > 5 ? 'var(--color-success)' : p.conversion_rate > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)',
-                            }}
-                          >
-                            {p.conversion_rate}%
-                          </span>
-                        </td>
-
-                        {/* Days on market */}
-                        <td className="px-5 py-3 text-center">
-                          <span className="font-mono" style={{ color: 'var(--color-text-secondary)' }}>
-                            {p.days_on_market || '—'}
-                          </span>
-                        </td>
-
-                        {/* Price/m² */}
-                        <td className="px-5 py-3 text-right">
-                          <span className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                            {p.price_per_m2 ? formatPrice(p.price_per_m2, currency) : '—'}
-                          </span>
-                        </td>
+              {/* ─── TABLE (desktop) ─── */}
+              <div
+                className="rounded-2xl overflow-hidden hidden lg:block"
+                style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+                        <th className="text-left px-5 py-3 text-xs font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>
+                          {t.property}
+                        </th>
+                        <ThSortable label={t.views} column="views" icon={Eye} />
+                        <ThSortable label={t.visitors} column="unique_visitors" icon={Users} />
+                        <ThSortable label={t.leads} column="leads_count" icon={MessageSquare} />
+                        <ThSortable label={t.conversion} column="conversion_rate" icon={TrendingUp} />
+                        <ThSortable label={t.daysOnMarket} column="days_on_market" icon={Home} />
+                        <th className="text-right px-5 py-3 text-xs font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>
+                          {t.priceM2}
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {sortedStats.map((p) => (
+                        <tr
+                          key={p.property_id}
+                          className="transition-colors cursor-pointer"
+                          style={{ borderBottom: '1px solid var(--color-border-subtle)' }}
+                          onClick={() => router.push(`/dashboard/portfolio/${p.property_id}`)}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-bg-hover)' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = '' }}
+                        >
+                          {/* Property info */}
+                          <td className="px-5 py-3">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-10 h-10 rounded-lg overflow-hidden shrink-0"
+                                style={{ background: 'var(--color-bg-surface)' }}
+                              >
+                                {p.cover_url ? (
+                                  <img src={p.cover_url} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <Home size={14} style={{ color: 'var(--color-text-muted)' }} />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold truncate max-w-[200px]" style={{ color: 'var(--color-text-primary)' }}>
+                                  {p.title}
+                                </p>
+                                <p className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+                                  {p.address_neighborhood || '—'}
+                                  {p.status !== 'active' && (
+                                    <span
+                                      className="ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase"
+                                      style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)' }}
+                                    >
+                                      {p.status}
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Views */}
+                          <td className="px-5 py-3 text-center">
+                            <span className="font-mono font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                              {p.views}
+                            </span>
+                          </td>
+
+                          {/* Unique visitors */}
+                          <td className="px-5 py-3 text-center">
+                            <span className="font-mono" style={{ color: 'var(--color-text-secondary)' }}>
+                              {p.unique_visitors}
+                            </span>
+                          </td>
+
+                          {/* Leads */}
+                          <td className="px-5 py-3 text-center">
+                            <span
+                              className="font-mono font-bold"
+                              style={{ color: p.leads_count > 0 ? 'var(--color-success)' : 'var(--color-text-muted)' }}
+                            >
+                              {p.leads_count}
+                            </span>
+                          </td>
+
+                          {/* Conversion */}
+                          <td className="px-5 py-3 text-center">
+                            <span
+                              className="font-mono text-xs px-2 py-0.5 rounded-full"
+                              style={{
+                                background: p.conversion_rate > 5 ? 'var(--color-success-subtle)' : p.conversion_rate > 0 ? 'var(--color-accent-subtle)' : 'var(--color-bg-surface)',
+                                color: p.conversion_rate > 5 ? 'var(--color-success)' : p.conversion_rate > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)',
+                              }}
+                            >
+                              {p.conversion_rate}%
+                            </span>
+                          </td>
+
+                          {/* Days on market */}
+                          <td className="px-5 py-3 text-center">
+                            <span className="font-mono" style={{ color: 'var(--color-text-secondary)' }}>
+                              {p.days_on_market || '—'}
+                            </span>
+                          </td>
+
+                          {/* Price/m² */}
+                          <td className="px-5 py-3 text-right">
+                            <span className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                              {p.price_per_m2 ? formatPrice(p.price_per_m2, currency) : '—'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           ) : (
