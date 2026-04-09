@@ -26,14 +26,8 @@ export default function DashboardLayout({
   const isMessagesPage = pathname?.startsWith('/dashboard/messages')
   const { user, loading, org, activePlanStatus, isStaff } = useAuth()
 
-  // Guard: não logado → login
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/login')
-    }
-  }, [loading, user, router])
-
   // Guard: usuário com org mas sem pagamento → onboarding
+  // Nota: proteção de auth principal é feita no middleware.ts
   useEffect(() => {
     if (!loading && user && org && activePlanStatus === 'trial' && !isStaff) {
       router.replace('/onboarding')

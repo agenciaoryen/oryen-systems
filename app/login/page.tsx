@@ -79,8 +79,10 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
-      router.push('/dashboard')
-      router.refresh()
+      // Full page navigation para garantir que o middleware detecte o cookie de sessão
+      const params = new URLSearchParams(window.location.search)
+      const redirect = params.get('redirect') || '/dashboard'
+      window.location.href = redirect
     } catch (error: any) {
       setErrorMsg(error.message || t.errorGeneric)
       setLoading(false)
