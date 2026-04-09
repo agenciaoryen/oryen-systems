@@ -7,13 +7,13 @@ import { exportToCSV, generatePLReportPDF, generateCommissionReportPDF, generate
 
 const TRANSLATIONS = {
   pt: {
-    title: 'Relatorios',
+    title: 'Relatórios',
     subtitle: 'Exporte seus dados financeiros em PDF ou CSV',
-    plReport: 'Relatorio P&L',
-    plDesc: 'Receitas, despesas e lucro liquido mensal',
-    commReport: 'Relatorio de Comissoes',
-    commDesc: 'Comissoes por corretor e negocio',
-    expReport: 'Relatorio de Despesas',
+    plReport: 'Relatório P&L',
+    plDesc: 'Receitas, despesas e lucro líquido mensal',
+    commReport: 'Relatório de Comissões',
+    commDesc: 'Comissões por corretor e negócio',
+    expReport: 'Relatório de Despesas',
     expDesc: 'Despesas agrupadas por categoria',
     pdf: 'PDF',
     csv: 'CSV',
@@ -42,7 +42,7 @@ const TRANSLATIONS = {
     commReport: 'Reporte de Comisiones',
     commDesc: 'Comisiones por corredor y negocio',
     expReport: 'Reporte de Gastos',
-    expDesc: 'Gastos agrupados por categoria',
+    expDesc: 'Gastos agrupados por categoría',
     pdf: 'PDF',
     csv: 'CSV',
     generating: 'Generando...',
@@ -79,10 +79,10 @@ export default function ReportExporter({
           exportToCSV(
             monthlyPL,
             [
-              { key: 'month', label: lang === 'pt' ? 'Mes' : 'Month' },
+              { key: 'month', label: lang === 'pt' ? 'Mês' : 'Month' },
               { key: 'revenue', label: lang === 'pt' ? 'Receita' : 'Revenue' },
               { key: 'expenses', label: lang === 'pt' ? 'Despesas' : 'Expenses' },
-              { key: 'netProfit', label: lang === 'pt' ? 'Lucro Liquido' : 'Net Profit' },
+              { key: 'netProfit', label: lang === 'pt' ? 'Lucro Líquido' : 'Net Profit' },
             ],
             `pl-${orgName.toLowerCase().replace(/\s+/g, '-')}`
           )
@@ -96,8 +96,8 @@ export default function ReportExporter({
             [
               { key: 'broker_name', label: lang === 'pt' ? 'Corretor' : 'Broker' },
               { key: 'revenue', label: lang === 'pt' ? 'Receita' : 'Revenue' },
-              { key: 'deals_count', label: lang === 'pt' ? 'Negocios' : 'Deals' },
-              { key: 'commission_total', label: lang === 'pt' ? 'Comissao' : 'Commission' },
+              { key: 'deals_count', label: lang === 'pt' ? 'Negócios' : 'Deals' },
+              { key: 'commission_total', label: lang === 'pt' ? 'Comissão' : 'Commission' },
             ],
             `commissions-${orgName.toLowerCase().replace(/\s+/g, '-')}`
           )

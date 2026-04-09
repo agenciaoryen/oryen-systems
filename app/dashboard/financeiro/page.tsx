@@ -44,17 +44,17 @@ import type {
 const TRANSLATIONS = {
   pt: {
     title: 'Financeiro',
-    subtitle: 'Gestao financeira completa da sua operacao',
+    subtitle: 'Gestão financeira completa da sua operação',
     refresh: 'Atualizar',
     loading: 'Carregando dados financeiros...',
     tabs: {
-      overview: 'Visao Geral',
-      commissions: 'Comissoes',
+      overview: 'Visão Geral',
+      commissions: 'Comissões',
       expenses: 'Despesas',
-      reports: 'Relatorios',
+      reports: 'Relatórios',
     },
     periods: {
-      month: 'Este Mes',
+      month: 'Este Mês',
       quarter: 'Trimestre',
       semester: 'Semestre',
       year: 'Este Ano',
@@ -80,11 +80,11 @@ const TRANSLATIONS = {
   },
   es: {
     title: 'Financiero',
-    subtitle: 'Gestion financiera completa de su operacion',
+    subtitle: 'Gestión financiera completa de su operación',
     refresh: 'Actualizar',
     loading: 'Cargando datos financieros...',
     tabs: {
-      overview: 'Vision General',
+      overview: 'Visión General',
       commissions: 'Comisiones',
       expenses: 'Gastos',
       reports: 'Reportes',
@@ -93,7 +93,7 @@ const TRANSLATIONS = {
       month: 'Este Mes',
       quarter: 'Trimestre',
       semester: 'Semestre',
-      year: 'Este Ano',
+      year: 'Este Año',
     },
   },
 }
@@ -252,18 +252,18 @@ export default function FinanceiroPage() {
 
       {/* Gate: Full module for Gold+ */}
       <FeatureLock feature="hasFinancialModule" lang={lang} variant="replace"
-        title={lang === 'pt' ? 'Modulo Financeiro' : lang === 'es' ? 'Modulo Financiero' : 'Financial Module'}>
+        title={lang === 'pt' ? 'Módulo Financeiro' : lang === 'es' ? 'Módulo Financiero' : 'Financial Module'}>
 
         {/* Tab Navigation */}
-        <div className="flex gap-1 p-1 rounded-xl overflow-x-auto"
+        <div className="flex gap-1 p-1 rounded-xl overflow-x-auto no-scrollbar"
           style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
           {tabs.map((tab) => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all whitespace-nowrap"
+              className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-all whitespace-nowrap cursor-pointer"
               style={{
-                background: activeTab === tab.key ? 'var(--color-bg-surface)' : 'transparent',
-                color: activeTab === tab.key ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
-                boxShadow: activeTab === tab.key ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                background: activeTab === tab.key ? 'var(--color-primary)' : 'transparent',
+                color: activeTab === tab.key ? '#fff' : 'var(--color-text-muted)',
+                boxShadow: activeTab === tab.key ? '0 2px 6px rgba(0,0,0,0.15)' : 'none',
               }}>
               {tab.label}
             </button>

@@ -8,11 +8,11 @@ const TRANSLATIONS = {
   pt: {
     revenue: 'Receita Total',
     expenses: 'Despesas',
-    netProfit: 'Lucro Liquido',
+    netProfit: 'Lucro Líquido',
     profitMargin: 'Margem de Lucro',
-    pendingComm: 'Comissoes Pendentes',
+    pendingComm: 'Comissões Pendentes',
     noData: 'Sem dados',
-    vsPrev: 'vs periodo anterior',
+    vsPrev: 'vs período anterior',
   },
   en: {
     revenue: 'Total Revenue',
@@ -30,7 +30,7 @@ const TRANSLATIONS = {
     profitMargin: 'Margen de Beneficio',
     pendingComm: 'Comisiones Pendientes',
     noData: 'Sin datos',
-    vsPrev: 'vs periodo anterior',
+    vsPrev: 'vs período anterior',
   },
 }
 
