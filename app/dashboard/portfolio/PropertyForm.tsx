@@ -24,6 +24,7 @@ import {
   Send,
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
+import { lookupZip, getCountryFromCurrency, getZipLookupUrl, getZipMask } from '@/lib/properties/zipLookup'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -366,27 +367,28 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [isDirty])
 
-  // ─── BUSCA CEP (ViaCEP) ───
+  // ─── BUSCA CÓDIGO POSTAL ───
   const [searchingCep, setSearchingCep] = useState(false)
+  const orgCountry = getCountryFromCurrency(currency)
+  const zipMask = getZipMask(orgCountry)
+  const zipLookupUrl = getZipLookupUrl(orgCountry)
 
-  const lookupCep = async () => {
-    const raw = form.address_zip.replace(/\D/g, '')
-    if (raw.length !== 8) return
+  const handleZipLookup = async () => {
+    if (!form.address_zip.trim()) return
     setSearchingCep(true)
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${raw}/json/`)
-      const data = await res.json()
-      if (data.erro) {
+      const result = await lookupZip(form.address_zip, orgCountry)
+      if (!result) {
         toast.error(t.zipNotFound)
         return
       }
       setForm(prev => ({
         ...prev,
-        address_street: data.logradouro || prev.address_street,
-        address_neighborhood: data.bairro || prev.address_neighborhood,
-        address_city: data.localidade || prev.address_city,
-        address_state: data.uf || prev.address_state,
-        address_complement: data.complemento || prev.address_complement,
+        address_street: result.street || prev.address_street,
+        address_neighborhood: result.neighborhood || prev.address_neighborhood,
+        address_city: result.city || prev.address_city,
+        address_state: result.state || prev.address_state,
+        address_complement: result.complement || prev.address_complement,
       }))
       setIsDirty(true)
       toast.success(t.zipFilled)
@@ -703,21 +705,18 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
                 <input
                   type="text"
                   value={form.address_zip}
-                  onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2')
-                    updateField('address_zip', v)
-                  }}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); lookupCep() } }}
+                  onChange={(e) => updateField('address_zip', zipMask.format(e.target.value))}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleZipLookup() } }}
                   className={inputClass}
                   style={inputStyle}
                   autoComplete="nope-zip"
-                  maxLength={9}
-                  placeholder="00000-000"
+                  maxLength={zipMask.maxLength}
+                  placeholder={zipMask.placeholder}
                 />
                 <button
                   type="button"
-                  onClick={lookupCep}
-                  disabled={searchingCep || form.address_zip.replace(/\D/g, '').length !== 8}
+                  onClick={handleZipLookup}
+                  disabled={searchingCep || !form.address_zip.trim()}
                   className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 shrink-0 disabled:opacity-40"
                   style={{ background: 'var(--site-primary, var(--color-primary))', color: 'var(--color-text-on-primary, #fff)' }}
                 >
@@ -729,7 +728,7 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
                 </button>
               </div>
               <a
-                href="https://buscacepinter.correios.com.br/app/endereco/index.php"
+                href={zipLookupUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs mt-1.5 inline-flex items-center gap-1 hover:underline"
