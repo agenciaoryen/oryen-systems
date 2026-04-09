@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
   -- Publicação
   is_published BOOLEAN DEFAULT false,
   custom_domain TEXT,
+  domain_status TEXT, -- 'pending', 'active', 'misconfigured'
 
   -- Timestamps
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

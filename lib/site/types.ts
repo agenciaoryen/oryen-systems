@@ -31,6 +31,7 @@ export interface SiteSettings {
   og_image_url: string | null
   is_published: boolean
   custom_domain: string | null
+  domain_status: string | null
   created_at: string
   updated_at: string
 }

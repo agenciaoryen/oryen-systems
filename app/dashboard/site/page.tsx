@@ -21,6 +21,10 @@ import {
   ImageIcon,
   AlertCircle,
   Trash2,
+  Link2,
+  Shield,
+  RefreshCw,
+  Copy,
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
@@ -83,6 +87,29 @@ const T = {
   slugChecking: 'Verificando...',
   slugAvailable: 'Disponível!',
   slugTaken: 'Já está em uso',
+  // Custom Domain
+  domainTitle: 'Domínio Próprio',
+  domainDesc: 'Use seu próprio domínio para um site ainda mais profissional.',
+  domainLabel: 'Seu domínio',
+  domainPlaceholder: 'Ex: www.meusite.com.br',
+  domainAdd: 'Conectar Domínio',
+  domainAdding: 'Conectando...',
+  domainRemove: 'Remover',
+  domainRemoving: 'Removendo...',
+  domainVerify: 'Verificar DNS',
+  domainVerifying: 'Verificando...',
+  domainStatusActive: 'Conectado',
+  domainStatusPending: 'Aguardando DNS',
+  domainStatusMisconfigured: 'DNS incorreto',
+  domainDnsTitle: 'Configure o DNS do seu domínio:',
+  domainDnsOption1: 'Opção 1 — CNAME (recomendado para subdomínios como www):',
+  domainDnsOption2: 'Opção 2 — Registro A (para domínio raiz):',
+  domainDnsType: 'Tipo',
+  domainDnsName: 'Nome',
+  domainDnsValue: 'Valor',
+  domainDnsHint: 'Após configurar o DNS, clique em "Verificar DNS". A propagação pode levar até 48h.',
+  domainCurrentUrl: 'URL atual (gratuita):',
+  domainOr: 'ou',
   // Publish
   publishTitle: 'Publicar site',
   publishDesc: 'Ao publicar, seu site ficará acessível publicamente.',
@@ -108,6 +135,12 @@ export default function SiteSettingsPage() {
   const [publishing, setPublishing] = useState(false)
   const [hasSaved, setHasSaved] = useState(false)
   const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
+
+  // Domain state
+  const [domainInput, setDomainInput] = useState('')
+  const [domainData, setDomainData] = useState<any>(null)
+  const [domainLoading, setDomainLoading] = useState(false)
+  const [domainAction, setDomainAction] = useState<'idle' | 'adding' | 'removing' | 'verifying'>('idle')
 
   const [form, setForm] = useState({
     slug: '',
@@ -252,6 +285,73 @@ export default function SiteSettingsPage() {
     }
   }
 
+  // ─── DOMAIN ───
+  const fetchDomainStatus = useCallback(async () => {
+    if (!orgId) return
+    try {
+      const res = await fetch(`/api/site/domain?org_id=${orgId}`)
+      const data = await res.json()
+      setDomainData(data)
+    } catch {}
+  }, [orgId])
+
+  useEffect(() => {
+    if (orgId && hasSaved) fetchDomainStatus()
+  }, [orgId, hasSaved, fetchDomainStatus])
+
+  const handleAddDomain = async () => {
+    if (!orgId || !domainInput.trim()) return
+    setDomainAction('adding')
+    try {
+      const res = await fetch('/api/site/domain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ org_id: orgId, domain: domainInput.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || 'Erro ao conectar domínio')
+        return
+      }
+      toast.success('Domínio conectado! Configure o DNS.')
+      setDomainInput('')
+      await fetchDomainStatus()
+    } catch {
+      toast.error('Erro ao conectar domínio')
+    } finally {
+      setDomainAction('idle')
+    }
+  }
+
+  const handleRemoveDomain = async () => {
+    if (!orgId) return
+    setDomainAction('removing')
+    try {
+      await fetch('/api/site/domain', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ org_id: orgId }),
+      })
+      toast.success('Domínio removido')
+      setDomainData(null)
+    } catch {
+      toast.error('Erro ao remover domínio')
+    } finally {
+      setDomainAction('idle')
+    }
+  }
+
+  const handleVerifyDomain = async () => {
+    setDomainAction('verifying')
+    await fetchDomainStatus()
+    setDomainAction('idle')
+    if (domainData?.status === 'active') {
+      toast.success('DNS verificado! Domínio ativo.')
+    } else {
+      toast.error('DNS ainda não propagou. Tente novamente mais tarde.')
+    }
+  }
+
   // ─── PUBLISH ───
   const handlePublish = async (publish: boolean) => {
     if (!orgId) return
@@ -320,6 +420,7 @@ export default function SiteSettingsPage() {
   const sectionStyle = { background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }
 
   const siteUrl = form.slug ? `${typeof window !== 'undefined' ? window.location.origin : ''}/sites/${form.slug}` : ''
+  const publicUrl = domainData?.domain && domainData?.status === 'active' ? `https://${domainData.domain}` : siteUrl
 
   if (loading) {
     return (
@@ -344,7 +445,7 @@ export default function SiteSettingsPage() {
         <div className="flex items-center gap-2">
           {form.is_published && form.slug && (
             <a
-              href={`/sites/${form.slug}`}
+              href={publicUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all hover:bg-[var(--color-bg-hover)]"
@@ -399,6 +500,128 @@ export default function SiteSettingsPage() {
           )}
         </div>
       </div>
+
+      {/* ═══ DOMÍNIO PRÓPRIO ═══ */}
+      {hasSaved && (
+        <div className={sectionClass} style={sectionStyle}>
+          <div className="flex items-center gap-2 mb-1">
+            <Link2 size={18} style={{ color: 'var(--color-success)' }} />
+            <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.domainTitle}</h2>
+          </div>
+          <p className="text-xs mb-4" style={{ color: 'var(--color-text-muted)' }}>{T.domainDesc}</p>
+
+          {/* URL gratuita atual */}
+          {form.slug && (
+            <div className="flex items-center gap-2 p-3 rounded-xl mb-4" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+              <Globe size={14} style={{ color: 'var(--color-text-muted)' }} />
+              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{T.domainCurrentUrl}</span>
+              <span className="text-xs font-mono font-medium" style={{ color: 'var(--color-primary)' }}>{siteUrl}</span>
+            </div>
+          )}
+
+          {/* Se já tem domínio configurado */}
+          {domainData?.domain ? (
+            <div className="space-y-4">
+              {/* Status do domínio */}
+              <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{
+                    background: domainData.status === 'active' ? 'var(--color-success-subtle)' : domainData.status === 'misconfigured' ? 'var(--color-error-subtle)' : 'var(--color-warning-subtle)'
+                  }}>
+                    {domainData.status === 'active' ? <Shield size={16} style={{ color: 'var(--color-success)' }} /> :
+                     domainData.status === 'misconfigured' ? <AlertCircle size={16} style={{ color: 'var(--color-error)' }} /> :
+                     <Loader2 size={16} className="animate-spin" style={{ color: 'var(--color-warning)' }} />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>{domainData.domain}</p>
+                    <p className="text-[11px] font-medium" style={{
+                      color: domainData.status === 'active' ? 'var(--color-success)' : domainData.status === 'misconfigured' ? 'var(--color-error)' : 'var(--color-warning)'
+                    }}>
+                      {domainData.status === 'active' ? T.domainStatusActive : domainData.status === 'misconfigured' ? T.domainStatusMisconfigured : T.domainStatusPending}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {domainData.status !== 'active' && (
+                    <button onClick={handleVerifyDomain} disabled={domainAction === 'verifying'}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+                      style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)' }}>
+                      {domainAction === 'verifying' ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                      {domainAction === 'verifying' ? T.domainVerifying : T.domainVerify}
+                    </button>
+                  )}
+                  <button onClick={handleRemoveDomain} disabled={domainAction === 'removing'}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+                    style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid var(--color-error-subtle)' }}>
+                    {domainAction === 'removing' ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                    {domainAction === 'removing' ? T.domainRemoving : T.domainRemove}
+                  </button>
+                </div>
+              </div>
+
+              {/* Instruções DNS (só se não está ativo) */}
+              {domainData.status !== 'active' && (
+                <div className="p-4 rounded-xl space-y-3" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+                  <p className="text-xs font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.domainDnsTitle}</p>
+
+                  {/* CNAME */}
+                  <div>
+                    <p className="text-[11px] font-medium mb-1.5" style={{ color: 'var(--color-text-muted)' }}>{T.domainDnsOption1}</p>
+                    <div className="grid grid-cols-3 gap-2 text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--color-text-muted)' }}>
+                      <span>{T.domainDnsType}</span>
+                      <span>{T.domainDnsName}</span>
+                      <span>{T.domainDnsValue}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs font-mono p-2 rounded-lg" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-secondary)' }}>
+                      <span>CNAME</span>
+                      <span>www</span>
+                      <button onClick={() => { navigator.clipboard.writeText('cname.vercel-dns.com'); toast.success('Copiado!') }} className="flex items-center gap-1 hover:opacity-80 text-left">
+                        cname.vercel-dns.com <Copy size={10} className="shrink-0 opacity-50" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* A Record */}
+                  <div>
+                    <p className="text-[11px] font-medium mb-1.5" style={{ color: 'var(--color-text-muted)' }}>{T.domainDnsOption2}</p>
+                    <div className="grid grid-cols-3 gap-2 text-xs font-mono p-2 rounded-lg" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-secondary)' }}>
+                      <span>A</span>
+                      <span>@</span>
+                      <button onClick={() => { navigator.clipboard.writeText('76.76.21.21'); toast.success('Copiado!') }} className="flex items-center gap-1 hover:opacity-80 text-left">
+                        76.76.21.21 <Copy size={10} className="shrink-0 opacity-50" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>{T.domainDnsHint}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Input para adicionar domínio */
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={domainInput}
+                onChange={e => setDomainInput(e.target.value.toLowerCase().replace(/\s/g, ''))}
+                placeholder={T.domainPlaceholder}
+                onKeyDown={e => e.key === 'Enter' && handleAddDomain()}
+                className="flex-1 rounded-xl p-3 text-sm outline-none transition-all"
+                style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+              />
+              <button
+                onClick={handleAddDomain}
+                disabled={!domainInput.trim() || domainAction === 'adding'}
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all disabled:opacity-50 shrink-0"
+                style={{ background: 'var(--color-primary)', color: '#fff' }}
+              >
+                {domainAction === 'adding' ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
+                {domainAction === 'adding' ? T.domainAdding : T.domainAdd}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ═══ BRANDING ═══ */}
       <div className={sectionClass} style={sectionStyle}>

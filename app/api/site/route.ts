@@ -140,7 +140,8 @@ export async function PUT(request: NextRequest) {
           og_image_url: body.og_image_url || null,
           currency: body.currency || 'BRL',
           is_published: false,
-          custom_domain: null,
+          custom_domain: body.custom_domain || null,
+          domain_status: null,
         })
         .select()
         .single()
