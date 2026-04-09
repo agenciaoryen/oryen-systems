@@ -448,7 +448,7 @@ export default function GoalSetup({ templates, activeGoals, orgId, month, lang =
             // Custom goal requires Diamond+
             if (isCustom) {
               return (
-                <FeatureLock key={template.id} feature="hasAdvancedFinancial" lang={lang} variant="overlay">
+                <FeatureLock key={template.id} feature="hasAdvancedFinancial" lang={lang} variant="badge">
                   {card}
                 </FeatureLock>
               )

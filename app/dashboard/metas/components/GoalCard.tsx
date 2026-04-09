@@ -172,8 +172,9 @@ export default function GoalCard({ progress, lang = 'pt', currency = 'BRL', onEx
     <div
       className="rounded-2xl p-5 transition-all hover:shadow-lg group"
       style={{
-        background: 'var(--color-bg-surface)',
-        border: '1px solid var(--color-border)',
+        background: 'var(--color-bg-elevated)',
+        border: `1px solid ${color}25`,
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
       }}
     >
       {/* Header: icon + name + pace */}
