@@ -8,20 +8,23 @@ import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 interface PropertyFiltersProps {
   slug: string
+  neighborhoods?: string[]
 }
 
-export default function PropertyFilters({ slug }: PropertyFiltersProps) {
+export default function PropertyFilters({ slug, neighborhoods = [] }: PropertyFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const [type, setType] = useState(searchParams.get('type') || '')
   const [transaction, setTransaction] = useState(searchParams.get('transaction') || '')
+  const [neighborhood, setNeighborhood] = useState(searchParams.get('neighborhood') || '')
   const [minBedrooms, setMinBedrooms] = useState(searchParams.get('min_bedrooms') || '')
 
   const applyFilters = () => {
     const params = new URLSearchParams()
     if (type) params.set('type', type)
     if (transaction) params.set('transaction', transaction)
+    if (neighborhood) params.set('neighborhood', neighborhood)
     if (minBedrooms) params.set('min_bedrooms', minBedrooms)
     router.push(`/sites/${slug}/properties?${params.toString()}`)
   }
@@ -29,11 +32,12 @@ export default function PropertyFilters({ slug }: PropertyFiltersProps) {
   const clearFilters = () => {
     setType('')
     setTransaction('')
+    setNeighborhood('')
     setMinBedrooms('')
     router.push(`/sites/${slug}/properties`)
   }
 
-  const hasFilters = type || transaction || minBedrooms
+  const hasFilters = type || transaction || neighborhood || minBedrooms
 
   return (
     <div className="flex flex-wrap gap-3 items-end">
@@ -60,6 +64,20 @@ export default function PropertyFilters({ slug }: PropertyFiltersProps) {
           ]}
         />
       </div>
+
+      {neighborhoods.length > 0 && (
+        <div className="w-44">
+          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Bairro</label>
+          <CustomSelect
+            value={neighborhood}
+            onChange={(v) => setNeighborhood(v)}
+            options={[
+              { value: '', label: 'Todos' },
+              ...neighborhoods.map((n) => ({ value: n, label: n })),
+            ]}
+          />
+        </div>
+      )}
 
       <div className="w-36">
         <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Quartos (mín.)</label>

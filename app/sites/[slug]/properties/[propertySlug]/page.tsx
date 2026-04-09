@@ -10,6 +10,7 @@ import ContactForm from '../../components/ContactForm'
 import PropertyCard from '../../components/PropertyCard'
 import PropertyGallery from './PropertyGallery'
 import PropertyViewTracker from './PropertyViewTracker'
+import PropertyMap from '../../components/PropertyMap'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -245,6 +246,14 @@ export default async function PropertyDetailPage({
                   </div>
                 </div>
               )}
+
+              {/* Mapa */}
+              <PropertyMap
+                latitude={property.latitude}
+                longitude={property.longitude}
+                address={[property.address_street, property.address_neighborhood, property.address_city, property.address_state].filter(Boolean).join(', ') || null}
+                title={property.title}
+              />
 
               {/* Vídeo */}
               {property.video_url && (

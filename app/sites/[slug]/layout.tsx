@@ -7,6 +7,7 @@ import type { Metadata } from 'next'
 import SiteHeader from './components/SiteHeader'
 import SiteFooter from './components/SiteFooter'
 import WhatsAppButton from './components/WhatsAppButton'
+import CookieConsent from './components/CookieConsent'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -73,6 +74,7 @@ export default async function SiteLayout({
       </main>
       <SiteFooter site={site} />
       {site.whatsapp && <WhatsAppButton phone={site.whatsapp} />}
+      <CookieConsent />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import PropertyCard from './components/PropertyCard'
 import ContactForm from './components/ContactForm'
+import HeroSearch from './components/HeroSearch'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,17 +23,46 @@ async function getData(slug: string) {
 
   if (!site) return null
 
-  // Imóveis em destaque (featured first, then recent active)
-  const { data: properties } = await supabase
-    .from('properties')
-    .select('*')
-    .eq('org_id', site.org_id)
-    .eq('status', 'active')
-    .order('is_featured', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(8)
+  // Queries em paralelo
+  const [featuredRes, latestRes, neighborhoodsRes] = await Promise.all([
+    // Imóveis em destaque
+    supabase
+      .from('properties')
+      .select('*')
+      .eq('org_id', site.org_id)
+      .eq('status', 'active')
+      .eq('is_featured', true)
+      .order('created_at', { ascending: false })
+      .limit(8),
+    // Últimos imóveis
+    supabase
+      .from('properties')
+      .select('*')
+      .eq('org_id', site.org_id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(4),
+    // Bairros distintos
+    supabase
+      .from('properties')
+      .select('address_neighborhood')
+      .eq('org_id', site.org_id)
+      .eq('status', 'active')
+      .not('address_neighborhood', 'is', null),
+  ])
 
-  return { site, properties: properties || [] }
+  const neighborhoods = [...new Set(
+    (neighborhoodsRes.data || [])
+      .map((p: any) => p.address_neighborhood)
+      .filter(Boolean)
+  )].sort() as string[]
+
+  return {
+    site,
+    featured: featuredRes.data || [],
+    latest: latestRes.data || [],
+    neighborhoods,
+  }
 }
 
 export default async function SiteHomePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -40,7 +70,17 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
   const data = await getData(slug)
   if (!data) notFound()
 
-  const { site, properties } = data
+  const { site, featured, latest, neighborhoods } = data
+
+  // Categorias para "Conforme sua necessidade"
+  const categories = [
+    { label: 'Apartamentos', icon: '🏢', href: `/sites/${slug}/properties?type=apartment` },
+    { label: 'Casas', icon: '🏠', href: `/sites/${slug}/properties?type=house` },
+    { label: 'Terrenos', icon: '🌳', href: `/sites/${slug}/properties?type=land` },
+    { label: 'Comercial', icon: '🏪', href: `/sites/${slug}/properties?type=commercial` },
+    { label: 'Para Alugar', icon: '🔑', href: `/sites/${slug}/properties?transaction=rent` },
+    { label: 'Para Comprar', icon: '🏡', href: `/sites/${slug}/properties?transaction=sale` },
+  ]
 
   return (
     <>
@@ -59,8 +99,8 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
-          <div className="max-w-2xl">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36">
+          <div className="max-w-3xl mx-auto text-center">
             {site.tagline && (
               <p
                 className="text-sm font-semibold uppercase tracking-wider mb-4"
@@ -69,45 +109,62 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
                 {site.tagline}
               </p>
             )}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6" style={{ color: 'var(--color-text-primary)' }}>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4" style={{ color: 'var(--color-text-primary)' }}>
               {site.site_name || 'Imóveis'}
             </h1>
             {site.bio && (
-              <p className="text-lg mb-8 line-clamp-3" style={{ color: 'var(--color-text-tertiary)' }}>
+              <p className="text-lg mb-8 line-clamp-2" style={{ color: 'var(--color-text-tertiary)' }}>
                 {site.bio}
               </p>
             )}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                href={`/sites/${site.slug}/properties`}
-                className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 shadow-lg"
-                style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
-              >
-                Ver Todos os Imóveis
-              </Link>
-              <a
-                href="#contato"
-                className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-bold backdrop-blur-sm transition-all"
-                style={{ color: 'var(--color-text-primary)', background: 'var(--color-bg-hover)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}
-              >
-                Fale Comigo
-              </a>
-            </div>
+
+            {/* Barra de busca */}
+            <HeroSearch slug={slug} neighborhoods={neighborhoods} />
           </div>
         </div>
       </section>
 
+      {/* ═══ ÚLTIMOS IMÓVEIS ═══ */}
+      {latest.length > 0 && (
+        <section className="py-16 sm:py-20" style={{ background: 'var(--color-bg-elevated)' }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Últimos Imóveis</h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>Adicionados recentemente</p>
+              </div>
+              <Link
+                href={`/sites/${slug}/properties`}
+                className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold transition-colors hover:opacity-80"
+                style={{ color: 'var(--site-primary)' }}
+              >
+                Ver todos
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {latest.map((prop: any) => (
+                <PropertyCard key={prop.id} property={prop} slug={slug} currency={site.currency} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ═══ IMÓVEIS EM DESTAQUE ═══ */}
-      {properties.length > 0 && (
+      {featured.length > 0 && (
         <section className="py-16 sm:py-20" style={{ background: 'var(--color-bg-surface)' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Imóveis em Destaque</h2>
-                <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>Confira as melhores oportunidades</p>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>As melhores oportunidades selecionadas</p>
               </div>
               <Link
-                href={`/sites/${site.slug}/properties`}
+                href={`/sites/${slug}/properties`}
                 className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold transition-colors hover:opacity-80"
                 style={{ color: 'var(--site-primary)' }}
               >
@@ -119,27 +176,46 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {properties.map((prop: any) => (
-                <PropertyCard key={prop.id} property={prop} slug={site.slug} currency={site.currency} />
+              {featured.map((prop: any) => (
+                <PropertyCard key={prop.id} property={prop} slug={slug} currency={site.currency} />
               ))}
-            </div>
-
-            <div className="mt-8 text-center sm:hidden">
-              <Link
-                href={`/sites/${site.slug}/properties`}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
-              >
-                Ver Todos os Imóveis
-              </Link>
             </div>
           </div>
         </section>
       )}
 
+      {/* ═══ CONFORME SUA NECESSIDADE ═══ */}
+      <section className="py-16 sm:py-20" style={{ background: 'var(--color-bg-elevated)' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Conforme sua Necessidade</h2>
+            <p className="text-sm mt-2" style={{ color: 'var(--color-text-muted)' }}>Encontre o imóvel ideal para você</p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {categories.map((cat) => (
+              <Link
+                key={cat.label}
+                href={cat.href}
+                className="group flex flex-col items-center gap-3 p-6 rounded-2xl transition-all hover:scale-105"
+                style={{
+                  background: 'var(--color-bg-surface)',
+                  border: '1px solid var(--color-border-subtle)',
+                }}
+              >
+                <span className="text-3xl">{cat.icon}</span>
+                <span className="text-sm font-semibold text-center" style={{ color: 'var(--color-text-primary)' }}>
+                  {cat.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ═══ SOBRE O CORRETOR ═══ */}
       {(site.bio || site.avatar_url) && (
-        <section className="py-16 sm:py-20" style={{ background: 'var(--color-bg-elevated)' }}>
+        <section className="py-16 sm:py-20" style={{ background: 'var(--color-bg-surface)' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center gap-8">
               {site.avatar_url && (
@@ -160,6 +236,30 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
                 )}
                 <p className="leading-relaxed whitespace-pre-line" style={{ color: 'var(--color-text-secondary)' }}>{site.bio}</p>
               </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ═══ LOCALIZAÇÃO ═══ */}
+      {site.address && (
+        <section className="py-16 sm:py-20" style={{ background: 'var(--color-bg-elevated)' }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Nossa Localização</h2>
+              <p className="text-sm mt-2" style={{ color: 'var(--color-text-muted)' }}>{site.address}</p>
+            </div>
+            <div className="rounded-2xl overflow-hidden shadow-lg" style={{ border: '1px solid var(--color-border-subtle)' }}>
+              <iframe
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(site.address)}&output=embed`}
+                width="100%"
+                height="400"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Localização"
+              />
             </div>
           </div>
         </section>

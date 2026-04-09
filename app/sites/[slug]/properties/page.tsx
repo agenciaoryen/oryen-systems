@@ -14,6 +14,7 @@ const supabase = createClient(
 interface SearchParams {
   type?: string
   transaction?: string
+  neighborhood?: string
   min_price?: string
   max_price?: string
   min_bedrooms?: string
@@ -34,6 +35,7 @@ async function getData(slug: string, searchParams: SearchParams) {
   const limit = 12
   const offset = (page - 1) * limit
 
+  // Buscar imóveis e bairros distintos em paralelo
   let query = supabase
     .from('properties')
     .select('*', { count: 'exact' })
@@ -42,6 +44,7 @@ async function getData(slug: string, searchParams: SearchParams) {
 
   if (searchParams.type) query = query.eq('property_type', searchParams.type)
   if (searchParams.transaction) query = query.eq('transaction_type', searchParams.transaction)
+  if (searchParams.neighborhood) query = query.eq('address_neighborhood', searchParams.neighborhood)
   if (searchParams.min_price) query = query.gte('price', parseInt(searchParams.min_price))
   if (searchParams.max_price) query = query.lte('price', parseInt(searchParams.max_price))
   if (searchParams.min_bedrooms) query = query.gte('bedrooms', parseInt(searchParams.min_bedrooms))
@@ -51,14 +54,29 @@ async function getData(slug: string, searchParams: SearchParams) {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
 
-  const { data: properties, count } = await query
+  const [propertiesRes, neighborhoodsRes] = await Promise.all([
+    query,
+    supabase
+      .from('properties')
+      .select('address_neighborhood')
+      .eq('org_id', site.org_id)
+      .eq('status', 'active')
+      .not('address_neighborhood', 'is', null),
+  ])
+
+  const neighborhoods = [...new Set(
+    (neighborhoodsRes.data || [])
+      .map((p: any) => p.address_neighborhood)
+      .filter(Boolean)
+  )].sort() as string[]
 
   return {
     site,
-    properties: properties || [],
-    total: count || 0,
+    properties: propertiesRes.data || [],
+    total: propertiesRes.count || 0,
     page,
-    totalPages: Math.ceil((count || 0) / limit),
+    totalPages: Math.ceil((propertiesRes.count || 0) / limit),
+    neighborhoods,
   }
 }
 
@@ -74,7 +92,7 @@ export default async function PropertiesListPage({
   const data = await getData(slug, resolvedSearchParams)
   if (!data) notFound()
 
-  const { site, properties, total, page, totalPages } = data
+  const { site, properties, total, page, totalPages, neighborhoods } = data
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-bg-surface)' }}>
@@ -88,7 +106,7 @@ export default async function PropertiesListPage({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filtros */}
-        <PropertyFilters slug={site.slug} />
+        <PropertyFilters slug={site.slug} neighborhoods={neighborhoods} />
 
         {/* Grid */}
         {properties.length > 0 ? (
