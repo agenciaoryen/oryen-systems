@@ -101,6 +101,33 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
   // 2. Montar messages com histórico
   const messages: Anthropic.MessageParam[] = buildMessages(input.history, input.user_message)
 
+  // 2.1 Detectar se é conversa em andamento (já houve interação anterior)
+  const hasAssistantHistory = input.history.some(h => h.role === 'assistant')
+  let finalSystemPrompt = systemPrompt
+
+  if (hasAssistantHistory) {
+    // Injetar instrução forte anti-cumprimento para conversas em andamento
+    const recentAssistantMsgs = input.history
+      .filter(h => h.role === 'assistant')
+      .slice(-3)
+      .map(h => h.body.substring(0, 100))
+      .join(' | ')
+
+    finalSystemPrompt += `\n\n# CONTEXTO CRÍTICO — CONVERSA EM ANDAMENTO
+Esta é uma conversa que JÁ ESTÁ ACONTECENDO. Você JÁ conversou com este lead antes.
+Suas últimas mensagens foram: "${recentAssistantMsgs}"
+
+PROIBIDO:
+- NÃO diga "Oi", "Olá", "Tudo bem?", ou qualquer cumprimento
+- NÃO se apresente ("Sou X da empresa Y")
+- NÃO repita perguntas que já fez (olhe o histórico acima)
+- NÃO envie mais de 2 mensagens
+
+OBRIGATÓRIO:
+- Responda DIRETAMENTE ao que o lead acabou de dizer
+- Continue a conversa de onde parou, sem reiniciar`
+  }
+
   // 3. Tool context para execução
   const toolCtx: ToolContext = {
     org_id: input.org_id,
@@ -120,7 +147,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      system: systemPrompt,
+      system: finalSystemPrompt,
       tools: agentTools,
       messages
     })
@@ -146,7 +173,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
         const forcedResponse = await client.messages.create({
           model: MODEL,
           max_tokens: MAX_TOKENS,
-          system: systemPrompt + '\n\nIMPORTANTE: Você DEVE responder ao lead agora com uma mensagem de texto. Não use ferramentas. Baseie-se no contexto da conversa e responda de forma natural.',
+          system: finalSystemPrompt + '\n\nIMPORTANTE: Você DEVE responder ao lead agora com uma mensagem de texto. Não use ferramentas. Baseie-se no contexto da conversa e responda de forma natural.',
           messages
         })
         totalTokens += (forcedResponse.usage?.input_tokens || 0) + (forcedResponse.usage?.output_tokens || 0)
@@ -225,7 +252,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
   const finalResponse = await client.messages.create({
     model: MODEL,
     max_tokens: MAX_TOKENS,
-    system: systemPrompt + '\n\nIMPORTANTE: Responda agora ao lead sem usar ferramentas.',
+    system: finalSystemPrompt + '\n\nIMPORTANTE: Responda agora ao lead sem usar ferramentas.',
     messages
   })
 
