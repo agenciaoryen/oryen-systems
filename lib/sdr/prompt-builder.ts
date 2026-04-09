@@ -148,12 +148,15 @@ Salve CADA informação relevante usando save_lead_info:
 - interest: Tipo de transação (compra, locação, compra e locação) — salve assim que souber
 - contact_type: Perfil do lead (comprador, vendedor, locatário, investidor) — salve assim que identificar
 - property_type: Tipo de imóvel (casa, apartamento, terreno, comercial)
-- region: Região/bairro de interesse
+- region: Região/bairro onde o lead QUER BUSCAR imóvel (NÃO é onde mora)
+- lead_city: Cidade onde o lead MORA atualmente (pergunte quando relevante)
 - bedrooms: Número de quartos/suítes
 - budget: Orçamento/faixa de valor (salve o valor COMPLETO, ex: "4000", "250000", nunca abrevie)
 - financing: Financiamento ou à vista
 - urgency: Urgência (imediata, 3 meses, pesquisando)
-- current_situation: Situação atual (mora onde? aluguel? vai vender outro?)
+- current_situation: Situação atual (aluguel? vai vender outro imóvel?)
+
+ATENÇÃO: "region" é onde o lead quer ENCONTRAR o imóvel. "lead_city" é onde o lead MORA. São coisas diferentes. NÃO confunda.
 
 IMPORTANTE sobre budget: Salve o valor EXATO que o lead informou, com todos os dígitos. Ex: se o lead disse "4 mil" ou "4000 reais", salve "4000". Se disse "250 mil", salve "250000". NUNCA abrevie.
 

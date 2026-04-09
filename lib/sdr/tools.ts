@@ -307,8 +307,8 @@ export const agentTools: Anthropic.Messages.Tool[] = [
       properties: {
         field: {
           type: 'string',
-          enum: ['budget', 'property_type', 'region', 'bedrooms', 'urgency', 'financing', 'current_situation', 'interest', 'contact_type', 'custom'],
-          description: 'Campo a ser salvo. Use "interest" para tipo de transação (compra, locação, compra e locação). Use "contact_type" para perfil do lead (comprador, vendedor, locatário, investidor).'
+          enum: ['budget', 'property_type', 'region', 'bedrooms', 'urgency', 'financing', 'current_situation', 'interest', 'contact_type', 'lead_city', 'custom'],
+          description: 'Campo a ser salvo. "interest": tipo de transação (compra, locação). "contact_type": perfil do lead (comprador, vendedor, locatário). "lead_city": cidade onde o lead MORA. "region": região/bairro onde quer BUSCAR imóvel (NÃO é onde mora).'
         },
         value: {
           type: 'string',
@@ -1021,9 +1021,10 @@ async function executeSaveLeadInfo(
     'property_type': 'nicho',            // tipo de imóvel → nicho (casa, apto, terreno)
     'interest': 'interesse',             // tipo de transação → interesse (compra, locação)
     'contact_type': 'tipo_contato',      // perfil do lead → tipo_contato (comprador, vendedor, locatário)
-    'region': 'city',                    // região/cidade → city
+    'lead_city': 'city',                 // cidade onde o lead MORA → city
     'budget': 'total_em_vendas',         // orçamento → valor
     'current_situation': 'tipo_contato', // fallback: situação → tipo_contato
+    // 'region' NÃO mapeia para campo direto — é só metadata (região de busca do imóvel)
   }
 
   const leadColumn = leadFieldMap[fieldKey]
