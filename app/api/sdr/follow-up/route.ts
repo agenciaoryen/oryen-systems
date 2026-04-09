@@ -15,6 +15,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { buildFollowUpPrompt } from '@/lib/sdr/follow-up-prompt'
 import { sendWithHumanization } from '@/lib/sdr/whatsapp-sender'
+import { notifyError } from '@/lib/monitoring/error-notifier'
 import { stopCheck } from '@/lib/sdr/redis'
 import { isWithinWindow } from '@/lib/sdr/messaging-window'
 
@@ -78,7 +79,12 @@ export async function GET(request: NextRequest) {
       } catch (err: any) {
         errors++
         console.error(`[FollowUp] Erro no item ${item.id}: ${err.message}`)
-        // Não quebra o loop — continua com os próximos
+        notifyError({
+          module: 'FollowUp',
+          severity: 'error',
+          error: err.message,
+          context: `Item: ${item.id} | Lead: ${item.lead_id}`
+        })
       }
     }
 

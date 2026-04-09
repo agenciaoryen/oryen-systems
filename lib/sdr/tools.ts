@@ -78,7 +78,7 @@ export const agentTools: Anthropic.Messages.Tool[] = [
   // 3. Agendar visita — criar evento na agenda do corretor
   {
     name: 'schedule_visit',
-    description: 'Agenda uma visita ao imóvel na agenda do corretor. Use quando o lead confirmar interesse em visitar um imóvel e concordar com data/horário.',
+    description: 'Agenda uma visita ao imóvel na agenda do corretor. Use quando o lead confirmar interesse em visitar um imóvel e concordar com data/horário. NÃO use se já agendou uma visita para este lead — o sistema retornará que já existe agendamento.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -469,6 +469,29 @@ async function executeScheduleVisit(
   input: { date: string; time: string; property_description: string; address?: string; notes?: string },
   ctx: ToolContext
 ): Promise<ToolResult> {
+  // Verificar se já existe visita agendada para este lead (evitar duplicação)
+  const { data: existingVisits } = await supabase
+    .from('calendar_events')
+    .select('id, event_date, start_time, status')
+    .eq('lead_id', ctx.lead_id)
+    .eq('org_id', ctx.org_id)
+    .eq('event_type', 'visit')
+    .eq('status', 'scheduled')
+
+  if (existingVisits && existingVisits.length > 0) {
+    const existing = existingVisits[0]
+    console.log(`[SDR:Schedule] Visita já existe para lead ${ctx.lead_id}: ${existing.event_date} ${existing.start_time} — ignorando duplicação`)
+    return {
+      success: true,
+      data: {
+        message: `Já existe uma visita agendada para ${existing.event_date} às ${existing.start_time}. Não é necessário agendar novamente.`,
+        already_scheduled: true,
+        existing_date: existing.event_date,
+        existing_time: existing.start_time
+      }
+    }
+  }
+
   const visitData = {
     date: input.date,
     time: input.time,

@@ -25,6 +25,7 @@ import {
 } from '@/lib/sdr/redis'
 import { runAgent } from '@/lib/sdr/ai-agent'
 import { sendWithHumanization } from '@/lib/sdr/whatsapp-sender'
+import { notifyError } from '@/lib/monitoring/error-notifier'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -162,6 +163,16 @@ export async function POST(request: NextRequest) {
 
     console.log(`[SDR:Process] IA respondeu: ${agentResponse.messages.length} msg(s) | tools: [${agentResponse.toolsExecuted.join(', ')}] | tokens: ${agentResponse.tokensUsed}`)
 
+    // Alerta se IA não gerou resposta (não deveria acontecer após fix)
+    if (agentResponse.messages.length === 0) {
+      notifyError({
+        module: 'SDR',
+        severity: 'warning',
+        error: 'Agente IA não gerou mensagem para o lead',
+        context: `Lead: ${lead_id} | Phone: ${phone} | Tools: ${agentResponse.toolsExecuted.join(', ')} | Tokens: ${agentResponse.tokensUsed}`
+      })
+    }
+
     // ─── 10. Salvar resposta do agente em sdr_messages + conversations ───
     if (agentResponse.messages.length > 0) {
       const fullResponse = agentResponse.messages.join('\n\n')
@@ -232,6 +243,12 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('[SDR:Process] Error:', error)
+    notifyError({
+      module: 'SDR',
+      severity: 'error',
+      error: error.message || 'Erro desconhecido no processamento',
+      context: `Lead: ${body?.lead_id || '?'} | Phone: ${body?.phone || '?'}`
+    })
     return NextResponse.json(
       { error: error.message || 'Internal error' },
       { status: 500 }
