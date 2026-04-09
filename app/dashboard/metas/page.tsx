@@ -204,7 +204,7 @@ export default function MetasPage() {
       title={lang === 'pt' ? 'Módulo de Metas' : lang === 'es' ? 'Módulo de Metas' : 'Goals Module'}
       description={lang === 'pt' ? 'Gerencie metas estratégicas com auto-tracking e coaching IA' : lang === 'es' ? 'Gestione metas estratégicas con auto-tracking y coaching IA' : 'Manage strategic goals with auto-tracking and AI coaching'}
     >
-      <div className="space-y-6">
+      <div className="space-y-6 pb-16">
         {/* ═══════════════════════════════════════════════════════════════════════
             HEADER
             ═══════════════════════════════════════════════════════════════════════ */}
@@ -327,6 +327,7 @@ export default function MetasPage() {
             orgId={orgId}
             month={monthStr}
             lang={lang}
+            currency={currency}
             onGoalActivated={() => fetchProgress(false)}
           />
         )}
