@@ -33,6 +33,7 @@ import {
   Calculator,
   TrendingUp,
   DollarSign,
+  Target,
   type LucideIcon
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
@@ -58,6 +59,7 @@ const TRANSLATIONS = {
       distribution: 'Distribuição',
       financing: 'Financiamento',
       financial: 'Financeiro',
+      goals: 'Metas',
       portfolio: 'Portfólio',
       mySite: 'Meu Site',
       settings: 'Configurações'
@@ -93,6 +95,7 @@ const TRANSLATIONS = {
       distribution: 'Distribution',
       financing: 'Financing',
       financial: 'Financial',
+      goals: 'Goals',
       portfolio: 'Portfolio',
       mySite: 'My Site',
       settings: 'Settings'
@@ -128,6 +131,7 @@ const TRANSLATIONS = {
       distribution: 'Distribución',
       financing: 'Financiamiento',
       financial: 'Financiero',
+      goals: 'Metas',
       portfolio: 'Portafolio',
       mySite: 'Mi Sitio',
       settings: 'Configuración'
@@ -341,6 +345,7 @@ export default function Sidebar() {
         { href: '/dashboard/follow-up', label: t.menu.followUp, icon: RefreshCw },
         { href: '/dashboard/distribuicao', label: t.menu.distribution, icon: Shuffle },
         { href: '/dashboard/financeiro', label: t.menu.financial, icon: DollarSign },
+        { href: '/dashboard/metas', label: t.menu.goals, icon: Target },
       ],
     },
     {

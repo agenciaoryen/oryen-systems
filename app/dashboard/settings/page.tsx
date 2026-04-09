@@ -2402,7 +2402,7 @@ export default function SettingsPage() {
               ORYEN
             </span>
             <span className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
-              v2.5.0
+              v3.0.0
             </span>
           </div>
 

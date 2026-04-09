@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Target, TrendingUp } from 'lucide-react'
+import { Target } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { formatPrice } from '@/lib/format'
 
@@ -13,6 +13,7 @@ const TRANSLATIONS = {
     remaining: 'Faltam',
     ofGoal: 'da meta',
     goalReached: 'Meta atingida!',
+    seeAll: 'Ver todas as metas',
   },
   en: {
     title: 'Revenue Goal',
@@ -21,6 +22,7 @@ const TRANSLATIONS = {
     remaining: 'Remaining',
     ofGoal: 'of goal',
     goalReached: 'Goal reached!',
+    seeAll: 'See all goals',
   },
   es: {
     title: 'Meta de Ingresos',
@@ -29,6 +31,7 @@ const TRANSLATIONS = {
     remaining: 'Faltan',
     ofGoal: 'de la meta',
     goalReached: 'Meta alcanzada!',
+    seeAll: 'Ver todas las metas',
   },
 }
 
@@ -58,11 +61,15 @@ export default function GoalProgress({ orgId, currency, lang }: Props) {
       const refMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
 
       const [goalRes, revenueRes] = await Promise.all([
+        // Read from org_goals with template_id='revenue'
         supabase
-          .from('goals')
-          .select('revenue_target')
+          .from('org_goals')
+          .select('target_value, current_value')
           .eq('org_id', orgId)
-          .eq('month', refMonth)
+          .eq('template_id', 'revenue')
+          .eq('period_start', refMonth)
+          .eq('is_active', true)
+          .is('broker_id', null)
           .maybeSingle(),
         supabase
           .from('financial_transactions')
@@ -73,7 +80,7 @@ export default function GoalProgress({ orgId, currency, lang }: Props) {
           .eq('reference_month', refMonth),
       ])
 
-      setGoal(goalRes.data?.revenue_target ?? null)
+      setGoal(goalRes.data?.target_value ?? null)
       setAchieved((revenueRes.data || []).reduce((sum, r) => sum + Number(r.amount), 0))
       setLoading(false)
     }

@@ -13,10 +13,10 @@ import {
 } from 'recharts'
 import { 
   TrendingUp, Users, Calendar, DollarSign, 
-  Activity, ArrowUpRight, ArrowDownRight, Download, Settings, X,
-  Loader2, RefreshCw
+  Activity, ArrowUpRight, ArrowDownRight, Download,
+  RefreshCw
 } from 'lucide-react'
-import { format, subDays, parseISO, startOfMonth } from 'date-fns'
+import { format, subDays, parseISO } from 'date-fns'
 import { ptBR, enUS, es, type Locale } from 'date-fns/locale'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -80,11 +80,6 @@ interface KPIs {
   respostas: number
   metaAtingida: number
   custoPorLead: number
-}
-
-interface Goals {
-  revenue: number
-  ads: number
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -407,95 +402,6 @@ const StatBadge = ({ value, label, trend }: StatBadgeProps) => (
 )
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MODAL DE METAS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface GoalsModalProps {
-  isOpen: boolean
-  onClose: () => void
-  currentGoals: Goals
-  onSave: (revenue: number, ads: number) => Promise<void>
-  loading: boolean
-  t: TranslationKeys
-  currencyCode: string
-}
-
-const GoalsModal = ({ isOpen, onClose, currentGoals, onSave, loading, t, currencyCode }: GoalsModalProps) => {
-  const [revenue, setRevenue] = useState(currentGoals.revenue)
-  const [ads, setAds] = useState(currentGoals.ads)
-
-  useEffect(() => {
-    setRevenue(currentGoals.revenue)
-    setAds(currentGoals.ads)
-  }, [currentGoals])
-
-  if (!isOpen) return null
-
-  const handleSubmit = async () => {
-    await onSave(revenue, ads)
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-      style={{ background: 'var(--color-bg-overlay)', backdropFilter: 'blur(8px)' }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div className="w-full max-w-md p-6 rounded-2xl"
-        style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-xl)' }}>
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg sm:text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>{t.goalsModalTitle}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg transition-colors"
-            style={{ color: 'var(--color-text-tertiary)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-bg-hover)'; e.currentTarget.style.color = 'var(--color-text-primary)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-tertiary)' }}>
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium mb-2" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.03em' }}>
-              {t.revenueGoal} ({currencyCode})
-            </label>
-            <input type="number" value={revenue} onChange={(e) => setRevenue(Number(e.target.value))}
-              className="w-full rounded-xl p-3 text-sm outline-none transition-all duration-150"
-              style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
-              onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
-              placeholder="Ex: 50000" min={0} />
-          </div>
-          <div>
-            <label className="block text-xs font-medium mb-2" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.03em' }}>
-              {t.adsBudget} ({currencyCode})
-            </label>
-            <input type="number" value={ads} onChange={(e) => setAds(Number(e.target.value))}
-              className="w-full rounded-xl p-3 text-sm outline-none transition-all duration-150"
-              style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
-              onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
-              placeholder="Ex: 1500" min={0} />
-          </div>
-        </div>
-
-        <div className="mt-8 flex gap-3">
-          <button onClick={onClose} className="flex-1 py-3 text-sm font-medium rounded-xl transition-colors"
-            style={{ color: 'var(--color-text-secondary)' }}>
-            {t.cancel}
-          </button>
-          <button onClick={handleSubmit} disabled={loading}
-            className="flex-1 py-3 rounded-xl text-sm font-bold transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
-            style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(90, 122, 230, 0.25)' }}>
-            {loading && <Loader2 size={16} className="animate-spin" />}
-            {loading ? t.saving : t.save}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // LOADING SKELETON
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -525,8 +431,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [range, setRange] = useState<number>(30)
-  const [isGoalsModalOpen, setIsGoalsModalOpen] = useState(false)
-  const [savingGoals, setSavingGoals] = useState(false)
 
   // Configurações do usuário
   const userLang = (user?.language as Language) || 'pt'
@@ -535,7 +439,6 @@ export default function DashboardPage() {
   const userCurrency = user?.currency || 'BRL'
 
   // Estados dos Dados
-  const [goals, setGoals] = useState<Goals>({ revenue: 0, ads: 0 })
   const [leadsCreatedInPeriod, setLeadsCreatedInPeriod] = useState<Lead[]>([])
   const [allActiveLeads, setAllActiveLeads] = useState<Lead[]>([])
   const [messages, setMessages] = useState<Message[]>([])
@@ -551,19 +454,9 @@ export default function DashboardPage() {
     setError(null)
     
     const startDateStr = startDate.toISOString()
-    const currentMonth = format(startOfMonth(new Date()), 'yyyy-MM-dd')
-
     try {
       // Fetch em paralelo
-      const [goalsResult, leadsCreatedResult, allLeadsResult, messagesResult] = await Promise.all([
-        // Metas do mês
-        supabase
-          .from('goals')
-          .select('revenue_target, ads_budget')
-          .eq('org_id', activeOrgId)
-          .eq('month', currentMonth)
-          .maybeSingle(),
-        
+      const [leadsCreatedResult, allLeadsResult, messagesResult] = await Promise.all([
         // Leads CRIADOS no período (para métricas de captação)
         supabase
           .from('leads')
@@ -594,11 +487,6 @@ export default function DashboardPage() {
       if (allLeadsResult.error) throw allLeadsResult.error
       if (messagesResult.error) throw messagesResult.error
 
-      setGoals({
-        revenue: goalsResult.data?.revenue_target || 0,
-        ads: goalsResult.data?.ads_budget || 0
-      })
-      
       setLeadsCreatedInPeriod(leadsCreatedResult.data || [])
       setAllActiveLeads(allLeadsResult.data || [])
       setMessages(messagesResult.data || [])
@@ -669,10 +557,10 @@ export default function DashboardPage() {
       leadsQualificados,
       disparos: messages.filter(m => m.direction === 'outbound').length,
       respostas: messages.filter(m => m.direction === 'inbound').length,
-      metaAtingida: goals.revenue > 0 ? (totalVendas / goals.revenue) * 100 : 0,
-      custoPorLead: leadsTotal > 0 ? goals.ads / leadsTotal : 0
+      metaAtingida: 0,
+      custoPorLead: 0
     }
-  }, [leadsCreatedInPeriod, leadsScheduledInPeriod, leadsAttendedInPeriod, leadsWithSalesInPeriod, messages, goals])
+  }, [leadsCreatedInPeriod, leadsScheduledInPeriod, leadsAttendedInPeriod, leadsWithSalesInPeriod, messages])
 
   // Gráfico de área (baseado em leads criados)
   const chartData = useMemo<ChartDataPoint[]>(() => {
@@ -772,36 +660,6 @@ export default function DashboardPage() {
     return total > 0 ? ((sentimentData[0].value / total) * 100).toFixed(0) : '0'
   }, [sentimentData])
 
-  // ─── SALVAR METAS ───
-  const handleSaveGoals = async (newRevenue: number, newAds: number) => {
-    if (!activeOrgId) return
-    setSavingGoals(true)
-    
-    const currentMonth = format(startOfMonth(new Date()), 'yyyy-MM-dd')
-
-    try {
-      const { error } = await supabase
-        .from('goals')
-        .upsert({ 
-          org_id: activeOrgId, 
-          month: currentMonth,
-          revenue_target: newRevenue,
-          ads_budget: newAds
-        }, { onConflict: 'org_id,month' })
-
-      if (error) throw error
-
-      setGoals({ revenue: newRevenue, ads: newAds })
-      setIsGoalsModalOpen(false)
-
-    } catch (err) {
-      console.error('Erro ao salvar metas:', err)
-      alert(t.errorSavingGoals)
-    } finally {
-      setSavingGoals(false)
-    }
-  }
-
   // ─── EXPORTAR CSV ───
   const handleExport = useCallback(() => {
     if (leadsCreatedInPeriod.length === 0) return
@@ -848,17 +706,6 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 sm:space-y-8 relative max-w-[1600px] mx-auto pb-16">
       
-      {/* Modal de Metas */}
-      <GoalsModal 
-        isOpen={isGoalsModalOpen} 
-        onClose={() => setIsGoalsModalOpen(false)} 
-        currentGoals={goals}
-        onSave={handleSaveGoals}
-        loading={savingGoals}
-        t={t}
-        currencyCode={userCurrency}
-      />
-
       {/* Erro */}
       {error && (
         <div className="px-4 py-3 rounded-xl flex items-center justify-between"
@@ -884,15 +731,6 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto mt-2 lg:mt-0">
-          <button onClick={() => setIsGoalsModalOpen(true)}
-            className="flex-1 lg:flex-none justify-center flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-150"
-            style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-border-strong)'; e.currentTarget.style.color = 'var(--color-text-primary)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}>
-            <Settings size={16} />
-            <span className="hidden sm:inline">{t.goals}</span>
-          </button>
-
           <div className="rounded-lg p-1 flex overflow-x-auto hide-scrollbar w-full sm:w-auto order-last sm:order-none mt-2 sm:mt-0"
             style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
             {RANGE_OPTIONS.map((d) => (
@@ -926,34 +764,24 @@ export default function DashboardPage() {
       {/* Grid Principal */}
       <div className="grid grid-cols-12 gap-4 sm:gap-6">
         
-        {/* KPI: Receita & Meta */}
-        <Card 
-          className="col-span-12 md:col-span-5 lg:col-span-4 p-5 sm:p-6 relative group"
-          onClick={() => setIsGoalsModalOpen(true)}
+        {/* KPI: Receita */}
+        <Card
+          className="col-span-12 md:col-span-5 lg:col-span-4 p-5 sm:p-6 relative group cursor-pointer"
+          onClick={() => router.push('/dashboard/metas')}
         >
           <div className="absolute inset-0 opacity-50 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(to bottom right, rgba(90, 122, 230, 0.1), transparent, transparent)' }} />
           <div className="flex items-center justify-between mb-4 relative">
             <div className="p-2.5 sm:p-3 rounded-xl" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
               <DollarSign size={20} className="sm:w-6 sm:h-6" />
             </div>
-            <span className="text-[10px] sm:text-xs font-mono px-2 py-1 rounded flex items-center gap-1" style={{ color: 'var(--color-success)', background: 'var(--color-success-subtle)', border: '1px solid rgba(52, 179, 104, 0.2)' }}>
-              Meta: {formatPrice(goals.revenue, userCurrency, userLang)}
+            <span className="text-[10px] sm:text-xs font-medium px-2 py-1 rounded flex items-center gap-1" style={{ color: 'var(--color-primary)', background: 'var(--color-primary-subtle)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
+              {t.goals} →
             </span>
           </div>
           <p className="text-xs sm:text-sm font-medium relative" style={{ color: 'var(--color-text-tertiary)' }}>{t.revenue} ({range}d)</p>
           <h2 className="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 tracking-tight relative" style={{ color: 'var(--color-text-primary)' }}>
             {formatPrice(kpis.totalFaturamento, userCurrency, userLang)}
           </h2>
-          <div className="mt-4 w-full rounded-full overflow-hidden h-1.5 sm:h-2 relative" style={{ background: 'var(--color-border)' }}>
-            <div
-              className="h-full transition-all duration-1000"
-              style={{ width: `${Math.min(kpis.metaAtingida, 100)}%`, background: 'var(--color-primary)', boxShadow: '0 0 10px rgba(90, 122, 230, 0.5)' }}
-            />
-          </div>
-          <p className="text-[10px] sm:text-xs mt-2 flex justify-between font-medium relative" style={{ color: 'var(--color-text-muted)' }}>
-            <span>{t.goalProgress}</span>
-            <span style={{ color: 'var(--color-text-primary)' }}>{kpis.metaAtingida.toFixed(1)}% {t.reached}</span>
-          </p>
         </Card>
 
         {/* KPIs Rápidos */}
