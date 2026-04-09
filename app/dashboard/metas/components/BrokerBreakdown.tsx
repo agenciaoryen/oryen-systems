@@ -5,9 +5,9 @@ import { useState } from 'react'
 import { formatPrice } from '@/lib/format'
 
 const TRANSLATIONS = {
-  pt: { title: 'Contribuicao por Corretor', noData: 'Sem dados de equipe' },
+  pt: { title: 'Contribuição por Corretor', noData: 'Sem dados de equipe' },
   en: { title: 'Broker Contribution', noData: 'No team data' },
-  es: { title: 'Contribucion por Corredor', noData: 'Sin datos de equipo' },
+  es: { title: 'Contribución por Corredor', noData: 'Sin datos de equipo' },
 }
 
 type Lang = keyof typeof TRANSLATIONS

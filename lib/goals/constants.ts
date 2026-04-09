@@ -68,7 +68,7 @@ export const PACE_LABELS: Record<string, Record<string, string>> = {
     ahead: 'Adiantado',
     on_track: 'No ritmo',
     behind: 'Atrasado',
-    critical: 'Critico',
+    critical: 'Crítico',
   },
   en: {
     ahead: 'Ahead',
@@ -80,7 +80,7 @@ export const PACE_LABELS: Record<string, Record<string, string>> = {
     ahead: 'Adelantado',
     on_track: 'En ritmo',
     behind: 'Atrasado',
-    critical: 'Critico',
+    critical: 'Crítico',
   },
 }
 

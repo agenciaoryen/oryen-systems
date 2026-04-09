@@ -26,7 +26,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 const TRANSLATIONS = {
   pt: {
     title: 'Ativar Metas',
-    subtitle: 'Selecione os templates e defina seus alvos para o mes',
+    subtitle: 'Selecione os templates e defina seus alvos para o mês',
     target: 'Alvo',
     activate: 'Ativar',
     activated: 'Ativa',
@@ -35,7 +35,7 @@ const TRANSLATIONS = {
     placeholder: 'Valor alvo',
     custom: 'Meta personalizada',
     customName: 'Nome da meta',
-    customDesc: 'Descricao',
+    customDesc: 'Descrição',
   },
   en: {
     title: 'Activate Goals',
@@ -61,7 +61,7 @@ const TRANSLATIONS = {
     placeholder: 'Valor objetivo',
     custom: 'Meta personalizada',
     customName: 'Nombre de la meta',
-    customDesc: 'Descripcion',
+    customDesc: 'Descripción',
   },
 }
 

@@ -29,7 +29,7 @@ const TRANSLATIONS = {
     of: 'de',
     projected: 'Projetado',
     daysLeft: 'dias restantes',
-    trend: 'Tendencia',
+    trend: 'Tendência',
     noData: 'Sem dados',
     brokers: 'Corretores',
   },
@@ -44,7 +44,7 @@ const TRANSLATIONS = {
   es: {
     of: 'de',
     projected: 'Proyectado',
-    daysLeft: 'dias restantes',
+    daysLeft: 'días restantes',
     trend: 'Tendencia',
     noData: 'Sin datos',
     brokers: 'Corredores',

@@ -20,12 +20,12 @@ import { buildCoachPayload } from '@/lib/goals/aggregations'
 
 const TRANSLATIONS = {
   pt: {
-    title: 'Metas Estrategicas',
-    subtitle: 'Acompanhe e gerencie suas metas com inteligencia',
+    title: 'Metas Estratégicas',
+    subtitle: 'Acompanhe e gerencie suas metas com inteligência',
     refresh: 'Atualizar',
     loading: 'Carregando metas...',
-    noGoals: 'Nenhuma meta ativa para este mes. Ative metas abaixo.',
-    months: ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+    noGoals: 'Nenhuma meta ativa para este mês. Ative metas abaixo.',
+    months: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
     activeGoals: 'Metas Ativas',
     setup: 'Configurar Metas',
   },
@@ -40,7 +40,7 @@ const TRANSLATIONS = {
     setup: 'Configure Goals',
   },
   es: {
-    title: 'Metas Estrategicas',
+    title: 'Metas Estratégicas',
     subtitle: 'Siga y gestione sus metas con inteligencia',
     refresh: 'Actualizar',
     loading: 'Cargando metas...',
@@ -201,8 +201,8 @@ export default function MetasPage() {
 
   return (
     <FeatureLock feature="hasFinancialModule" lang={lang} variant="replace"
-      title={lang === 'pt' ? 'Modulo de Metas' : lang === 'es' ? 'Modulo de Metas' : 'Goals Module'}
-      description={lang === 'pt' ? 'Gerencie metas estrategicas com auto-tracking e coaching IA' : 'Manage strategic goals with auto-tracking and AI coaching'}
+      title={lang === 'pt' ? 'Módulo de Metas' : lang === 'es' ? 'Módulo de Metas' : 'Goals Module'}
+      description={lang === 'pt' ? 'Gerencie metas estratégicas com auto-tracking e coaching IA' : lang === 'es' ? 'Gestione metas estratégicas con auto-tracking y coaching IA' : 'Manage strategic goals with auto-tracking and AI coaching'}
     >
       <div className="space-y-6">
         {/* ═══════════════════════════════════════════════════════════════════════

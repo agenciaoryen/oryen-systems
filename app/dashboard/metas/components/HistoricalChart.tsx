@@ -11,11 +11,11 @@ import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
 const TRANSLATIONS = {
   pt: {
-    title: 'Historico de Metas',
+    title: 'Histórico de Metas',
     selectGoal: 'Selecionar meta',
     actual: 'Realizado',
     target: 'Meta',
-    noData: 'Sem dados historicos',
+    noData: 'Sem dados históricos',
     months: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
   },
   en: {
@@ -27,11 +27,11 @@ const TRANSLATIONS = {
     months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
   },
   es: {
-    title: 'Historico de Metas',
+    title: 'Histórico de Metas',
     selectGoal: 'Seleccionar meta',
     actual: 'Realizado',
     target: 'Meta',
-    noData: 'Sin datos historicos',
+    noData: 'Sin datos históricos',
     months: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
   },
 }

@@ -3,7 +3,7 @@
 import type { GoalStreak } from '@/lib/goals/types'
 
 const TRANSLATIONS = {
-  pt: { months: 'meses', month: 'mes', best: 'Recorde' },
+  pt: { months: 'meses', month: 'mês', best: 'Recorde' },
   en: { months: 'months', month: 'month', best: 'Best' },
   es: { months: 'meses', month: 'mes', best: 'Record' },
 }
