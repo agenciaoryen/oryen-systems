@@ -25,10 +25,12 @@ export async function trackActivity(
   }
 
   // Insert activity log entry
+  const points = SCORE_POINTS[activityType] || 0
   const { error } = await supabase.from('lead_activity_log').insert({
     org_id: orgId,
     lead_id: leadId,
     activity_type: activityType,
+    points,
     metadata: metadata || null,
   })
 
