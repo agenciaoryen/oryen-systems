@@ -99,7 +99,7 @@ export default async function PropertyDetailPage({
     '@type': 'RealEstateListing',
     name: property.title,
     description: property.description,
-    url: `${process.env.NEXT_PUBLIC_SITE_URL || ''}/sites/${params.slug}/properties/${property.slug || property.id}`,
+    url: `${process.env.NEXT_PUBLIC_SITE_URL || ''}/sites/${slug}/properties/${property.slug || property.id}`,
     image: cover,
     offers: property.price ? {
       '@type': 'Offer',
@@ -117,12 +117,12 @@ export default async function PropertyDetailPage({
       />
 
       {/* Tracking de view */}
-      <PropertyViewTracker siteSlug={params.slug} propertyId={property.id} />
+      <PropertyViewTracker siteSlug={slug} propertyId={property.id} />
 
       <div style={{ background: 'var(--color-bg-elevated)' }}>
         {/* ═══ GALERIA ═══ */}
         {property.images && property.images.length > 0 && (
-          <PropertyGallery images={property.images} title={property.title} siteSlug={params.slug} propertyId={property.id} />
+          <PropertyGallery images={property.images} title={property.title} siteSlug={slug} propertyId={property.id} />
         )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
