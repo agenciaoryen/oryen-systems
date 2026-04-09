@@ -9,7 +9,7 @@ import { FeatureLock, UpgradeBanner } from '@/app/dashboard/components/FeatureLo
 import {
   Plus, FileText, Settings, Trash2, X, Save,
   Clock, Calendar, MessageCircle, BarChart3, Loader2, Info,
-  CheckCircle2, XCircle, Send
+  CheckCircle2, XCircle, Send, DollarSign, Globe, Target, RefreshCw, Zap
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
@@ -65,6 +65,34 @@ const TRANSLATIONS = {
     m_mensagens_enviadas: 'Disparos de Mensagens',
     m_ligacoes_feitas: 'Ligações Realizadas',
     m_leads_responderam: 'Contatos que Responderam',
+    // Financial
+    financialTitle: 'Métricas Financeiras',
+    financialDesc: 'Receitas, despesas e indicadores de negócio',
+    m_receita: 'Receita Total',
+    m_despesas: 'Despesas Totais',
+    m_lucro: 'Lucro Líquido',
+    m_comissoes: 'Comissões Pendentes',
+    m_negocios: 'Negócios Fechados',
+    m_ticket_medio: 'Ticket Médio',
+    // Site
+    siteTitle: 'Métricas do Site',
+    siteDesc: 'Tráfego e conversão do site público',
+    m_views: 'Visualizações',
+    m_site_leads: 'Leads do Site',
+    m_conversion: 'Taxa de Conversão',
+    // Goals
+    goalsTitle: 'Meta Principal',
+    goalsDesc: 'Progresso da meta ativa',
+    m_meta_principal: 'Incluir Meta Principal',
+    // Follow-up
+    followupTitle: 'Follow-up',
+    followupDesc: 'Status do reengajamento automático',
+    m_followup_status: 'Status de Follow-up',
+    // Send now
+    sendNow: 'Enviar Agora',
+    sending: 'Enviando...',
+    sentSuccess: 'Relatório enviado!',
+    sentError: 'Erro ao enviar',
     // Next send
     today: 'Hoje',
     tomorrow: 'Amanhã'
@@ -112,6 +140,29 @@ const TRANSLATIONS = {
     m_mensagens_enviadas: 'Messages Sent',
     m_ligacoes_feitas: 'Calls Made',
     m_leads_responderam: 'Contacts Responded',
+    financialTitle: 'Financial Metrics',
+    financialDesc: 'Revenue, expenses and business indicators',
+    m_receita: 'Total Revenue',
+    m_despesas: 'Total Expenses',
+    m_lucro: 'Net Profit',
+    m_comissoes: 'Pending Commissions',
+    m_negocios: 'Deals Closed',
+    m_ticket_medio: 'Average Ticket',
+    siteTitle: 'Site Metrics',
+    siteDesc: 'Public site traffic and conversion',
+    m_views: 'Page Views',
+    m_site_leads: 'Site Leads',
+    m_conversion: 'Conversion Rate',
+    goalsTitle: 'Main Goal',
+    goalsDesc: 'Active goal progress',
+    m_meta_principal: 'Include Main Goal',
+    followupTitle: 'Follow-up',
+    followupDesc: 'Automatic re-engagement status',
+    m_followup_status: 'Follow-up Status',
+    sendNow: 'Send Now',
+    sending: 'Sending...',
+    sentSuccess: 'Report sent!',
+    sentError: 'Failed to send',
     today: 'Today',
     tomorrow: 'Tomorrow'
   },
@@ -158,6 +209,29 @@ const TRANSLATIONS = {
     m_mensagens_enviadas: 'Mensajes Enviados',
     m_ligacoes_feitas: 'Llamadas Realizadas',
     m_leads_responderam: 'Contactos Respondieron',
+    financialTitle: 'Métricas Financieras',
+    financialDesc: 'Ingresos, gastos e indicadores de negocio',
+    m_receita: 'Ingreso Total',
+    m_despesas: 'Gastos Totales',
+    m_lucro: 'Ganancia Neta',
+    m_comissoes: 'Comisiones Pendientes',
+    m_negocios: 'Negocios Cerrados',
+    m_ticket_medio: 'Ticket Promedio',
+    siteTitle: 'Métricas del Sitio',
+    siteDesc: 'Tráfico y conversión del sitio público',
+    m_views: 'Visualizaciones',
+    m_site_leads: 'Leads del Sitio',
+    m_conversion: 'Tasa de Conversión',
+    goalsTitle: 'Meta Principal',
+    goalsDesc: 'Progreso de la meta activa',
+    m_meta_principal: 'Incluir Meta Principal',
+    followupTitle: 'Follow-up',
+    followupDesc: 'Estado del reenganche automático',
+    m_followup_status: 'Estado de Follow-up',
+    sendNow: 'Enviar Ahora',
+    sending: 'Enviando...',
+    sentSuccess: '¡Reporte enviado!',
+    sentError: 'Error al enviar',
     today: 'Hoy',
     tomorrow: 'Mañana'
   }
@@ -229,7 +303,11 @@ function getNextSendDate(report: any, t: any): string {
 function countSelectedMetrics(report: any): number {
   const baseCount = Object.values(report.metrics?.base || {}).filter(Boolean).length
   const pipelineCount = (report.metrics?.pipeline || []).length
-  return baseCount + pipelineCount
+  const financialCount = Object.values(report.metrics?.financial || {}).filter(Boolean).length
+  const siteCount = Object.values(report.metrics?.site || {}).filter(Boolean).length
+  const goalsCount = Object.values(report.metrics?.goals || {}).filter(Boolean).length
+  const followupCount = Object.values(report.metrics?.followup || {}).filter(Boolean).length
+  return baseCount + pipelineCount + financialCount + siteCount + goalsCount + followupCount
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -253,6 +331,10 @@ export default function ReportsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
 
+  // Send Now state
+  const [sendingId, setSendingId] = useState<string | null>(null)
+  const [sendResult, setSendResult] = useState<{ id: string; ok: boolean } | null>(null)
+
   // Form State
   const [formData, setFormData] = useState({
     name: '',
@@ -261,7 +343,11 @@ export default function ReportsPage() {
     send_time: '18:00',
     send_day: 'monday',
     metrics: DEFAULT_BASE_METRICS,
-    pipeline_stages: [] as string[]
+    pipeline_stages: [] as string[],
+    financial: { receita: false, despesas: false, lucro: false, comissoes: false, negocios: false, ticket_medio: false } as Record<string, boolean>,
+    site: { views: false, leads: false, conversion: false } as Record<string, boolean>,
+    goals: { meta_principal: false } as Record<string, boolean>,
+    followup: { status: false } as Record<string, boolean>,
   })
 
   // Dias da semana traduzidos
@@ -310,7 +396,11 @@ export default function ReportsPage() {
         send_time: report.send_time.substring(0, 5),
         send_day: report.send_day || 'monday',
         metrics: report.metrics?.base || DEFAULT_BASE_METRICS,
-        pipeline_stages: report.metrics?.pipeline || []
+        pipeline_stages: report.metrics?.pipeline || [],
+        financial: report.metrics?.financial || { receita: false, despesas: false, lucro: false, comissoes: false, negocios: false, ticket_medio: false },
+        site: report.metrics?.site || { views: false, leads: false, conversion: false },
+        goals: report.metrics?.goals || { meta_principal: false },
+        followup: report.metrics?.followup || { status: false },
       })
     } else {
       setEditingId(null)
@@ -322,7 +412,11 @@ export default function ReportsPage() {
         send_time: '18:00',
         send_day: 'monday',
         metrics: DEFAULT_BASE_METRICS,
-        pipeline_stages: allStageIds
+        pipeline_stages: allStageIds,
+        financial: { receita: false, despesas: false, lucro: false, comissoes: false, negocios: false, ticket_medio: false },
+        site: { views: false, leads: false, conversion: false },
+        goals: { meta_principal: false },
+        followup: { status: false },
       })
     }
     setIsModalOpen(true)
@@ -345,6 +439,34 @@ export default function ReportsPage() {
           : [...prev.pipeline_stages, stageId]
       }
     })
+  }
+
+  const handleToggleCategory = (category: 'financial' | 'site' | 'goals' | 'followup', key: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [category]: { ...prev[category], [key]: !prev[category][key] }
+    }))
+  }
+
+  const handleSendNow = async (reportId: string) => {
+    if (!activeOrgId || sendingId) return
+    setSendingId(reportId)
+    setSendResult(null)
+    try {
+      const res = await fetch('/api/reports/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportId, orgId: activeOrgId })
+      })
+      const data = await res.json()
+      setSendResult({ id: reportId, ok: res.ok })
+      setTimeout(() => setSendResult(null), 3000)
+    } catch {
+      setSendResult({ id: reportId, ok: false })
+      setTimeout(() => setSendResult(null), 3000)
+    } finally {
+      setSendingId(null)
+    }
   }
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
@@ -376,7 +498,11 @@ export default function ReportsPage() {
 
     const combinedMetrics = {
       base: formData.metrics,
-      pipeline: formData.pipeline_stages
+      pipeline: formData.pipeline_stages,
+      financial: formData.financial,
+      site: formData.site,
+      goals: formData.goals,
+      followup: formData.followup,
     }
 
     const payload = {
@@ -406,7 +532,12 @@ export default function ReportsPage() {
   }
 
   // Contador de métricas selecionadas no form
-  const selectedMetricsCount = Object.values(formData.metrics).filter(Boolean).length + formData.pipeline_stages.length
+  const selectedMetricsCount = Object.values(formData.metrics).filter(Boolean).length
+    + formData.pipeline_stages.length
+    + Object.values(formData.financial).filter(Boolean).length
+    + Object.values(formData.site).filter(Boolean).length
+    + Object.values(formData.goals).filter(Boolean).length
+    + Object.values(formData.followup).filter(Boolean).length
 
   // Se não tem acesso a Reports, mostra tela de upgrade
   if (!canUseReports) {
@@ -559,6 +690,25 @@ export default function ReportsPage() {
 
               {/* Actions */}
               <div className="mt-auto flex gap-2">
+                <button
+                  onClick={() => handleSendNow(report.id)}
+                  disabled={sendingId === report.id}
+                  className="py-2 px-3 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  style={{
+                    background: sendResult?.id === report.id
+                      ? (sendResult.ok ? 'var(--color-success-subtle)' : 'var(--color-error-subtle)')
+                      : 'var(--color-primary-subtle)',
+                    color: sendResult?.id === report.id
+                      ? (sendResult.ok ? 'var(--color-success)' : 'var(--color-error)')
+                      : 'var(--color-primary)',
+                    border: `1px solid ${sendResult?.id === report.id
+                      ? (sendResult.ok ? 'var(--color-success)' : 'var(--color-error)')
+                      : 'var(--color-primary)'}`
+                  }}
+                >
+                  {sendingId === report.id ? <Loader2 size={14} className="animate-spin" /> : sendResult?.id === report.id ? (sendResult.ok ? <CheckCircle2 size={14} /> : <XCircle size={14} />) : <Zap size={14} />}
+                  {sendingId === report.id ? t.sending : sendResult?.id === report.id ? (sendResult.ok ? t.sentSuccess : t.sentError) : t.sendNow}
+                </button>
                 <button
                   onClick={() => handleOpenModal(report)}
                   className="flex-1 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
@@ -779,6 +929,125 @@ export default function ReportsPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Métricas Financeiras */}
+                <div className="pt-6" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+                  <div className="mb-4">
+                    <h3 className="font-bold text-sm sm:text-base flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                      <DollarSign size={16} style={{ color: 'var(--color-success)' }} /> {t.financialTitle}
+                    </h3>
+                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.financialDesc}</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                    {Object.keys(formData.financial).map((key) => {
+                      const isActive = formData.financial[key]
+                      return (
+                        <label key={key} className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none"
+                          style={isActive
+                            ? { background: 'var(--color-success-subtle)', border: '1px solid var(--color-success)' }
+                            : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }
+                          }>
+                          <span className="text-sm font-medium truncate pr-2" style={{ color: isActive ? 'var(--color-success)' : 'var(--color-text-tertiary)' }}>
+                            {t[`m_${key}` as keyof typeof t] || key}
+                          </span>
+                          <div className="shrink-0 w-9 h-5 rounded-full relative transition-colors" style={{ background: isActive ? 'var(--color-success)' : 'var(--color-bg-elevated)' }}>
+                            <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
+                          </div>
+                          <input type="checkbox" className="sr-only" checked={isActive} onChange={() => handleToggleCategory('financial', key)} />
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Métricas do Site */}
+                <div className="pt-6" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+                  <div className="mb-4">
+                    <h3 className="font-bold text-sm sm:text-base flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                      <Globe size={16} style={{ color: 'var(--color-info)' }} /> {t.siteTitle}
+                    </h3>
+                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.siteDesc}</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                    {Object.keys(formData.site).map((key) => {
+                      const isActive = formData.site[key]
+                      return (
+                        <label key={key} className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none"
+                          style={isActive
+                            ? { background: 'var(--color-info-subtle)', border: '1px solid var(--color-info)' }
+                            : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }
+                          }>
+                          <span className="text-sm font-medium truncate pr-2" style={{ color: isActive ? 'var(--color-info)' : 'var(--color-text-tertiary)' }}>
+                            {t[`m_${key === 'leads' ? 'site_leads' : key}` as keyof typeof t] || key}
+                          </span>
+                          <div className="shrink-0 w-9 h-5 rounded-full relative transition-colors" style={{ background: isActive ? 'var(--color-info)' : 'var(--color-bg-elevated)' }}>
+                            <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
+                          </div>
+                          <input type="checkbox" className="sr-only" checked={isActive} onChange={() => handleToggleCategory('site', key)} />
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Meta Principal + Follow-up (lado a lado) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+                  {/* Meta */}
+                  <div>
+                    <div className="mb-4">
+                      <h3 className="font-bold text-sm sm:text-base flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                        <Target size={16} style={{ color: 'var(--color-warning)' }} /> {t.goalsTitle}
+                      </h3>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.goalsDesc}</p>
+                    </div>
+                    {Object.keys(formData.goals).map((key) => {
+                      const isActive = formData.goals[key]
+                      return (
+                        <label key={key} className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none"
+                          style={isActive
+                            ? { background: 'var(--color-warning-subtle)', border: '1px solid var(--color-warning)' }
+                            : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }
+                          }>
+                          <span className="text-sm font-medium truncate pr-2" style={{ color: isActive ? 'var(--color-warning)' : 'var(--color-text-tertiary)' }}>
+                            {t[`m_${key}` as keyof typeof t] || key}
+                          </span>
+                          <div className="shrink-0 w-9 h-5 rounded-full relative transition-colors" style={{ background: isActive ? 'var(--color-warning)' : 'var(--color-bg-elevated)' }}>
+                            <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
+                          </div>
+                          <input type="checkbox" className="sr-only" checked={isActive} onChange={() => handleToggleCategory('goals', key)} />
+                        </label>
+                      )
+                    })}
+                  </div>
+
+                  {/* Follow-up */}
+                  <div>
+                    <div className="mb-4">
+                      <h3 className="font-bold text-sm sm:text-base flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                        <RefreshCw size={16} style={{ color: 'var(--color-primary)' }} /> {t.followupTitle}
+                      </h3>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.followupDesc}</p>
+                    </div>
+                    {Object.keys(formData.followup).map((key) => {
+                      const isActive = formData.followup[key]
+                      return (
+                        <label key={key} className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none"
+                          style={isActive
+                            ? { background: 'var(--color-primary-subtle)', border: '1px solid var(--color-primary)' }
+                            : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }
+                          }>
+                          <span className="text-sm font-medium truncate pr-2" style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}>
+                            {t[`m_${key === 'status' ? 'followup_status' : key}` as keyof typeof t] || key}
+                          </span>
+                          <div className="shrink-0 w-9 h-5 rounded-full relative transition-colors" style={{ background: isActive ? 'var(--color-primary)' : 'var(--color-bg-elevated)' }}>
+                            <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
+                          </div>
+                          <input type="checkbox" className="sr-only" checked={isActive} onChange={() => handleToggleCategory('followup', key)} />
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
 
               </form>
             </div>
