@@ -569,7 +569,7 @@ export default function PropertyForm({ propertyId, initialData }: PropertyFormPr
   const labelStyle = { color: 'var(--color-text-secondary)' }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 pb-6">
       {/* ═══ HEADER ═══ */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
