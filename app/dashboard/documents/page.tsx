@@ -171,36 +171,36 @@ function DocumentCard({ doc, lang, t }: { doc: LeadDocument; lang: Language; t: 
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-hover)' }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-subtle)' }}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-2">
         {/* Left side */}
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <div className="p-2.5 rounded-lg shrink-0" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
-            {doc.source_type === 'uploaded' ? <Upload size={18} /> : categoryIcon}
+        <div className="flex items-start gap-3 flex-1 min-w-0 overflow-hidden">
+          <div className="p-2 sm:p-2.5 rounded-lg shrink-0" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
+            {doc.source_type === 'uploaded' ? <Upload size={16} /> : categoryIcon}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
+            <h3 className="font-medium text-sm sm:text-base truncate" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
             {doc.lead && (
               <Link
                 href={`/dashboard/crm/${doc.lead.id}`}
-                className="text-sm flex items-center gap-1 mt-0.5 transition-colors"
+                className="text-xs sm:text-sm flex items-center gap-1 mt-0.5 transition-colors"
                 style={{ color: 'var(--color-text-muted)' }}
               >
                 <User size={12} />
-                {doc.lead.name}
+                <span className="truncate">{doc.lead.name}</span>
               </Link>
             )}
           </div>
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           <StatusBadge status={doc.status} lang={lang} />
 
           {/* Menu */}
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+              className="p-1.5 rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100"
               style={{ color: 'var(--color-text-muted)' }}
             >
               <MoreVertical size={16} />
@@ -241,7 +241,7 @@ function DocumentCard({ doc, lang, t }: { doc: LeadDocument; lang: Language; t: 
       </div>
 
       {/* Footer */}
-      <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 pt-3" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
         <span className="text-xs flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
           <Calendar size={12} />
           {t.createdAt}: {new Date(doc.created_at).toLocaleDateString()}
@@ -346,8 +346,8 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-100px)] p-4 sm:p-6" style={{ background: 'var(--color-bg-surface)' }}>
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-[calc(100vh-100px)]" style={{ background: 'var(--color-bg-surface)' }}>
+      <div className="max-w-6xl mx-auto space-y-6 pb-8">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -359,22 +359,22 @@ export default function DocumentsPage() {
             <p className="mt-1" style={{ color: 'var(--color-text-muted)' }}>{t.subtitle}</p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             <button
               onClick={handleUpload}
-              className="px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors"
               style={{ background: 'var(--color-bg-hover)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border-subtle)' }}
             >
               <Upload size={16} />
-              {t.upload}
+              <span className="hidden sm:inline">{t.upload}</span>
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors shadow-lg"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors shadow-lg"
               style={{ background: 'var(--color-primary)', color: '#fff' }}
             >
               <Plus size={16} />
-              {t.newDocument}
+              <span className="hidden sm:inline">{t.newDocument}</span>
             </button>
           </div>
         </div>
