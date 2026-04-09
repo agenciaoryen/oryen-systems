@@ -227,7 +227,7 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-6">
       {/* ═══ HEADER ═══ */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -272,28 +272,29 @@ export default function PortfolioPage() {
           )}
         </div>
 
-        {/* Status */}
-        <div className="w-44 shrink-0">
-          <CustomSelect
-            value={statusFilter}
-            onChange={(v) => setStatusFilter(v)}
-            options={[
-              { value: '', label: t.allStatuses },
-              ...Object.entries(PROPERTY_STATUSES).map(([key, labels]) => ({ value: key, label: labels[lang] })),
-            ]}
-          />
-        </div>
+        {/* Status + Tipo (lado a lado no mobile) */}
+        <div className="flex gap-3">
+          <div className="flex-1 sm:w-44 sm:flex-none">
+            <CustomSelect
+              value={statusFilter}
+              onChange={(v) => setStatusFilter(v)}
+              options={[
+                { value: '', label: t.allStatuses },
+                ...Object.entries(PROPERTY_STATUSES).map(([key, labels]) => ({ value: key, label: labels[lang] })),
+              ]}
+            />
+          </div>
 
-        {/* Tipo */}
-        <div className="w-44 shrink-0">
-          <CustomSelect
-            value={typeFilter}
-            onChange={(v) => setTypeFilter(v)}
-            options={[
-              { value: '', label: t.allTypes },
-              ...Object.entries(PROPERTY_TYPES).map(([key, labels]) => ({ value: key, label: labels[lang] })),
-            ]}
-          />
+          <div className="flex-1 sm:w-44 sm:flex-none">
+            <CustomSelect
+              value={typeFilter}
+              onChange={(v) => setTypeFilter(v)}
+              options={[
+                { value: '', label: t.allTypes },
+                ...Object.entries(PROPERTY_TYPES).map(([key, labels]) => ({ value: key, label: labels[lang] })),
+              ]}
+            />
+          </div>
         </div>
 
         {/* View toggle */}
@@ -393,7 +394,7 @@ export default function PortfolioPage() {
                   </button>
                   {/* Price overlay */}
                   {prop.price && (
-                    <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg backdrop-blur-sm text-sm font-bold" style={{ background: 'var(--color-bg-overlay)', color: 'var(--color-text-primary)' }}>
+                    <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg backdrop-blur-sm text-sm font-bold" style={{ background: 'rgba(0,0,0,0.65)', color: '#fff' }}>
                       {formatPrice(prop.price, currency)}
                     </div>
                   )}
