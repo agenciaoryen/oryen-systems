@@ -722,11 +722,12 @@ export default function DashboardPage() {
         style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.025em' }}>{t.overview}</h1>
-          <p className="mt-2 flex items-center gap-2 text-sm sm:text-base" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="mt-2 flex items-center gap-2 text-sm sm:text-base flex-wrap" style={{ color: 'var(--color-text-secondary)' }}>
             <Activity size={16} style={{ color: 'var(--color-success)' }} className="shrink-0" />
-            <span className="truncate max-w-[200px] sm:max-w-[400px]">
-              {t.performance} <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{activeOrgName}</span>
+            <span>
+              {t.performance}
             </span>
+            <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{activeOrgName}</span>
           </p>
         </div>
 

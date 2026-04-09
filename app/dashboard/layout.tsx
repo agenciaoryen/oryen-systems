@@ -26,6 +26,13 @@ export default function DashboardLayout({
   const isMessagesPage = pathname?.startsWith('/dashboard/messages')
   const { user, loading, org, activePlanStatus, isStaff } = useAuth()
 
+  // Guard: não logado → login
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/login')
+    }
+  }, [loading, user, router])
+
   // Guard: usuário com org mas sem pagamento → onboarding
   useEffect(() => {
     if (!loading && user && org && activePlanStatus === 'trial' && !isStaff) {
@@ -35,6 +42,15 @@ export default function DashboardLayout({
 
   // Mostrar loading enquanto verifica
   if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center" style={{ background: 'var(--color-bg-base)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-text-secondary)' }} />
+      </div>
+    )
+  }
+
+  // Se não logado, mostrar loading enquanto redireciona
+  if (!user) {
     return (
       <div className="flex h-screen w-full items-center justify-center" style={{ background: 'var(--color-bg-base)' }}>
         <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-text-secondary)' }} />
