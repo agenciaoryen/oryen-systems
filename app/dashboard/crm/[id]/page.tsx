@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
-import { formatPrice } from '@/lib/format'
+import { formatPrice, formatSource } from '@/lib/format'
 import LeadDocuments from './components/LeadDocuments'
 import FinancingSimulation from './components/FinancingSimulation'
 import {
@@ -1147,7 +1147,7 @@ export default function LeadProfilePage() {
               )}
               {lead.source && (
                 <div className="flex items-center gap-1.5">
-                  {t.source}: <span style={{ color: 'var(--color-text-tertiary)' }}>{lead.source}</span>
+                  {t.source}: <span style={{ color: 'var(--color-text-tertiary)' }}>{formatSource(lead.source, userLang)}</span>
                 </div>
               )}
               {lead.nicho && (

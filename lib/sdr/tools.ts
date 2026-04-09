@@ -442,6 +442,29 @@ async function executeQualifyLead(
 
   const previousStage = currentLead?.stage || 'new'
 
+  // Proteger contra retrocesso de stage (ex: visit_scheduled → qualified)
+  const STAGE_ORDER: Record<string, number> = {
+    'new': 0, 'qualifying': 1, 'qualified': 2,
+    'visit_scheduled': 3, 'visita_agendada': 3, 'agendado': 3,
+    'negotiation': 4, 'negociacao': 4,
+    'won': 5, 'fechamento': 5, 'lost': 5, 'perdido': 5,
+  }
+  const currentOrder = STAGE_ORDER[previousStage.toLowerCase()] ?? -1
+  const targetOrder = STAGE_ORDER[targetStage.toLowerCase()] ?? -1
+
+  if (targetOrder >= 0 && currentOrder >= 0 && targetOrder < currentOrder) {
+    console.log(`[SDR:Qualify] Bloqueado retrocesso: ${previousStage} (${currentOrder}) → ${targetStage} (${targetOrder})`)
+    return {
+      success: true,
+      data: {
+        stage: previousStage,
+        original_stage: input.stage,
+        reason: `Stage não alterado: lead já está em ${previousStage} (mais avançado que ${targetStage})`,
+        blocked: true
+      }
+    }
+  }
+
   const { error } = await supabase
     .from('leads')
     .update({

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
-import { formatPrice } from '@/lib/format'
+import { formatPrice, formatSource } from '@/lib/format'
 import { usePlan } from '@/lib/usePlan'
 import {
   Search,
@@ -1089,7 +1089,7 @@ export default function CrmPage() {
                           </div>
                         </td>
                         <td className="px-4 md:px-6 py-3 text-xs truncate max-w-[100px]" style={{ color: 'var(--color-text-muted)' }}>
-                          {lead.source || '-'}
+                          {lead.source ? formatSource(lead.source, userLang) : '-'}
                         </td>
                         <td className="px-4 md:px-6 py-3">
                           {lead.assigned_to_name ? (
@@ -1299,7 +1299,7 @@ export default function CrmPage() {
                               <div className="flex flex-wrap gap-1 mb-2">
                                 {cardFields.includes('source') && lead.source && (
                                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] truncate max-w-[100px]" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border)' }}>
-                                    {lead.source}
+                                    {formatSource(lead.source, userLang)}
                                   </span>
                                 )}
                                 {cardFields.includes('nicho') && lead.nicho && (

@@ -70,3 +70,33 @@ export const formatDateTime = (
     timeZone: timezone,
   }).format(date);
 };
+
+/**
+ * Formata a origem do lead com rótulos amigáveis.
+ * Ex: "whatsapp_inbound" → "WhatsApp (entrada)"
+ */
+const SOURCE_LABELS: Record<string, Record<string, string>> = {
+  whatsapp_inbound: { pt: 'WhatsApp (entrada)', en: 'WhatsApp (inbound)', es: 'WhatsApp (entrada)' },
+  whatsapp_outbound: { pt: 'WhatsApp (prospecção)', en: 'WhatsApp (outbound)', es: 'WhatsApp (prospección)' },
+  whatsapp: { pt: 'WhatsApp', en: 'WhatsApp', es: 'WhatsApp' },
+  instagram: { pt: 'Instagram', en: 'Instagram', es: 'Instagram' },
+  facebook: { pt: 'Facebook', en: 'Facebook', es: 'Facebook' },
+  website: { pt: 'Site', en: 'Website', es: 'Sitio web' },
+  site: { pt: 'Site', en: 'Website', es: 'Sitio web' },
+  referral: { pt: 'Indicação', en: 'Referral', es: 'Referido' },
+  manual: { pt: 'Cadastro manual', en: 'Manual entry', es: 'Registro manual' },
+  import: { pt: 'Importação', en: 'Import', es: 'Importación' },
+  csv_import: { pt: 'Importação CSV', en: 'CSV Import', es: 'Importación CSV' },
+  api: { pt: 'API externa', en: 'External API', es: 'API externa' },
+  google_ads: { pt: 'Google Ads', en: 'Google Ads', es: 'Google Ads' },
+  meta_ads: { pt: 'Meta Ads', en: 'Meta Ads', es: 'Meta Ads' },
+  organic: { pt: 'Orgânico', en: 'Organic', es: 'Orgánico' },
+  landing_page: { pt: 'Página de captura', en: 'Landing page', es: 'Página de captura' },
+}
+
+export const formatSource = (source: string, lang: string = 'pt'): string => {
+  if (!source) return '-'
+  const label = SOURCE_LABELS[source.toLowerCase()]
+  if (label) return label[lang] || label.pt
+  return source.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
