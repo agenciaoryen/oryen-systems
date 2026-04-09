@@ -307,8 +307,8 @@ export const agentTools: Anthropic.Messages.Tool[] = [
       properties: {
         field: {
           type: 'string',
-          enum: ['budget', 'property_type', 'region', 'bedrooms', 'urgency', 'financing', 'current_situation', 'custom'],
-          description: 'Campo a ser salvo'
+          enum: ['budget', 'property_type', 'region', 'bedrooms', 'urgency', 'financing', 'current_situation', 'interest', 'contact_type', 'custom'],
+          description: 'Campo a ser salvo. Use "interest" para tipo de transação (compra, locação, compra e locação). Use "contact_type" para perfil do lead (comprador, vendedor, locatário, investidor).'
         },
         value: {
           type: 'string',
@@ -502,11 +502,37 @@ async function executeScheduleVisit(
     scheduled_by: 'sdr_agent'
   }
 
-  // Atualizar lead com estágio
+  // Mapear stage semanticamente para o pipeline da org
+  let visitStage = 'visit_scheduled'
+  const { data: pipelineStages } = await supabase
+    .from('pipeline_stages')
+    .select('name, label, position')
+    .eq('org_id', ctx.org_id)
+    .eq('is_active', true)
+    .order('position')
+
+  if (pipelineStages && pipelineStages.length > 0) {
+    const visitAliases = ['visit_scheduled', 'visita_agendada', 'agendado', 'scheduled', 'visita']
+    const mapped = pipelineStages.find(s =>
+      visitAliases.some(a =>
+        s.name.toLowerCase().includes(a) || s.label.toLowerCase().includes(a)
+      )
+    )
+    if (mapped) {
+      visitStage = mapped.name
+    } else {
+      // Fallback: usar posição 3 (tipicamente visit_scheduled) se existir
+      if (pipelineStages.length > 3) {
+        visitStage = pipelineStages[3].name
+      }
+    }
+  }
+
+  // Atualizar lead com estágio mapeado
   const { error } = await supabase
     .from('leads')
     .update({
-      stage: 'visit_scheduled',
+      stage: visitStage,
       updated_at: new Date().toISOString()
     })
     .eq('id', ctx.lead_id)
@@ -992,18 +1018,25 @@ async function executeSaveLeadInfo(
 
   // Atualizar campos diretos do lead quando aplicável
   const leadFieldMap: Record<string, string> = {
-    'property_type': 'interesse',       // tipo de imóvel → interesse
-    'region': 'city',                   // região/cidade → city
-    'budget': 'total_em_vendas',        // orçamento → valor
-    'current_situation': 'tipo_contato', // situação → tipo_contato
+    'property_type': 'nicho',            // tipo de imóvel → nicho (casa, apto, terreno)
+    'interest': 'interesse',             // tipo de transação → interesse (compra, locação)
+    'contact_type': 'tipo_contato',      // perfil do lead → tipo_contato (comprador, vendedor, locatário)
+    'region': 'city',                    // região/cidade → city
+    'budget': 'total_em_vendas',         // orçamento → valor
+    'current_situation': 'tipo_contato', // fallback: situação → tipo_contato
   }
 
   const leadColumn = leadFieldMap[fieldKey]
   if (leadColumn) {
     const updateData: Record<string, any> = { updated_at: new Date().toISOString() }
     if (leadColumn === 'total_em_vendas') {
-      // Extrair número do orçamento
-      const numStr = input.value.replace(/[^\d.,]/g, '').replace(',', '.')
+      // Extrair número do orçamento — tratar formato BR (4.000,00) e EN (4,000.00)
+      let numStr = input.value.replace(/[^\d.,]/g, '') // "4.000,00" ou "4000" ou "4,000.00"
+      // Detectar formato brasileiro: se tem ponto seguido de 3 dígitos, é separador de milhar
+      if (/\d\.\d{3}/.test(numStr)) {
+        numStr = numStr.replace(/\./g, '') // remover pontos de milhar
+      }
+      numStr = numStr.replace(',', '.') // vírgula decimal → ponto
       const num = parseFloat(numStr)
       if (!isNaN(num)) updateData[leadColumn] = num
     } else {
