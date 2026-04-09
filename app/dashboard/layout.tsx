@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import Sidebar from './Sidebar'
 import { Toaster } from 'sonner'
 import { useTheme } from '@/lib/ThemeContext'
@@ -22,6 +22,8 @@ export default function DashboardLayout({
 }) {
   const { theme } = useTheme()
   const router = useRouter()
+  const pathname = usePathname()
+  const isMessagesPage = pathname?.startsWith('/dashboard/messages')
   const { user, loading, org, activePlanStatus, isStaff } = useAuth()
 
   // Guard: usuário com org mas sem pagamento → onboarding
@@ -68,7 +70,7 @@ export default function DashboardLayout({
         href="https://wa.me/5551998388409"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+        className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${isMessagesPage ? 'hidden md:flex' : ''}`}
         style={{ background: '#25D366', color: '#fff', boxShadow: '0 4px 16px rgba(37, 211, 102, 0.35)' }}
         title="Suporte via WhatsApp"
       >
