@@ -229,10 +229,25 @@ export function FeatureLock({
   // ─── VARIANT: BADGE ───
   if (variant === 'badge') {
     return (
-      <div className={`relative ${className}`}>
-        {children}
-        <div className="absolute -top-2 -right-2 rounded-full p-1 shadow-lg" style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)' }}>
+      <div
+        className={`relative cursor-pointer ${className}`}
+        onClick={handleUpgrade}
+        title={`${t.unlockWith} ${upgradePlan?.displayName || 'Diamond'}`}
+      >
+        {/* Bloqueia interação com o conteúdo */}
+        <div className="pointer-events-none opacity-60">
+          {children}
+        </div>
+        {/* Badge de cadeado */}
+        <div className="absolute -top-2 -right-2 rounded-full p-1.5 shadow-lg" style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)' }}>
           <Lock size={12} style={{ color: '#000' }} />
+        </div>
+        {/* Overlay sutil ao hover */}
+        <div className="absolute inset-0 rounded-xl opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)' }}>
+          <span className="text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5" style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)', color: '#000' }}>
+            <Crown size={12} />
+            {t.upgradeButton}
+          </span>
         </div>
       </div>
     )
