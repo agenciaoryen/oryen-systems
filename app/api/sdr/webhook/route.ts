@@ -100,12 +100,34 @@ export async function POST(request: NextRequest) {
     }
 
     // ─── 5. Delegar ao processador compartilhado ───
+    // ─── 5b. Marcar mensagem como lida (read receipt — ticks azuis) ───
+    const whatsappMessageId = payload.messageId || (payload as any).id || ''
+    if (whatsappMessageId && !isAttendant) {
+      try {
+        const { createTransport } = await import('@/lib/sdr/whatsapp-adapter')
+        const { data: instRecord } = await supabase
+          .from('whatsapp_instances')
+          .select('api_type, instance_name, instance_token, api_url, phone_number_id, waba_id, cloud_api_token')
+          .eq('instance_name', instanceName)
+          .single()
+
+        if (instRecord) {
+          const transport = createTransport(instRecord as any)
+          transport.markAsRead(whatsappMessageId).catch(() => {})
+        }
+      } catch {
+        // Read receipt não é crítico — ignorar
+      }
+    }
+
+    // ─── 6. Delegar ao processador compartilhado ───
     const normalized: NormalizedInbound = {
       phone,
       phoneFallback,
       messageText: wasTranscribed ? messageText : messageText,
       messageType: isAudioMessage ? 'audio' : 'text',
       pushName: payload.pushName || '',
+      whatsappMessageId,
       timestamp: payload.timestamp || Date.now(),
       orgId: instance.org_id,
       agentId: instance.agent_id,

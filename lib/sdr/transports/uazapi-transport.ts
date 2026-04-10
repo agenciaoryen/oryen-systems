@@ -37,7 +37,7 @@ export class UazapiTransport implements WhatsAppTransport {
         'Content-Type': 'application/json',
         'token': this.token,
       },
-      body: JSON.stringify({ number, text }),
+      body: JSON.stringify({ number, text, delay: 1200 }),
     })
 
     if (!response.ok) {
@@ -50,8 +50,39 @@ export class UazapiTransport implements WhatsAppTransport {
   }
 
   /**
+   * Envia imagem via URL usando UAZAPI /send/media.
+   */
+  async sendImage(phone: string, imageUrl: string, caption?: string): Promise<{ messageId?: string }> {
+    const number = formatNumber(phone)
+
+    const body: any = {
+      number,
+      type: 'image',
+      file: imageUrl,
+      delay: 2000,
+    }
+    if (caption) body.caption = caption
+
+    const response = await fetch(`${this.apiUrl}/send/media`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'token': this.token,
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (!response.ok) {
+      const respBody = await response.text().catch(() => '')
+      throw new Error(`UAZAPI sendImage error ${response.status}: ${respBody}`)
+    }
+
+    const data = await response.json().catch(() => ({}))
+    return { messageId: data?.key?.id || data?.messageId }
+  }
+
+  /**
    * Templates não existem na UAZAPI. Envia como texto livre.
-   * O caller deve garantir que os params já foram interpolados no texto.
    */
   async sendTemplate(
     phone: string,
@@ -59,13 +90,11 @@ export class UazapiTransport implements WhatsAppTransport {
     _language: string,
     params: string[]
   ): Promise<{ messageId?: string }> {
-    // UAZAPI não tem templates — lança erro para forçar o caller a usar sendText
     throw new Error('UazapiTransport: templates not supported. Use sendText instead.')
   }
 
   /**
    * Envia presença (composing/available) via UAZAPI.
-   * "composing" = mostra "digitando..." no WhatsApp do lead.
    */
   async sendPresence(phone: string, state: 'composing' | 'available'): Promise<void> {
     const number = formatNumber(phone)
@@ -77,8 +106,22 @@ export class UazapiTransport implements WhatsAppTransport {
         'token': this.token,
       },
       body: JSON.stringify({ number, state }),
+    }).catch(() => {})
+  }
+
+  /**
+   * Marca mensagem como lida (read receipts / ticks azuis) via UAZAPI.
+   */
+  async markAsRead(messageId: string): Promise<void> {
+    await fetch(`${this.apiUrl}/chat/readMessages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'token': this.token,
+      },
+      body: JSON.stringify({ id: messageId }),
     }).catch(() => {
-      // Presença não é crítica — ignorar erros silenciosamente
+      // Read receipt não é crítico — ignorar erros
     })
   }
 }

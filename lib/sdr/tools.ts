@@ -321,6 +321,26 @@ export const agentTools: Anthropic.Messages.Tool[] = [
       },
       required: ['field', 'value']
     }
+  },
+
+  // 15. Enviar fotos de propriedade ao lead
+  {
+    name: 'send_property_images',
+    description: 'Envia fotos de uma propriedade ao lead via WhatsApp. Use quando o lead pedir fotos ou quando quiser apresentar visualmente um imóvel. Envia até 4 fotos de uma vez.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        property_id: {
+          type: 'string',
+          description: 'ID da propriedade (retornado por search_properties ou get_property_by_ref)'
+        },
+        max_images: {
+          type: 'number',
+          description: 'Máximo de fotos a enviar (1-4, padrão 3)'
+        }
+      },
+      required: ['property_id']
+    }
   }
 ]
 
@@ -394,6 +414,9 @@ export async function executeTool(
 
     case 'get_property_by_ref':
       return executeGetPropertyByRef(input, ctx)
+
+    case 'send_property_images':
+      return executeSendPropertyImages(input, ctx)
 
     default:
       return { success: false, error: `Tool desconhecida: ${toolName}` }
@@ -1114,7 +1137,7 @@ async function executeSearchProperties(
 ): Promise<ToolResult> {
   let query = supabase
     .from('properties')
-    .select('id, title, slug, property_type, transaction_type, price, condo_fee, bedrooms, suites, bathrooms, parking_spots, total_area, address_neighborhood, address_city, address_state, amenities, external_code, description')
+    .select('id, title, slug, property_type, transaction_type, price, condo_fee, bedrooms, suites, bathrooms, parking_spots, total_area, address_neighborhood, address_city, address_state, amenities, external_code, description, images')
     .eq('org_id', ctx.org_id)
     .eq('status', 'active')
 
@@ -1154,26 +1177,31 @@ async function executeSearchProperties(
 
   const siteSlug = site?.is_published ? site.slug : null
 
-  const formatted = properties.map(p => ({
-    id: p.id,
-    ref: p.external_code || p.slug || p.id.slice(0, 8),
-    title: p.title,
-    type: p.property_type,
-    transaction: p.transaction_type,
-    price: p.price,
-    bedrooms: p.bedrooms,
-    suites: p.suites,
-    bathrooms: p.bathrooms,
-    parking: p.parking_spots,
-    area: p.total_area,
-    neighborhood: p.address_neighborhood,
-    city: p.address_city,
-    state: p.address_state,
-    condo_fee: p.condo_fee,
-    amenities: p.amenities,
-    description: p.description?.slice(0, 200),
-    site_url: siteSlug ? `/sites/${siteSlug}/properties/${p.slug || p.id}` : null,
-  }))
+  const formatted = properties.map(p => {
+    const images = Array.isArray(p.images) ? p.images : []
+    return {
+      id: p.id,
+      ref: p.external_code || p.slug || p.id.slice(0, 8),
+      title: p.title,
+      type: p.property_type,
+      transaction: p.transaction_type,
+      price: p.price,
+      bedrooms: p.bedrooms,
+      suites: p.suites,
+      bathrooms: p.bathrooms,
+      parking: p.parking_spots,
+      area: p.total_area,
+      neighborhood: p.address_neighborhood,
+      city: p.address_city,
+      state: p.address_state,
+      condo_fee: p.condo_fee,
+      amenities: p.amenities,
+      description: p.description?.slice(0, 200),
+      has_images: images.length > 0,
+      image_count: images.length,
+      site_url: siteSlug ? `/sites/${siteSlug}/properties/${p.slug || p.id}` : null,
+    }
+  })
 
   console.log(`[SDR:SearchProperties] Encontrados ${formatted.length} imóveis | org: ${ctx.org_id}`)
   return {
@@ -1305,11 +1333,106 @@ async function executeGetPropertyByRef(
         state: property.address_state,
         address: [property.address_street, property.address_number, property.address_neighborhood, property.address_city].filter(Boolean).join(', '),
         amenities: property.amenities,
+        has_images: Array.isArray(property.images) && property.images.length > 0,
+        image_count: Array.isArray(property.images) ? property.images.length : 0,
         video_url: property.video_url,
         virtual_tour_url: property.virtual_tour_url,
         site_url: siteSlug ? `/sites/${siteSlug}/properties/${property.slug || property.id}` : null,
       },
-      tip: 'REGRA ABSOLUTA: Use SOMENTE os dados acima para falar deste imóvel. Se um campo é null, 0, ou não aparece, NÃO invente — diga "vou confirmar com o corretor". NÃO despeje tudo de uma vez. Responda o que o lead perguntar e guie para agendar visita.'
+      tip: 'REGRA ABSOLUTA: Use SOMENTE os dados acima para falar deste imóvel. Se um campo é null, 0, ou não aparece, NÃO invente — diga "vou confirmar com o corretor". NÃO despeje tudo de uma vez. Se has_images=true, ofereça enviar fotos usando send_property_images.'
+    }
+  }
+}
+
+// ─── Send Property Images: enviar fotos ao lead via WhatsApp ───
+async function executeSendPropertyImages(
+  input: { property_id: string; max_images?: number },
+  ctx: ToolContext
+): Promise<ToolResult> {
+  const maxImages = Math.min(input.max_images || 3, 4)
+
+  // Buscar propriedade com imagens
+  const { data: property, error } = await supabase
+    .from('properties')
+    .select('id, title, images, external_code, slug')
+    .eq('id', input.property_id)
+    .eq('org_id', ctx.org_id)
+    .eq('status', 'active')
+    .single()
+
+  if (error || !property) {
+    return { success: false, error: 'Propriedade não encontrada.' }
+  }
+
+  const images = Array.isArray(property.images) ? property.images : []
+  if (images.length === 0) {
+    return {
+      success: true,
+      data: {
+        sent: 0,
+        message: 'Esta propriedade não possui fotos cadastradas no momento. Informe ao lead que as fotos serão disponibilizadas em breve.'
+      }
+    }
+  }
+
+  // Ordenar por is_cover primeiro, depois por order
+  const sorted = [...images].sort((a: any, b: any) => {
+    if (a.is_cover && !b.is_cover) return -1
+    if (!a.is_cover && b.is_cover) return 1
+    return (a.order || 0) - (b.order || 0)
+  })
+
+  const toSend = sorted.slice(0, maxImages)
+
+  // Buscar instância para enviar via transport
+  const { createTransport } = await import('./whatsapp-adapter')
+  const { data: instance } = await supabase
+    .from('whatsapp_instances')
+    .select('api_type, instance_name, instance_token, api_url, phone_number_id, waba_id, cloud_api_token')
+    .eq('instance_name', ctx.instance_name)
+    .single()
+
+  if (!instance) {
+    return { success: false, error: 'Instância WhatsApp não encontrada.' }
+  }
+
+  const transport = createTransport(instance as any)
+  const phone = ctx.phone.replace(/[^0-9]/g, '')
+
+  let sentCount = 0
+  const ref = property.external_code || property.slug || property.id.slice(0, 8)
+
+  for (let i = 0; i < toSend.length; i++) {
+    const img = toSend[i] as any
+    const imageUrl = img.url
+
+    if (!imageUrl) continue
+
+    try {
+      // Primeira imagem com caption (título da propriedade)
+      const caption = i === 0 ? `${property.title} (${ref})` : undefined
+      await transport.sendImage(phone, imageUrl, caption)
+      sentCount++
+
+      // Pequena pausa entre imagens para não parecer spam
+      if (i < toSend.length - 1) {
+        await new Promise(r => setTimeout(r, 1500))
+      }
+    } catch (err: any) {
+      console.error(`[SDR:SendImages] Erro ao enviar imagem ${i + 1}: ${err.message}`)
+    }
+  }
+
+  console.log(`[SDR:SendImages] ${sentCount}/${toSend.length} fotos enviadas para ${phone} | property: ${ref}`)
+
+  return {
+    success: true,
+    data: {
+      sent: sentCount,
+      total_available: images.length,
+      message: sentCount > 0
+        ? `${sentCount} foto(s) enviada(s) ao lead.`
+        : 'Não foi possível enviar as fotos no momento.'
     }
   }
 }

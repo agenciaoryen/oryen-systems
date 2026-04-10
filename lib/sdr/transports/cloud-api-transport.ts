@@ -87,6 +87,25 @@ export class CloudApiTransport implements WhatsAppTransport {
   }
 
   /**
+   * Envia imagem via URL pela Cloud API.
+   */
+  async sendImage(phone: string, imageUrl: string, caption?: string): Promise<{ messageId?: string }> {
+    const body: any = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: formatPhone(phone),
+      type: 'image',
+      image: {
+        link: imageUrl,
+      },
+    }
+    if (caption) body.image.caption = caption
+
+    const result = await this.callApi(body)
+    return { messageId: result?.messages?.[0]?.id }
+  }
+
+  /**
    * Cloud API não suporta typing indicators via API.
    * No-op para manter compatibilidade com o adapter.
    */
