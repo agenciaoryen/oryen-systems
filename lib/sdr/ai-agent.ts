@@ -170,16 +170,43 @@ OBRIGATÓRIO:
       // Se não gerou mensagens visíveis, forçar uma resposta
       if (whatsappMessages.length === 0) {
         console.warn(`[SDR:Agent] Loop ${loops}: IA não gerou texto visível — forçando resposta`)
-        const forcedResponse = await client.messages.create({
-          model: MODEL,
-          max_tokens: MAX_TOKENS,
-          system: finalSystemPrompt + '\n\nIMPORTANTE: Você DEVE responder ao lead agora com uma mensagem de texto. Não use ferramentas. Baseie-se no contexto da conversa e responda de forma natural.',
-          messages
-        })
-        totalTokens += (forcedResponse.usage?.input_tokens || 0) + (forcedResponse.usage?.output_tokens || 0)
-        const forcedText = forcedResponse.content.filter((b: any) => b.type === 'text').map(b => b.text).join('\n')
+
+        // Simplificar messages para reduzir tokens — manter apenas últimas 6 mensagens user/assistant
+        const simplifiedMessages = messages
+          .filter(m => typeof m.content === 'string')
+          .slice(-6)
+        if (simplifiedMessages.length === 0 || simplifiedMessages[0].role !== 'user') {
+          simplifiedMessages.unshift({ role: 'user', content: input.user_message })
+        }
+
+        try {
+          const forcedResponse = await client.messages.create({
+            model: MODEL,
+            max_tokens: MAX_TOKENS,
+            system: finalSystemPrompt + '\n\nIMPORTANTE: Você DEVE responder ao lead agora com uma mensagem de texto curta e natural. NÃO use ferramentas. Responda diretamente ao que o lead disse.',
+            tools: [], // Sem tools — forçar texto
+            messages: simplifiedMessages
+          })
+          totalTokens += (forcedResponse.usage?.input_tokens || 0) + (forcedResponse.usage?.output_tokens || 0)
+          const forcedText = forcedResponse.content.filter((b: any) => b.type === 'text').map(b => b.text).join('\n')
+          const forcedMessages = splitForWhatsApp(forcedText)
+
+          if (forcedMessages.length > 0) {
+            return {
+              messages: forcedMessages,
+              toolsExecuted,
+              tokensUsed: totalTokens,
+              model: MODEL
+            }
+          }
+        } catch (forcedErr: any) {
+          console.error(`[SDR:Agent] Erro na resposta forçada: ${forcedErr.message}`)
+        }
+
+        // Último fallback: mensagem genérica para não deixar o lead sem resposta
+        console.warn(`[SDR:Agent] Fallback final — enviando mensagem genérica`)
         return {
-          messages: splitForWhatsApp(forcedText),
+          messages: ['Oi! Recebi sua mensagem. Me conta mais sobre o que você procura que te ajudo!'],
           toolsExecuted,
           tokensUsed: totalTokens,
           model: MODEL
