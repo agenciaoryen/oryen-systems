@@ -2,33 +2,27 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // Pipeline Multi-Agente do SDR
 //
-// Arquitetura inspirada em sistemas de produção (Google, Meta, NVIDIA):
+// Arquitetura:
+//   INTAKE (código) → ENRICHER (Claude Haiku) → RESPONDER (OpenAI 4o-mini) → EXECUTOR (código)
 //
-//   INTAKE (código) → ENRICHER (Haiku) → RESPONDER (Sonnet) → EXECUTOR (código)
-//
-// Benefícios vs. monolítico anterior:
-//   - ~60-70% menos tokens (elimina loops de buscar_info, save_info, think)
-//   - ~50% mais rápido (Haiku pre-processing + contexto injetado)
-//   - Mais confiável (responder foca 100% na conversa, sem confundir tarefas)
-//   - Zero regressão (prompt completo preservado, tools existentes reutilizadas)
-//
-// Fallback: se enricher falhar, o responder recebe todas as tools (modo legado)
+// O Responder usa OpenAI gpt-4o-mini — excelente para conversação natural.
+// O Enricher continua no Claude Haiku — mais barato para extração estruturada.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { buildSystemPrompt, buildResponderSystemPrompt } from './prompt-builder'
 import { agentTools, responderTools, executeTool, type ToolContext } from './tools'
 import { loadLeadContext, type LeadContext } from './intake'
 import { enrichMessage, type EnrichedData } from './enricher'
 import { executePostProcessing } from './executor'
 
-// Singleton do cliente Anthropic
-let anthropic: Anthropic | null = null
-function getClient(): Anthropic {
-  if (!anthropic) {
-    anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+// Singleton do cliente OpenAI
+let openai: OpenAI | null = null
+function getOpenAIClient(): OpenAI {
+  if (!openai) {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
   }
-  return anthropic
+  return openai
 }
 
 // ─── Tipos ───
@@ -74,16 +68,31 @@ export interface AgentResponse {
 }
 
 // ─── Modelos e limites ───
-const RESPONDER_MODEL = 'claude-sonnet-4-20250514'
+const RESPONDER_MODEL = 'gpt-4o-mini'
 const MAX_TOKENS = 2048
-const MAX_TOOL_LOOPS = 6 // Reduzido de 8 → 6 (responder tem menos tools, precisa menos loops)
+const MAX_TOOL_LOOPS = 6
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONVERTER TOOLS: Anthropic → OpenAI format
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function convertToolsToOpenAI(anthropicTools: any[]): OpenAI.Chat.Completions.ChatCompletionTool[] {
+  return anthropicTools.map(tool => ({
+    type: 'function' as const,
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.input_schema,
+    }
+  }))
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PIPELINE PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export async function runAgent(input: AgentInput): Promise<AgentResponse> {
-  const client = getClient()
+  const client = getOpenAIClient()
   const toolsExecuted: string[] = []
   let totalTokens = 0
 
@@ -134,7 +143,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
     }
   }
 
-  // ─── STAGE 3: RESPONDER — Gerar resposta via Sonnet ───
+  // ─── STAGE 3: RESPONDER — Gerar resposta via OpenAI gpt-4o-mini ───
   const promptConfig = {
     assistant_name: input.config?.assistant_name,
     company_context: input.config?.company_context,
@@ -154,10 +163,9 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
 
   // Escolher tools e prompt baseado no sucesso do enricher
   let finalSystemPrompt: string
-  let activeTools: Anthropic.Messages.Tool[]
+  let activeAnthropicTools: any[]
 
   if (enricherSucceeded) {
-    // Pipeline normal: prompt otimizado + tools reduzidas
     finalSystemPrompt = buildResponderSystemPrompt({
       config: promptConfig,
       leadContext: {
@@ -173,14 +181,16 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
         isFarewell: enriched.isFarewell
       }
     })
-    activeTools = responderTools
-    console.log(`[SDR:Pipeline] Modo otimizado: ${responderTools.length} tools | phase: ${enriched.conversationPhase}`)
+    activeAnthropicTools = responderTools
+    console.log(`[SDR:Pipeline] Modo otimizado (OpenAI): ${responderTools.length} tools | phase: ${enriched.conversationPhase}`)
   } else {
-    // Fallback: prompt original + todas as tools (modo legado)
     finalSystemPrompt = buildSystemPrompt(promptConfig)
-    activeTools = agentTools
-    console.log(`[SDR:Pipeline] Modo fallback (legado): ${agentTools.length} tools`)
+    activeAnthropicTools = agentTools
+    console.log(`[SDR:Pipeline] Modo fallback (OpenAI): ${agentTools.length} tools`)
   }
+
+  // Converter tools para formato OpenAI
+  const activeTools = convertToolsToOpenAI(activeAnthropicTools)
 
   // Injetar instrução anti-cumprimento para conversas em andamento
   if (leadContext.hasAssistantHistory) {
@@ -205,8 +215,12 @@ OBRIGATÓRIO:
 - Continue a conversa de onde parou, sem reiniciar`
   }
 
-  // Montar messages com histórico
-  const messages: Anthropic.MessageParam[] = buildMessages(input.history, input.user_message)
+  // Montar messages no formato OpenAI
+  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = buildOpenAIMessages(
+    finalSystemPrompt,
+    input.history,
+    input.user_message
+  )
 
   // Tool context para execução
   const toolCtx: ToolContext = {
@@ -224,27 +238,24 @@ OBRIGATÓRIO:
   while (loops < MAX_TOOL_LOOPS) {
     loops++
 
-    const response = await client.messages.create({
+    const response = await client.chat.completions.create({
       model: RESPONDER_MODEL,
       max_tokens: MAX_TOKENS,
-      system: finalSystemPrompt,
-      tools: activeTools,
-      messages
+      messages,
+      tools: activeTools.length > 0 ? activeTools : undefined,
     })
 
-    totalTokens += (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0)
+    const choice = response.choices[0]
+    if (!choice) break
 
-    // Verificar se tem tool_use
-    const toolUseBlocks = response.content.filter(
-      (block: any) => block.type === 'tool_use'
-    )
+    totalTokens += (response.usage?.prompt_tokens || 0) + (response.usage?.completion_tokens || 0)
 
-    if (toolUseBlocks.length === 0) {
+    const assistantMessage = choice.message
+    const toolCalls = assistantMessage.tool_calls || []
+
+    if (toolCalls.length === 0) {
       // Sem tool calls → extrair texto final
-      const textBlocks = response.content.filter(
-        (block: any) => block.type === 'text'
-      )
-      const fullText = textBlocks.map((b: any) => b.text).join('\n')
+      const fullText = assistantMessage.content || ''
       const whatsappMessages = splitForWhatsApp(fullText)
 
       // Se não gerou mensagens visíveis, forçar resposta
@@ -255,9 +266,7 @@ OBRIGATÓRIO:
         totalTokens += forcedMessages.tokensUsed
 
         if (forcedMessages.messages.length > 0) {
-          // Disparar executor em background (fire-and-forget)
           fireExecutor(toolCtx, enriched, leadContext, toolsExecuted)
-
           return {
             messages: forcedMessages.messages,
             toolsExecuted,
@@ -269,7 +278,6 @@ OBRIGATÓRIO:
         // Último fallback: mensagem genérica
         console.warn(`[SDR:Pipeline] Fallback final — enviando mensagem genérica`)
         fireExecutor(toolCtx, enriched, leadContext, toolsExecuted)
-
         return {
           messages: ['Oi! Recebi sua mensagem. Me conta mais sobre o que você procura que te ajudo!'],
           toolsExecuted,
@@ -289,25 +297,28 @@ OBRIGATÓRIO:
       }
     }
 
-    // Tem tool_use → executar tools e continuar loop
-    messages.push({ role: 'assistant', content: response.content as any })
+    // Tem tool calls → adicionar assistant message e executar tools
+    messages.push(assistantMessage)
 
-    const toolResults: any[] = []
     let conversationEnded = false
 
-    for (const toolBlock of toolUseBlocks) {
-      const toolName = (toolBlock as any).name
+    for (const toolCall of toolCalls) {
+      const toolName = toolCall.function.name
       toolsExecuted.push(toolName)
 
-      const result = await executeTool(
-        toolName,
-        (toolBlock as any).input,
-        toolCtx
-      )
+      let toolInput: any = {}
+      try {
+        toolInput = JSON.parse(toolCall.function.arguments || '{}')
+      } catch {
+        console.warn(`[SDR:Pipeline] Erro ao parsear arguments da tool ${toolName}`)
+      }
 
-      toolResults.push({
-        type: 'tool_result',
-        tool_use_id: (toolBlock as any).id,
+      const result = await executeTool(toolName, toolInput, toolCtx)
+
+      // Adicionar resultado no formato OpenAI
+      messages.push({
+        role: 'tool',
+        tool_call_id: toolCall.id,
         content: JSON.stringify(result)
       })
 
@@ -316,15 +327,11 @@ OBRIGATÓRIO:
       }
     }
 
-    messages.push({ role: 'user', content: toolResults })
-
     // Se conversa encerrada, extrair texto de despedida e parar
     if (conversationEnded) {
-      const textBlocks = response.content.filter((block: any) => block.type === 'text')
-      const farewell = textBlocks.map((b: any) => b.text).join('\n').trim()
-      const whatsappMessages = farewell ? splitForWhatsApp(farewell) : []
+      const farewell = assistantMessage.content || ''
+      const whatsappMessages = farewell.trim() ? splitForWhatsApp(farewell) : []
 
-      // Disparar executor em background
       fireExecutor(toolCtx, enriched, leadContext, toolsExecuted)
 
       return {
@@ -338,22 +345,21 @@ OBRIGATÓRIO:
 
   // Fallback: atingiu MAX_TOOL_LOOPS
   console.warn(`[SDR:Pipeline] Atingiu ${MAX_TOOL_LOOPS} loops — forçando resposta`)
-  const finalResponse = await client.messages.create({
+
+  // Remover tools para forçar texto
+  const finalResponse = await client.chat.completions.create({
     model: RESPONDER_MODEL,
     max_tokens: MAX_TOKENS,
-    system: finalSystemPrompt + '\n\nIMPORTANTE: Responda agora ao lead sem usar ferramentas.',
-    tools: [],
-    messages
+    messages: [
+      ...messages,
+      { role: 'system', content: 'IMPORTANTE: Responda agora ao lead sem usar ferramentas. Dê uma resposta curta e natural.' }
+    ],
   })
 
-  totalTokens += (finalResponse.usage?.input_tokens || 0) + (finalResponse.usage?.output_tokens || 0)
+  totalTokens += (finalResponse.usage?.prompt_tokens || 0) + (finalResponse.usage?.completion_tokens || 0)
 
-  const textBlocks = finalResponse.content.filter(
-    (block: any) => block.type === 'text'
-  )
-  const fullText = textBlocks.map((b: any) => b.text).join('\n')
+  const fullText = finalResponse.choices[0]?.message?.content || ''
 
-  // Disparar executor em background
   fireExecutor(toolCtx, enriched, leadContext, toolsExecuted)
 
   return {
@@ -374,7 +380,6 @@ function fireExecutor(
   leadContext: LeadContext,
   responderToolsExecuted: string[]
 ): void {
-  // Não bloquear — rodar em background
   executePostProcessing({
     toolCtx,
     enriched,
@@ -390,34 +395,42 @@ function fireExecutor(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function forceTextResponse(
-  client: Anthropic,
+  client: OpenAI,
   systemPrompt: string,
-  originalMessages: Anthropic.MessageParam[],
+  originalMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
   userMessage: string
 ): Promise<{ messages: string[]; tokensUsed: number }> {
-  // Simplificar messages — manter apenas últimas 6 mensagens string
-  const simplifiedMessages = originalMessages
-    .filter(m => typeof m.content === 'string')
+  // Simplificar messages — manter system + últimas mensagens string
+  const simplified: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+    { role: 'system', content: systemPrompt + '\n\nIMPORTANTE: Você DEVE responder ao lead agora com uma mensagem de texto curta e natural. NÃO use ferramentas. Responda diretamente ao que o lead disse.' }
+  ]
+
+  // Pegar últimas mensagens user/assistant
+  const userAssistantMsgs = originalMessages
+    .filter(m => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
     .slice(-6)
 
-  if (simplifiedMessages.length === 0 || simplifiedMessages[0].role !== 'user') {
-    simplifiedMessages.unshift({ role: 'user', content: userMessage })
+  if (userAssistantMsgs.length === 0) {
+    simplified.push({ role: 'user', content: userMessage })
+  } else {
+    simplified.push(...userAssistantMsgs)
+  }
+
+  // Garantir que começa com user após system
+  if (simplified.length > 1 && simplified[1].role !== 'user') {
+    simplified.splice(1, 0, { role: 'user', content: userMessage })
   }
 
   try {
-    const forcedResponse = await client.messages.create({
+    const forcedResponse = await client.chat.completions.create({
       model: RESPONDER_MODEL,
       max_tokens: MAX_TOKENS,
-      system: systemPrompt + '\n\nIMPORTANTE: Você DEVE responder ao lead agora com uma mensagem de texto curta e natural. NÃO use ferramentas. Responda diretamente ao que o lead disse.',
-      tools: [], // Sem tools — forçar texto
-      messages: simplifiedMessages
+      messages: simplified,
+      // Sem tools → forçar texto
     })
 
-    const tokensUsed = (forcedResponse.usage?.input_tokens || 0) + (forcedResponse.usage?.output_tokens || 0)
-    const forcedText = forcedResponse.content
-      .filter((b: any) => b.type === 'text')
-      .map((b: any) => b.text)
-      .join('\n')
+    const tokensUsed = (forcedResponse.usage?.prompt_tokens || 0) + (forcedResponse.usage?.completion_tokens || 0)
+    const forcedText = forcedResponse.choices[0]?.message?.content || ''
 
     return {
       messages: splitForWhatsApp(forcedText),
@@ -430,22 +443,26 @@ async function forceTextResponse(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CONVERTER HISTÓRICO PARA FORMATO CLAUDE
+// CONVERTER HISTÓRICO PARA FORMATO OPENAI
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function buildMessages(history: ConversationEntry[], currentMessage: string): Anthropic.MessageParam[] {
-  const messages: Anthropic.MessageParam[] = []
+function buildOpenAIMessages(
+  systemPrompt: string,
+  history: ConversationEntry[],
+  currentMessage: string
+): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
+  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+    { role: 'system', content: systemPrompt }
+  ]
 
   for (const entry of history) {
     if (entry.role === 'system') continue
 
-    const role = entry.role === 'user' ? 'user' : 'assistant'
+    const role: 'user' | 'assistant' = entry.role === 'user' ? 'user' : 'assistant'
 
     const lastMsg = messages[messages.length - 1]
-    if (lastMsg && lastMsg.role === role) {
-      if (typeof lastMsg.content === 'string') {
-        lastMsg.content = lastMsg.content + '\n' + entry.body
-      }
+    if (lastMsg && lastMsg.role === role && typeof lastMsg.content === 'string') {
+      lastMsg.content = lastMsg.content + '\n' + entry.body
     } else {
       messages.push({ role, content: entry.body })
     }
@@ -453,20 +470,18 @@ function buildMessages(history: ConversationEntry[], currentMessage: string): An
 
   // Adicionar mensagem atual do lead
   const lastMsg = messages[messages.length - 1]
-  if (lastMsg && lastMsg.role === 'user') {
-    if (typeof lastMsg.content === 'string') {
-      lastMsg.content = lastMsg.content + '\n' + currentMessage
-    }
+  if (lastMsg && lastMsg.role === 'user' && typeof lastMsg.content === 'string') {
+    lastMsg.content = lastMsg.content + '\n' + currentMessage
   } else {
     messages.push({ role: 'user', content: currentMessage })
   }
 
-  // Garantir que começa com 'user'
-  if (messages.length > 0 && messages[0].role !== 'user') {
-    messages.shift()
+  // Garantir que após o system vem um 'user'
+  if (messages.length > 1 && messages[1].role !== 'user') {
+    messages.splice(1, 1) // remover assistant órfão
   }
 
-  if (messages.length === 0) {
+  if (messages.length === 1) {
     messages.push({ role: 'user', content: currentMessage })
   }
 
