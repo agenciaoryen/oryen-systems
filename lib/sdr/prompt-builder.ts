@@ -226,7 +226,27 @@ Você tem acesso ao portfólio real de imóveis da imobiliária. Use-o para:
 - Quando o lead perguntar "quais imóveis vocês têm?" → use search_properties
 - Quando o lead mencionar um código (REF-1001, COD-xxx) → use get_property_by_ref
 - Quando já souber o perfil do lead (tipo, preço, região) → busque imóveis compatíveis
-- Apresente os dados REAIS (preço, quartos, bairro) — nunca invente
+
+## REGRA ABSOLUTA DE PRECISÃO DE DADOS (CRÍTICO)
+Você SOMENTE pode compartilhar informações sobre propriedades que vieram de:
+1. O resultado de search_properties
+2. O resultado de get_property_by_ref
+3. Os dados pré-carregados na seção "Propriedade de Interesse"
+
+PROIBIDO INVENTAR OU DEDUZIR:
+- Se o campo NÃO apareceu nos dados retornados, NÃO mencione. Exemplo: se "condo_fee" é null ou não aparece, NUNCA diga "o condomínio é de R$ X".
+- Se a descrição NÃO menciona algo (churrasqueira, piscina, academia), NÃO diga que tem.
+- Se "amenities" não inclui um item, NÃO fale que a propriedade oferece isso.
+- Se o preço é null, diga "vou confirmar o valor com o corretor" em vez de inventar.
+- Se a área não aparece, NÃO estime. Diga "posso verificar a metragem com o corretor".
+
+QUANDO O LEAD PERGUNTAR ALGO QUE VOCÊ NÃO TEM NOS DADOS:
+→ Responda honestamente: "Essa informação específica eu preciso confirmar com o corretor. Posso verificar pra você!"
+→ Use notify_agent para avisar o corretor da dúvida
+
+ANTES de citar QUALQUER dado de uma propriedade, use "think" para verificar:
+- Este dado EXISTE nos resultados da ferramenta ou no contexto pré-carregado?
+- Se NÃO existe → NÃO mencione. Ponto final.
 
 ## REGRA ANTI-REPETIÇÃO (CRÍTICO — LEIA COM MUITA ATENÇÃO)
 Um humano NUNCA repete a mesma informação duas vezes numa conversa. Você também não deve.
@@ -330,6 +350,7 @@ Desqualifique educadamente se:
 
 # O Que NÃO Fazer
 - NÃO invente imóveis — use APENAS os dados retornados por search_properties ou get_property_by_ref
+- NÃO invente dados sobre imóveis (preço, condomínio, área, amenidades, etc.) — se um campo é null ou não apareceu nos dados, diga "vou confirmar com o corretor"
 - NÃO prometa valores ou condições que não pode confirmar
 - NÃO insista se o lead disser que não tem interesse
 - NÃO envie links, arquivos, fotos ou vídeos (você é apenas texto)
@@ -491,7 +512,10 @@ function buildPropertyContext(property: any): string {
   if (property.site_url) lines.push(`Link: ${property.site_url}`)
 
   lines.push('')
-  lines.push('LEMBRETE: NÃO despeje todas as informações. Apresente 2-3 características principais e guarde o resto para responder dúvidas específicas.')
+  lines.push('⚠️ ESTES SÃO OS ÚNICOS DADOS REAIS DESTA PROPRIEDADE.')
+  lines.push('Se um dado NÃO aparece acima (ex: condomínio, IPTU, área, amenidades), ele NÃO EXISTE nos registros.')
+  lines.push('NUNCA invente dados que não estão listados. Diga "vou confirmar com o corretor" para qualquer dado ausente.')
+  lines.push('NÃO despeje tudo de uma vez — apresente 2-3 dados principais e guarde o resto.')
 
   return lines.join('\n')
 }

@@ -164,8 +164,10 @@ export async function POST(request: NextRequest) {
 
     console.log(`[SDR:Process] IA respondeu: ${agentResponse.messages.length} msg(s) | tools: [${agentResponse.toolsExecuted.join(', ')}] | tokens: ${agentResponse.tokensUsed}`)
 
-    // Alerta se IA não gerou resposta (não deveria acontecer após fix)
-    if (agentResponse.messages.length === 0) {
+    // Alerta se IA não gerou resposta — MAS não alertar se end_conversation foi chamado
+    // (0 mensagens após end_conversation é comportamento correto: lead se despediu)
+    const isLegitimateEnd = agentResponse.toolsExecuted.includes('end_conversation')
+    if (agentResponse.messages.length === 0 && !isLegitimateEnd) {
       notifyError({
         module: 'SDR',
         severity: 'warning',

@@ -1181,7 +1181,7 @@ async function executeSearchProperties(
     data: {
       found: formatted.length,
       properties: formatted,
-      tip: 'Apresente os imóveis de forma natural na conversa. Mencione as características que combinam com o que o lead busca. Se houver link do site, pode compartilhar.'
+      tip: 'IMPORTANTE: Use SOMENTE os dados listados acima. Se um campo é null ou não aparece, NÃO invente — diga que vai confirmar com o corretor. Apresente de forma natural, mencionando apenas dados que EXISTEM nos resultados.'
     }
   }
 }
@@ -1309,7 +1309,7 @@ async function executeGetPropertyByRef(
         virtual_tour_url: property.virtual_tour_url,
         site_url: siteSlug ? `/sites/${siteSlug}/properties/${property.slug || property.id}` : null,
       },
-      tip: 'O lead tem interesse neste imóvel. Use os detalhes para responder dúvidas com precisão. NÃO despeje todas as informações de uma vez — responda o que ele perguntar e guie a conversa para agendar uma visita.'
+      tip: 'REGRA ABSOLUTA: Use SOMENTE os dados acima para falar deste imóvel. Se um campo é null, 0, ou não aparece, NÃO invente — diga "vou confirmar com o corretor". NÃO despeje tudo de uma vez. Responda o que o lead perguntar e guie para agendar visita.'
     }
   }
 }
