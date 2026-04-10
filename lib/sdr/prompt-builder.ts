@@ -278,8 +278,34 @@ Se o lead não mencionou imóvel específico:
 1. Qualifique primeiro (ICUVA) para entender o que busca
 2. Quando tiver dados suficientes (tipo + região OU tipo + orçamento), use search_properties
 3. Apresente 1-2 opções que mais combinam, de forma natural
-4. Se nenhum combinar, diga honestamente e pergunte se pode ampliar a busca
+4. Se nenhum combinar com filtros exatos, RELAXE os filtros e busque de novo (ex: remova transaction_type, aumente faixa de preço em 30%, reduza quartos)
 5. Ao voltar a falar de um imóvel já apresentado, destaque aspectos NOVOS
+
+## REGRA DE BUSCA INTELIGENTE (CRÍTICO)
+Quando buscar imóveis com search_properties:
+1. Use os CAMPOS REAIS da propriedade (bedrooms, price, property_type) para filtrar, NUNCA o título
+2. Se a primeira busca retornar 0 resultados, TENTE DE NOVO com filtros mais amplos:
+   - Remova transaction_type (talvez o lead aceite compra ou aluguel)
+   - Aumente max_price em 20-30%
+   - Reduza min_bedrooms em 1
+   - Remova neighborhood
+3. Só diga "não temos" se TODAS as variações de busca retornarem 0
+4. Ao apresentar resultados, use os dados REAIS do campo bedrooms/price/area, não do título
+
+## REGRA DE PROATIVIDADE (CRÍTICO)
+Quando o lead demonstrar FLEXIBILIDADE (ex: "posso esticar o orçamento", "aceito outra região", "pode ser maior"), você DEVE:
+1. IMEDIATAMENTE usar search_properties com critérios ampliados
+2. Apresentar a melhor opção encontrada COM detalhes e foto (send_property_images)
+3. NÃO perguntar "até quanto?" ou "qual região?" — BUSQUE primeiro e apresente
+
+Exemplo ERRADO:
+Lead: "Posso esticar um pouco o orçamento"
+Agente: "Até quanto você poderia ir?" ← ERRADO, pergunta desnecessária
+
+Exemplo CORRETO:
+Lead: "Posso esticar um pouco o orçamento"
+Agente: [usa search_properties com max_price 30% maior]
+Agente: "Achei uma opção que pode te interessar! Apartamento de 2 quartos no Centro, 65m², por R$ 1.800/mês. Quer ver as fotos?" ← CORRETO, já veio com sugestão
 
 # Estágios do Lead no Funil Imobiliário
 - new: Lead novo, ainda não qualificado
@@ -454,16 +480,21 @@ function buildPreloadedContext(ctx: ResponderPromptParams['leadContext']): strin
   const lines: string[] = []
   const lead = ctx.lead
 
+  lines.push('⚠️ AVISO: Os dados abaixo são do CRM (cadastro interno). NÃO trate como fatos confirmados pelo lead na conversa atual.')
+    lines.push('Se o lead NÃO disse explicitamente nesta conversa que quer "comprar" ou "alugar", NÃO assuma. PERGUNTE.')
+    lines.push('Use os dados do CRM apenas como REFERÊNCIA para personalizar a conversa, nunca como verdade absoluta.')
+    lines.push('')
+
   if (lead) {
     lines.push(`Nome: ${lead.name || 'Não informado'}`)
     lines.push(`Telefone: ${lead.phone || 'Não informado'}`)
     lines.push(`Estágio: ${lead.stage || 'new'}`)
     lines.push(`Origem: ${lead.source || 'WhatsApp'}`)
-    if (lead.interesse) lines.push(`Interesse: ${lead.interesse}`)
-    if (lead.tipo_contato) lines.push(`Tipo de contato: ${lead.tipo_contato}`)
-    if (lead.nicho) lines.push(`Tipo de imóvel: ${lead.nicho}`)
+    if (lead.interesse) lines.push(`Interesse (CRM, não confirmado): ${lead.interesse}`)
+    if (lead.tipo_contato) lines.push(`Tipo de contato (CRM, não confirmado): ${lead.tipo_contato}`)
+    if (lead.nicho) lines.push(`Tipo de imóvel (CRM, não confirmado): ${lead.nicho}`)
     if (lead.city) lines.push(`Cidade (onde mora): ${lead.city}`)
-    if (lead.total_em_vendas) lines.push(`Orçamento: R$ ${Number(lead.total_em_vendas).toLocaleString('pt-BR')}`)
+    if (lead.total_em_vendas) lines.push(`Orçamento (CRM): R$ ${Number(lead.total_em_vendas).toLocaleString('pt-BR')}`)
     if (lead.instagram) lines.push(`Instagram: ${lead.instagram}`)
     if (lead.conversa_finalizada) lines.push(`⚠️ Conversa marcada como finalizada anteriormente`)
   } else {

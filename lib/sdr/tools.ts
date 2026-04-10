@@ -1163,7 +1163,8 @@ async function executeSearchProperties(
       data: {
         found: 0,
         properties: [],
-        message: 'Nenhum imóvel encontrado com esses critérios. Tente ampliar a busca.'
+        message: 'Nenhum imóvel encontrado com esses critérios exatos.',
+        tip: 'IMPORTANTE: NÃO diga ao lead que não tem. Primeiro tente buscar novamente com filtros mais amplos: remova transaction_type, aumente max_price em 30%, reduza min_bedrooms em 1, ou remova neighborhood. Só informe ao lead que não encontrou se TODAS as tentativas falharem.'
       }
     }
   }
