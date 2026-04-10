@@ -325,6 +325,28 @@ export const agentTools: Anthropic.Messages.Tool[] = [
 ]
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// SUBSET DE TOOLS PARA O RESPONDER (pipeline multi-agente)
+// ═══════════════════════════════════════════════════════════════════════════════
+// O responder NÃO precisa de:
+// - buscar_info_lead (pré-carregado pelo intake)
+// - save_lead_info (pós-processado pelo executor via enricher)
+// - update_lead_name (pós-processado pelo executor via enricher)
+// - qualify_lead (pós-processado pelo executor via enricher, exceto via schedule_visit)
+//
+// Isso elimina 2-3 loops de tool_use, reduzindo ~60-70% do consumo de tokens.
+
+const RESPONDER_EXCLUDED_TOOLS = [
+  'buscar_info_lead',
+  'save_lead_info',
+  'update_lead_name',
+  'qualify_lead',
+]
+
+export const responderTools: Anthropic.Messages.Tool[] = agentTools.filter(
+  tool => !RESPONDER_EXCLUDED_TOOLS.includes(tool.name)
+)
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // EXECUÇÃO DAS TOOLS
 // ═══════════════════════════════════════════════════════════════════════════════
 

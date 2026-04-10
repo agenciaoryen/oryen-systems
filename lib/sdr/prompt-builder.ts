@@ -349,6 +349,154 @@ ${config.extra_instructions ? `# Instruções Adicionais\n${config.extra_instruc
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// PROMPT DO RESPONDER (pipeline multi-agente)
+// ═══════════════════════════════════════════════════════════════════════════════
+// Envolve o prompt base com:
+// 1. Override de ferramentas (remove buscar_info, save_lead_info, etc.)
+// 2. Contexto pré-carregado (dados do lead, info coletada, propriedade)
+// 3. Dados extraídos da mensagem atual pelo enricher
+//
+// A estratégia é ADITIVA: o prompt base fica intacto, e as seções extras
+// no final sobrescrevem instruções conflitantes (Claude prioriza o final).
+
+interface ResponderPromptParams {
+  config: PromptConfig
+  leadContext: {
+    lead: any
+    savedInfo: { field: string; value: string }[]
+    notes: string[]
+    referenceProperty: any | null
+    hasAssistantHistory: boolean
+  }
+  enriched: {
+    extractedFields: Record<string, string>
+    conversationPhase: string
+    isFarewell: boolean
+  }
+}
+
+export function buildResponderSystemPrompt(params: ResponderPromptParams): string {
+  const { config, leadContext, enriched } = params
+
+  // 1. Prompt base completo (todas as regras preservadas)
+  const basePrompt = buildSystemPrompt(config)
+
+  // 2. Override de ferramentas + instruções para o responder
+  const responderOverride = `
+
+# ═══ OVERRIDE: PIPELINE MULTI-AGENTE ═══
+# As instruções abaixo SOBRESCREVEM qualquer conflito com o prompt acima.
+
+# Ferramentas Disponíveis (Atualizado)
+Seu conjunto de ferramentas foi OTIMIZADO. Estas são as ferramentas que você pode usar:
+- **think**: Organize seu raciocínio antes de responder
+- **search_properties**: Busque imóveis no portfólio
+- **get_property_by_ref**: Busque imóvel por código de referência
+- **schedule_visit**: Agende visita (atualiza stage automaticamente)
+- **check_availability**: Consulte disponibilidade na agenda
+- **reschedule_visit**: Reagende uma visita existente
+- **cancel_event**: Cancele uma visita
+- **notify_agent**: Notifique o corretor
+- **end_conversation**: Finalize a conversa
+
+IMPORTANTE — Ferramentas que NÃO estão mais disponíveis (são automáticas agora):
+- buscar_info_lead → Os dados do lead já estão carregados abaixo. NÃO tente chamá-la.
+- save_lead_info → A extração de dados é AUTOMÁTICA. O sistema salva os dados que o lead compartilhar. Foque na conversa.
+- update_lead_name → O sistema detecta e salva o nome automaticamente.
+- qualify_lead → O sistema atualiza o estágio automaticamente. O schedule_visit continua atualizando para visit_scheduled.
+
+FOQUE 100% NA CONVERSA. Não se preocupe em salvar dados — isso é feito por outro agente automaticamente.
+
+# Fase da Conversa Detectada
+O sistema analisou a conversa e detectou a fase: **${enriched.conversationPhase}**
+${enriched.isFarewell ? '⚠️ O lead está se DESPEDINDO. Use end_conversation se não há mais perguntas pendentes.' : ''}
+
+# Contexto Pré-carregado do Lead
+${buildPreloadedContext(leadContext)}
+
+${leadContext.referenceProperty ? `# Propriedade de Interesse (Pré-carregada)
+${buildPropertyContext(leadContext.referenceProperty)}` : ''}
+
+${Object.keys(enriched.extractedFields).length > 0 ? `# Dados Extraídos da Mensagem Atual
+O sistema detectou estas informações novas na mensagem do lead:
+${Object.entries(enriched.extractedFields).map(([k, v]) => `- ${k}: ${v}`).join('\n')}
+Use estas informações para personalizar sua resposta (RPQ). NÃO pergunte o que já foi respondido.` : ''}`
+
+  return basePrompt + responderOverride
+}
+
+// ─── Helpers do Responder ───
+
+function buildPreloadedContext(ctx: ResponderPromptParams['leadContext']): string {
+  const lines: string[] = []
+  const lead = ctx.lead
+
+  if (lead) {
+    lines.push(`Nome: ${lead.name || 'Não informado'}`)
+    lines.push(`Telefone: ${lead.phone || 'Não informado'}`)
+    lines.push(`Estágio: ${lead.stage || 'new'}`)
+    lines.push(`Origem: ${lead.source || 'WhatsApp'}`)
+    if (lead.interesse) lines.push(`Interesse: ${lead.interesse}`)
+    if (lead.tipo_contato) lines.push(`Tipo de contato: ${lead.tipo_contato}`)
+    if (lead.nicho) lines.push(`Tipo de imóvel: ${lead.nicho}`)
+    if (lead.city) lines.push(`Cidade (onde mora): ${lead.city}`)
+    if (lead.total_em_vendas) lines.push(`Orçamento: R$ ${Number(lead.total_em_vendas).toLocaleString('pt-BR')}`)
+    if (lead.instagram) lines.push(`Instagram: ${lead.instagram}`)
+    if (lead.conversa_finalizada) lines.push(`⚠️ Conversa marcada como finalizada anteriormente`)
+  } else {
+    lines.push('(Lead não encontrado no CRM — primeiro contato)')
+  }
+
+  // Informações coletadas em conversas anteriores
+  if (ctx.savedInfo.length > 0) {
+    lines.push('')
+    lines.push('Informações coletadas anteriormente:')
+    for (const entry of ctx.savedInfo) {
+      // Evitar duplicar o que já está nos dados do CRM
+      if (['interesse', 'tipo_contato', 'nicho', 'city'].includes(entry.field)) continue
+      lines.push(`- ${entry.field}: ${entry.value}`)
+    }
+  }
+
+  // Notas do corretor
+  if (ctx.notes.length > 0) {
+    lines.push('')
+    lines.push('Notas do corretor:')
+    for (const note of ctx.notes) {
+      lines.push(`- ${note}`)
+    }
+  }
+
+  return lines.join('\n')
+}
+
+function buildPropertyContext(property: any): string {
+  if (!property) return ''
+
+  const lines: string[] = []
+  lines.push(`Título: ${property.title}`)
+  lines.push(`Ref: ${property.ref}`)
+  lines.push(`Tipo: ${property.type} | Transação: ${property.transaction}`)
+  if (property.price) lines.push(`Preço: R$ ${Number(property.price).toLocaleString('pt-BR')}`)
+  if (property.bedrooms) lines.push(`Quartos: ${property.bedrooms}${property.suites ? ` (${property.suites} suíte${property.suites > 1 ? 's' : ''})` : ''}`)
+  if (property.bathrooms) lines.push(`Banheiros: ${property.bathrooms}`)
+  if (property.parking) lines.push(`Vagas: ${property.parking}`)
+  if (property.total_area) lines.push(`Área: ${property.total_area}m²`)
+  if (property.neighborhood) lines.push(`Bairro: ${property.neighborhood}`)
+  if (property.city) lines.push(`Cidade: ${property.city}`)
+  if (property.address) lines.push(`Endereço: ${property.address}`)
+  if (property.condo_fee) lines.push(`Condomínio: R$ ${Number(property.condo_fee).toLocaleString('pt-BR')}`)
+  if (property.amenities?.length) lines.push(`Amenidades: ${property.amenities.join(', ')}`)
+  if (property.description) lines.push(`Descrição: ${property.description.slice(0, 300)}`)
+  if (property.site_url) lines.push(`Link: ${property.site_url}`)
+
+  lines.push('')
+  lines.push('LEMBRETE: NÃO despeje todas as informações. Apresente 2-3 características principais e guarde o resto para responder dúvidas específicas.')
+
+  return lines.join('\n')
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
