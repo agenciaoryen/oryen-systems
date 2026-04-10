@@ -434,6 +434,18 @@ async function executeQualifyLead(
   input: { stage: string; reason: string },
   ctx: ToolContext
 ): Promise<ToolResult> {
+  // Validação: rejeitar stages inválidos antes de qualquer coisa
+  const VALID_SEMANTIC_STAGES = ['new', 'qualifying', 'qualified', 'visit_scheduled', 'negotiation', 'won', 'lost']
+  const inputStage = (input.stage || '').trim().toLowerCase()
+
+  if (!inputStage || inputStage === 'null' || inputStage === 'undefined' || !VALID_SEMANTIC_STAGES.includes(inputStage)) {
+    console.warn(`[SDR:Qualify] Stage inválido rejeitado: "${input.stage}" — ignorando`)
+    return {
+      success: false,
+      error: `Stage "${input.stage}" não é válido. Stages aceitos: ${VALID_SEMANTIC_STAGES.join(', ')}`
+    }
+  }
+
   // Buscar stages do pipeline ativo da org para mapear corretamente
   const { data: stages } = await supabase
     .from('pipeline_stages')
@@ -443,10 +455,10 @@ async function executeQualifyLead(
     .order('position')
 
   // Mapear stage do agente para stage real do pipeline
-  let targetStage = input.stage
+  let targetStage = inputStage
   if (stages && stages.length > 0) {
     // Tentar match direto
-    const directMatch = stages.find(s => s.name === input.stage)
+    const directMatch = stages.find(s => s.name === inputStage)
     if (!directMatch) {
       // Mapear stages semânticos do agente para stages do pipeline
       const stageMap: Record<string, string[]> = {
@@ -458,7 +470,7 @@ async function executeQualifyLead(
         'won':              ['won', 'fechamento', 'ganho', 'closed_won'],
         'lost':             ['lost', 'perdido', 'closed_lost'],
       }
-      const aliases = stageMap[input.stage] || [input.stage]
+      const aliases = stageMap[inputStage] || [inputStage]
       const mapped = stages.find(s => aliases.some(a =>
         s.name.toLowerCase().includes(a) || s.label.toLowerCase().includes(a)
       ))
@@ -470,12 +482,18 @@ async function executeQualifyLead(
           'new': 0, 'qualifying': 1, 'qualified': 2,
           'visit_scheduled': 3, 'negotiation': 4, 'won': 5, 'lost': 6
         }
-        const pos = positionMap[input.stage]
+        const pos = positionMap[inputStage]
         if (pos !== undefined && pos < stages.length) {
           targetStage = stages[Math.min(pos, stages.length - 1)].name
         }
       }
     }
+  }
+
+  // Validação final: nunca gravar null/undefined/empty no banco
+  if (!targetStage || targetStage === 'null' || targetStage === 'undefined') {
+    console.warn(`[SDR:Qualify] targetStage resolveu para valor inválido: "${targetStage}" — abortando`)
+    return { success: false, error: 'Stage não pôde ser mapeado para um valor válido' }
   }
 
   // Buscar stage anterior para o evento
@@ -703,16 +721,25 @@ async function executeCheckAvailability(
     what: e.title
   }))
 
+  // Gerar referência de dias para ajudar o modelo
+  const now = new Date()
+  const todayStr = now.toISOString().split('T')[0]
+  const tomorrow = new Date(now)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const tomorrowStr = tomorrow.toISOString().split('T')[0]
+
   return {
     success: true,
     data: {
       calendar_integrated: true,
+      today: todayStr,
+      tomorrow: tomorrowStr,
       busy_slots: busySlots,
       total_events: busySlots.length,
       suggested_hours: 'Horário comercial: seg-sex 9h às 18h | sáb 9h às 12h',
       instruction: busySlots.length === 0
-        ? `Não há compromissos agendados entre ${input.date_from} e ${dateTo}. Pode sugerir horários em horário comercial.`
-        : `Há ${busySlots.length} compromisso(s) no período. Evite os horários ocupados ao sugerir ao lead.`
+        ? `Não há compromissos entre ${input.date_from} e ${dateTo}. Todos os horários em horário comercial estão livres. Sugira 2-3 opções específicas ao lead.`
+        : `Há ${busySlots.length} compromisso(s) ocupado(s). Sugira horários que NÃO conflitem com os slots ocupados listados acima.`
     }
   }
 }
@@ -988,16 +1015,30 @@ async function executeUpdateLeadName(
   input: { name: string },
   ctx: ToolContext
 ): Promise<ToolResult> {
+  // Validação: rejeitar nomes inválidos
+  const cleanName = (input.name || '').trim()
+  if (
+    !cleanName ||
+    cleanName.toLowerCase() === 'null' ||
+    cleanName.toLowerCase() === 'undefined' ||
+    cleanName.toLowerCase() === 'não informado' ||
+    cleanName.toLowerCase() === 'n/a' ||
+    cleanName.length < 2
+  ) {
+    console.warn(`[SDR:Name] Nome inválido rejeitado: "${input.name}" — ignorando`)
+    return { success: false, error: `Nome "${input.name}" não é válido` }
+  }
+
   const { error } = await supabase
     .from('leads')
-    .update({ name: input.name, updated_at: new Date().toISOString() })
+    .update({ name: cleanName, updated_at: new Date().toISOString() })
     .eq('id', ctx.lead_id)
     .eq('org_id', ctx.org_id)
 
   if (error) return { success: false, error: error.message }
 
-  console.log(`[SDR:Name] Lead ${ctx.lead_id} → "${input.name}"`)
-  return { success: true, data: { name: input.name } }
+  console.log(`[SDR:Name] Lead ${ctx.lead_id} → "${cleanName}"`)
+  return { success: true, data: { name: cleanName } }
 }
 
 // ─── End Conversation ───

@@ -56,9 +56,15 @@ export async function executePostProcessing(params: ExecutorParams): Promise<voi
   }
 
   // ─── 2. Atualizar nome do lead se detectado ───
-  if (enriched.leadName && enriched.leadName !== leadContext.lead?.name) {
+  const cleanName = (enriched.leadName || '').trim()
+  const isValidName = cleanName.length >= 2 &&
+    cleanName.toLowerCase() !== 'null' &&
+    cleanName.toLowerCase() !== 'undefined' &&
+    cleanName.toLowerCase() !== 'não informado'
+
+  if (isValidName && cleanName !== (leadContext.lead?.name || '').trim()) {
     tasks.push(
-      executeTool('update_lead_name', { name: enriched.leadName }, toolCtx)
+      executeTool('update_lead_name', { name: cleanName }, toolCtx)
         .then(result => {
           if (!result.success) {
             console.warn(`[SDR:Executor] Falha ao atualizar nome: ${result.error}`)
@@ -72,21 +78,24 @@ export async function executePostProcessing(params: ExecutorParams): Promise<voi
 
   // ─── 3. Atualizar stage se sugerido pelo enricher ───
   // Só atualizar se:
-  // - O enricher sugeriu um stage
+  // - O enricher sugeriu um stage válido (não null/undefined/empty)
   // - O responder NÃO executou qualify_lead ou schedule_visit (que já atualizam stage)
   // - A proteção de retrocesso no executeTool cuida do resto
+  const VALID_STAGES = ['qualifying', 'qualified', 'visit_scheduled', 'negotiation', 'won', 'lost']
+  const suggestedStage = (enriched.suggestedStage || '').trim().toLowerCase()
+  const isValidStage = suggestedStage && VALID_STAGES.includes(suggestedStage)
+
   if (
-    enriched.suggestedStage &&
+    isValidStage &&
     !responderToolsExecuted.includes('qualify_lead') &&
     !responderToolsExecuted.includes('schedule_visit')
   ) {
     const reason = `Enriquecimento automático: conversa na fase "${enriched.conversationPhase}"`
     tasks.push(
-      executeTool('qualify_lead', { stage: enriched.suggestedStage, reason }, toolCtx)
+      executeTool('qualify_lead', { stage: suggestedStage, reason }, toolCtx)
         .then(result => {
           if (result.success && result.data?.blocked) {
-            // Stage retrocession blocked — expected behavior
-            console.log(`[SDR:Executor] Stage ${enriched.suggestedStage} bloqueado (retrocesso) — ok`)
+            console.log(`[SDR:Executor] Stage ${suggestedStage} bloqueado (retrocesso) — ok`)
           }
         })
         .catch(err => {
