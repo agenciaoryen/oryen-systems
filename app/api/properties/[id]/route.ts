@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { slugify } from '@/lib/properties/constants'
+import { geocodeAddress } from '@/lib/properties/geocoder'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -87,6 +88,49 @@ export async function PUT(
     }
 
     body.updated_at = new Date().toISOString()
+
+    // Re-geocodificar se endereço mudou e não tem lat/lng manual
+    const addressChanged = body.address_street !== undefined ||
+      body.address_neighborhood !== undefined ||
+      body.address_city !== undefined ||
+      body.address_state !== undefined ||
+      body.address_zip !== undefined
+
+    if (addressChanged && !body.latitude && !body.longitude) {
+      // Buscar dados atuais do imóvel para montar endereço completo
+      const { data: current } = await supabase
+        .from('properties')
+        .select('org_id, address_street, address_number, address_neighborhood, address_city, address_state, address_zip')
+        .eq('id', id)
+        .single()
+
+      if (current) {
+        // Mesclar campos atualizados com existentes
+        const merged = {
+          street: body.address_street ?? current.address_street,
+          number: body.address_number ?? current.address_number,
+          neighborhood: body.address_neighborhood ?? current.address_neighborhood,
+          city: body.address_city ?? current.address_city,
+          state: body.address_state ?? current.address_state,
+          zip: body.address_zip ?? current.address_zip,
+        }
+
+        if (merged.city || merged.zip) {
+          const { data: orgRow } = await supabase
+            .from('orgs')
+            .select('country')
+            .eq('id', current.org_id)
+            .single()
+
+          const geo = await geocodeAddress({ ...merged, country: orgRow?.country || null })
+          if (geo) {
+            body.latitude = geo.latitude
+            body.longitude = geo.longitude
+            console.log(`[Properties:PUT] Re-geocoded ${id}: ${geo.latitude}, ${geo.longitude}`)
+          }
+        }
+      }
+    }
 
     const { data, error } = await supabase
       .from('properties')

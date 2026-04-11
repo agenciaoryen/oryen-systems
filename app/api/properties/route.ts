@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { slugify } from '@/lib/properties/constants'
+import { geocodeAddress } from '@/lib/properties/geocoder'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -130,6 +131,38 @@ export async function POST(request: NextRequest) {
       externalCode = `REF-${1001 + (count || 0)}`
     }
 
+    // Geocoding automático se não tem lat/lng mas tem endereço
+    let latitude = body.latitude || null
+    let longitude = body.longitude || null
+
+    if (!latitude || !longitude) {
+      const hasAddress = body.address_city || body.address_zip || body.address_neighborhood
+      if (hasAddress) {
+        // Buscar país da org para geocoding mais preciso
+        const { data: orgRow } = await supabase
+          .from('orgs')
+          .select('country')
+          .eq('id', org_id)
+          .single()
+
+        const geo = await geocodeAddress({
+          street: body.address_street,
+          number: body.address_number,
+          neighborhood: body.address_neighborhood,
+          city: body.address_city,
+          state: body.address_state,
+          zip: body.address_zip,
+          country: orgRow?.country || null,
+        })
+
+        if (geo) {
+          latitude = geo.latitude
+          longitude = geo.longitude
+          console.log(`[Properties:POST] Geocoded: ${geo.latitude}, ${geo.longitude} (${geo.display_name?.slice(0, 60)})`)
+        }
+      }
+    }
+
     const { data, error } = await supabase
       .from('properties')
       .insert({
@@ -149,8 +182,8 @@ export async function POST(request: NextRequest) {
         address_city: body.address_city || null,
         address_state: body.address_state || null,
         address_zip: body.address_zip || null,
-        latitude: body.latitude || null,
-        longitude: body.longitude || null,
+        latitude,
+        longitude,
         bedrooms: body.bedrooms || 0,
         suites: body.suites || 0,
         bathrooms: body.bathrooms || 0,

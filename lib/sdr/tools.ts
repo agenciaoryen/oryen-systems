@@ -1261,44 +1261,119 @@ async function executeSearchProperties(
     }
   }
 
-  // Se não encontrou e tinha filtro de bairro, retry sem bairro (mesma cidade)
+  // Se não encontrou e tinha filtro de bairro, buscar imóveis em bairros próximos
   let usedCityFallback = false
+  let nearbySearchKm: number | null = null
   if ((!properties || properties.length === 0) && input.neighborhood) {
-    console.log(`[SDR:SearchProperties] 0 resultados no bairro "${input.neighborhood}" — retry na mesma cidade`)
+    console.log(`[SDR:SearchProperties] 0 resultados no bairro "${input.neighborhood}" — buscando bairros próximos`)
 
-    let cityQuery = supabase
+    // Buscar todos imóveis da mesma cidade com lat/lng (para calcular distância)
+    let nearbyQuery = supabase
       .from('properties')
-      .select('id, title, slug, property_type, transaction_type, price, condo_fee, bedrooms, suites, bathrooms, parking_spots, total_area, address_neighborhood, address_city, address_state, amenities, external_code, description, images')
+      .select('id, title, slug, property_type, transaction_type, price, condo_fee, bedrooms, suites, bathrooms, parking_spots, total_area, address_neighborhood, address_city, address_state, amenities, external_code, description, images, latitude, longitude')
       .eq('org_id', ctx.org_id)
       .eq('status', 'active')
+      .not('latitude', 'is', null)
+      .not('longitude', 'is', null)
 
-    if (input.property_type) cityQuery = cityQuery.eq('property_type', input.property_type)
-    if (input.transaction_type) cityQuery = cityQuery.eq('transaction_type', input.transaction_type)
-    if (input.min_price) cityQuery = cityQuery.gte('price', usedPriceMargin ? input.min_price * 0.8 : input.min_price)
-    if (input.max_price) cityQuery = cityQuery.lte('price', usedPriceMargin ? input.max_price * 1.2 : input.max_price)
-    if (input.min_bedrooms) cityQuery = cityQuery.gte('bedrooms', input.min_bedrooms)
-    // SEM filtro de bairro — busca na cidade toda
+    if (input.property_type) nearbyQuery = nearbyQuery.eq('property_type', input.property_type)
+    if (input.transaction_type) nearbyQuery = nearbyQuery.eq('transaction_type', input.transaction_type)
+    if (input.min_price) nearbyQuery = nearbyQuery.gte('price', usedPriceMargin ? input.min_price * 0.8 : input.min_price)
+    if (input.max_price) nearbyQuery = nearbyQuery.lte('price', usedPriceMargin ? input.max_price * 1.2 : input.max_price)
+    if (input.min_bedrooms) nearbyQuery = nearbyQuery.gte('bedrooms', input.min_bedrooms)
 
-    cityQuery = cityQuery
-      .order('is_featured', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(amenityFilter ? 20 : 5)
+    nearbyQuery = nearbyQuery.limit(50) // buscar mais para filtrar por distância
 
-    const { data: cityProperties } = await cityQuery
+    const { data: nearbyProperties } = await nearbyQuery
 
-    let cityFiltered = cityProperties || []
-    if (amenityFilter && cityFiltered.length > 0) {
-      cityFiltered = cityFiltered.filter(p => {
-        const am = Array.isArray(p.amenities) ? p.amenities : []
-        return am.some((a: string) => a.toLowerCase().includes(amenityFilter))
-      })
+    if (nearbyProperties && nearbyProperties.length > 0) {
+      // Geocodificar o bairro pedido para ter ponto de referência
+      const { geocodeNeighborhood, distanceKm } = await import('@/lib/properties/geocoder')
+
+      // Buscar cidade da org para contexto
+      const { data: orgRow } = await supabase
+        .from('orgs')
+        .select('country')
+        .eq('id', ctx.org_id)
+        .single()
+
+      // Tentar descobrir a cidade dos imóveis existentes
+      const sampleCity = nearbyProperties[0]?.address_city || null
+      const sampleState = nearbyProperties[0]?.address_state || null
+
+      const refPoint = await geocodeNeighborhood(
+        input.neighborhood,
+        sampleCity,
+        sampleState,
+        orgRow?.country || null
+      )
+
+      if (refPoint) {
+        // Calcular distância e ordenar por proximidade (max 10km)
+        const MAX_RADIUS_KM = 10
+        const withDistance = nearbyProperties
+          .map(p => ({
+            ...p,
+            _distance: distanceKm(refPoint.latitude, refPoint.longitude, p.latitude, p.longitude)
+          }))
+          .filter(p => p._distance <= MAX_RADIUS_KM)
+          .sort((a, b) => a._distance - b._distance)
+
+        // Filtrar por amenidade se necessário
+        let nearbyFiltered = withDistance
+        if (amenityFilter && nearbyFiltered.length > 0) {
+          nearbyFiltered = nearbyFiltered.filter(p => {
+            const am = Array.isArray(p.amenities) ? p.amenities : []
+            return am.some((a: string) => a.toLowerCase().includes(amenityFilter))
+          })
+        }
+
+        if (nearbyFiltered.length > 5) nearbyFiltered = nearbyFiltered.slice(0, 5)
+
+        if (nearbyFiltered.length > 0) {
+          properties = nearbyFiltered
+          usedCityFallback = true
+          nearbySearchKm = Math.round(nearbyFiltered[nearbyFiltered.length - 1]._distance * 10) / 10
+          console.log(`[SDR:SearchProperties] Proximidade: ${nearbyFiltered.length} imóvel(is) em até ${nearbySearchKm}km do bairro "${input.neighborhood}"`)
+        }
+      }
     }
-    if (cityFiltered.length > 5) cityFiltered = cityFiltered.slice(0, 5)
 
-    if (cityFiltered.length > 0) {
-      properties = cityFiltered
-      usedCityFallback = true
-      console.log(`[SDR:SearchProperties] Fallback cidade encontrou ${properties.length} imóvel(is)`)
+    // Fallback final: se não tem imóveis geocodificados, busca por cidade
+    if (!properties || properties.length === 0) {
+      let cityQuery = supabase
+        .from('properties')
+        .select('id, title, slug, property_type, transaction_type, price, condo_fee, bedrooms, suites, bathrooms, parking_spots, total_area, address_neighborhood, address_city, address_state, amenities, external_code, description, images')
+        .eq('org_id', ctx.org_id)
+        .eq('status', 'active')
+
+      if (input.property_type) cityQuery = cityQuery.eq('property_type', input.property_type)
+      if (input.transaction_type) cityQuery = cityQuery.eq('transaction_type', input.transaction_type)
+      if (input.min_price) cityQuery = cityQuery.gte('price', usedPriceMargin ? input.min_price * 0.8 : input.min_price)
+      if (input.max_price) cityQuery = cityQuery.lte('price', usedPriceMargin ? input.max_price * 1.2 : input.max_price)
+      if (input.min_bedrooms) cityQuery = cityQuery.gte('bedrooms', input.min_bedrooms)
+
+      cityQuery = cityQuery
+        .order('is_featured', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(amenityFilter ? 20 : 5)
+
+      const { data: cityProperties } = await cityQuery
+
+      let cityFiltered = cityProperties || []
+      if (amenityFilter && cityFiltered.length > 0) {
+        cityFiltered = cityFiltered.filter(p => {
+          const am = Array.isArray(p.amenities) ? p.amenities : []
+          return am.some((a: string) => a.toLowerCase().includes(amenityFilter))
+        })
+      }
+      if (cityFiltered.length > 5) cityFiltered = cityFiltered.slice(0, 5)
+
+      if (cityFiltered.length > 0) {
+        properties = cityFiltered
+        usedCityFallback = true
+        console.log(`[SDR:SearchProperties] Fallback cidade (sem geo): ${properties.length} imóvel(is)`)
+      }
     }
   }
 
@@ -1325,7 +1400,7 @@ async function executeSearchProperties(
 
   const formatted = properties.map(p => {
     const images = Array.isArray(p.images) ? p.images : []
-    return {
+    const entry: any = {
       id: p.id,
       ref: p.external_code || p.slug || p.id.slice(0, 8),
       title: p.title,
@@ -1347,11 +1422,18 @@ async function executeSearchProperties(
       image_count: images.length,
       site_url: siteSlug ? `/sites/${siteSlug}/properties/${p.slug || p.id}` : null,
     }
+    // Incluir distância do bairro pedido (se calculada)
+    if (p._distance !== undefined) {
+      entry.distance_km = Math.round(p._distance * 10) / 10
+    }
+    return entry
   })
 
   console.log(`[SDR:SearchProperties] Encontrados ${formatted.length} imóveis | org: ${ctx.org_id}${usedPriceMargin ? ' (margem de preço)' : ''}`)
-  const tip = usedCityFallback
-    ? `ATENÇÃO: Não encontrei imóveis no bairro "${input.neighborhood}" que o lead pediu, mas encontrei opções em outros bairros da mesma cidade. Apresente naturalmente: "Nesse bairro não encontrei no momento, mas achei uma opção ótima no bairro [BAIRRO] que fica bem perto e tem as características que você procura". NÃO pergunte se aceita outro bairro — já apresente a sugestão direto.`
+  const tip = usedCityFallback && nearbySearchKm
+    ? `ATENÇÃO: Não encontrei imóveis no bairro "${input.neighborhood}", mas encontrei opções em bairros próximos (até ${nearbySearchKm}km). Cada imóvel tem "distance_km" indicando a distância. Apresente naturalmente: "No ${input.neighborhood} não tenho no momento, mas achei uma opção ótima no [BAIRRO], que fica bem pertinho, a menos de Xkm". NÃO pergunte se aceita outro bairro — já apresente a sugestão direto.`
+    : usedCityFallback
+    ? `ATENÇÃO: Não encontrei imóveis no bairro "${input.neighborhood}", mas encontrei opções em outros bairros da região. Apresente naturalmente: "No ${input.neighborhood} não tenho no momento, mas achei uma opção ótima no [BAIRRO] que pode te interessar". NÃO pergunte se aceita outro bairro — já apresente a sugestão direto.`
     : usedPriceMargin
       ? 'ATENÇÃO: Não encontrei no valor exato que o lead pediu, mas encontrei opções próximas (±20%). Apresente naturalmente: "No valor exato não encontrei, mas tenho uma opção muito boa por R$ X que pode te interessar". NÃO pergunte se o lead aceita outro valor — já apresente a sugestão direto.'
       : 'IMPORTANTE: Use SOMENTE os dados listados acima. Se um campo é null ou não aparece, NÃO invente — diga que vai confirmar com o corretor. Apresente de forma natural.'
