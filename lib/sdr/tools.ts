@@ -1733,16 +1733,47 @@ async function executeSendPropertyImages(
 
   console.log(`[SDR:SendImages] ${sentCount}/${toSend.length} fotos enviadas para ${phone} | property: ${ref}`)
 
+  // Registrar no histórico que fotos foram enviadas (para o agente saber no próximo turno)
+  if (sentCount > 0) {
+    await supabase.from('sdr_messages').insert({
+      org_id: ctx.org_id,
+      lead_id: ctx.lead_id,
+      campaign_id: ctx.campaign_id || null,
+      instance_name: ctx.instance_name,
+      phone: ctx.phone,
+      role: 'assistant',
+      body: `[Fotos enviadas: ${property.title} (${ref}) — ${sentCount} foto(s)]`,
+      type: 'image',
+    })
+
+    // Salvar no módulo de conversas do dashboard
+    try {
+      await supabase.rpc('fn_insert_message', {
+        p_org_id: ctx.org_id,
+        p_lead_id: ctx.lead_id,
+        p_channel: 'whatsapp',
+        p_direction: 'outbound',
+        p_body: `[Fotos enviadas: ${property.title} (${ref}) — ${sentCount} foto(s)]`,
+        p_sender_type: 'agent_bot',
+        p_sender_name: 'SDR Agent',
+        p_message_type: 'image',
+        p_timestamp: new Date().toISOString(),
+      })
+    } catch {}
+  }
+
   return {
     success: true,
     data: {
       sent: sentCount,
       total_available: images.length,
+      property_title: property.title,
+      property_ref: ref,
       message: sentCount > 0
-        ? `${sentCount} foto(s) já foram enviadas ao lead automaticamente.`
+        ? `${sentCount} foto(s) de "${property.title}" (${ref}) já foram enviadas ao lead.`
         : 'Não foi possível enviar as fotos no momento.',
       tip: sentCount > 0
-        ? 'As fotos JÁ CHEGARAM no WhatsApp do lead antes desta mensagem. NÃO mencione o envio das fotos de nenhuma forma. PROIBIDO: "as fotos foram enviadas", "te enviei as fotos", "aqui estão as fotos", "seguem as fotos". O lead já VIU as fotos. Responda com uma pergunta curta e calorosa sobre o imóvel: "O que achou?" ou "Te chamou atenção?". NÃO proponha visita ainda nesta mensagem — espere a reação do lead primeiro.'
+        ? `As fotos de "${property.title}" JÁ CHEGARAM no WhatsApp do lead. NÃO mencione o envio das fotos. PROIBIDO: "as fotos foram enviadas", "te enviei as fotos", "aqui estão as fotos". Responda com uma pergunta curta e calorosa: "O que achou?" ou "Te chamou atenção?". NÃO proponha visita ainda — espere a reação do lead. LEMBRE-SE: você já enviou fotos deste imóvel, NÃO envie novamente.`
         : undefined
     }
   }
