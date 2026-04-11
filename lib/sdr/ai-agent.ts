@@ -3,9 +3,9 @@
 // Pipeline Multi-Agente do SDR
 //
 // Arquitetura:
-//   INTAKE (código) → ENRICHER (Claude Haiku) → RESPONDER (OpenAI 4o-mini) → EXECUTOR (código)
+//   INTAKE (código) → ENRICHER (Claude Haiku) → RESPONDER (OpenAI 4.1-mini) → EXECUTOR (código)
 //
-// O Responder usa OpenAI gpt-4o-mini — excelente para conversação natural.
+// O Responder usa OpenAI gpt-4.1-mini — melhor reasoning e tool calling que 4o-mini.
 // O Enricher continua no Claude Haiku — mais barato para extração estruturada.
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -68,7 +68,7 @@ export interface AgentResponse {
 }
 
 // ─── Modelos e limites ───
-const RESPONDER_MODEL = 'gpt-4o-mini'
+const RESPONDER_MODEL = 'gpt-4.1-mini'
 const MAX_TOKENS = 2048
 const MAX_TOOL_LOOPS = 6
 
