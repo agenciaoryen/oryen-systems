@@ -1474,8 +1474,11 @@ async function executeSendPropertyImages(
       sent: sentCount,
       total_available: images.length,
       message: sentCount > 0
-        ? `${sentCount} foto(s) enviada(s) ao lead.`
-        : 'Não foi possível enviar as fotos no momento.'
+        ? `${sentCount} foto(s) já foram enviadas ao lead automaticamente.`
+        : 'Não foi possível enviar as fotos no momento.',
+      tip: sentCount > 0
+        ? 'As fotos JÁ CHEGARAM no WhatsApp do lead. NÃO diga "aqui estão as fotos", "enviei as fotos", "[Imagens enviadas]" ou qualquer coisa que descreva o envio. O lead já VIU as fotos. Sua próxima mensagem deve ser uma pergunta sobre o imóvel: "O que achou?", "Te interessou?", "Quer agendar uma visita pra conhecer pessoalmente?"'
+        : undefined
     }
   }
 }
