@@ -1273,6 +1273,14 @@ async function executeSearchProperties(
     properties = properties.slice(0, 5)
   }
 
+  // Se amenidade filtrou para 0 resultados mas existem imóveis sem essa amenidade → mostrar sem filtro
+  let amenityNotFound = false
+  if (amenityKey && (!properties || properties.length === 0) && allProperties && allProperties.length > 0) {
+    properties = allProperties.slice(0, 5)
+    amenityNotFound = true
+    console.log(`[SDR:SearchProperties] Amenidade "${amenityKey}" não encontrada — mostrando ${properties.length} imóvel(is) sem filtro de amenidade`)
+  }
+
   // Se não encontrou e tinha filtro de preço, retry automático com margem de ±20%
   let usedPriceMargin = false
   if ((!properties || properties.length === 0) && (input.max_price || input.min_price)) {
@@ -1483,8 +1491,14 @@ async function executeSearchProperties(
     return entry
   })
 
-  console.log(`[SDR:SearchProperties] Encontrados ${formatted.length} imóveis | org: ${ctx.org_id}${usedPriceMargin ? ' (margem de preço)' : ''}`)
-  const tip = usedCityFallback && nearbySearchKm
+  console.log(`[SDR:SearchProperties] Encontrados ${formatted.length} imóveis | org: ${ctx.org_id}${usedPriceMargin ? ' (margem de preço)' : ''}${amenityNotFound ? ` (sem ${input.amenity})` : ''}`)
+
+  // Resolver label da amenidade para o tip (mostrar em português para o agente)
+  const amenityLabel = input.amenity || ''
+
+  const tip = amenityNotFound
+    ? `ATENÇÃO: Não encontrei imóveis com "${amenityLabel}" no portfólio. Mas encontrei estas opções que podem interessar ao lead. Apresente naturalmente: "Com ${amenityLabel} não tenho disponível no momento, mas tenho essas opções que podem te interessar". Mostre os imóveis e pergunte se algum chama atenção. Veja o campo "amenities" de cada imóvel para mencionar o que eles TÊM.`
+    : usedCityFallback && nearbySearchKm
     ? `ATENÇÃO: Não encontrei imóveis no bairro "${input.neighborhood}", mas encontrei opções em bairros próximos (até ${nearbySearchKm}km). Cada imóvel tem "distance_km" indicando a distância. Apresente naturalmente: "No ${input.neighborhood} não tenho no momento, mas achei uma opção ótima no [BAIRRO], que fica bem pertinho, a menos de Xkm". NÃO pergunte se aceita outro bairro — já apresente a sugestão direto.`
     : usedCityFallback
     ? `ATENÇÃO: Não encontrei imóveis no bairro "${input.neighborhood}", mas encontrei opções em outros bairros da região. Apresente naturalmente: "No ${input.neighborhood} não tenho no momento, mas achei uma opção ótima no [BAIRRO] que pode te interessar". NÃO pergunte se aceita outro bairro — já apresente a sugestão direto.`
@@ -1499,6 +1513,8 @@ async function executeSearchProperties(
       properties: formatted,
       price_margin_applied: usedPriceMargin,
       city_fallback_applied: usedCityFallback,
+      amenity_not_found: amenityNotFound || undefined,
+      searched_amenity: amenityNotFound ? amenityLabel : undefined,
       searched_neighborhood: usedCityFallback ? input.neighborhood : undefined,
       tip
     }
