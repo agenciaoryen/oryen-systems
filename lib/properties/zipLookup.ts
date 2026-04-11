@@ -132,15 +132,34 @@ async function lookupBrazil(zip: string): Promise<ZipResult | null> {
 
   const res = await fetch(`https://viacep.com.br/ws/${raw}/json/`)
   const data = await res.json()
-  if (data.erro) return null
 
-  return {
-    street: data.logradouro || '',
-    neighborhood: data.bairro || '',
-    city: data.localidade || '',
-    state: data.uf || '',
-    complement: data.complemento || '',
+  if (!data.erro) {
+    return {
+      street: data.logradouro || '',
+      neighborhood: data.bairro || '',
+      city: data.localidade || '',
+      state: data.uf || '',
+      complement: data.complemento || '',
+    }
   }
+
+  // Fallback para CEPs gerais (ex: 95900-000): extrair cidade/estado pelo prefixo
+  // Busca um CEP específico na mesma faixa para pegar a cidade
+  const prefix = raw.slice(0, 5)
+  const fallbackRes = await fetch(`https://viacep.com.br/ws/${prefix}0010/json/`)
+  const fallbackData = await fallbackRes.json()
+
+  if (!fallbackData.erro && fallbackData.localidade) {
+    return {
+      street: '',
+      neighborhood: '',
+      city: fallbackData.localidade,
+      state: fallbackData.uf || '',
+      complement: '',
+    }
+  }
+
+  return null
 }
 
 // Zippopotam.us — genérico para todos os outros países
