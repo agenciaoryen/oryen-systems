@@ -1175,6 +1175,59 @@ async function executeSaveLeadInfo(
   return { success: true, data: { field: fieldKey, value: input.value } }
 }
 
+// ─── Mapa de sinônimos: termo do lead (PT/EN/ES) → key do banco ───
+const AMENITY_SYNONYMS: Record<string, string> = {
+  // PT
+  'piscina': 'pool', 'academia': 'gym', 'playground': 'playground',
+  'espaço gourmet': 'gourmet_area', 'espaco gourmet': 'gourmet_area', 'gourmet': 'gourmet_area',
+  'churrasqueira': 'barbecue', 'churrasco': 'barbecue', 'bbq': 'barbecue', 'area de churrasco': 'barbecue',
+  'sauna': 'sauna', 'salão de festas': 'party_room', 'salao de festas': 'party_room', 'salão de festa': 'party_room',
+  'elevador': 'elevator', 'portaria': 'doorman', 'portaria 24h': 'doorman', 'porteiro': 'doorman',
+  'segurança': 'security', 'seguranca': 'security', 'jardim': 'garden',
+  'sacada': 'balcony', 'varanda': 'balcony', 'varanda gourmet': 'balcony', 'terraço': 'balcony', 'terraco': 'balcony',
+  'mobiliado': 'furnished', 'mobilhado': 'furnished', 'mobilia': 'furnished',
+  'ar condicionado': 'air_conditioning', 'ar-condicionado': 'air_conditioning', 'climatizado': 'air_conditioning',
+  'lavanderia': 'laundry', 'aceita pets': 'pet_friendly', 'pet friendly': 'pet_friendly', 'aceita animais': 'pet_friendly',
+  'energia solar': 'solar_energy', 'solar': 'solar_energy', 'lareira': 'fireplace',
+  'closet': 'closet', 'home office': 'home_office', 'escritório': 'home_office', 'escritorio': 'home_office',
+  'acesso asfaltado': 'paved_access', 'asfalto': 'paved_access',
+  'água encanada': 'water_supply', 'agua encanada': 'water_supply',
+  'esgoto': 'sewage', 'fossa': 'sewage',
+  'energia elétrica': 'electricity', 'energia eletrica': 'electricity', 'luz': 'electricity',
+  'gás encanado': 'natural_gas', 'gas encanado': 'natural_gas', 'gás': 'natural_gas',
+  'terreno plano': 'flat_terrain', 'plano': 'flat_terrain',
+  'cercado': 'fenced', 'murado': 'fenced', 'muro': 'fenced',
+  'esquina': 'corner_lot', 'condomínio fechado': 'gated_community', 'condominio fechado': 'gated_community',
+  'iluminação pública': 'street_lighting', 'iluminacao publica': 'street_lighting',
+  'recepção': 'reception', 'recepcao': 'reception',
+  'sala de reunião': 'meeting_room', 'sala de reuniao': 'meeting_room',
+  'doca': 'loading_dock', 'acessibilidade': 'handicap_access', 'acessível': 'handicap_access',
+  'poço artesiano': 'well', 'poco artesiano': 'well', 'poço': 'well',
+  'curral': 'corral', 'galpão': 'barn', 'galpao': 'barn',
+  'pomar': 'fruit_trees', 'acesso a rio': 'river_access', 'lago': 'river_access',
+  // EN
+  'pool': 'pool', 'gym': 'gym', 'barbecue': 'barbecue', 'balcony': 'balcony',
+  'elevator': 'elevator', 'garden': 'garden', 'security': 'security', 'furnished': 'furnished',
+  'fireplace': 'fireplace', 'sauna': 'sauna', 'laundry': 'laundry',
+  // ES
+  'parrilla': 'barbecue', 'gimnasio': 'gym', 'balcón': 'balcony', 'balcon': 'balcony',
+  'ascensor': 'elevator', 'seguridad': 'security', 'amueblado': 'furnished',
+  'chimenea': 'fireplace', 'jardín': 'garden', 'jardin': 'garden',
+}
+
+function resolveAmenityKey(term: string): string {
+  // Busca exata no mapa
+  if (AMENITY_SYNONYMS[term]) return AMENITY_SYNONYMS[term]
+
+  // Busca parcial (ex: "churrasq" casa com "churrasqueira")
+  for (const [synonym, key] of Object.entries(AMENITY_SYNONYMS)) {
+    if (synonym.includes(term) || term.includes(synonym)) return key
+  }
+
+  // Se não encontrou no mapa, retorna o termo original (pode ser a key direta)
+  return term
+}
+
 // ─── Search Properties: buscar imóveis no portfólio ───
 async function executeSearchProperties(
   input: { property_type?: string; transaction_type?: string; min_price?: number; max_price?: number; min_bedrooms?: number; neighborhood?: string; amenity?: string },
@@ -1193,24 +1246,25 @@ async function executeSearchProperties(
   if (input.min_bedrooms) query = query.gte('bedrooms', input.min_bedrooms)
   if (input.neighborhood) query = query.ilike('address_neighborhood', `%${input.neighborhood}%`)
 
-  // Amenity: buscar mais resultados para filtrar por amenidade no código (case-insensitive)
-  const amenityFilter = input.amenity?.toLowerCase().trim()
+  // Amenity: resolver termo do lead → key do banco usando mapa de sinônimos
+  const amenityRaw = input.amenity?.toLowerCase().trim()
+  const amenityKey = amenityRaw ? resolveAmenityKey(amenityRaw) : null
 
   query = query
     .order('is_featured', { ascending: false })
     .order('created_at', { ascending: false })
-    .limit(amenityFilter ? 20 : 5)  // buscar mais se tem filtro de amenidade
+    .limit(amenityKey ? 20 : 5)  // buscar mais se tem filtro de amenidade
 
   const { data: allProperties, error } = await query
 
   if (error) return { success: false, error: error.message }
 
-  // Filtrar por amenidade case-insensitive
+  // Filtrar por amenidade: comparar key resolvida com keys no banco
   let properties = allProperties
-  if (amenityFilter && properties) {
+  if (amenityKey && properties) {
     properties = properties.filter(p => {
       const amenities = Array.isArray(p.amenities) ? p.amenities : []
-      return amenities.some((a: string) => a.toLowerCase().includes(amenityFilter))
+      return amenities.some((a: string) => a.toLowerCase() === amenityKey)
     })
   }
 
@@ -1240,16 +1294,16 @@ async function executeSearchProperties(
     retryQuery = retryQuery
       .order('is_featured', { ascending: false })
       .order('created_at', { ascending: false })
-      .limit(amenityFilter ? 20 : 5)
+      .limit(amenityKey ? 20 : 5)
 
     const { data: retryProperties } = await retryQuery
 
     // Filtrar amenidade se necessário
     let retryFiltered = retryProperties || []
-    if (amenityFilter && retryFiltered.length > 0) {
+    if (amenityKey && retryFiltered.length > 0) {
       retryFiltered = retryFiltered.filter(p => {
         const am = Array.isArray(p.amenities) ? p.amenities : []
-        return am.some((a: string) => a.toLowerCase().includes(amenityFilter))
+        return am.some((a: string) => a.toLowerCase() === amenityKey)
       })
     }
     if (retryFiltered.length > 5) retryFiltered = retryFiltered.slice(0, 5)
@@ -1321,10 +1375,10 @@ async function executeSearchProperties(
 
         // Filtrar por amenidade se necessário
         let nearbyFiltered = withDistance
-        if (amenityFilter && nearbyFiltered.length > 0) {
+        if (amenityKey && nearbyFiltered.length > 0) {
           nearbyFiltered = nearbyFiltered.filter(p => {
             const am = Array.isArray(p.amenities) ? p.amenities : []
-            return am.some((a: string) => a.toLowerCase().includes(amenityFilter))
+            return am.some((a: string) => a.toLowerCase() === amenityKey)
           })
         }
 
@@ -1356,15 +1410,15 @@ async function executeSearchProperties(
       cityQuery = cityQuery
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(amenityFilter ? 20 : 5)
+        .limit(amenityKey ? 20 : 5)
 
       const { data: cityProperties } = await cityQuery
 
       let cityFiltered = cityProperties || []
-      if (amenityFilter && cityFiltered.length > 0) {
+      if (amenityKey && cityFiltered.length > 0) {
         cityFiltered = cityFiltered.filter(p => {
           const am = Array.isArray(p.amenities) ? p.amenities : []
-          return am.some((a: string) => a.toLowerCase().includes(amenityFilter))
+          return am.some((a: string) => a.toLowerCase() === amenityKey)
         })
       }
       if (cityFiltered.length > 5) cityFiltered = cityFiltered.slice(0, 5)
