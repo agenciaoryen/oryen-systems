@@ -1491,6 +1491,9 @@ async function executeSearchProperties(
       state: p.address_state,
       condo_fee: p.condo_fee,
       amenities: Array.isArray(p.amenities) ? translateAmenities(p.amenities, ctx.org_language) : [],
+      amenities_summary: Array.isArray(p.amenities) && p.amenities.length > 0
+        ? `Este imóvel TEM: ${translateAmenities(p.amenities, ctx.org_language).join(', ')}`
+        : 'Sem amenidades cadastradas',
       description: p.description?.slice(0, 200),
       has_images: images.length > 0,
       image_count: images.length,
@@ -1652,6 +1655,9 @@ async function executeGetPropertyByRef(
         state: property.address_state,
         address: [property.address_street, property.address_number, property.address_neighborhood, property.address_city].filter(Boolean).join(', '),
         amenities: Array.isArray(property.amenities) ? translateAmenities(property.amenities, ctx.org_language) : [],
+        amenities_summary: Array.isArray(property.amenities) && property.amenities.length > 0
+          ? `Este imóvel TEM: ${translateAmenities(property.amenities, ctx.org_language).join(', ')}`
+          : 'Sem amenidades cadastradas',
         has_images: Array.isArray(property.images) && property.images.length > 0,
         image_count: Array.isArray(property.images) ? property.images.length : 0,
         video_url: property.video_url,
