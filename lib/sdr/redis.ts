@@ -155,11 +155,35 @@ export async function stopClear(orgId: string, phone: string): Promise<void> {
  * Mensagens longas (parágrafo) → espera menos (lead já terminou)
  */
 export function calculateBufferSeconds(messageText: string): number {
-  const len = messageText.length
+  // Buffer de 20s para dar tempo do lead enviar múltiplas mensagens
+  // antes do agente processar (evita respostas fragmentadas)
+  return 20
+}
 
-  if (len <= 5) return 12     // "oi", "olá" → espera bastante
-  if (len <= 20) return 10    // frase curta
-  if (len <= 50) return 8     // frase média
-  if (len <= 100) return 6    // mensagem completa
-  return 6                    // mensagem longa → processa rápido
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOCK — Evita processamento duplicado (2 /process simultâneos)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const LOCK_PREFIX = 'sdr:lock:'
+
+/**
+ * Tenta adquirir lock para processar mensagens de um lead.
+ * Retorna true se conseguiu, false se já está sendo processado.
+ * TTL de 60s como safety net (se o processo crashar, libera sozinho).
+ */
+export async function acquireProcessLock(orgId: string, phone: string): Promise<boolean> {
+  const r = getRedis()
+  const key = `${LOCK_PREFIX}${orgId}:${phone}`
+  // SET NX = só seta se não existe. Retorna 'OK' se setou, null se já existe.
+  const result = await r.set(key, Date.now(), { nx: true, ex: 60 })
+  return result === 'OK'
+}
+
+/**
+ * Libera o lock após processamento.
+ */
+export async function releaseProcessLock(orgId: string, phone: string): Promise<void> {
+  const r = getRedis()
+  const key = `${LOCK_PREFIX}${orgId}:${phone}`
+  await r.del(key)
 }

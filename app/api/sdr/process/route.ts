@@ -21,7 +21,9 @@ import {
   bufferCount,
   bufferFlush,
   bufferGetScheduledCount,
-  stopCheck
+  stopCheck,
+  acquireProcessLock,
+  releaseProcessLock
 } from '@/lib/sdr/redis'
 import { runAgent } from '@/lib/sdr/ai-agent'
 import { sendWithHumanization } from '@/lib/sdr/whatsapp-sender'
@@ -75,10 +77,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ skipped: true, reason: 'buffer_growing' })
     }
 
+    // ─── 2b. Lock — evitar processamento duplicado ───
+    const gotLock = await acquireProcessLock(org_id, phone)
+    if (!gotLock) {
+      console.log(`[SDR:Process] Lock ativo para ${phone} — outro processo já está respondendo`)
+      return NextResponse.json({ skipped: true, reason: 'already_processing' })
+    }
+
     // ─── 3. Flush do buffer — consumir todas as mensagens ───
     const messages = await bufferFlush(org_id, phone)
 
     if (messages.length === 0) {
+      await releaseProcessLock(org_id, phone)
       return NextResponse.json({ skipped: true, reason: 'empty_buffer' })
     }
 
@@ -227,6 +237,9 @@ export async function POST(request: NextRequest) {
       console.log(`[SDR:Process] Envio completo: ${sendResult.sent} ok, ${sendResult.failed} falha | ${Math.round(sendResult.total_time_ms / 1000)}s`)
     }
 
+    // Liberar lock após processamento completo
+    await releaseProcessLock(org_id, phone)
+
     return NextResponse.json({
       success: true,
       processed: true,
@@ -246,6 +259,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('[SDR:Process] Error:', error)
+    // Liberar lock mesmo em caso de erro
+    try { await releaseProcessLock(body?.org_id, body?.phone) } catch {}
     notifyError({
       module: 'SDR',
       severity: 'error',
