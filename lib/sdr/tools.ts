@@ -1694,19 +1694,59 @@ async function executeSendPropertyImages(
   ctx: ToolContext
 ): Promise<ToolResult> {
   const maxImages = Math.min(input.max_images || 3, 4)
+  const propId = input.property_id?.trim()
 
-  // Buscar propriedade com imagens
-  const { data: property, error } = await supabase
-    .from('properties')
-    .select('id, title, images, external_code, slug')
-    .eq('id', input.property_id)
-    .eq('org_id', ctx.org_id)
-    .eq('status', 'active')
-    .single()
+  console.log(`[SDR:SendImages] Iniciando envio | property_id: ${propId} | lead: ${ctx.lead_id}`)
 
-  if (error || !property) {
-    return { success: false, error: 'Propriedade não encontrada.' }
+  if (!propId) {
+    return { success: false, error: 'property_id não fornecido.' }
   }
+
+  // Buscar propriedade por ID, external_code (REF-xxx) ou slug
+  let property: any = null
+
+  // Tentativa 1: por UUID
+  if (propId.length > 20) {
+    const { data } = await supabase
+      .from('properties')
+      .select('id, title, images, external_code, slug')
+      .eq('id', propId)
+      .eq('org_id', ctx.org_id)
+      .eq('status', 'active')
+      .single()
+    property = data
+  }
+
+  // Tentativa 2: por external_code (REF-1001)
+  if (!property) {
+    const { data } = await supabase
+      .from('properties')
+      .select('id, title, images, external_code, slug')
+      .eq('org_id', ctx.org_id)
+      .eq('status', 'active')
+      .ilike('external_code', propId)
+      .single()
+    property = data
+  }
+
+  // Tentativa 3: por slug
+  if (!property) {
+    const { data } = await supabase
+      .from('properties')
+      .select('id, title, images, external_code, slug')
+      .eq('org_id', ctx.org_id)
+      .eq('status', 'active')
+      .eq('slug', propId)
+      .single()
+    property = data
+  }
+
+  if (!property) {
+    console.error(`[SDR:SendImages] Propriedade NÃO encontrada | input: ${propId} | org: ${ctx.org_id}`)
+    return { success: false, error: `Propriedade não encontrada com ID/REF "${propId}".` }
+  }
+
+  console.log(`[SDR:SendImages] Propriedade encontrada: ${property.title} (${property.external_code || property.id})`)
 
   const images = Array.isArray(property.images) ? property.images : []
   if (images.length === 0) {
@@ -1730,7 +1770,7 @@ async function executeSendPropertyImages(
     .eq('org_id', ctx.org_id)
     .eq('type', 'image')
     .eq('role', 'assistant')
-    .ilike('body', `%${input.property_id}%`)
+    .ilike('body', `%${property.id}%`)
 
   // Extrair URLs já enviadas do histórico
   const alreadySentUrls = new Set<string>()
@@ -1817,7 +1857,7 @@ async function executeSendPropertyImages(
 
   // Registrar no histórico com URLs para rastreamento de duplicatas
   if (sentCount > 0) {
-    const bodyLog = `[Fotos enviadas: ${property.title} (${ref}) — ${sentCount} foto(s) | prop_id:${input.property_id} |urls:${sentUrls.join(',')}]`
+    const bodyLog = `[Fotos enviadas: ${property.title} (${ref}) — ${sentCount} foto(s) | prop_id:${property.id} |urls:${sentUrls.join(',')}]`
     await supabase.from('sdr_messages').insert({
       org_id: ctx.org_id,
       lead_id: ctx.lead_id,
