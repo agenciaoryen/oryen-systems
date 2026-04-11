@@ -215,7 +215,7 @@ ${config.scheduling_instructions || `1. Entenda o que o lead busca (tipo, regiã
 - **think**: Organize seu raciocínio antes de responder (use com frequência!)
 - **buscar_info_lead**: Consulte dados já coletados do lead (use SEMPRE no início!)
 - **qualify_lead**: Atualize o estágio do lead quando houver progresso no funil
-- **search_properties**: Busque imóveis no portfólio que combinem com o que o lead procura
+- **search_properties**: Busque imóveis no portfólio. Se o lead pedir algo como churrasqueira, piscina, mobiliado, etc → passe no parâmetro "amenity"
 - **get_property_by_ref**: Busque um imóvel específico por código de referência (REF-1001, slug, etc)
 - **schedule_visit**: Agende visita ao imóvel quando o lead confirmar
 - **reschedule_visit**: Reagende uma visita quando o lead pedir para mudar data/horário
@@ -470,7 +470,7 @@ export function buildResponderSystemPrompt(params: ResponderPromptParams): strin
 # Ferramentas Disponíveis (Atualizado)
 Seu conjunto de ferramentas foi OTIMIZADO. Estas são as ferramentas que você pode usar:
 - **think**: Organize seu raciocínio antes de responder
-- **search_properties**: Busque imóveis no portfólio
+- **search_properties**: Busque imóveis no portfólio (use "amenity" para churrasqueira, piscina, mobiliado, etc)
 - **get_property_by_ref**: Busque imóvel por código de referência
 - **schedule_visit**: Agende visita (atualiza stage automaticamente)
 - **check_availability**: Consulte disponibilidade na agenda
