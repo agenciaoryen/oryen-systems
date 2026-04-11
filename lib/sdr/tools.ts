@@ -1776,7 +1776,7 @@ async function executeSendPropertyImages(
   const alreadySentUrls = new Set<string>()
   if (prevSent) {
     for (const msg of prevSent) {
-      const urlMatch = msg.body.match(/\|urls:(.+)$/)
+      const urlMatch = msg.body.match(/\|urls:(.+?)[\]\s]*$/)
       if (urlMatch) {
         urlMatch[1].split(',').forEach((u: string) => alreadySentUrls.add(u.trim()))
       }
