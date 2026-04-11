@@ -1521,6 +1521,25 @@ async function executeSearchProperties(
       ? 'ATENÇÃO: Não encontrei no valor exato que o lead pediu, mas encontrei opções próximas (±20%). Apresente naturalmente: "No valor exato não encontrei, mas tenho uma opção muito boa por R$ X que pode te interessar". NÃO pergunte se o lead aceita outro valor — já apresente a sugestão direto.'
       : 'IMPORTANTE: Use SOMENTE os dados listados acima. Se um campo é null ou não aparece, NÃO invente — diga que vai confirmar com o corretor. Apresente de forma natural.'
 
+  // Persistir dados dos imóveis apresentados para contexto em turnos futuros
+  // (o histórico só carrega role+body, tool_results se perdem entre turnos)
+  if (formatted.length > 0) {
+    const propertySummaries = formatted.map((p: any) =>
+      `[${p.ref}] ${p.title} | ${p.neighborhood}, ${p.city} | R$ ${p.price} | ${p.bedrooms}q | ${p.amenities_summary}`
+    ).join('\n')
+
+    await supabase.from('sdr_messages').insert({
+      org_id: ctx.org_id,
+      lead_id: ctx.lead_id,
+      campaign_id: ctx.campaign_id || null,
+      instance_name: ctx.instance_name,
+      phone: ctx.phone,
+      role: 'system',
+      body: `[Imóveis apresentados ao lead]\n${propertySummaries}`,
+      type: 'context',
+    })
+  }
+
   return {
     success: true,
     data: {

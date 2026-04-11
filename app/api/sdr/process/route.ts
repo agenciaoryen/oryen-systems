@@ -102,10 +102,10 @@ export async function POST(request: NextRequest) {
 
     const { data: history } = await supabase
       .from('sdr_messages')
-      .select('role, body, created_at')
+      .select('role, body, created_at, type')
       .eq('lead_id', lead_id)
       .eq('org_id', org_id)
-      .in('role', ['user', 'assistant'])  // Só mensagens reais da conversa (exclui system/tool_result)
+      .or('role.in.(user,assistant),type.eq.context')  // Mensagens + contexto de imóveis apresentados
       .order('created_at', { ascending: false })
       .limit(CONTEXT_WINDOW)
 

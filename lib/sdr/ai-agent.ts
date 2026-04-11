@@ -31,6 +31,7 @@ interface ConversationEntry {
   role: 'user' | 'assistant' | 'system'
   body: string
   created_at: string
+  type?: string  // 'context' = dados de imóveis para persistir entre turnos
 }
 
 interface AgentInput {
@@ -457,7 +458,13 @@ function buildOpenAIMessages(
   ]
 
   for (const entry of history) {
-    if (entry.role === 'system') continue
+    // Mensagens de contexto (imóveis apresentados) → injetar como system para o modelo lembrar
+    if (entry.role === 'system') {
+      if ((entry as any).type === 'context') {
+        messages.push({ role: 'system', content: entry.body })
+      }
+      continue
+    }
 
     const role: 'user' | 'assistant' = entry.role === 'user' ? 'user' : 'assistant'
 
