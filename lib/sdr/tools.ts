@@ -248,7 +248,7 @@ export const agentTools: Anthropic.Messages.Tool[] = [
   // 12. Buscar imóveis no portfólio da imobiliária
   {
     name: 'search_properties',
-    description: 'Busca imóveis disponíveis no portfólio da imobiliária. Filtra por tipo, região, quartos e preço. IMPORTANTE: NÃO é possível filtrar por amenidades (piscina, churrasqueira, etc.) — elas aparecem no campo "amenities" dos resultados. Para buscar imóveis com amenidade específica: faça uma busca AMPLA (poucos filtros) e depois identifique nos resultados quais têm a amenidade desejada. Máximo 1 busca por vez — NÃO repita a mesma busca com filtros diferentes.',
+    description: 'Busca imóveis disponíveis no portfólio da imobiliária. Filtra por tipo, região, quartos, preço e amenidade. Máximo 1 busca por vez — NÃO repita a mesma busca com filtros diferentes.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -277,6 +277,10 @@ export const agentTools: Anthropic.Messages.Tool[] = [
         neighborhood: {
           type: 'string',
           description: 'Bairro ou região de interesse (opcional)'
+        },
+        amenity: {
+          type: 'string',
+          description: 'Amenidade desejada (opcional). Ex: "Piscina", "Churrasqueira", "Mobiliado", "Jardim", "Ar condicionado", "Elevador", "Portaria 24h", "Segurança", "Energia solar", "Condomínio fechado", "Acessibilidade"'
         }
       },
       required: []
@@ -1173,7 +1177,7 @@ async function executeSaveLeadInfo(
 
 // ─── Search Properties: buscar imóveis no portfólio ───
 async function executeSearchProperties(
-  input: { property_type?: string; transaction_type?: string; min_price?: number; max_price?: number; min_bedrooms?: number; neighborhood?: string },
+  input: { property_type?: string; transaction_type?: string; min_price?: number; max_price?: number; min_bedrooms?: number; neighborhood?: string; amenity?: string },
   ctx: ToolContext
 ): Promise<ToolResult> {
   let query = supabase
@@ -1188,6 +1192,7 @@ async function executeSearchProperties(
   if (input.max_price) query = query.lte('price', input.max_price)
   if (input.min_bedrooms) query = query.gte('bedrooms', input.min_bedrooms)
   if (input.neighborhood) query = query.ilike('address_neighborhood', `%${input.neighborhood}%`)
+  if (input.amenity) query = query.contains('amenities', [input.amenity])
 
   query = query
     .order('is_featured', { ascending: false })
