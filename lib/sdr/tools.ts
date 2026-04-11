@@ -1192,16 +1192,32 @@ async function executeSearchProperties(
   if (input.max_price) query = query.lte('price', input.max_price)
   if (input.min_bedrooms) query = query.gte('bedrooms', input.min_bedrooms)
   if (input.neighborhood) query = query.ilike('address_neighborhood', `%${input.neighborhood}%`)
-  if (input.amenity) query = query.contains('amenities', [input.amenity])
+
+  // Amenity: buscar mais resultados para filtrar por amenidade no código (case-insensitive)
+  const amenityFilter = input.amenity?.toLowerCase().trim()
 
   query = query
     .order('is_featured', { ascending: false })
     .order('created_at', { ascending: false })
-    .limit(5)
+    .limit(amenityFilter ? 20 : 5)  // buscar mais se tem filtro de amenidade
 
-  const { data: properties, error } = await query
+  const { data: allProperties, error } = await query
 
   if (error) return { success: false, error: error.message }
+
+  // Filtrar por amenidade case-insensitive
+  let properties = allProperties
+  if (amenityFilter && properties) {
+    properties = properties.filter(p => {
+      const amenities = Array.isArray(p.amenities) ? p.amenities : []
+      return amenities.some((a: string) => a.toLowerCase().includes(amenityFilter))
+    })
+  }
+
+  // Limitar a 5 resultados após filtro
+  if (properties && properties.length > 5) {
+    properties = properties.slice(0, 5)
+  }
 
   if (!properties || properties.length === 0) {
     return {
