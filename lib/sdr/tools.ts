@@ -24,6 +24,7 @@ export interface ToolContext {
   campaign_id: string | null
   instance_name: string
   agent_id: string
+  org_language?: string  // 'pt', 'en', 'es' — para traduzir amenidades etc.
 }
 
 // ─── Resultado padronizado ───
@@ -1215,26 +1216,15 @@ const AMENITY_SYNONYMS: Record<string, string> = {
   'chimenea': 'fireplace', 'jardín': 'garden', 'jardin': 'garden',
 }
 
-// Mapa reverso: key do banco → label legível (pt)
-const AMENITY_KEY_TO_LABEL: Record<string, string> = {
-  pool: 'Piscina', gym: 'Academia', playground: 'Playground',
-  gourmet_area: 'Espaço gourmet', barbecue: 'Churrasqueira', sauna: 'Sauna',
-  party_room: 'Salão de festas', elevator: 'Elevador', doorman: 'Portaria 24h',
-  security: 'Segurança', garden: 'Jardim', balcony: 'Sacada/Varanda',
-  furnished: 'Mobiliado', air_conditioning: 'Ar condicionado', laundry: 'Lavanderia',
-  pet_friendly: 'Aceita pets', solar_energy: 'Energia solar', fireplace: 'Lareira',
-  closet: 'Closet', home_office: 'Home office',
-  paved_access: 'Acesso asfaltado', water_supply: 'Água encanada',
-  sewage: 'Esgoto/Fossa', electricity: 'Energia elétrica', natural_gas: 'Gás encanado',
-  flat_terrain: 'Terreno plano', fenced: 'Cercado/Murado', corner_lot: 'Esquina',
-  gated_community: 'Condomínio fechado', street_lighting: 'Iluminação pública',
-  reception: 'Recepção', meeting_room: 'Sala de reunião', loading_dock: 'Doca de carga',
-  handicap_access: 'Acessibilidade', well: 'Poço artesiano', corral: 'Curral',
-  barn: 'Galpão', fruit_trees: 'Pomar', river_access: 'Acesso a rio/lago',
-}
+// Traduz amenidades da key (EN) para o idioma da org usando ALL_AMENITIES
+import { ALL_AMENITIES } from '@/lib/properties/constants'
 
-function translateAmenities(keys: string[]): string[] {
-  return keys.map(k => AMENITY_KEY_TO_LABEL[k] || k)
+function translateAmenities(keys: string[], lang: string = 'pt'): string[] {
+  const l = (lang === 'pt' || lang === 'en' || lang === 'es') ? lang : 'pt'
+  return keys.map(k => {
+    const found = ALL_AMENITIES.find(a => a.key === k)
+    return found ? found.label[l as 'pt' | 'en' | 'es'] : k
+  })
 }
 
 function resolveAmenityKey(term: string): string {
@@ -1500,7 +1490,7 @@ async function executeSearchProperties(
       city: p.address_city,
       state: p.address_state,
       condo_fee: p.condo_fee,
-      amenities: Array.isArray(p.amenities) ? translateAmenities(p.amenities) : [],
+      amenities: Array.isArray(p.amenities) ? translateAmenities(p.amenities, ctx.org_language) : [],
       description: p.description?.slice(0, 200),
       has_images: images.length > 0,
       image_count: images.length,
@@ -1661,7 +1651,7 @@ async function executeGetPropertyByRef(
         city: property.address_city,
         state: property.address_state,
         address: [property.address_street, property.address_number, property.address_neighborhood, property.address_city].filter(Boolean).join(', '),
-        amenities: Array.isArray(property.amenities) ? translateAmenities(property.amenities) : [],
+        amenities: Array.isArray(property.amenities) ? translateAmenities(property.amenities, ctx.org_language) : [],
         has_images: Array.isArray(property.images) && property.images.length > 0,
         image_count: Array.isArray(property.images) ? property.images.length : 0,
         video_url: property.video_url,

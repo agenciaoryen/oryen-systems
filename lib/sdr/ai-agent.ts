@@ -229,7 +229,8 @@ OBRIGATÓRIO:
     phone: input.phone,
     campaign_id: input.campaign_id,
     instance_name: input.instance_name,
-    agent_id: input.agent_id
+    agent_id: input.agent_id,
+    org_language: input.org?.language || 'pt'
   }
 
   // ─── Agentic loop do responder ───
