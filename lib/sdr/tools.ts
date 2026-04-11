@@ -248,7 +248,7 @@ export const agentTools: Anthropic.Messages.Tool[] = [
   // 12. Buscar imóveis no portfólio da imobiliária
   {
     name: 'search_properties',
-    description: 'Busca imóveis disponíveis no portfólio da imobiliária. Use para encontrar imóveis que combinem com o que o lead procura (tipo, região, quartos, faixa de preço). Retorna até 5 resultados com detalhes completos.',
+    description: 'Busca imóveis disponíveis no portfólio da imobiliária. Filtra por tipo, região, quartos e preço. IMPORTANTE: NÃO é possível filtrar por amenidades (piscina, churrasqueira, etc.) — elas aparecem no campo "amenities" dos resultados. Para buscar imóveis com amenidade específica: faça uma busca AMPLA (poucos filtros) e depois identifique nos resultados quais têm a amenidade desejada. Máximo 1 busca por vez — NÃO repita a mesma busca com filtros diferentes.',
     input_schema: {
       type: 'object' as const,
       properties: {
