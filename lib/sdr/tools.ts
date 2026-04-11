@@ -1261,13 +1261,54 @@ async function executeSearchProperties(
     }
   }
 
+  // Se não encontrou e tinha filtro de bairro, retry sem bairro (mesma cidade)
+  let usedCityFallback = false
+  if ((!properties || properties.length === 0) && input.neighborhood) {
+    console.log(`[SDR:SearchProperties] 0 resultados no bairro "${input.neighborhood}" — retry na mesma cidade`)
+
+    let cityQuery = supabase
+      .from('properties')
+      .select('id, title, slug, property_type, transaction_type, price, condo_fee, bedrooms, suites, bathrooms, parking_spots, total_area, address_neighborhood, address_city, address_state, amenities, external_code, description, images')
+      .eq('org_id', ctx.org_id)
+      .eq('status', 'active')
+
+    if (input.property_type) cityQuery = cityQuery.eq('property_type', input.property_type)
+    if (input.transaction_type) cityQuery = cityQuery.eq('transaction_type', input.transaction_type)
+    if (input.min_price) cityQuery = cityQuery.gte('price', usedPriceMargin ? input.min_price * 0.8 : input.min_price)
+    if (input.max_price) cityQuery = cityQuery.lte('price', usedPriceMargin ? input.max_price * 1.2 : input.max_price)
+    if (input.min_bedrooms) cityQuery = cityQuery.gte('bedrooms', input.min_bedrooms)
+    // SEM filtro de bairro — busca na cidade toda
+
+    cityQuery = cityQuery
+      .order('is_featured', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(amenityFilter ? 20 : 5)
+
+    const { data: cityProperties } = await cityQuery
+
+    let cityFiltered = cityProperties || []
+    if (amenityFilter && cityFiltered.length > 0) {
+      cityFiltered = cityFiltered.filter(p => {
+        const am = Array.isArray(p.amenities) ? p.amenities : []
+        return am.some((a: string) => a.toLowerCase().includes(amenityFilter))
+      })
+    }
+    if (cityFiltered.length > 5) cityFiltered = cityFiltered.slice(0, 5)
+
+    if (cityFiltered.length > 0) {
+      properties = cityFiltered
+      usedCityFallback = true
+      console.log(`[SDR:SearchProperties] Fallback cidade encontrou ${properties.length} imóvel(is)`)
+    }
+  }
+
   if (!properties || properties.length === 0) {
     return {
       success: true,
       data: {
         found: 0,
         properties: [],
-        message: 'Nenhum imóvel encontrado com esses critérios, mesmo com margem de preço.',
+        message: 'Nenhum imóvel encontrado com esses critérios.',
         tip: 'Informe ao lead que não encontrou opções com esse perfil no momento, mas pergunte se pode buscar com outros critérios (outra região, outro tipo de imóvel, etc.).'
       }
     }
@@ -1309,15 +1350,21 @@ async function executeSearchProperties(
   })
 
   console.log(`[SDR:SearchProperties] Encontrados ${formatted.length} imóveis | org: ${ctx.org_id}${usedPriceMargin ? ' (margem de preço)' : ''}`)
+  const tip = usedCityFallback
+    ? `ATENÇÃO: Não encontrei imóveis no bairro "${input.neighborhood}" que o lead pediu, mas encontrei opções em outros bairros da mesma cidade. Apresente naturalmente: "Nesse bairro não encontrei no momento, mas achei uma opção ótima no bairro [BAIRRO] que fica bem perto e tem as características que você procura". NÃO pergunte se aceita outro bairro — já apresente a sugestão direto.`
+    : usedPriceMargin
+      ? 'ATENÇÃO: Não encontrei no valor exato que o lead pediu, mas encontrei opções próximas (±20%). Apresente naturalmente: "No valor exato não encontrei, mas tenho uma opção muito boa por R$ X que pode te interessar". NÃO pergunte se o lead aceita outro valor — já apresente a sugestão direto.'
+      : 'IMPORTANTE: Use SOMENTE os dados listados acima. Se um campo é null ou não aparece, NÃO invente — diga que vai confirmar com o corretor. Apresente de forma natural.'
+
   return {
     success: true,
     data: {
       found: formatted.length,
       properties: formatted,
       price_margin_applied: usedPriceMargin,
-      tip: usedPriceMargin
-        ? 'ATENÇÃO: Não encontrei no valor exato que o lead pediu, mas encontrei opções próximas (±20%). Apresente naturalmente: "No valor exato não encontrei, mas tenho uma opção muito boa por R$ X que pode te interessar". NÃO pergunte se o lead aceita outro valor — já apresente a sugestão direto.'
-        : 'IMPORTANTE: Use SOMENTE os dados listados acima. Se um campo é null ou não aparece, NÃO invente — diga que vai confirmar com o corretor. Apresente de forma natural.'
+      city_fallback_applied: usedCityFallback,
+      searched_neighborhood: usedCityFallback ? input.neighborhood : undefined,
+      tip
     }
   }
 }
