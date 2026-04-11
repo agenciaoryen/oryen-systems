@@ -82,7 +82,7 @@ export async function processInboundMessage(msg: NormalizedInbound): Promise<Pro
     ? `[Áudio transcrito]: ${msg.messageText}`
     : msg.messageText
 
-  await supabase.from('sdr_messages').insert({
+  const { error: insertErr } = await supabase.from('sdr_messages').insert({
     org_id: orgId,
     lead_id: lead.id,
     campaign_id: msg.campaignId || null,
@@ -91,8 +91,11 @@ export async function processInboundMessage(msg: NormalizedInbound): Promise<Pro
     role: messageRole,
     body: bodyToSave,
     type: msg.isAttendant ? 'attendant' : msg.messageType,
-    source: msg.isAttendant ? 'human' : 'lead',
   })
+
+  if (insertErr) {
+    console.error(`[Webhook:Processor] ERRO ao salvar mensagem em sdr_messages: ${insertErr.message}`)
+  }
 
   // Salvar em conversations/messages
   try {
