@@ -1683,6 +1683,29 @@ async function executeSendPropertyImages(
     }
   }
 
+  const ref = property.external_code || property.slug || property.id.slice(0, 8)
+
+  // ─── Verificar quais fotos já foram enviadas para este lead/imóvel ───
+  const { data: prevSent } = await supabase
+    .from('sdr_messages')
+    .select('body')
+    .eq('lead_id', ctx.lead_id)
+    .eq('org_id', ctx.org_id)
+    .eq('type', 'image')
+    .eq('role', 'assistant')
+    .ilike('body', `%${input.property_id}%`)
+
+  // Extrair URLs já enviadas do histórico
+  const alreadySentUrls = new Set<string>()
+  if (prevSent) {
+    for (const msg of prevSent) {
+      const urlMatch = msg.body.match(/\|urls:(.+)$/)
+      if (urlMatch) {
+        urlMatch[1].split(',').forEach((u: string) => alreadySentUrls.add(u.trim()))
+      }
+    }
+  }
+
   // Ordenar por is_cover primeiro, depois por order
   const sorted = [...images].sort((a: any, b: any) => {
     if (a.is_cover && !b.is_cover) return -1
@@ -1690,7 +1713,27 @@ async function executeSendPropertyImages(
     return (a.order || 0) - (b.order || 0)
   })
 
-  const toSend = sorted.slice(0, maxImages)
+  // Filtrar fotos já enviadas
+  const notYetSent = sorted.filter((img: any) => img.url && !alreadySentUrls.has(img.url))
+
+  // Se todas as fotos já foram enviadas → não reenviar
+  if (notYetSent.length === 0) {
+    console.log(`[SDR:SendImages] TODAS as ${images.length} fotos de ${ref} já foram enviadas para ${ctx.phone}`)
+    return {
+      success: true,
+      data: {
+        sent: 0,
+        already_sent_all: true,
+        total_photos: images.length,
+        property_title: property.title,
+        property_ref: ref,
+        message: `Todas as ${images.length} fotos de "${property.title}" já foram enviadas anteriormente.`,
+        tip: `Você JÁ enviou TODAS as fotos deste imóvel ao lead. NÃO envie novamente. Se o lead gostou, conduza para visita de forma natural: "Pessoalmente é ainda melhor! Consigo encaixar uma visita amanhã, funciona pra você?" Se o lead quer ver OUTROS imóveis, use search_properties para buscar novas opções.`
+      }
+    }
+  }
+
+  const toSend = notYetSent.slice(0, maxImages)
 
   // Buscar instância para enviar via transport
   const { createTransport } = await import('./whatsapp-adapter')
@@ -1708,7 +1751,7 @@ async function executeSendPropertyImages(
   const phone = ctx.phone.replace(/[^0-9]/g, '')
 
   let sentCount = 0
-  const ref = property.external_code || property.slug || property.id.slice(0, 8)
+  const sentUrls: string[] = []
 
   for (let i = 0; i < toSend.length; i++) {
     const img = toSend[i] as any
@@ -1717,12 +1760,11 @@ async function executeSendPropertyImages(
     if (!imageUrl) continue
 
     try {
-      // Primeira imagem com caption (título da propriedade)
       const caption = i === 0 ? `${property.title} (${ref})` : undefined
       await transport.sendImage(phone, imageUrl, caption)
       sentCount++
+      sentUrls.push(imageUrl)
 
-      // Pequena pausa entre imagens para não parecer spam
       if (i < toSend.length - 1) {
         await new Promise(r => setTimeout(r, 1500))
       }
@@ -1731,10 +1773,14 @@ async function executeSendPropertyImages(
     }
   }
 
-  console.log(`[SDR:SendImages] ${sentCount}/${toSend.length} fotos enviadas para ${phone} | property: ${ref}`)
+  const totalSentSoFar = alreadySentUrls.size + sentCount
+  const remainingPhotos = images.length - totalSentSoFar
 
-  // Registrar no histórico que fotos foram enviadas (para o agente saber no próximo turno)
+  console.log(`[SDR:SendImages] ${sentCount} novas fotos enviadas para ${phone} | property: ${ref} | total enviadas: ${totalSentSoFar}/${images.length} | restantes: ${remainingPhotos}`)
+
+  // Registrar no histórico com URLs para rastreamento de duplicatas
   if (sentCount > 0) {
+    const bodyLog = `[Fotos enviadas: ${property.title} (${ref}) — ${sentCount} foto(s) | prop_id:${input.property_id} |urls:${sentUrls.join(',')}]`
     await supabase.from('sdr_messages').insert({
       org_id: ctx.org_id,
       lead_id: ctx.lead_id,
@@ -1742,18 +1788,17 @@ async function executeSendPropertyImages(
       instance_name: ctx.instance_name,
       phone: ctx.phone,
       role: 'assistant',
-      body: `[Fotos enviadas: ${property.title} (${ref}) — ${sentCount} foto(s)]`,
+      body: bodyLog,
       type: 'image',
     })
 
-    // Salvar no módulo de conversas do dashboard
     try {
       await supabase.rpc('fn_insert_message', {
         p_org_id: ctx.org_id,
         p_lead_id: ctx.lead_id,
         p_channel: 'whatsapp',
         p_direction: 'outbound',
-        p_body: `[Fotos enviadas: ${property.title} (${ref}) — ${sentCount} foto(s)]`,
+        p_body: `[Fotos: ${property.title} (${ref}) — ${sentCount} foto(s)]`,
         p_sender_type: 'agent_bot',
         p_sender_name: 'SDR Agent',
         p_message_type: 'image',
@@ -1766,15 +1811,15 @@ async function executeSendPropertyImages(
     success: true,
     data: {
       sent: sentCount,
+      total_sent_so_far: totalSentSoFar,
       total_available: images.length,
+      remaining_photos: remainingPhotos,
       property_title: property.title,
       property_ref: ref,
-      message: sentCount > 0
-        ? `${sentCount} foto(s) de "${property.title}" (${ref}) já foram enviadas ao lead.`
-        : 'Não foi possível enviar as fotos no momento.',
-      tip: sentCount > 0
-        ? `As fotos de "${property.title}" JÁ CHEGARAM no WhatsApp do lead. NÃO mencione o envio das fotos. PROIBIDO: "as fotos foram enviadas", "te enviei as fotos", "aqui estão as fotos". Responda com uma pergunta curta e calorosa: "O que achou?" ou "Te chamou atenção?". NÃO proponha visita ainda — espere a reação do lead. LEMBRE-SE: você já enviou fotos deste imóvel, NÃO envie novamente.`
-        : undefined
+      message: `${sentCount} foto(s) novas de "${property.title}" enviadas. Total enviadas: ${totalSentSoFar}/${images.length}.`,
+      tip: remainingPhotos > 0
+        ? `As fotos JÁ CHEGARAM no WhatsApp do lead. NÃO mencione o envio. Responda com "O que achou?" ou "Te chamou atenção?". Ainda restam ${remainingPhotos} foto(s) deste imóvel que podem ser enviadas depois se o lead pedir.`
+        : `As fotos JÁ CHEGARAM no WhatsApp do lead. NÃO mencione o envio. Você já enviou TODAS as ${images.length} fotos deste imóvel. Se o lead gostou, conduza para visita: "Pessoalmente é ainda melhor! Consigo encaixar amanhã, funciona pra você?" NÃO ofereça mais fotos deste imóvel.`
     }
   }
 }
