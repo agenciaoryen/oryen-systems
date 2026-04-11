@@ -1412,7 +1412,8 @@ async function executeSendPropertyImages(
       success: true,
       data: {
         sent: 0,
-        message: 'Esta propriedade não possui fotos cadastradas no momento. Informe ao lead que as fotos serão disponibilizadas em breve.'
+        message: 'Esta propriedade ainda não tem fotos cadastradas.',
+        tip: 'Diga ao lead de forma natural: "As fotos desse imóvel ainda estão sendo preparadas, mas posso te contar mais sobre ele ou agendar uma visita pra você conhecer pessoalmente. O que prefere?"'
       }
     }
   }
