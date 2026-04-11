@@ -98,13 +98,14 @@ export async function POST(request: NextRequest) {
     console.log(`[SDR:Process] Processando ${messages.length} msg(s) de ${phone}: "${fullMessage.slice(0, 80)}..."`)
 
     // ─── 4. Buscar contexto de conversa (últimas N mensagens) ───
-    const CONTEXT_WINDOW = 20 // mensagens de contexto para a IA
+    const CONTEXT_WINDOW = 30 // mensagens de contexto para a IA
 
     const { data: history } = await supabase
       .from('sdr_messages')
       .select('role, body, created_at')
       .eq('lead_id', lead_id)
       .eq('org_id', org_id)
+      .in('role', ['user', 'assistant'])  // Só mensagens reais da conversa (exclui system/tool_result)
       .order('created_at', { ascending: false })
       .limit(CONTEXT_WINDOW)
 
