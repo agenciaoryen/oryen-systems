@@ -1477,7 +1477,7 @@ async function executeSendPropertyImages(
         ? `${sentCount} foto(s) já foram enviadas ao lead automaticamente.`
         : 'Não foi possível enviar as fotos no momento.',
       tip: sentCount > 0
-        ? 'As fotos JÁ CHEGARAM no WhatsApp do lead. NÃO diga "aqui estão as fotos", "enviei as fotos", "[Imagens enviadas]" ou qualquer coisa que descreva o envio. O lead já VIU as fotos. Sua próxima mensagem deve ser uma pergunta sobre o imóvel: "O que achou?", "Te interessou?", "Quer agendar uma visita pra conhecer pessoalmente?"'
+        ? 'As fotos JÁ CHEGARAM no WhatsApp do lead. Você É quem enviou — não fale em terceira pessoa. PROIBIDO dizer: "as fotos foram enviadas", "já enviei as fotos", "aqui estão as fotos", "[Imagens enviadas]". Isso te entrega como robô. Aja como se VOCÊ tivesse acabado de mostrar as fotos pessoalmente. Sua mensagem deve ser APENAS uma pergunta curta e natural: "O que achou?" ou "Te interessou?" ou "Quer conhecer pessoalmente?"'
         : undefined
     }
   }
