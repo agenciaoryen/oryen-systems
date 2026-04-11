@@ -1219,14 +1219,56 @@ async function executeSearchProperties(
     properties = properties.slice(0, 5)
   }
 
+  // Se não encontrou e tinha filtro de preço, retry automático com margem de ±20%
+  let usedPriceMargin = false
+  if ((!properties || properties.length === 0) && (input.max_price || input.min_price)) {
+    console.log(`[SDR:SearchProperties] 0 resultados com preço exato — retry com margem ±20%`)
+
+    let retryQuery = supabase
+      .from('properties')
+      .select('id, title, slug, property_type, transaction_type, price, condo_fee, bedrooms, suites, bathrooms, parking_spots, total_area, address_neighborhood, address_city, address_state, amenities, external_code, description, images')
+      .eq('org_id', ctx.org_id)
+      .eq('status', 'active')
+
+    if (input.property_type) retryQuery = retryQuery.eq('property_type', input.property_type)
+    if (input.transaction_type) retryQuery = retryQuery.eq('transaction_type', input.transaction_type)
+    if (input.min_price) retryQuery = retryQuery.gte('price', input.min_price * 0.8)
+    if (input.max_price) retryQuery = retryQuery.lte('price', input.max_price * 1.2)
+    if (input.min_bedrooms) retryQuery = retryQuery.gte('bedrooms', input.min_bedrooms)
+    if (input.neighborhood) retryQuery = retryQuery.ilike('address_neighborhood', `%${input.neighborhood}%`)
+
+    retryQuery = retryQuery
+      .order('is_featured', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(amenityFilter ? 20 : 5)
+
+    const { data: retryProperties } = await retryQuery
+
+    // Filtrar amenidade se necessário
+    let retryFiltered = retryProperties || []
+    if (amenityFilter && retryFiltered.length > 0) {
+      retryFiltered = retryFiltered.filter(p => {
+        const am = Array.isArray(p.amenities) ? p.amenities : []
+        return am.some((a: string) => a.toLowerCase().includes(amenityFilter))
+      })
+    }
+    if (retryFiltered.length > 5) retryFiltered = retryFiltered.slice(0, 5)
+
+    if (retryFiltered.length > 0) {
+      properties = retryFiltered
+      usedPriceMargin = true
+      console.log(`[SDR:SearchProperties] Retry encontrou ${properties.length} imóvel(is) com margem de preço`)
+    }
+  }
+
   if (!properties || properties.length === 0) {
     return {
       success: true,
       data: {
         found: 0,
         properties: [],
-        message: 'Nenhum imóvel encontrado com esses critérios exatos.',
-        tip: 'IMPORTANTE: NÃO diga ao lead que não tem. Primeiro tente buscar novamente com filtros mais amplos: remova transaction_type, aumente max_price em 30%, reduza min_bedrooms em 1, ou remova neighborhood. Só informe ao lead que não encontrou se TODAS as tentativas falharem.'
+        message: 'Nenhum imóvel encontrado com esses critérios, mesmo com margem de preço.',
+        tip: 'Informe ao lead que não encontrou opções com esse perfil no momento, mas pergunte se pode buscar com outros critérios (outra região, outro tipo de imóvel, etc.).'
       }
     }
   }
@@ -1266,13 +1308,16 @@ async function executeSearchProperties(
     }
   })
 
-  console.log(`[SDR:SearchProperties] Encontrados ${formatted.length} imóveis | org: ${ctx.org_id}`)
+  console.log(`[SDR:SearchProperties] Encontrados ${formatted.length} imóveis | org: ${ctx.org_id}${usedPriceMargin ? ' (margem de preço)' : ''}`)
   return {
     success: true,
     data: {
       found: formatted.length,
       properties: formatted,
-      tip: 'IMPORTANTE: Use SOMENTE os dados listados acima. Se um campo é null ou não aparece, NÃO invente — diga que vai confirmar com o corretor. Apresente de forma natural, mencionando apenas dados que EXISTEM nos resultados.'
+      price_margin_applied: usedPriceMargin,
+      tip: usedPriceMargin
+        ? 'ATENÇÃO: Não encontrei no valor exato que o lead pediu, mas encontrei opções próximas (±20%). Apresente naturalmente: "No valor exato não encontrei, mas tenho uma opção muito boa por R$ X que pode te interessar". NÃO pergunte se o lead aceita outro valor — já apresente a sugestão direto.'
+        : 'IMPORTANTE: Use SOMENTE os dados listados acima. Se um campo é null ou não aparece, NÃO invente — diga que vai confirmar com o corretor. Apresente de forma natural.'
     }
   }
 }
