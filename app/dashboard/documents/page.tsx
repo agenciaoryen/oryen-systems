@@ -167,95 +167,92 @@ function DocumentCard({ doc, lang, t }: { doc: LeadDocument; lang: Language; t: 
 
   return (
     <div
-      className="rounded-xl p-4 transition-all group"
+      className="rounded-xl p-3 sm:p-4 transition-all group"
       style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-hover)' }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-subtle)' }}
     >
-      <div className="flex items-start justify-between gap-2">
-        {/* Left side */}
-        <div className="flex items-start gap-3 flex-1 min-w-0 overflow-hidden">
-          <div className="p-2 sm:p-2.5 rounded-lg shrink-0" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
-            {doc.source_type === 'uploaded' ? <Upload size={16} /> : categoryIcon}
+      <div className="flex items-start gap-2 sm:gap-3">
+        {/* Icon */}
+        <div className="p-2 sm:p-2.5 rounded-lg shrink-0" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
+          {doc.source_type === 'uploaded' ? <Upload size={16} /> : categoryIcon}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-medium text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
+            {/* Menu */}
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-1.5 rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100"
+                style={{ color: 'var(--color-text-muted)' }}
+              >
+                <MoreVertical size={16} />
+              </button>
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                  <div
+                    className="absolute right-0 top-full mt-1 rounded-lg shadow-xl z-20 py-1 min-w-[140px]"
+                    style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
+                  >
+                    <button className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
+                      <Eye size={14} /> {t.view}
+                    </button>
+                    {doc.status === 'draft' && (
+                      <button className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
+                        <Send size={14} /> {t.send}
+                      </button>
+                    )}
+                    {doc.file_url && (
+                      <button className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
+                        <Download size={14} /> {t.download}
+                      </button>
+                    )}
+                    <hr style={{ borderColor: 'var(--color-border-subtle)' }} className="my-1" />
+                    <button className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-error)' }}>
+                      <X size={14} /> {t.delete}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm sm:text-base truncate" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
+
+          {/* Lead + Status */}
+          <div className="flex flex-wrap items-center gap-2 mt-1">
             {doc.lead && (
               <Link
                 href={`/dashboard/crm/${doc.lead.id}`}
-                className="text-xs sm:text-sm flex items-center gap-1 mt-0.5 transition-colors"
+                className="text-xs flex items-center gap-1 transition-colors"
                 style={{ color: 'var(--color-text-muted)' }}
               >
-                <User size={12} />
-                <span className="truncate">{doc.lead.name}</span>
+                <User size={11} />
+                <span className="truncate max-w-[120px] sm:max-w-none">{doc.lead.name}</span>
               </Link>
             )}
-          </div>
-        </div>
-
-        {/* Right side */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <StatusBadge status={doc.status} lang={lang} />
-
-          {/* Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-1.5 rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              <MoreVertical size={16} />
-            </button>
-
-            {showMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowMenu(false)}
-                />
-                <div
-                  className="absolute right-0 top-full mt-1 rounded-lg shadow-xl z-20 py-1 min-w-[140px]"
-                  style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
-                >
-                  <button className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
-                    <Eye size={14} /> {t.view}
-                  </button>
-                  {doc.status === 'draft' && (
-                    <button className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
-                      <Send size={14} /> {t.send}
-                    </button>
-                  )}
-                  {doc.file_url && (
-                    <button className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
-                      <Download size={14} /> {t.download}
-                    </button>
-                  )}
-                  <hr style={{ borderColor: 'var(--color-border-subtle)' }} className="my-1" />
-                  <button className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-error)' }}>
-                    <X size={14} /> {t.delete}
-                  </button>
-                </div>
-              </>
-            )}
+            <StatusBadge status={doc.status} lang={lang} />
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 pt-3" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
-        <span className="text-xs flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
-          <Calendar size={12} />
-          {t.createdAt}: {new Date(doc.created_at).toLocaleDateString()}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2.5 pt-2.5 ml-10 sm:ml-[52px]" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+        <span className="text-[11px] sm:text-xs flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
+          <Calendar size={11} />
+          {new Date(doc.created_at).toLocaleDateString()}
         </span>
         {doc.sent_at && (
-          <span className="text-xs flex items-center gap-1" style={{ color: 'var(--color-accent)' }}>
-            <Send size={12} />
+          <span className="text-[11px] sm:text-xs flex items-center gap-1" style={{ color: 'var(--color-accent)' }}>
+            <Send size={11} />
             {new Date(doc.sent_at).toLocaleDateString()}
           </span>
         )}
         {doc.signed_at && (
-          <span className="text-xs flex items-center gap-1" style={{ color: 'var(--color-success)' }}>
-            <CheckCircle2 size={12} />
+          <span className="text-[11px] sm:text-xs flex items-center gap-1" style={{ color: 'var(--color-success)' }}>
+            <CheckCircle2 size={11} />
             {new Date(doc.signed_at).toLocaleDateString()}
           </span>
         )}
@@ -270,16 +267,16 @@ function DocumentCard({ doc, lang, t }: { doc: LeadDocument; lang: Language; t: 
 
 function EmptyState({ t, onNewDocument, onUpload }: { t: any; onNewDocument: () => void; onUpload: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: 'var(--color-primary-subtle)' }}>
-        <FileText className="w-8 h-8" style={{ color: 'var(--color-primary)' }} />
+    <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center px-4">
+      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-4" style={{ background: 'var(--color-primary-subtle)' }}>
+        <FileText className="w-7 h-7 sm:w-8 sm:h-8" style={{ color: 'var(--color-primary)' }} />
       </div>
-      <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>{t.noDocuments}</h3>
+      <h3 className="text-base sm:text-lg font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>{t.noDocuments}</h3>
       <p className="text-sm mb-6 max-w-sm" style={{ color: 'var(--color-text-muted)' }}>{t.noDocumentsDesc}</p>
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
         <button
           onClick={onNewDocument}
-          className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+          className="px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
           style={{ background: 'var(--color-primary)', color: '#fff' }}
         >
           <Plus size={16} />
@@ -287,7 +284,7 @@ function EmptyState({ t, onNewDocument, onUpload }: { t: any; onNewDocument: () 
         </button>
         <button
           onClick={onUpload}
-          className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+          className="px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
           style={{ background: 'var(--color-bg-hover)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border-subtle)' }}
         >
           <Upload size={16} />
@@ -411,7 +408,7 @@ export default function DocumentsPage() {
 
   return (
     <div className="min-h-[calc(100vh-100px)]" style={{ background: 'var(--color-bg-surface)' }}>
-      <div className="max-w-6xl mx-auto space-y-6 pb-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-5 sm:space-y-6 pb-8">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -459,10 +456,10 @@ export default function DocumentsPage() {
           </div>
 
           {/* Status Filter */}
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               onClick={() => setStatusFilter('all')}
-              className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
+              className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors"
               style={statusFilter === 'all'
                 ? { background: 'var(--color-primary)', color: '#fff' }
                 : { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)' }
@@ -472,7 +469,7 @@ export default function DocumentsPage() {
             </button>
             <button
               onClick={() => setStatusFilter('draft')}
-              className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
+              className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors"
               style={statusFilter === 'draft'
                 ? { background: 'var(--color-bg-elevated)', color: 'var(--color-text-primary)' }
                 : { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)' }
@@ -482,7 +479,7 @@ export default function DocumentsPage() {
             </button>
             <button
               onClick={() => setStatusFilter('sent')}
-              className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
+              className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors"
               style={statusFilter === 'sent'
                 ? { background: 'var(--color-accent)', color: 'var(--color-text-primary)' }
                 : { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)' }
@@ -492,7 +489,7 @@ export default function DocumentsPage() {
             </button>
             <button
               onClick={() => setStatusFilter('signed')}
-              className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
+              className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors"
               style={statusFilter === 'signed'
                 ? { background: 'var(--color-success)', color: 'var(--color-text-primary)' }
                 : { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)' }
