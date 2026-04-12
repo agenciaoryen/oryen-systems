@@ -293,9 +293,9 @@ function DocumentCard({ doc, lang, t, onRefresh }: { doc: LeadDocument; lang: La
 
       {/* Preview Modal */}
       {showPreview && doc.content && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={() => setShowPreview(false)}>
-          <div className="border rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }} onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-6 sm:p-10" style={{ background: 'var(--color-bg-overlay)' }} onClick={() => setShowPreview(false)}>
+          <div className="border rounded-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-8 sm:px-10 py-5 border-b" style={{ borderColor: 'var(--color-border)' }}>
               <div className="flex items-center gap-3 min-w-0 mr-4">
                 <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'var(--color-primary-subtle)' }}>
                   <FileText size={20} style={{ color: 'var(--color-primary)' }} />
