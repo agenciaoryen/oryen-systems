@@ -299,17 +299,17 @@ function DocumentItem({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b relative z-10" style={{ borderColor: 'var(--color-border)' }}>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg" style={{ background: 'var(--color-primary-subtle)' }}>
+            <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b relative z-10" style={{ borderColor: 'var(--color-border)' }}>
+              <div className="flex items-center gap-3 min-w-0 mr-4">
+                <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'var(--color-primary-subtle)' }}>
                   <FileText size={20} style={{ color: 'var(--color-primary)' }} />
                 </div>
-                <div>
-                  <h3 className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
+                <div className="min-w-0">
+                  <h3 className="font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
                   <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Vista previa del documento</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => {
                     const printWindow = window.open('', '_blank')
@@ -358,10 +358,10 @@ function DocumentItem({
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowPreview(false) }}
-                  className="p-2 rounded-lg border transition-colors cursor-pointer relative z-20"
+                  className="p-2.5 rounded-xl border transition-colors cursor-pointer relative z-20"
                   style={{ background: 'var(--color-bg-hover)', borderColor: 'var(--color-border)', color: 'var(--color-text-tertiary)', pointerEvents: 'auto' }}
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
             </div>

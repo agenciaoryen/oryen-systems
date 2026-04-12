@@ -295,19 +295,19 @@ function DocumentCard({ doc, lang, t, onRefresh }: { doc: LeadDocument; lang: La
       {showPreview && doc.content && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={() => setShowPreview(false)}>
           <div className="border rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }} onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg" style={{ background: 'var(--color-primary-subtle)' }}>
+            <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b" style={{ borderColor: 'var(--color-border)' }}>
+              <div className="flex items-center gap-3 min-w-0 mr-4">
+                <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'var(--color-primary-subtle)' }}>
                   <FileText size={20} style={{ color: 'var(--color-primary)' }} />
                 </div>
                 <h3 className="font-semibold text-sm sm:text-base truncate" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
               </div>
-              <button onClick={() => setShowPreview(false)} className="p-2 rounded-lg" style={{ color: 'var(--color-text-tertiary)' }}>
-                <X size={20} />
+              <button onClick={() => setShowPreview(false)} className="p-2.5 rounded-xl shrink-0 transition-colors" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}>
+                <X size={18} />
               </button>
             </div>
             <div className="flex-1 overflow-auto p-4 sm:p-8" style={{ background: '#f3f4f6' }}>
-              <div className="bg-white rounded-lg shadow-lg" style={{ maxWidth: '210mm', width: '100%', margin: '0 auto', padding: '15mm sm:20mm', fontSize: '11pt', lineHeight: '1.6', color: '#1a1a1a' }}>
+              <div className="bg-white rounded-lg shadow-lg" style={{ maxWidth: '210mm', width: '100%', margin: '0 auto', padding: '20mm', fontSize: '11pt', lineHeight: '1.6', color: '#1a1a1a' }}>
                 <div dangerouslySetInnerHTML={{ __html: doc.content }} />
               </div>
             </div>
