@@ -361,6 +361,7 @@ export default function FinancingCalculator({
   const t = TRANSLATIONS[lang]
 
   // ─── State ──────────────────────────────────────────────────────────────────
+  const [isCompactView, setIsCompactView] = useState(compact)
   const [country, setCountry] = useState<CountryCode>(initialCountry || 'BR')
   const countryConfig = useMemo(() => getCountryConfig(country), [country])
   const bankPresets = useMemo(() => getBankPresets(country), [country])
@@ -544,7 +545,7 @@ export default function FinancingCalculator({
         <Calculator size={20} style={{ color: 'var(--color-primary)' }} />
         <h2
           style={{
-            fontSize: compact ? '18px' : '20px',
+            fontSize: isCompactView ? '18px' : '20px',
             fontWeight: 700,
             color: 'var(--color-text-primary)',
             margin: 0,
@@ -975,7 +976,7 @@ export default function FinancingCalculator({
             >
               {t.paymentEvolution}
             </h3>
-            <div style={{ width: '100%', height: compact ? 220 : 300 }}>
+            <div style={{ width: '100%', height: isCompactView ? 220 : 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
                   <defs>
@@ -1043,7 +1044,7 @@ export default function FinancingCalculator({
           {/* ═══════════════════════════════════════════════════════════════════ */}
           {/* NON-COMPACT sections */}
           {/* ═══════════════════════════════════════════════════════════════════ */}
-          {!compact ? (
+          {!isCompactView ? (
             <>
               {/* ─── Section 4: Comparison Table ─────────────────────────────── */}
               <div style={styles.card}>
@@ -1464,6 +1465,7 @@ export default function FinancingCalculator({
             <div style={{ textAlign: 'center' }}>
               <button
                 type="button"
+                onClick={() => setIsCompactView(false)}
                 style={{
                   ...styles.secondaryBtn,
                   display: 'inline-flex',

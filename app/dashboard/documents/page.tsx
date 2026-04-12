@@ -35,6 +35,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -301,16 +302,79 @@ function EmptyState({ t, onNewDocument, onUpload }: { t: any; onNewDocument: () 
 // PÁGINA PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// TRADUÇÕES DO SELETOR DE LEAD
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const LEAD_SELECTOR_T = {
+  pt: {
+    selectLead: 'Selecione o contato',
+    searchLead: 'Buscar contato...',
+    noLeads: 'Nenhum contato encontrado',
+    cancel: 'Cancelar',
+  },
+  en: {
+    selectLead: 'Select contact',
+    searchLead: 'Search contact...',
+    noLeads: 'No contacts found',
+    cancel: 'Cancel',
+  },
+  es: {
+    selectLead: 'Seleccionar contacto',
+    searchLead: 'Buscar contacto...',
+    noLeads: 'No se encontraron contactos',
+    cancel: 'Cancelar',
+  }
+}
+
 export default function DocumentsPage() {
-  const { user } = useAuth()
+  const { user, activeOrgId } = useAuth()
   const { documents, loading, error, refetch } = useLeadDocuments()
 
   const lang = (user?.language as Language) || 'pt'
   const t = TRANSLATIONS[lang]
+  const lt = LEAD_SELECTOR_T[lang]
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<DocumentStatus | 'all'>('all')
+  const [showLeadSelector, setShowLeadSelector] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [selectedLead, setSelectedLead] = useState<{ id: string; name: string; phone?: string; email?: string } | null>(null)
+  const [leadSearch, setLeadSearch] = useState('')
+  const [leads, setLeads] = useState<{ id: string; name: string; phone?: string; email?: string }[]>([])
+  const [leadsLoading, setLeadsLoading] = useState(false)
+
+  // Buscar leads quando abrir o seletor
+  const openLeadSelector = async () => {
+    setShowLeadSelector(true)
+    setLeadSearch('')
+    setLeadsLoading(true)
+    const { data } = await supabase
+      .from('leads')
+      .select('id, name, phone, email')
+      .eq('org_id', activeOrgId)
+      .order('updated_at', { ascending: false })
+      .limit(50)
+    setLeads(data || [])
+    setLeadsLoading(false)
+  }
+
+  // Filtrar leads por busca
+  const filteredLeads = useMemo(() => {
+    if (!leadSearch) return leads
+    const s = leadSearch.toLowerCase()
+    return leads.filter(l =>
+      l.name?.toLowerCase().includes(s) ||
+      l.phone?.includes(s) ||
+      l.email?.toLowerCase().includes(s)
+    )
+  }, [leads, leadSearch])
+
+  const handleSelectLead = (lead: typeof leads[0]) => {
+    setSelectedLead(lead)
+    setShowLeadSelector(false)
+    setShowCreateModal(true)
+  }
 
   // Filtrar documentos
   const filteredDocuments = useMemo(() => {
@@ -369,7 +433,7 @@ export default function DocumentsPage() {
               <span className="hidden sm:inline">{t.upload}</span>
             </button>
             <button
-              onClick={() => setShowCreateModal(true)}
+              onClick={openLeadSelector}
               className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors shadow-lg"
               style={{ background: 'var(--color-primary)', color: '#fff' }}
             >
@@ -455,42 +519,82 @@ export default function DocumentsPage() {
         )}
       </div>
 
-      {/* Create Document Modal - Nota: precisa de leadId */}
-      {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }}>
+      {/* Lead Selector Modal */}
+      {showLeadSelector && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={() => setShowLeadSelector(false)}>
           <div
-            className="rounded-2xl p-6 max-w-md w-full text-center"
-            style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
+            className="rounded-2xl max-w-md w-full overflow-hidden"
+            style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}
+            onClick={e => e.stopPropagation()}
           >
-            <FileText className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--color-primary)' }} />
-            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>
-              {lang === 'pt' ? 'Criar Documento' : lang === 'es' ? 'Crear Documento' : 'Create Document'}
-            </h3>
-            <p className="text-sm mb-6" style={{ color: 'var(--color-text-tertiary)' }}>
-              {lang === 'pt'
-                ? 'Para criar um documento, acesse o perfil de um contato e clique em "Novo Documento" na seção de documentos.'
-                : lang === 'es'
-                ? 'Para crear un documento, acceda al perfil de un contacto y haga clic en "Nuevo Documento" en la sección de documentos.'
-                : 'To create a document, go to a contact profile and click "New Document" in the documents section.'}
-            </p>
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                style={{ background: 'var(--color-bg-hover)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border-subtle)' }}
-              >
-                {lang === 'pt' ? 'Fechar' : lang === 'es' ? 'Cerrar' : 'Close'}
-              </button>
-              <Link
-                href="/dashboard/crm"
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                style={{ background: 'var(--color-primary)', color: '#fff' }}
-              >
-                {lang === 'pt' ? 'Ir para CRM' : lang === 'es' ? 'Ir al CRM' : 'Go to CRM'}
-              </Link>
+            <div className="p-5 pb-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                  <User size={20} style={{ color: 'var(--color-primary)' }} />
+                  {lt.selectLead}
+                </h3>
+                <button onClick={() => setShowLeadSelector(false)} className="p-1 rounded-lg">
+                  <X size={18} style={{ color: 'var(--color-text-secondary)' }} />
+                </button>
+              </div>
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder={lt.searchLead}
+                  value={leadSearch}
+                  onChange={e => setLeadSearch(e.target.value)}
+                  autoFocus
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                />
+              </div>
+            </div>
+            <div className="max-h-72 overflow-y-auto px-5 pb-5">
+              {leadsLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-primary)' }} />
+                </div>
+              ) : filteredLeads.length === 0 ? (
+                <p className="text-sm text-center py-8" style={{ color: 'var(--color-text-muted)' }}>{lt.noLeads}</p>
+              ) : (
+                <div className="space-y-1">
+                  {filteredLeads.map(lead => (
+                    <button
+                      key={lead.id}
+                      onClick={() => handleSelectLead(lead)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all hover:opacity-90"
+                      style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)' }}
+                    >
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-xs font-bold" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
+                        {(lead.name || '?').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
+                          {lead.name || 'Sem nome'}
+                        </p>
+                        <p className="text-xs truncate" style={{ color: 'var(--color-text-muted)' }}>
+                          {lead.phone || lead.email || '—'}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
+      )}
+
+      {/* Create Document Modal */}
+      {showCreateModal && selectedLead && (
+        <CreateDocumentModal
+          isOpen={showCreateModal}
+          onClose={() => { setShowCreateModal(false); setSelectedLead(null) }}
+          leadId={selectedLead.id}
+          leadData={{ name: selectedLead.name, phone: selectedLead.phone, email: selectedLead.email }}
+          onSuccess={() => { refetch(); setSelectedLead(null) }}
+        />
       )}
     </div>
   )

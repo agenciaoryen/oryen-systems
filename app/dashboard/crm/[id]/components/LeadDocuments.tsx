@@ -499,14 +499,6 @@ export default function LeadDocuments({ leadId, leadData }: LeadDocumentsProps) 
           <FileText className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--color-text-tertiary)' }} />
           <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{t.noDocuments}</p>
           <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.noDocumentsDesc}</p>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="mt-4 px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 transition-colors"
-            style={{ background: 'var(--color-primary)', color: '#fff' }}
-          >
-            <Plus size={14} />
-            {t.newDocument}
-          </button>
         </div>
       ) : (
         <div className="space-y-2">
