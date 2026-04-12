@@ -9,10 +9,10 @@
 //   - Entre mensagens: 1-2s de pausa extra
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const MS_PER_CHAR = 55
-const MIN_TYPING_MS = 1500
-const MAX_TYPING_MS = 8000
-const PAUSE_BETWEEN_MS = 1200  // pausa entre mensagens consecutivas
+const MS_PER_CHAR = 40
+const MIN_TYPING_MS = 1200
+const MAX_TYPING_MS = 6000
+const PAUSE_BETWEEN_MS = 1000  // pausa entre mensagens consecutivas
 
 export interface ScheduledMessage {
   text: string

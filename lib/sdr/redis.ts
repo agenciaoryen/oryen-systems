@@ -155,9 +155,10 @@ export async function stopClear(orgId: string, phone: string): Promise<void> {
  * Mensagens longas (parágrafo) → espera menos (lead já terminou)
  */
 export function calculateBufferSeconds(messageText: string): number {
-  // Buffer de 20s para dar tempo do lead enviar múltiplas mensagens
-  // antes do agente processar (evita respostas fragmentadas)
-  return 20
+  const len = messageText.trim().length
+  if (len <= 20) return 8     // "oi", "sim", "pode ser" — lead já terminou
+  if (len <= 100) return 12   // frase curta — provavelmente completa
+  return 18                   // parágrafo — pequena margem extra
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
