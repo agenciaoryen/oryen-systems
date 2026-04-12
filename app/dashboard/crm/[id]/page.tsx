@@ -1188,14 +1188,14 @@ export default function LeadProfilePage() {
                       <p className="text-[10px] font-mono font-medium" style={{ color: 'var(--color-text-muted)' }}>
                         {formatDateTime(event.created_at, userLang, userTimezone)}
                       </p>
-                      <div className="flex items-center gap-1 opacity-0 group-hover/event:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover/event:opacity-100 transition-opacity">
                         <button
                           onClick={() => {
                             setEditingEventId(event.id)
                             setEditingEventContent(event.content)
                           }}
                           className="p-1.5 rounded-lg transition-colors hover:bg-[var(--color-bg-hover)]"
-                          style={{ color: 'var(--color-text-muted)' }}
+                          style={{ color: 'var(--color-text-secondary)' }}
                           title="Editar"
                         >
                           <Pencil size={12} />
@@ -1203,7 +1203,7 @@ export default function LeadProfilePage() {
                         <button
                           onClick={() => handleDeleteEvent(event.id)}
                           className="p-1.5 rounded-lg transition-colors hover:bg-[var(--color-bg-hover)]"
-                          style={{ color: 'var(--color-error)' }}
+                          style={{ color: 'var(--color-text-secondary)' }}
                           title="Excluir"
                         >
                           <Trash2 size={12} />
