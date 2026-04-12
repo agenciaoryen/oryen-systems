@@ -437,7 +437,7 @@ export default function WhatsAppPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
             {t.title}
@@ -447,13 +447,13 @@ export default function WhatsAppPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
+          <span className="text-xs px-2.5 py-1 rounded-full whitespace-nowrap" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
             {t.instancesCount(instances.length, maxInstances)}
           </span>
           <button
             onClick={() => canCreateMore ? setShowTypeSelector(true) : null}
             disabled={!canCreateMore}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
             style={{ background: 'var(--color-primary)', color: '#fff' }}
             title={!canCreateMore ? t.limitReached : ''}
           >
@@ -726,119 +726,122 @@ export default function WhatsAppPage() {
           {instances.map(instance => (
             <div
               key={instance.id}
-              className="rounded-2xl p-5 transition-all"
+              className="rounded-2xl p-4 sm:p-5 transition-all"
               style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  {/* Ícone */}
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+              {/* Top: Icon + Info + Badges */}
+              <div className="flex items-start gap-3 sm:gap-4">
+                {/* Ícone */}
+                <div
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0"
+                  style={{
+                    background: instance.status === 'connected'
+                      ? 'rgba(16,185,129,0.1)'
+                      : 'var(--color-bg-elevated)'
+                  }}
+                >
+                  <Smartphone
+                    size={20}
                     style={{
-                      background: instance.status === 'connected'
-                        ? 'rgba(16,185,129,0.1)'
-                        : 'var(--color-bg-elevated)'
+                      color: instance.status === 'connected'
+                        ? 'rgb(16,185,129)'
+                        : 'var(--color-text-secondary)'
                     }}
-                  >
-                    <Smartphone
-                      size={22}
-                      style={{
-                        color: instance.status === 'connected'
-                          ? 'rgb(16,185,129)'
-                          : 'var(--color-text-secondary)'
-                      }}
-                    />
-                  </div>
-
-                  {/* Info */}
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
-                        {instance.display_name || instance.instance_name}
-                      </h3>
-                      <StatusBadge status={instance.status} />
-                      {/* Badge API type */}
-                      <span
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                        style={instance.api_type === 'cloud_api'
-                          ? { background: 'rgba(37,211,102,0.1)', color: '#25D366', border: '1px solid rgba(37,211,102,0.3)' }
-                          : { background: 'rgba(251,191,36,0.1)', color: 'rgb(217,160,15)', border: '1px solid rgba(251,191,36,0.3)' }
-                        }
-                      >
-                        {instance.api_type === 'cloud_api' ? <Shield size={10} /> : <QrCode size={10} />}
-                        {instance.api_type === 'cloud_api' ? t.official : t.unofficial}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 mt-1">
-                      {instance.phone_number && (
-                        <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                          {t.phone}: +{instance.phone_number}
-                        </span>
-                      )}
-                      {instance.connected_at && (
-                        <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                          {t.connectedSince} {new Date(instance.connected_at).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  />
                 </div>
 
-                {/* Agent select + Actions */}
-                <div className="flex items-center gap-3">
-                  {/* Agent select */}
-                  <div className="flex items-center gap-1.5">
-                    <Bot size={13} style={{ color: instance.agent_id ? 'rgb(16,185,129)' : 'var(--color-text-secondary)' }} />
-                    <CustomSelect
-                      value={instance.agent_id || ''}
-                      onChange={(v) => handleLinkAgent(instance.id, v)}
-                      options={[
-                        { value: '', label: t.noAgent },
-                        ...agents.map(ag => ({
-                          value: ag.id,
-                          label: ag.solution_slug.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
-                        })),
-                      ]}
-                    />
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
+                    {instance.display_name || instance.instance_name}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                    <StatusBadge status={instance.status} />
+                    {/* Badge API type */}
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                      style={instance.api_type === 'cloud_api'
+                        ? { background: 'rgba(37,211,102,0.1)', color: '#25D366', border: '1px solid rgba(37,211,102,0.3)' }
+                        : { background: 'rgba(251,191,36,0.1)', color: 'rgb(217,160,15)', border: '1px solid rgba(251,191,36,0.3)' }
+                      }
+                    >
+                      {instance.api_type === 'cloud_api' ? <Shield size={10} /> : <QrCode size={10} />}
+                      {instance.api_type === 'cloud_api' ? t.official : t.unofficial}
+                    </span>
                   </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 mt-1">
+                    {instance.phone_number && (
+                      <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                        {t.phone}: +{instance.phone_number}
+                      </span>
+                    )}
+                    {instance.connected_at && (
+                      <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                        {t.connectedSince} {new Date(instance.connected_at).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-                  {/* Templates link (Cloud API only) */}
-                  {instance.api_type === 'cloud_api' && instance.waba_id && (
-                    <Link
-                      href={`/dashboard/whatsapp/templates?waba_id=${instance.waba_id}`}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all"
-                      style={{ background: 'rgba(37,211,102,0.08)', color: '#25D366', border: '1px solid rgba(37,211,102,0.2)' }}
-                    >
-                      <FileText size={13} />
-                      {t.templates}
-                    </Link>
-                  )}
+              {/* Bottom: Agent select + Actions */}
+              <div className="flex flex-wrap items-center gap-2 mt-3 pt-3" style={{ borderTop: '1px solid var(--color-border)' }}>
+                {/* Agent select */}
+                <div className="flex items-center gap-1.5">
+                  <Bot size={13} style={{ color: instance.agent_id ? 'rgb(16,185,129)' : 'var(--color-text-secondary)' }} />
+                  <CustomSelect
+                    value={instance.agent_id || ''}
+                    onChange={(v) => handleLinkAgent(instance.id, v)}
+                    options={[
+                      { value: '', label: t.noAgent },
+                      ...agents.map(ag => ({
+                        value: ag.id,
+                        label: ag.solution_slug.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+                      })),
+                    ]}
+                  />
+                </div>
 
-                  {/* Webhook setup button (uazapi only) */}
-                  {instance.status === 'connected' && instance.api_type !== 'cloud_api' && (
-                    <button
-                      onClick={() => handleSetupWebhook(instance.id)}
-                      disabled={configuringWebhook === instance.id}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
-                      style={{
-                        background: webhookResult[instance.id] === 'success' ? 'rgba(16,185,129,0.15)' : webhookResult[instance.id] === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(99,102,241,0.1)',
-                        color: webhookResult[instance.id] === 'success' ? 'rgb(16,185,129)' : webhookResult[instance.id] === 'error' ? 'rgb(239,68,68)' : 'rgb(99,102,241)',
-                        border: `1px solid ${webhookResult[instance.id] === 'success' ? 'rgba(16,185,129,0.3)' : webhookResult[instance.id] === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(99,102,241,0.2)'}`
-                      }}
-                    >
-                      {configuringWebhook === instance.id ? (
-                        <Loader2 size={13} className="animate-spin" />
-                      ) : webhookResult[instance.id] === 'success' ? (
-                        <CheckCircle2 size={13} />
-                      ) : (
-                        <Wifi size={13} />
-                      )}
-                      {webhookResult[instance.id] === 'success' ? t.webhookOk : webhookResult[instance.id] === 'error' ? t.webhookFail : t.setupWebhook}
-                    </button>
-                  )}
+                {/* Templates link (Cloud API only) */}
+                {instance.api_type === 'cloud_api' && instance.waba_id && (
+                  <Link
+                    href={`/dashboard/whatsapp/templates?waba_id=${instance.waba_id}`}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all"
+                    style={{ background: 'rgba(37,211,102,0.08)', color: '#25D366', border: '1px solid rgba(37,211,102,0.2)' }}
+                  >
+                    <FileText size={13} />
+                    {t.templates}
+                  </Link>
+                )}
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2">
+                {/* Webhook setup button (uazapi only) */}
+                {instance.status === 'connected' && instance.api_type !== 'cloud_api' && (
+                  <button
+                    onClick={() => handleSetupWebhook(instance.id)}
+                    disabled={configuringWebhook === instance.id}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+                    style={{
+                      background: webhookResult[instance.id] === 'success' ? 'rgba(16,185,129,0.15)' : webhookResult[instance.id] === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(99,102,241,0.1)',
+                      color: webhookResult[instance.id] === 'success' ? 'rgb(16,185,129)' : webhookResult[instance.id] === 'error' ? 'rgb(239,68,68)' : 'rgb(99,102,241)',
+                      border: `1px solid ${webhookResult[instance.id] === 'success' ? 'rgba(16,185,129,0.3)' : webhookResult[instance.id] === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(99,102,241,0.2)'}`
+                    }}
+                  >
+                    {configuringWebhook === instance.id ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : webhookResult[instance.id] === 'success' ? (
+                      <CheckCircle2 size={13} />
+                    ) : (
+                      <Wifi size={13} />
+                    )}
+                    {webhookResult[instance.id] === 'success' ? t.webhookOk : webhookResult[instance.id] === 'error' ? t.webhookFail : t.setupWebhook}
+                  </button>
+                )}
+
+                {/* Spacer to push actions right on desktop */}
+                <div className="flex-1" />
+
+                {/* Actions */}
+                <div className="flex items-center gap-2">
                   {instance.status !== 'connected' && (
                     <button
                       onClick={() => { setQrInstanceId(instance.id); fetchQR(instance.id) }}
@@ -872,7 +875,6 @@ export default function WhatsAppPage() {
                     )}
                     {deletingId === instance.id ? t.deleting : t.delete}
                   </button>
-                  </div>
                 </div>
               </div>
             </div>
