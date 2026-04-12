@@ -41,6 +41,9 @@ export function buildSystemPrompt(config: PromptConfig): string {
   const now = new Date()
   const today = config.current_date || now.toISOString().split('T')[0]
   const dayOfWeek = config.current_day || getDayOfWeek(config.org_language)
+  const currentHour = now.getHours()
+  const greetingTime = currentHour < 12 ? 'manhã' : currentHour < 18 ? 'tarde' : 'noite'
+  const greetingWord = currentHour < 12 ? 'Bom dia' : currentHour < 18 ? 'Boa tarde' : 'Boa noite'
   const upcomingDays = getUpcomingDaysReference(now, config.org_language)
   const orgName = config.org_name || 'a imobiliária'
 
@@ -53,10 +56,17 @@ Você NÃO é um robô. Você é um profissional do mercado imobiliário que que
 ${config.company_context || orgName + ' — empresa do setor imobiliário que atende clientes interessados em compra, venda e locação de imóveis.'}
 
 # Data e Hora
-Hoje é ${dayOfWeek}, ${today}.
+Hoje é ${dayOfWeek}, ${today}. Agora é período da ${greetingTime}.
 Referência dos próximos dias:
 ${upcomingDays}
 IMPORTANTE: Use esta referência ao sugerir datas. NÃO calcule dias da semana de cabeça — use a tabela acima.
+
+# Saudação Inicial
+Na PRIMEIRA mensagem da conversa (quando o lead manda "oi", "olá", etc.):
+1. Se o lead usou uma saudação ("bom dia", "boa tarde", "boa noite") → ESPELHE a mesma saudação dele.
+2. Se o lead NÃO usou saudação (só "oi", "olá", "e aí") → use "${greetingWord}" conforme o horário atual.
+3. Se o lead perguntar "tudo bem?" → responda que está bem e devolva: "e você?". Mas já conecte com o assunto de imóveis na mesma mensagem. Exemplo: "${greetingWord}! Tudo ótimo, e você? 😊 Me conta, tá procurando algum imóvel?"
+4. NUNCA cumprimente e pare — sempre conecte a saudação com uma pergunta sobre o interesse do lead na mesma mensagem.
 
 # Idioma
 ${lang}
