@@ -244,6 +244,11 @@ function DocumentCard({ doc, lang, t, onRefresh }: { doc: LeadDocument; lang: La
                       <button onClick={handleView} className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors hover:bg-[var(--color-bg-hover)]" style={{ color: 'var(--color-text-secondary)' }}>
                         <Eye size={14} /> {t.view}
                       </button>
+                      {(doc.status === 'draft' || doc.status === 'ready') && doc.lead && (
+                        <button onClick={() => { setShowMenu(false); setShowSendModal(true) }} className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors hover:bg-[var(--color-bg-hover)]" style={{ color: 'var(--color-text-secondary)' }}>
+                          <Send size={14} /> {t.send}
+                        </button>
+                      )}
                       {doc.file_url && (
                         <a href={doc.file_url} target="_blank" rel="noopener noreferrer" onClick={() => setShowMenu(false)} className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors hover:bg-[var(--color-bg-hover)]" style={{ color: 'var(--color-text-secondary)' }}>
                           <Download size={14} /> {t.download}

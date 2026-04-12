@@ -350,8 +350,8 @@ function DocumentItem({
                       printWindow.print()
                     }
                   }}
-                  className="px-4 py-2 border rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-                  style={{ background: 'var(--color-bg-hover)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                  className="flex items-center gap-2 text-sm font-medium transition-colors"
+                  style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)', padding: '8px 16px', borderRadius: '10px' }}
                 >
                   <ExternalLink size={16} />
                   Imprimir
