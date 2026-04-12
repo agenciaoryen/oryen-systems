@@ -31,6 +31,7 @@ import {
   Save
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
+import { toast } from 'sonner'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -145,6 +146,11 @@ const TRANSLATIONS = {
     attendantPause: 'Pausa do atendente',
     agentReturnsIn: 'Agente retorna em',
     reactivateAI: 'Reativar IA',
+    deleteEventConfirm: 'Tem certeza que deseja excluir este registro?',
+    deleteEventSuccess: 'Registro excluído com sucesso',
+    editEventSuccess: 'Registro editado com sucesso',
+    confirm: 'Confirmar',
+    cancel: 'Cancelar',
   },
   en: {
     back: 'Back',
@@ -202,6 +208,11 @@ const TRANSLATIONS = {
     attendantPause: 'Attendant pause',
     agentReturnsIn: 'Agent returns in',
     reactivateAI: 'Reactivate AI',
+    deleteEventConfirm: 'Are you sure you want to delete this record?',
+    deleteEventSuccess: 'Record deleted successfully',
+    editEventSuccess: 'Record edited successfully',
+    confirm: 'Confirm',
+    cancel: 'Cancel',
   },
   es: {
     back: 'Volver',
@@ -259,6 +270,11 @@ const TRANSLATIONS = {
     attendantPause: 'Pausa del atendente',
     agentReturnsIn: 'Agente regresa en',
     reactivateAI: 'Reactivar IA',
+    deleteEventConfirm: '¿Estás seguro de que deseas eliminar este registro?',
+    deleteEventSuccess: 'Registro eliminado con éxito',
+    editEventSuccess: 'Registro editado con éxito',
+    confirm: 'Confirmar',
+    cancel: 'Cancelar',
   }
 }
 
@@ -368,6 +384,7 @@ export default function LeadProfilePage() {
   // Estados de edição/exclusão de eventos da timeline
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
   const [editingEventContent, setEditingEventContent] = useState('')
+  const [confirmDeleteEventId, setConfirmDeleteEventId] = useState<string | null>(null)
   const [editCompany, setEditCompany] = useState('')
 
   // ─── CARREGAR DADOS ───
@@ -695,7 +712,9 @@ export default function LeadProfilePage() {
     const { error } = await supabase.from('lead_events').delete().eq('id', eventId)
     if (!error) {
       setEvents(prev => prev.filter(e => e.id !== eventId))
+      toast.success(t.deleteEventSuccess)
     }
+    setConfirmDeleteEventId(null)
   }
 
   const handleEditEvent = async (eventId: string) => {
@@ -708,6 +727,7 @@ export default function LeadProfilePage() {
       setEvents(prev => prev.map(e => e.id === eventId ? { ...e, content: editingEventContent.trim() } : e))
       setEditingEventId(null)
       setEditingEventContent('')
+      toast.success(t.editEventSuccess)
     }
   }
 
@@ -1201,7 +1221,7 @@ export default function LeadProfilePage() {
                           <Pencil size={12} />
                         </button>
                         <button
-                          onClick={() => handleDeleteEvent(event.id)}
+                          onClick={() => setConfirmDeleteEventId(event.id)}
                           className="p-1.5 rounded-lg transition-colors hover:bg-[var(--color-bg-hover)]"
                           style={{ color: 'var(--color-text-secondary)' }}
                           title="Excluir"
@@ -1312,6 +1332,37 @@ export default function LeadProfilePage() {
           )}
         </div>
       </div>
+
+      {/* Modal confirmação de exclusão de evento */}
+      {confirmDeleteEventId && (
+        <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={() => setConfirmDeleteEventId(null)}>
+          <div className="rounded-2xl w-full max-w-sm p-6 space-y-4" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'var(--color-error-subtle)' }}>
+                <Trash2 size={20} style={{ color: 'var(--color-error)' }} />
+              </div>
+              <p className="text-sm pt-2" style={{ color: 'var(--color-text-secondary)' }}>{t.deleteEventConfirm}</p>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={() => setConfirmDeleteEventId(null)}
+                className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl transition-colors"
+                style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}
+              >
+                {t.cancel}
+              </button>
+              <button
+                onClick={() => handleDeleteEvent(confirmDeleteEventId)}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-colors"
+                style={{ background: 'var(--color-error)', color: '#fff' }}
+              >
+                <Trash2 size={14} />
+                {t.confirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Click outside para fechar dropdowns */}
       {(isStageDropdownOpen || isTagDropdownOpen) && (
