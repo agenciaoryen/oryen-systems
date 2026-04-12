@@ -294,15 +294,15 @@ function DocumentCard({ doc, lang, t, onRefresh }: { doc: LeadDocument; lang: La
       {/* Preview Modal */}
       {showPreview && doc.content && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-6 sm:p-10" style={{ background: 'var(--color-bg-overlay)' }} onClick={() => setShowPreview(false)}>
-          <div className="border rounded-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }} onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-8 sm:px-10 py-5 border-b" style={{ borderColor: 'var(--color-border)' }}>
-              <div className="flex items-center gap-3 min-w-0 mr-4">
-                <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'var(--color-primary-subtle)' }}>
+          <div className="w-full max-w-4xl flex flex-col shadow-2xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', borderRadius: '16px', maxHeight: '85vh', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b" style={{ borderColor: 'var(--color-border)', padding: '20px 32px' }}>
+              <div className="flex items-center gap-3 min-w-0" style={{ marginRight: '16px' }}>
+                <div className="shrink-0" style={{ background: 'var(--color-primary-subtle)', padding: '10px', borderRadius: '12px' }}>
                   <FileText size={20} style={{ color: 'var(--color-primary)' }} />
                 </div>
                 <h3 className="font-semibold text-sm sm:text-base truncate" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
               </div>
-              <button onClick={() => setShowPreview(false)} className="p-2.5 rounded-xl shrink-0 transition-colors" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}>
+              <button onClick={() => setShowPreview(false)} className="shrink-0 transition-colors" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', padding: '10px', borderRadius: '12px' }}>
                 <X size={18} />
               </button>
             </div>

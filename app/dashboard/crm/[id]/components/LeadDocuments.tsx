@@ -294,14 +294,14 @@ function DocumentItem({
           onClick={() => setShowPreview(false)}
         >
           <div
-            className="border rounded-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
-            style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}
+            className="w-full max-w-4xl flex flex-col shadow-2xl"
+            style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', borderRadius: '16px', maxHeight: '85vh', overflow: 'hidden' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-8 sm:px-10 py-5 border-b relative z-10" style={{ borderColor: 'var(--color-border)' }}>
-              <div className="flex items-center gap-3 min-w-0 mr-4">
-                <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'var(--color-primary-subtle)' }}>
+            <div className="flex items-center justify-between border-b relative z-10" style={{ borderColor: 'var(--color-border)', padding: '20px 32px' }}>
+              <div className="flex items-center gap-3 min-w-0" style={{ marginRight: '16px' }}>
+                <div className="shrink-0" style={{ background: 'var(--color-primary-subtle)', padding: '10px', borderRadius: '12px' }}>
                   <FileText size={20} style={{ color: 'var(--color-primary)' }} />
                 </div>
                 <div className="min-w-0">
@@ -358,8 +358,8 @@ function DocumentItem({
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowPreview(false) }}
-                  className="p-2.5 rounded-xl border transition-colors cursor-pointer relative z-20"
-                  style={{ background: 'var(--color-bg-hover)', borderColor: 'var(--color-border)', color: 'var(--color-text-tertiary)', pointerEvents: 'auto' }}
+                  className="transition-colors cursor-pointer relative z-20"
+                  style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-tertiary)', pointerEvents: 'auto', padding: '10px', borderRadius: '12px' }}
                 >
                   <X size={18} />
                 </button>
