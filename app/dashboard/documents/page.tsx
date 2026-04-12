@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react'
 import { useAuth } from '@/lib/AuthContext'
-import { useLeadDocuments, useDocumentCategories } from '@/lib/documents'
+import { useLeadDocuments, useDocumentCategories, deleteDocument } from '@/lib/documents'
 import {
   DOCUMENT_STATUS_LABELS,
   DOCUMENT_STATUS_COLORS,
@@ -31,7 +31,8 @@ import {
   CalendarCheck,
   File,
   Loader2,
-  X
+  X,
+  Trash2
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -65,6 +66,10 @@ const TRANSLATIONS = {
     download: 'Baixar',
     edit: 'Editar',
     delete: 'Excluir',
+    confirmDelete: 'Tem certeza que deseja excluir este documento?',
+    deleted: 'Documento excluído',
+    cancel: 'Cancelar',
+    confirm: 'Confirmar',
   },
   en: {
     title: 'Documents',
@@ -89,6 +94,10 @@ const TRANSLATIONS = {
     download: 'Download',
     edit: 'Edit',
     delete: 'Delete',
+    confirmDelete: 'Are you sure you want to delete this document?',
+    deleted: 'Document deleted',
+    cancel: 'Cancel',
+    confirm: 'Confirm',
   },
   es: {
     title: 'Documentos',
@@ -113,6 +122,10 @@ const TRANSLATIONS = {
     download: 'Descargar',
     edit: 'Editar',
     delete: 'Eliminar',
+    confirmDelete: '¿Estás seguro de que deseas eliminar este documento?',
+    deleted: 'Documento eliminado',
+    cancel: 'Cancelar',
+    confirm: 'Confirmar',
   }
 }
 
@@ -160,104 +173,171 @@ function StatusBadge({ status, lang }: { status: DocumentStatus; lang: Language 
 // COMPONENTE: DocumentCard
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function DocumentCard({ doc, lang, t }: { doc: LeadDocument; lang: Language; t: any }) {
+function DocumentCard({ doc, lang, t, onRefresh }: { doc: LeadDocument; lang: Language; t: any; onRefresh: () => void }) {
   const [showMenu, setShowMenu] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const categoryIcon = CATEGORY_ICONS[doc.template?.category || 'other'] || <File size={16} />
 
-  return (
-    <div
-      className="rounded-xl p-3 sm:p-4 transition-all group"
-      style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-hover)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-subtle)' }}
-    >
-      <div className="flex items-start gap-2 sm:gap-3">
-        {/* Icon */}
-        <div className="p-2 sm:p-2.5 rounded-lg shrink-0" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
-          {doc.source_type === 'uploaded' ? <Upload size={16} /> : categoryIcon}
-        </div>
+  const handleView = () => {
+    setShowMenu(false)
+    if (doc.content) {
+      setShowPreview(true)
+    } else if (doc.file_url) {
+      window.open(doc.file_url, '_blank')
+    }
+  }
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-medium text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
-            {/* Menu */}
-            <div className="relative shrink-0">
-              <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="p-1.5 rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100"
-                style={{ color: 'var(--color-text-muted)' }}
-              >
-                <MoreVertical size={16} />
-              </button>
-              {showMenu && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                  <div
-                    className="absolute right-0 top-full mt-1 rounded-lg shadow-xl z-20 py-1 min-w-[140px]"
-                    style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
-                  >
-                    <button className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
-                      <Eye size={14} /> {t.view}
-                    </button>
-                    {doc.status === 'draft' && (
-                      <button className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
-                        <Send size={14} /> {t.send}
+  const handleDelete = async () => {
+    setDeleting(true)
+    const { success } = await deleteDocument(doc.id)
+    if (success) {
+      toast.success(t.deleted)
+      onRefresh()
+    }
+    setDeleting(false)
+    setShowDeleteConfirm(false)
+  }
+
+  return (
+    <>
+      <div
+        className="rounded-xl p-3 sm:p-4 transition-all group"
+        style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-hover)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-subtle)' }}
+      >
+        <div className="flex items-start gap-2 sm:gap-3">
+          {/* Icon */}
+          <div className="p-2 sm:p-2.5 rounded-lg shrink-0" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
+            {doc.source_type === 'uploaded' ? <Upload size={16} /> : categoryIcon}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-medium text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
+              {/* Menu */}
+              <div className="relative shrink-0">
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="p-1.5 rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  <MoreVertical size={16} />
+                </button>
+                {showMenu && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                    <div
+                      className="absolute right-0 top-full mt-1 rounded-lg shadow-xl z-20 py-1 min-w-[140px]"
+                      style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
+                    >
+                      <button onClick={handleView} className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors hover:bg-[var(--color-bg-hover)]" style={{ color: 'var(--color-text-secondary)' }}>
+                        <Eye size={14} /> {t.view}
                       </button>
-                    )}
-                    {doc.file_url && (
-                      <button className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
-                        <Download size={14} /> {t.download}
+                      {doc.file_url && (
+                        <a href={doc.file_url} target="_blank" rel="noopener noreferrer" onClick={() => setShowMenu(false)} className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors hover:bg-[var(--color-bg-hover)]" style={{ color: 'var(--color-text-secondary)' }}>
+                          <Download size={14} /> {t.download}
+                        </a>
+                      )}
+                      <hr style={{ borderColor: 'var(--color-border-subtle)' }} className="my-1" />
+                      <button onClick={() => { setShowMenu(false); setShowDeleteConfirm(true) }} className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors hover:bg-[var(--color-bg-hover)]" style={{ color: 'var(--color-error)' }}>
+                        <Trash2 size={14} /> {t.delete}
                       </button>
-                    )}
-                    <hr style={{ borderColor: 'var(--color-border-subtle)' }} className="my-1" />
-                    <button className="w-full px-3 py-2 text-sm text-left flex items-center gap-2" style={{ color: 'var(--color-error)' }}>
-                      <X size={14} /> {t.delete}
-                    </button>
-                  </div>
-                </>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Lead + Status */}
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              {doc.lead && (
+                <Link
+                  href={`/dashboard/crm/${doc.lead.id}`}
+                  className="text-xs flex items-center gap-1 transition-colors"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  <User size={11} />
+                  <span className="truncate max-w-[120px] sm:max-w-none">{doc.lead.name}</span>
+                </Link>
               )}
+              <StatusBadge status={doc.status} lang={lang} />
             </div>
           </div>
+        </div>
 
-          {/* Lead + Status */}
-          <div className="flex flex-wrap items-center gap-2 mt-1">
-            {doc.lead && (
-              <Link
-                href={`/dashboard/crm/${doc.lead.id}`}
-                className="text-xs flex items-center gap-1 transition-colors"
-                style={{ color: 'var(--color-text-muted)' }}
-              >
-                <User size={11} />
-                <span className="truncate max-w-[120px] sm:max-w-none">{doc.lead.name}</span>
-              </Link>
-            )}
-            <StatusBadge status={doc.status} lang={lang} />
-          </div>
+        {/* Footer */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2.5 pt-2.5 ml-10 sm:ml-[52px]" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+          <span className="text-[11px] sm:text-xs flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
+            <Calendar size={11} />
+            {new Date(doc.created_at).toLocaleDateString()}
+          </span>
+          {doc.sent_at && (
+            <span className="text-[11px] sm:text-xs flex items-center gap-1" style={{ color: 'var(--color-accent)' }}>
+              <Send size={11} />
+              {new Date(doc.sent_at).toLocaleDateString()}
+            </span>
+          )}
+          {doc.signed_at && (
+            <span className="text-[11px] sm:text-xs flex items-center gap-1" style={{ color: 'var(--color-success)' }}>
+              <CheckCircle2 size={11} />
+              {new Date(doc.signed_at).toLocaleDateString()}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2.5 pt-2.5 ml-10 sm:ml-[52px]" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
-        <span className="text-[11px] sm:text-xs flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
-          <Calendar size={11} />
-          {new Date(doc.created_at).toLocaleDateString()}
-        </span>
-        {doc.sent_at && (
-          <span className="text-[11px] sm:text-xs flex items-center gap-1" style={{ color: 'var(--color-accent)' }}>
-            <Send size={11} />
-            {new Date(doc.sent_at).toLocaleDateString()}
-          </span>
-        )}
-        {doc.signed_at && (
-          <span className="text-[11px] sm:text-xs flex items-center gap-1" style={{ color: 'var(--color-success)' }}>
-            <CheckCircle2 size={11} />
-            {new Date(doc.signed_at).toLocaleDateString()}
-          </span>
-        )}
-      </div>
-    </div>
+      {/* Preview Modal */}
+      {showPreview && doc.content && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={() => setShowPreview(false)}>
+          <div className="border rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg" style={{ background: 'var(--color-primary-subtle)' }}>
+                  <FileText size={20} style={{ color: 'var(--color-primary)' }} />
+                </div>
+                <h3 className="font-semibold text-sm sm:text-base truncate" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
+              </div>
+              <button onClick={() => setShowPreview(false)} className="p-2 rounded-lg" style={{ color: 'var(--color-text-tertiary)' }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4 sm:p-8" style={{ background: '#f3f4f6' }}>
+              <div className="bg-white rounded-lg shadow-lg" style={{ maxWidth: '210mm', width: '100%', margin: '0 auto', padding: '15mm sm:20mm', fontSize: '11pt', lineHeight: '1.6', color: '#1a1a1a' }}>
+                <div dangerouslySetInnerHTML={{ __html: doc.content }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={() => setShowDeleteConfirm(false)}>
+          <div className="rounded-2xl w-full max-w-sm p-6 space-y-4" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'var(--color-error-subtle)' }}>
+                <Trash2 size={20} style={{ color: 'var(--color-error)' }} />
+              </div>
+              <p className="text-sm pt-2" style={{ color: 'var(--color-text-secondary)' }}>{t.confirmDelete}</p>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl transition-colors" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}>
+                {t.cancel}
+              </button>
+              <button onClick={handleDelete} disabled={deleting} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-colors disabled:opacity-50" style={{ background: 'var(--color-error)', color: '#fff' }}>
+                {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                {t.confirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -456,10 +536,10 @@ export default function DocumentsPage() {
           </div>
 
           {/* Status Filter */}
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="grid grid-cols-4 sm:flex gap-1.5 sm:gap-2">
             <button
               onClick={() => setStatusFilter('all')}
-              className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors"
+              className="px-2 sm:px-4 py-2 rounded-lg text-[11px] sm:text-sm font-medium text-center transition-colors"
               style={statusFilter === 'all'
                 ? { background: 'var(--color-primary)', color: '#fff' }
                 : { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)' }
@@ -469,7 +549,7 @@ export default function DocumentsPage() {
             </button>
             <button
               onClick={() => setStatusFilter('draft')}
-              className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors"
+              className="px-2 sm:px-4 py-2 rounded-lg text-[11px] sm:text-sm font-medium text-center transition-colors"
               style={statusFilter === 'draft'
                 ? { background: 'var(--color-bg-elevated)', color: 'var(--color-text-primary)' }
                 : { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)' }
@@ -479,7 +559,7 @@ export default function DocumentsPage() {
             </button>
             <button
               onClick={() => setStatusFilter('sent')}
-              className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors"
+              className="px-2 sm:px-4 py-2 rounded-lg text-[11px] sm:text-sm font-medium text-center transition-colors"
               style={statusFilter === 'sent'
                 ? { background: 'var(--color-accent)', color: 'var(--color-text-primary)' }
                 : { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)' }
@@ -489,7 +569,7 @@ export default function DocumentsPage() {
             </button>
             <button
               onClick={() => setStatusFilter('signed')}
-              className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors"
+              className="px-2 sm:px-4 py-2 rounded-lg text-[11px] sm:text-sm font-medium text-center transition-colors"
               style={statusFilter === 'signed'
                 ? { background: 'var(--color-success)', color: 'var(--color-text-primary)' }
                 : { background: 'var(--color-bg-hover)', color: 'var(--color-text-tertiary)' }
@@ -510,7 +590,7 @@ export default function DocumentsPage() {
         ) : (
           <div className="grid gap-3">
             {filteredDocuments.map((doc) => (
-              <DocumentCard key={doc.id} doc={doc} lang={lang} t={t} />
+              <DocumentCard key={doc.id} doc={doc} lang={lang} t={t} onRefresh={refetch} />
             ))}
           </div>
         )}

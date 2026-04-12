@@ -56,6 +56,8 @@ const TRANSLATIONS = {
     deleted: 'Documento excluído',
     statusUpdated: 'Status atualizado',
     createdAt: 'Criado em',
+    cancel: 'Cancelar',
+    confirm: 'Confirmar',
   },
   en: {
     title: 'Documents',
@@ -75,6 +77,8 @@ const TRANSLATIONS = {
     deleted: 'Document deleted',
     statusUpdated: 'Status updated',
     createdAt: 'Created at',
+    cancel: 'Cancel',
+    confirm: 'Confirm',
   },
   es: {
     title: 'Documentos',
@@ -94,6 +98,8 @@ const TRANSLATIONS = {
     deleted: 'Documento eliminado',
     statusUpdated: 'Estado actualizado',
     createdAt: 'Creado el',
+    cancel: 'Cancelar',
+    confirm: 'Confirmar',
   }
 }
 
@@ -152,20 +158,20 @@ function DocumentItem({
   const [loading, setLoading] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [showSendModal, setShowSendModal] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const handleDelete = async () => {
-    if (!confirm(t.confirmDelete)) return
-    
     setLoading(true)
     const { success, error } = await deleteDocument(doc.id)
     setLoading(false)
-    
+
     if (success) {
       toast.success(t.deleted)
       onRefresh()
     } else {
       toast.error(error || 'Error')
     }
+    setShowDeleteConfirm(false)
     setShowMenu(false)
   }
 
@@ -267,7 +273,7 @@ function DocumentItem({
                   <hr className="my-1" style={{ borderColor: 'var(--color-border-subtle)' }} />
 
                   <button
-                    onClick={handleDelete}
+                    onClick={() => { setShowMenu(false); setShowDeleteConfirm(true) }}
                     className="w-full px-3 py-2 text-sm text-left flex items-center gap-2"
                     style={{ color: 'var(--color-error)' }}
                   >
@@ -435,6 +441,29 @@ function DocumentItem({
                   dangerouslySetInnerHTML={{ __html: doc.content }}
                 />
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={() => setShowDeleteConfirm(false)}>
+          <div className="rounded-2xl w-full max-w-sm p-6 space-y-4" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'var(--color-error-subtle)' }}>
+                <Trash2 size={20} style={{ color: 'var(--color-error)' }} />
+              </div>
+              <p className="text-sm pt-2" style={{ color: 'var(--color-text-secondary)' }}>{t.confirmDelete}</p>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl transition-colors" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}>
+                {t.cancel}
+              </button>
+              <button onClick={handleDelete} disabled={loading} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-colors disabled:opacity-50" style={{ background: 'var(--color-error)', color: '#fff' }}>
+                {loading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                {t.confirm}
+              </button>
             </div>
           </div>
         </div>
