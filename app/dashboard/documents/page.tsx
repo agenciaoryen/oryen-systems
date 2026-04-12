@@ -11,6 +11,7 @@ import {
   type DocumentStatus
 } from '@/lib/documents/types'
 import CreateDocumentModal from '@/app/dashboard/components/CreateDocumentModal'
+import SendDocumentModal from '@/app/dashboard/components/SendDocumentModal'
 import {
   FileText,
   Plus,
@@ -32,7 +33,8 @@ import {
   File,
   Loader2,
   X,
-  Trash2
+  Trash2,
+  ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -63,6 +65,7 @@ const TRANSLATIONS = {
     actions: 'Ações',
     view: 'Visualizar',
     send: 'Enviar',
+    print: 'Imprimir',
     download: 'Baixar',
     edit: 'Editar',
     delete: 'Excluir',
@@ -91,6 +94,7 @@ const TRANSLATIONS = {
     actions: 'Actions',
     view: 'View',
     send: 'Send',
+    print: 'Print',
     download: 'Download',
     edit: 'Edit',
     delete: 'Delete',
@@ -119,6 +123,7 @@ const TRANSLATIONS = {
     actions: 'Acciones',
     view: 'Ver',
     send: 'Enviar',
+    print: 'Imprimir',
     download: 'Descargar',
     edit: 'Editar',
     delete: 'Eliminar',
@@ -177,6 +182,7 @@ function DocumentCard({ doc, lang, t, onRefresh }: { doc: LeadDocument; lang: La
   const [showMenu, setShowMenu] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showSendModal, setShowSendModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
   const categoryIcon = CATEGORY_ICONS[doc.template?.category || 'other'] || <File size={16} />
@@ -302,9 +308,67 @@ function DocumentCard({ doc, lang, t, onRefresh }: { doc: LeadDocument; lang: La
                 </div>
                 <h3 className="font-semibold text-sm sm:text-base truncate" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
               </div>
-              <button onClick={() => setShowPreview(false)} className="shrink-0 transition-colors" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', padding: '10px', borderRadius: '12px' }}>
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                {(doc.status === 'draft' || doc.status === 'ready') && doc.lead && (
+                  <button
+                    onClick={() => { setShowPreview(false); setShowSendModal(true) }}
+                    className="flex items-center gap-2 text-sm font-medium transition-colors"
+                    style={{ background: 'var(--color-primary)', color: '#fff', padding: '8px 16px', borderRadius: '10px' }}
+                  >
+                    <Send size={16} />
+                    {t.send}
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    const printWindow = window.open('', '_blank')
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                          <meta charset="UTF-8">
+                          <title>${doc.name}</title>
+                          <style>
+                            * { box-sizing: border-box; margin: 0; padding: 0; }
+                            body {
+                              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                              font-size: 11pt;
+                              line-height: 1.5;
+                              color: #1a1a1a;
+                              background: #fff;
+                              padding: 20mm;
+                            }
+                            h1, h2, h3, h4 { color: #0f172a; margin-bottom: 0.5em; font-weight: 600; }
+                            h1 { font-size: 18pt; }
+                            h2 { font-size: 14pt; }
+                            h3 { font-size: 12pt; }
+                            p { margin-bottom: 0.75em; color: #374151; }
+                            table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+                            th, td { border: 1px solid #d1d5db; padding: 10px 12px; text-align: left; }
+                            th { background-color: #f3f4f6; font-weight: 600; color: #1f2937; }
+                            tr:nth-child(even) { background-color: #f9fafb; }
+                            strong, b { font-weight: 600; color: #1f2937; }
+                            @media print { body { padding: 10mm; } }
+                          </style>
+                        </head>
+                        <body>${doc.content}</body>
+                        </html>
+                      `)
+                      printWindow.document.close()
+                      printWindow.print()
+                    }
+                  }}
+                  className="flex items-center gap-2 text-sm font-medium transition-colors"
+                  style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)', padding: '8px 16px', borderRadius: '10px' }}
+                >
+                  <ExternalLink size={16} />
+                  {t.print}
+                </button>
+                <button onClick={() => setShowPreview(false)} className="shrink-0 transition-colors" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', padding: '10px', borderRadius: '12px' }}>
+                  <X size={18} />
+                </button>
+              </div>
             </div>
             <div className="flex-1 overflow-auto p-4 sm:p-8" style={{ background: '#f3f4f6' }}>
               <div className="bg-white rounded-lg shadow-lg" style={{ maxWidth: '210mm', width: '100%', margin: '0 auto', padding: '20mm', fontSize: '11pt', lineHeight: '1.6', color: '#1a1a1a' }}>
@@ -336,6 +400,17 @@ function DocumentCard({ doc, lang, t, onRefresh }: { doc: LeadDocument; lang: La
             </div>
           </div>
         </div>
+      )}
+
+      {/* Send Modal */}
+      {doc.lead && (
+        <SendDocumentModal
+          isOpen={showSendModal}
+          onClose={() => setShowSendModal(false)}
+          document={doc}
+          leadData={{ name: doc.lead.name, phone: doc.lead.phone, email: doc.lead.email }}
+          onSuccess={onRefresh}
+        />
       )}
     </>
   )
