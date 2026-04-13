@@ -19,6 +19,7 @@ import {
   Filter,
   CheckCheck
 } from 'lucide-react'
+import { toast } from 'sonner'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -49,7 +50,10 @@ const TRANSLATIONS = {
     refresh: 'Atualizar',
     emptyTitle: 'Tudo Limpo!',
     emptyDesc: 'Você não tem alertas pendentes por enquanto.',
-    confirmDelete: 'Excluir este alerta?',
+    confirmDelete: 'Tem certeza que deseja excluir este alerta?',
+    cancel: 'Cancelar',
+    confirm: 'Confirmar',
+    deleted: 'Alerta excluído',
     markRead: 'Marcar como lido',
     markAllRead: 'Marcar todos como lidos',
     delete: 'Excluir alerta',
@@ -68,7 +72,10 @@ const TRANSLATIONS = {
     refresh: 'Refresh',
     emptyTitle: 'All Clear!',
     emptyDesc: 'You have no pending alerts for now.',
-    confirmDelete: 'Delete this alert?',
+    confirmDelete: 'Are you sure you want to delete this alert?',
+    cancel: 'Cancel',
+    confirm: 'Confirm',
+    deleted: 'Alert deleted',
     markRead: 'Mark as read',
     markAllRead: 'Mark all as read',
     delete: 'Delete alert',
@@ -87,7 +94,10 @@ const TRANSLATIONS = {
     refresh: 'Actualizar',
     emptyTitle: '¡Todo Limpio!',
     emptyDesc: 'No tiene alertas pendientes por ahora.',
-    confirmDelete: '¿Eliminar esta alerta?',
+    confirmDelete: '¿Estás seguro de que deseas eliminar esta alerta?',
+    cancel: 'Cancelar',
+    confirm: 'Confirmar',
+    deleted: 'Alerta eliminada',
     markRead: 'Marcar como leído',
     markAllRead: 'Marcar todos como leídos',
     delete: 'Eliminar alerta',
@@ -197,6 +207,7 @@ export default function AlertsPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [filterType, setFilterType] = useState<AlertType>('all')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   // Configurações de idioma
   const userLang = (user?.language as Language) || 'pt'
@@ -275,9 +286,10 @@ export default function AlertsPage() {
 
   // ─── EXCLUIR ALERTA ───
   async function deleteAlert(id: string) {
-    if (!confirm(t.confirmDelete)) return
     setAlerts(prev => prev.filter(a => a.id !== id))
     await supabase.from('alerts').delete().eq('id', id)
+    setConfirmDeleteId(null)
+    toast.success(t.deleted)
   }
 
   // ─── FILTRAR ALERTAS ───
@@ -481,7 +493,7 @@ export default function AlertsPage() {
                     </button>
                   )}
                   <button
-                    onClick={() => deleteAlert(alert.id)}
+                    onClick={() => setConfirmDeleteId(alert.id)}
                     className="p-2 rounded-lg transition-colors"
                     style={{ color: 'var(--color-text-muted)' }}
                     title={t.delete}
@@ -494,6 +506,29 @@ export default function AlertsPage() {
           })
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={() => setConfirmDeleteId(null)}>
+          <div className="rounded-2xl w-full max-w-sm p-6 space-y-4" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'var(--color-error-subtle)' }}>
+                <Trash2 size={20} style={{ color: 'var(--color-error)' }} />
+              </div>
+              <p className="text-sm pt-2" style={{ color: 'var(--color-text-secondary)' }}>{t.confirmDelete}</p>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button onClick={() => setConfirmDeleteId(null)} className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl transition-colors" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}>
+                {t.cancel}
+              </button>
+              <button onClick={() => deleteAlert(confirmDeleteId)} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-colors" style={{ background: 'var(--color-error)', color: '#fff' }}>
+                <Trash2 size={14} />
+                {t.confirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
