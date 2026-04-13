@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, Suspense, useCallback } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useAuth, useActivePlan } from '@/lib/AuthContext'
 import { usePlan, PLAN_CONFIGS, type PlanName } from '@/lib/usePlan'
 import { ADDON_CONFIGS, ALL_ADDON_TYPES, type AddonType } from '@/lib/addons'
@@ -30,7 +30,6 @@ import {
   Clock,
   FileText,
   Download,
-  ChevronLeft,
   Lock,
   Trash2,
 } from 'lucide-react'
@@ -594,7 +593,6 @@ function BillingPageContent() {
   const { user, org, activeOrgId, activePlan, activePlanStatus } = useAuth()
   const { plan, planConfig } = usePlan()
   const searchParams = useSearchParams()
-  const router = useRouter()
 
   const userLang = (user?.language as Language) || 'pt'
   const userCurrency = user?.currency || 'BRL'
@@ -825,16 +823,6 @@ function BillingPageContent() {
         
         {/* Header */}
         <div>
-          <button
-            onClick={() => router.push('/dashboard/settings')}
-            className="flex items-center gap-1.5 text-sm font-medium mb-3 transition-colors"
-            style={{ color: 'var(--color-text-muted)' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-primary)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)' }}
-          >
-            <ChevronLeft size={16} />
-            {t.backToSettings}
-          </button>
           <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>
             <CreditCard style={{ color: 'var(--color-primary)' }} />
             {t.title}
