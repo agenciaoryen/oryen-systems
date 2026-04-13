@@ -34,18 +34,16 @@ const T = {
     dragDrop: 'Arraste seu arquivo CSV aqui',
     or: 'ou',
     browse: 'Selecionar arquivo',
-    accepted: 'Aceita arquivos .csv com colunas: nome, email, telefone, empresa',
+    accepted: 'Aceita arquivos .csv com colunas: nome, email, telefone',
     columns: 'Colunas aceitas',
     colName: 'Nome (obrigatório)',
     colEmail: 'Email',
     colPhone: 'Telefone / WhatsApp',
-    colCompany: 'Empresa',
     preview: 'Pré-visualização',
     rows: 'contatos encontrados',
     name: 'Nome',
     email: 'Email',
     phone: 'Telefone',
-    company: 'Empresa',
     importing: 'Importando...',
     import: 'Importar Contatos',
     removeFile: 'Remover arquivo',
@@ -69,18 +67,16 @@ const T = {
     dragDrop: 'Drag your CSV file here',
     or: 'or',
     browse: 'Select file',
-    accepted: 'Accepts .csv files with columns: name, email, phone, company',
+    accepted: 'Accepts .csv files with columns: name, email, phone',
     columns: 'Accepted columns',
     colName: 'Name (required)',
     colEmail: 'Email',
     colPhone: 'Phone / WhatsApp',
-    colCompany: 'Company',
     preview: 'Preview',
     rows: 'contacts found',
     name: 'Name',
     email: 'Email',
     phone: 'Phone',
-    company: 'Company',
     importing: 'Importing...',
     import: 'Import Contacts',
     removeFile: 'Remove file',
@@ -104,18 +100,16 @@ const T = {
     dragDrop: 'Arrastra tu archivo CSV aquí',
     or: 'o',
     browse: 'Seleccionar archivo',
-    accepted: 'Acepta archivos .csv con columnas: nombre, email, teléfono, empresa',
+    accepted: 'Acepta archivos .csv con columnas: nombre, email, teléfono',
     columns: 'Columnas aceptadas',
     colName: 'Nombre (obligatorio)',
     colEmail: 'Email',
     colPhone: 'Teléfono / WhatsApp',
-    colCompany: 'Empresa',
     preview: 'Vista previa',
     rows: 'contactos encontrados',
     name: 'Nombre',
     email: 'Email',
     phone: 'Teléfono',
-    company: 'Empresa',
     importing: 'Importando...',
     import: 'Importar Contactos',
     removeFile: 'Eliminar archivo',
@@ -139,14 +133,12 @@ interface ParsedRow {
   name: string
   email: string
   phone: string
-  company: string
 }
 
 const COL_MAP: Record<string, keyof ParsedRow> = {
   nome: 'name', name: 'name', nombre: 'name', 'nome completo': 'name', 'full name': 'name',
   email: 'email', 'e-mail': 'email', correo: 'email',
   telefone: 'phone', phone: 'phone', celular: 'phone', whatsapp: 'phone', tel: 'phone', 'teléfono': 'phone',
-  empresa: 'company', company: 'company', 'nome da empresa': 'company', 'company name': 'company', 'nombre empresa': 'company',
 }
 
 function parseCSV(rawText: string): ParsedRow[] {
@@ -175,7 +167,6 @@ function parseCSV(rawText: string): ParsedRow[] {
       name,
       email: colIndexes.email !== undefined ? cols[colIndexes.email] || '' : '',
       phone: colIndexes.phone !== undefined ? cols[colIndexes.phone] || '' : '',
-      company: colIndexes.company !== undefined ? cols[colIndexes.company] || '' : '',
     })
   }
   return rows
@@ -183,7 +174,7 @@ function parseCSV(rawText: string): ParsedRow[] {
 
 function downloadTemplate() {
   const bom = '\uFEFF'
-  const csv = bom + 'nome;email;telefone;empresa\nJoao Silva;joao@email.com;5511999999999;Imobiliaria ABC\nMaria Santos;maria@email.com;5521888888888;Construtora XYZ\n'
+  const csv = bom + 'nome;email;telefone\nJoao Silva;joao@email.com;55 11 99999-9999\nMaria Santos;maria@email.com;55 21 98888-8888\nCarlos Oliveira;carlos@email.com;55 54 93333-4444\n'
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -287,7 +278,6 @@ export default function CsvImportPage() {
           name: row.name,
           email: row.email || null,
           phone: row.phone || null,
-          nome_empresa: row.company || null,
           stage: defaultStage,
           source: 'csv_import',
         })
@@ -387,12 +377,11 @@ export default function CsvImportPage() {
               </p>
 
               {/* Columns info */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+              <div className="grid grid-cols-3 gap-2 mb-4">
                 {[
                   { label: t.colName, required: true },
                   { label: t.colEmail, required: false },
                   { label: t.colPhone, required: false },
-                  { label: t.colCompany, required: false },
                 ].map((col) => (
                   <div
                     key={col.label}
@@ -483,22 +472,25 @@ export default function CsvImportPage() {
 
                   {/* Preview table */}
                   <div className="overflow-x-auto rounded-xl mb-4" style={{ border: '1px solid var(--color-border)' }}>
-                    <table className="w-full text-xs">
+                    <table className="w-full text-sm" style={{ tableLayout: 'fixed' }}>
+                      <colgroup>
+                        <col style={{ width: '35%' }} />
+                        <col style={{ width: '35%' }} />
+                        <col style={{ width: '30%' }} />
+                      </colgroup>
                       <thead>
                         <tr style={{ background: 'var(--color-bg-hover)' }}>
-                          <th className="text-left px-3 py-2.5 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{t.name}</th>
-                          <th className="text-left px-3 py-2.5 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{t.email}</th>
-                          <th className="text-left px-3 py-2.5 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{t.phone}</th>
-                          <th className="text-left px-3 py-2.5 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{t.company}</th>
+                          <th className="text-left px-4 py-2.5 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{t.name}</th>
+                          <th className="text-left px-4 py-2.5 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{t.email}</th>
+                          <th className="text-left px-4 py-2.5 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{t.phone}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {previewRows.map((row, i) => (
                           <tr key={i} style={{ borderTop: '1px solid var(--color-border)' }}>
-                            <td className="px-3 py-2.5" style={{ color: 'var(--color-text-primary)' }}>{row.name}</td>
-                            <td className="px-3 py-2.5" style={{ color: 'var(--color-text-secondary)' }}>{row.email || '—'}</td>
-                            <td className="px-3 py-2.5" style={{ color: 'var(--color-text-secondary)' }}>{row.phone || '—'}</td>
-                            <td className="px-3 py-2.5" style={{ color: 'var(--color-text-secondary)' }}>{row.company || '—'}</td>
+                            <td className="px-4 py-2.5 truncate" style={{ color: 'var(--color-text-primary)' }}>{row.name}</td>
+                            <td className="px-4 py-2.5 truncate" style={{ color: 'var(--color-text-secondary)' }}>{row.email || '—'}</td>
+                            <td className="px-4 py-2.5" style={{ color: 'var(--color-text-secondary)' }}>{row.phone || '—'}</td>
                           </tr>
                         ))}
                       </tbody>
