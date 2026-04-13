@@ -1075,7 +1075,7 @@ export default function DashboardPage() {
             <h3 className="text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
               <TrendingUp size={14} /> {t.conversionRate}
             </h3>
-            <div className="space-y-4 overflow-y-auto max-h-[160px] sm:max-h-[200px] pr-2 hide-scrollbar">
+            <div className="space-y-4">
               {sourceData.length === 0 ? (
                 <p className="text-xs text-center mt-8 sm:mt-10" style={{ color: 'var(--color-text-muted)' }}>{t.insufficientData}</p>
               ) : (
