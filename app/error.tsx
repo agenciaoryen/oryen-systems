@@ -7,19 +7,19 @@ const translations = {
     title: 'Algo deu errado',
     description: 'Ocorreu um erro inesperado. Tente novamente ou volte para a pagina inicial.',
     retry: 'Tentar novamente',
-    home: 'Voltar ao inicio',
+    home: 'Voltar',
   },
   en: {
     title: 'Something went wrong',
-    description: 'An unexpected error occurred. Try again or go back to the home page.',
+    description: 'An unexpected error occurred. Try again or go back.',
     retry: 'Try again',
-    home: 'Back to home',
+    home: 'Go back',
   },
   es: {
     title: 'Algo salio mal',
-    description: 'Ocurrio un error inesperado. Intenta de nuevo o vuelve a la pagina principal.',
+    description: 'Ocurrio un error inesperado. Intenta de nuevo o vuelve atrás.',
     retry: 'Intentar de nuevo',
-    home: 'Volver al inicio',
+    home: 'Volver',
   },
 };
 
@@ -177,8 +177,15 @@ export default function GlobalError({
           >
             {t.retry}
           </button>
-          <a
-            href="/"
+          <button
+            onClick={() => {
+              const isDashboard = typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard')
+              if (window.history.length > 1) {
+                window.history.back()
+              } else {
+                window.location.href = isDashboard ? '/dashboard' : '/'
+              }
+            }}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -190,13 +197,12 @@ export default function GlobalError({
               color: 'var(--color-text-secondary)',
               background: 'var(--color-bg-surface)',
               border: '1px solid var(--color-border)',
-              textDecoration: 'none',
               cursor: 'pointer',
               transition: 'opacity 0.2s',
             }}
           >
             {t.home}
-          </a>
+          </button>
         </div>
       </div>
     </div>

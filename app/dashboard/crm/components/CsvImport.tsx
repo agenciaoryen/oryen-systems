@@ -157,7 +157,7 @@ function downloadTemplate() {
 }
 
 export default function CsvImport({ orgId, defaultStage, onClose, onSuccess, lang = 'pt' }: Props) {
-  const t = T[lang]
+  const t = T[lang] || T.pt
   const fileRef = useRef<HTMLInputElement>(null)
   const [rows, setRows] = useState<ParsedRow[]>([])
   const [fileName, setFileName] = useState('')
