@@ -9,7 +9,6 @@ import {
   Tag, Plus, GripVertical, Pencil, LayoutGrid, ChevronUp, ChevronDown,
   Sun, Moon, CreditCard, Eye, RotateCcw, Clock, Play, Calendar
 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { useTheme } from '@/lib/ThemeContext'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
@@ -68,8 +67,7 @@ const TRANSLATIONS = {
       tags: 'Tags',
       integrations: 'Integrações',
       leadCard: 'Card do Lead',
-      distribution: 'Distribuição',
-      billing: 'Minha Assinatura'
+      distribution: 'Distribuição'
     },
     profile: {
       personalData: 'Dados Pessoais',
@@ -228,8 +226,7 @@ const TRANSLATIONS = {
       tags: 'Tags',
       integrations: 'Integrations',
       leadCard: 'Lead Card',
-      distribution: 'Distribution',
-      billing: 'My Subscription'
+      distribution: 'Distribution'
     },
     profile: {
       personalData: 'Personal Data',
@@ -388,8 +385,7 @@ const TRANSLATIONS = {
       tags: 'Tags',
       integrations: 'Integraciones',
       leadCard: 'Card del Lead',
-      distribution: 'Distribución',
-      billing: 'Mi Suscripción'
+      distribution: 'Distribución'
     },
     profile: {
       personalData: 'Datos Personales',
@@ -568,7 +564,6 @@ export default function SettingsPage() {
   const orgId = useActiveOrgId()
   const isStaff = useIsStaff()
   const { theme, setTheme } = useTheme()
-  const router = useRouter()
 
   const [activeTab, setActiveTab] = useState('profile')
   const [loading, setLoading] = useState(false)
@@ -1144,7 +1139,6 @@ export default function SettingsPage() {
     { id: 'leadCard', label: t.tabs.leadCard, icon: Eye, adminOnly: true },
     { id: 'integrations', label: t.tabs.integrations, icon: Globe, adminOnly: true },
     { id: 'distribution', label: t.tabs.distribution, icon: Users, adminOnly: true },
-    { id: 'billing', label: t.tabs.billing, icon: CreditCard, adminOnly: true },
   ]
 
   return (
@@ -1248,7 +1242,7 @@ export default function SettingsPage() {
             return (
               <button
                 key={tab.id}
-                onClick={() => tab.id === 'billing' ? router.push('/dashboard/settings/billing') : setActiveTab(tab.id)}
+                onClick={() => setActiveTab(tab.id)}
                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all"
                 style={activeTab === tab.id
                   ? { background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(90, 122, 230, 0.25)' }
