@@ -3,7 +3,7 @@
 // Usado nas API routes para verificar se a org pode criar mais recursos
 
 import { createClient } from '@supabase/supabase-js'
-import { getPlanConfig, type PlanLimits } from './usePlan'
+import { getPlanConfig, type PlanLimits } from './planConfig'
 import { calculateAddonBonus } from './addons'
 
 const supabase = createClient(

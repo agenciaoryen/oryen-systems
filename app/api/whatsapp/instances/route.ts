@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getPlanConfig } from '@/lib/usePlan'
+import { getPlanConfig } from '@/lib/planConfig'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
