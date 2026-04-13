@@ -181,7 +181,7 @@ function parseCSV(text: string): ParsedRow[] {
 
 function downloadTemplate() {
   const bom = '\uFEFF'
-  const csv = bom + 'nome,email,telefone,empresa\nJoao Silva,joao@email.com,5511999999999,Imobiliaria ABC\nMaria Santos,maria@email.com,5521888888888,Construtora XYZ\n'
+  const csv = bom + 'nome;email;telefone;empresa\nJoao Silva;joao@email.com;5511999999999;Imobiliaria ABC\nMaria Santos;maria@email.com;5521888888888;Construtora XYZ\n'
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
