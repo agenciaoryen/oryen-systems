@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { formatPrice, formatSource } from '@/lib/format'
 import { usePlan } from '@/lib/usePlan'
+import UpgradeModal from '@/app/dashboard/components/UpgradeModal'
 import {
   Search,
   Plus,
@@ -435,6 +436,7 @@ export default function CrmPage() {
   // Estados do Modal
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; current: number; limit: number }>({ open: false, current: 0, limit: 0 })
   const [newLeadData, setNewLeadData] = useState({
     name: '',
     nome_empresa: '',
@@ -707,7 +709,7 @@ export default function CrmPage() {
       const limitRes = await fetch(`/api/plan-limit?org_id=${orgId}&resource=leads`)
       const limitData = await limitRes.json()
       if (!limitData.allowed) {
-        alert(`Limite de ${limitData.limit} leads atingido. Faça upgrade do plano para adicionar mais.`)
+        setUpgradeModal({ open: true, current: limitData.current, limit: limitData.limit })
         setIsSaving(false)
         return
       }
@@ -1598,6 +1600,15 @@ export default function CrmPage() {
           onClick={() => setIsTagFilterOpen(false)}
         />
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={upgradeModal.open}
+        onClose={() => setUpgradeModal({ open: false, current: 0, limit: 0 })}
+        resource="leads"
+        current={upgradeModal.current}
+        limit={upgradeModal.limit}
+      />
     </div>
   )
 }

@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/lib/AuthContext'
+import UpgradeModal from '@/app/dashboard/components/UpgradeModal'
 import { 
   useDocumentTemplates, 
   createDocument, 
@@ -434,6 +435,7 @@ export default function CreateDocumentModal({
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null)
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [creating, setCreating] = useState(false)
+  const [docUpgradeModal, setDocUpgradeModal] = useState<{ open: boolean; current: number; limit: number }>({ open: false, current: 0, limit: 0 })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   // Reset ao abrir
@@ -545,7 +547,7 @@ export default function CreateDocumentModal({
       const limitRes = await fetch(`/api/plan-limit?org_id=${activeOrgId}&resource=documents`)
       const limitData = await limitRes.json()
       if (!limitData.allowed) {
-        toast.error(`Limite de ${limitData.limit} documentos/mês atingido. Faça upgrade do plano.`)
+        setDocUpgradeModal({ open: true, current: limitData.current, limit: limitData.limit })
         setCreating(false)
         return
       }
@@ -843,6 +845,15 @@ export default function CreateDocumentModal({
           </div>
         </div>
       </div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={docUpgradeModal.open}
+        onClose={() => setDocUpgradeModal({ open: false, current: 0, limit: 0 })}
+        resource="documents"
+        current={docUpgradeModal.current}
+        limit={docUpgradeModal.limit}
+      />
     </div>
   )
 }

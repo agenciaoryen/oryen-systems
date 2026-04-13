@@ -49,12 +49,31 @@ export async function POST(req: NextRequest) {
       // ═══════════════════════════════════════════════════════════════════
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
-        
+
         const orgId = session.metadata?.org_id
-        const planName = session.metadata?.plan_name
+        const isAddon = session.metadata?.is_addon === 'true'
         const subscriptionId = session.subscription as string
 
-        if (orgId && planName) {
+        if (orgId && isAddon) {
+          // ─── Add-on checkout ───
+          const addonType = session.metadata?.addon_type
+          const addonQuantity = parseInt(session.metadata?.addon_quantity || '1')
+
+          await supabase
+            .from('org_addons')
+            .insert({
+              org_id: orgId,
+              addon_type: addonType,
+              quantity: addonQuantity,
+              stripe_subscription_id: subscriptionId,
+              status: 'active',
+            })
+
+          console.log(`✅ Addon checkout completed: org ${orgId} added ${addonQuantity}x ${addonType}`)
+        } else if (orgId && session.metadata?.plan_name) {
+          // ─── Plano principal checkout ───
+          const planName = session.metadata.plan_name
+
           await supabase
             .from('orgs')
             .update({

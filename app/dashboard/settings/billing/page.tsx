@@ -5,7 +5,9 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuth, useActivePlan } from '@/lib/AuthContext'
 import { usePlan, PLAN_CONFIGS, type PlanName } from '@/lib/usePlan'
+import { ADDON_CONFIGS, ALL_ADDON_TYPES, type AddonType } from '@/lib/addons'
 import { supabase } from '@/lib/supabase'
+import UsageBar from '@/app/dashboard/components/UsageBar'
 import {
   Crown,
   Sparkles,
@@ -481,8 +483,35 @@ function BillingPageContent() {
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<PlanName | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [usage, setUsage] = useState<Record<string, { current: number; limit: number }>>({})
+  const [orgAddons, setOrgAddons] = useState<any[]>([])
+  const [addonLoading, setAddonLoading] = useState<string | null>(null)
 
   const colors = PLAN_COLORS[plan]
+
+  // Carregar uso atual de cada recurso
+  useEffect(() => {
+    if (!activeOrgId) return
+    const resources = ['users', 'leads', 'messages', 'properties', 'documents', 'sites']
+    Promise.all(
+      resources.map(r =>
+        fetch(`/api/plan-limit?org_id=${activeOrgId}&resource=${r}`)
+          .then(res => res.json())
+          .then(data => ({ resource: r, current: data.current || 0, limit: data.limit ?? -1 }))
+          .catch(() => ({ resource: r, current: 0, limit: -1 }))
+      )
+    ).then(results => {
+      const map: Record<string, { current: number; limit: number }> = {}
+      results.forEach(r => { map[r.resource] = { current: r.current, limit: r.limit } })
+      setUsage(map)
+    })
+
+    // Carregar add-ons
+    fetch(`/api/addons?org_id=${activeOrgId}`)
+      .then(res => res.json())
+      .then(data => setOrgAddons(data.addons || []))
+      .catch(() => {})
+  }, [activeOrgId])
 
   // Verificar se voltou do Stripe com sucesso ou cancelamento
   useEffect(() => {
@@ -669,6 +698,83 @@ function BillingPageContent() {
             </div>
           </div>
         </div>
+
+        {/* Usage Overview */}
+        {Object.keys(usage).length > 0 && (
+          <div className="rounded-2xl p-6" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+            <h2 className="text-lg font-bold mb-5" style={{ color: 'var(--color-text-primary)' }}>
+              {userLang === 'en' ? 'Current Usage' : userLang === 'es' ? 'Uso Actual' : 'Uso Atual'}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {usage.users && <UsageBar label={userLang === 'en' ? 'Users' : userLang === 'es' ? 'Usuarios' : 'Usuários'} current={usage.users.current} limit={usage.users.limit} />}
+              {usage.leads && <UsageBar label="Leads" current={usage.leads.current} limit={usage.leads.limit} />}
+              {usage.messages && <UsageBar label={userLang === 'en' ? 'AI Messages' : userLang === 'es' ? 'Mensajes IA' : 'Mensagens IA'} current={usage.messages.current} limit={usage.messages.limit} monthly />}
+              {usage.properties && <UsageBar label={userLang === 'en' ? 'Properties' : userLang === 'es' ? 'Propiedades' : 'Imóveis'} current={usage.properties.current} limit={usage.properties.limit} />}
+              {usage.documents && <UsageBar label={userLang === 'en' ? 'Documents' : userLang === 'es' ? 'Documentos' : 'Documentos'} current={usage.documents.current} limit={usage.documents.limit} monthly />}
+              {usage.sites && <UsageBar label="Sites" current={usage.sites.current} limit={usage.sites.limit} />}
+            </div>
+
+            {/* Add-ons ativos */}
+            {orgAddons.length > 0 && (
+              <div className="mt-5 pt-4" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+                <p className="text-xs uppercase tracking-wider font-bold mb-3" style={{ color: 'var(--color-text-muted)' }}>
+                  Add-ons {userLang === 'en' ? 'active' : userLang === 'es' ? 'activos' : 'ativos'}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {orgAddons.map((addon: any) => (
+                    <span key={addon.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
+                      <Check size={12} />
+                      {addon.quantity}x {addon.config?.displayName || addon.addon_type}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Botões de add-on */}
+            <div className="mt-5 pt-4" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+              <p className="text-xs uppercase tracking-wider font-bold mb-3" style={{ color: 'var(--color-text-muted)' }}>
+                {userLang === 'en' ? 'Need more?' : userLang === 'es' ? '¿Necesitas más?' : 'Precisa de mais?'}
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {ALL_ADDON_TYPES.map(type => {
+                  const cfg = ADDON_CONFIGS[type]
+                  const price = userCurrency === 'BRL' ? `R$${cfg.priceBrl}` : `$${cfg.priceUsd}`
+                  return (
+                    <button
+                      key={type}
+                      disabled={!!addonLoading}
+                      onClick={async () => {
+                        setAddonLoading(type)
+                        try {
+                          const res = await fetch('/api/addons', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ orgId: activeOrgId, addonType: type, quantity: 1, userId: user?.id, userEmail: user?.email })
+                          })
+                          const data = await res.json()
+                          if (data.url) window.location.href = data.url
+                          else if (data.error) alert(data.error)
+                        } catch { }
+                        finally { setAddonLoading(null) }
+                      }}
+                      className="flex flex-col items-center gap-1 p-3 rounded-xl text-xs transition-all disabled:opacity-50"
+                      style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+                    >
+                      {addonLoading === type
+                        ? <Loader2 size={16} className="animate-spin" style={{ color: 'var(--color-primary)' }} />
+                        : <span className="text-sm">+{cfg.unitAmount === 1 ? '1' : cfg.unitAmount.toLocaleString()}</span>
+                      }
+                      <span>{cfg.unitLabel}</span>
+                      <span className="font-bold" style={{ color: 'var(--color-primary)' }}>{price}/{userLang === 'en' ? 'mo' : 'mês'}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Plans Grid */}
         <div>
