@@ -8,8 +8,8 @@ import { formatPrice } from '@/lib/format'
 import NoOrganizationState from './components/NoOrganizationState'
 import DailyPriorities from './components/DailyPriorities'
 import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend
 } from 'recharts'
 import { 
   TrendingUp, Users, Calendar, DollarSign, 
