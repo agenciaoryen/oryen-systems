@@ -744,7 +744,7 @@ async function executeCheckAvailability(
       suggested_hours: 'Horário comercial: seg-sex 9h às 18h | sáb 9h às 12h',
       instruction: busySlots.length === 0
         ? `Não há compromissos entre ${input.date_from} e ${dateTo}. Todos os horários em horário comercial estão livres. Sugira 2-3 opções específicas ao lead.`
-        : `Há ${busySlots.length} compromisso(s) ocupado(s). Sugira horários que NÃO conflitem com os slots ocupados listados acima.`
+        : `ATENÇÃO: Há ${busySlots.length} compromisso(s) ocupado(s). Analise os horários ocupados (from/to) e sugira APENAS horários que NÃO caiam dentro desses intervalos. Ex: se há evento das 15:00 às 17:00, qualquer horário entre 15:00 e 16:59 está INDISPONÍVEL. Sugira horários ANTES ou DEPOIS dos slots ocupados.`
     }
   }
 }
