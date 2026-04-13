@@ -62,6 +62,7 @@
   --color-text-primary:        #EDEDF5;
   --color-text-secondary:      #8888AA;
   --color-text-tertiary:       #555572;
+  --color-text-muted:          #555572;
   --color-text-disabled:       #333348;
   --color-text-on-primary:     #FFFFFF;
   --color-text-on-accent:      #0C0800;
@@ -283,6 +284,7 @@
   --color-text-primary:        #0C0C1E;
   --color-text-secondary:      #4A4A68;
   --color-text-tertiary:       #8282A0;
+  --color-text-muted:          #8282A0;
   --color-text-disabled:       #B8B8CC;
   --color-text-on-primary:     #FFFFFF;
   --color-text-on-accent:      #FFFFFF;
