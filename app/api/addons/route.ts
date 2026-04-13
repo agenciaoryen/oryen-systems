@@ -15,14 +15,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// Stripe price IDs dos add-ons (precisam ser criados no Stripe)
-// Por enquanto ficam vazios — o usuário vai criar no dashboard do Stripe
-const ADDON_PRICE_IDS: Record<AddonType, string> = {
-  extra_users: process.env.STRIPE_ADDON_USERS_PRICE_ID || '',
-  extra_messages: process.env.STRIPE_ADDON_MESSAGES_PRICE_ID || '',
-  extra_whatsapp: process.env.STRIPE_ADDON_WHATSAPP_PRICE_ID || '',
-  extra_sites: process.env.STRIPE_ADDON_SITES_PRICE_ID || '',
-}
 
 /**
  * GET /api/addons?org_id=X
@@ -53,7 +45,7 @@ export async function GET(request: NextRequest) {
     // Retornar também as opções disponíveis para compra
     const available = ALL_ADDON_TYPES.map(type => ({
       ...ADDON_CONFIGS[type],
-      hasPriceId: !!ADDON_PRICE_IDS[type],
+      hasPriceId: !!ADDON_CONFIGS[type].stripePriceId,
     }))
 
     return NextResponse.json({ addons: enriched, available })
@@ -81,7 +73,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Unknown addon: ${addonType}` }, { status: 400 })
     }
 
-    const priceId = ADDON_PRICE_IDS[addonType as AddonType]
+    const priceId = config.stripePriceId
     if (!priceId) {
       return NextResponse.json({ error: `Addon ${addonType} not configured in Stripe yet` }, { status: 400 })
     }

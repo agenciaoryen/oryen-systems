@@ -24,9 +24,18 @@ export interface AddonConfig {
   unitAmount: number           // quanto cada unidade adiciona ao limite
   priceUsd: number             // preço mensal por unidade (USD)
   priceBrl: number             // preço mensal por unidade (BRL)
+  stripePriceId: string        // price_id do Stripe (hardcoded, igual aos planos)
   limitKey: string             // qual campo do PlanLimits este addon expande
   icon: string                 // nome do ícone Lucide
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Para adicionar um novo add-on no futuro:
+// 1. Crie o produto recorrente no Stripe Dashboard
+// 2. Adicione o tipo no AddonType acima
+// 3. Adicione a config aqui com o stripePriceId
+// 4. Pronto — planLimits, API, billing page e webhook já funcionam automaticamente
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export const ADDON_CONFIGS: Record<AddonType, AddonConfig> = {
   extra_users: {
@@ -37,6 +46,7 @@ export const ADDON_CONFIGS: Record<AddonType, AddonConfig> = {
     unitAmount: 1,
     priceUsd: 15,
     priceBrl: 75,
+    stripePriceId: 'price_1TLnsj3PghkCuiR4En2Vkx0T',
     limitKey: 'maxUsers',
     icon: 'Users',
   },
@@ -48,6 +58,7 @@ export const ADDON_CONFIGS: Record<AddonType, AddonConfig> = {
     unitAmount: 2000,
     priceUsd: 25,
     priceBrl: 125,
+    stripePriceId: 'price_1TLnuC3PghkCuiR4b5tZZdL7',
     limitKey: 'maxMonthlyMessages',
     icon: 'MessageSquare',
   },
@@ -59,6 +70,7 @@ export const ADDON_CONFIGS: Record<AddonType, AddonConfig> = {
     unitAmount: 1,
     priceUsd: 12,
     priceBrl: 60,
+    stripePriceId: 'price_1TLnus3PghkCuiR4FrQKR4Cl',
     limitKey: 'maxWhatsappNumbers',
     icon: 'Phone',
   },
@@ -70,6 +82,7 @@ export const ADDON_CONFIGS: Record<AddonType, AddonConfig> = {
     unitAmount: 1,
     priceUsd: 20,
     priceBrl: 100,
+    stripePriceId: 'price_1TLnvb3PghkCuiR44OL98HHj',
     limitKey: 'maxSites',
     icon: 'Globe',
   },
