@@ -18,6 +18,7 @@ import { sendWithHumanization } from '@/lib/sdr/whatsapp-sender'
 import { notifyError } from '@/lib/monitoring/error-notifier'
 import { stopCheck } from '@/lib/sdr/redis'
 import { isWithinWindow } from '@/lib/sdr/messaging-window'
+import { checkMonthlyPlanLimit } from '@/lib/planLimits'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -151,6 +152,16 @@ async function processFollowUp(
   const isStopped = await stopCheck(item.org_id, lead.phone)
   if (isStopped) {
     console.log(`[FollowUp] STOP ativo para ${lead.phone} — pulando`)
+    return 'skipped'
+  }
+
+  // ─── 4b. Verificar limite mensal de mensagens IA do plano ───
+  const msgLimit = await checkMonthlyPlanLimit(
+    item.org_id, 'maxMonthlyMessages', 'sdr_messages', 'created_at',
+    { role: 'assistant' }
+  )
+  if (!msgLimit.allowed) {
+    console.warn(`[FollowUp] AI message limit reached for org ${item.org_id}: ${msgLimit.current}/${msgLimit.limit} — pulando`)
     return 'skipped'
   }
 

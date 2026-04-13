@@ -19,7 +19,8 @@ type UserProfile = {
 
 type AppUser = User & UserProfile
 
-type PlanName = 'basic' | 'gold' | 'diamond' | 'enterprise'
+// Aceita planos novos (v2) e legados (v1) que podem existir no banco
+type PlanName = 'starter' | 'pro' | 'business' | 'enterprise' | 'basic' | 'gold' | 'diamond'
 type PlanStatus = 'active' | 'trial' | 'past_due' | 'canceled'
 
 type Org = {
@@ -66,7 +67,7 @@ const AuthContext = createContext<AuthContextType>({
   activeOrgName: 'Organização',
   activeOrg: null,
   // Plano
-  activePlan: 'basic',
+  activePlan: 'starter',
   activePlanStatus: 'active',
 })
 
@@ -112,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Para staff: usa a org selecionada do availableOrgs
   // Para usuário normal: usa a org do perfil
   const activeOrg = isStaff ? selectedOrg : org
-  const activePlan: PlanName = activeOrg?.plan || 'basic'
+  const activePlan: PlanName = activeOrg?.plan || 'starter'
   const activePlanStatus: PlanStatus = activeOrg?.plan_status || 'active'
 
   // ─── Effect principal de autenticação ───
@@ -150,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Garantir valores default para plan
           const orgs: Org[] = (orgsData || []).map(o => ({
             ...o,
-            plan: o.plan || 'basic',
+            plan: o.plan || 'starter',
             plan_status: o.plan_status || 'active',
             plan_started_at: o.plan_started_at || null,
             niche: o.niche || null
@@ -185,7 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (orgData) {
               setOrg({
                 ...orgData,
-                plan: orgData.plan || 'basic',
+                plan: orgData.plan || 'starter',
                 plan_status: orgData.plan_status || 'active',
                 plan_started_at: orgData.plan_started_at || null,
                 niche: orgData.niche || null
@@ -298,7 +299,7 @@ export const useIsStaff = (): boolean => {
  * 
  * @example
  * const { plan, status } = useActivePlan()
- * if (plan === 'basic') { showUpgradePrompt() }
+ * if (plan === 'starter') { showUpgradePrompt() }
  */
 export const useActivePlan = (): { plan: PlanName; status: PlanStatus } => {
   const { activePlan, activePlanStatus } = useContext(AuthContext)

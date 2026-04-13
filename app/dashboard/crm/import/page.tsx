@@ -242,6 +242,15 @@ export default function CsvImportPage() {
     setError('')
 
     try {
+      // Verificar limite de leads do plano antes de importar
+      const limitRes = await fetch(`/api/plan-limit?org_id=${orgId}&resource=leads`)
+      const limitData = await limitRes.json()
+      if (!limitData.allowed) {
+        setError(`Limite de ${limitData.limit} leads atingido. Faça upgrade do plano para importar mais.`)
+        setImporting(false)
+        return
+      }
+
       const { data: existing } = await supabase
         .from('leads')
         .select('email, phone')
@@ -286,15 +295,20 @@ export default function CsvImportPage() {
         if (phoneClean) existingPhones.add(phoneClean)
       }
 
-      if (toInsert.length > 0) {
-        for (let i = 0; i < toInsert.length; i += 100) {
-          const batch = toInsert.slice(i, i + 100)
+      // Limitar ao espaço disponível no plano
+      const remaining = limitData.limit === -1 ? toInsert.length : Math.max(0, limitData.limit - limitData.current)
+      const trimmed = toInsert.length > remaining ? toInsert.slice(0, remaining) : toInsert
+      const skippedByLimit = toInsert.length - trimmed.length
+
+      if (trimmed.length > 0) {
+        for (let i = 0; i < trimmed.length; i += 100) {
+          const batch = trimmed.slice(i, i + 100)
           const { error: insertError } = await supabase.from('leads').insert(batch)
           if (insertError) throw insertError
         }
       }
 
-      setResult({ imported: toInsert.length, duplicates })
+      setResult({ imported: trimmed.length, duplicates: duplicates + skippedByLimit })
       toast.success(`${toInsert.length} ${t.success}`)
     } catch (err: any) {
       setError(`${t.error}: ${err.message}`)

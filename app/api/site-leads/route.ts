@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkPlanLimit } from '@/lib/planLimits'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -145,6 +146,9 @@ export async function POST(request: NextRequest) {
         .eq('phone', phone)
         .single()
 
+      // Verificar limite de leads do plano antes de criar novo
+      const leadsLimit = await checkPlanLimit(site.org_id, 'maxActiveLeads', 'leads')
+
       if (existingLead) {
         crmLeadId = existingLead.id
         // Atualizar dados do lead existente com info do imóvel
@@ -157,6 +161,9 @@ export async function POST(request: NextRequest) {
           updateData.updated_at = new Date().toISOString()
           await supabase.from('leads').update(updateData).eq('id', existingLead.id)
         }
+      } else if (!leadsLimit.allowed) {
+        // Limite atingido — site_lead já foi salvo, mas não sincroniza ao CRM
+        console.warn(`[SiteLeads] Lead limit reached for org ${site.org_id}: ${leadsLimit.current}/${leadsLimit.limit}`)
       } else {
         // Buscar primeiro estágio do pipeline da org
         const { data: firstStage } = await supabase

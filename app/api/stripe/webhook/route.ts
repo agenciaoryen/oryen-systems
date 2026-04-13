@@ -10,10 +10,16 @@ const supabase = createClient(
 )
 
 // Mapeamento de price_id para nome do plano
+// Planos v2 (Abril 2026)
 const PRICE_TO_PLAN: Record<string, string> = {
+  'price_1TLluY3PghkCuiR4OcBt2z9E': 'starter',
+  'price_1TLlwh3PghkCuiR4cxbEyOT3': 'pro',
+  'price_1TLlxl3PghkCuiR4bhofUcOC': 'business',
+  'price_1TLlzY3PghkCuiR4nwvO8uy6': 'enterprise',
+  // Legado (para subscription.updated de clientes antigos)
   'price_1T8oZU3PghkCuiR4VQeMLnCJ': 'basic',
   'price_1T8odD3PghkCuiR4GEP8EgHp': 'gold',
-  'price_1T8oex3PghkCuiR4nAtWe7qo': 'diamond'
+  'price_1T8oex3PghkCuiR4nAtWe7qo': 'diamond',
 }
 
 export async function POST(req: NextRequest) {
@@ -109,17 +115,17 @@ export async function POST(req: NextRequest) {
         const orgId = subscription.metadata?.org_id
 
         if (orgId) {
-          // Volta para plano basic quando cancela
+          // Volta para plano starter quando cancela
           await supabase
             .from('orgs')
             .update({
-              plan: 'basic',
+              plan: 'starter',
               plan_status: 'canceled',
               billing_subscription_id: null
             })
             .eq('id', orgId)
 
-          console.log(`✅ Subscription canceled: org ${orgId} downgraded to basic`)
+          console.log(`✅ Subscription canceled: org ${orgId} downgraded to starter`)
         }
         break
       }

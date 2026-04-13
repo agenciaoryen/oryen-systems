@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oryen - Estrategia de Pricing v2 | Documento Interno</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg-card: #12121a;
+      --bg-card-alt: #1a1a2e;
+      --border: #2a2a3e;
+      --text: #e4e4e7;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --accent: #6366f1;
+      --accent-light: #818cf8;
+      --starter: #22c55e;
+      --starter-bg: rgba(34, 197, 94, 0.08);
+      --pro: #6366f1;
+      --pro-bg: rgba(99, 102, 241, 0.08);
+      --business: #f59e0b;
+      --business-bg: rgba(245, 158, 11, 0.08);
+      --enterprise: #ec4899;
+      --enterprise-bg: rgba(236, 72, 153, 0.08);
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 0;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #12121a 0%, #1e1e3a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    .header-badge {
+      display: inline-block;
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--accent-light);
+      padding: 0.4rem 1.2rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .header h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #fff 0%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .header-meta {
+      margin-top: 1.5rem;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+
+    /* Layout */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Sections */
+    .section {
+      margin-bottom: 3rem;
+    }
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .section-title .num {
+      background: var(--accent);
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .section-subtitle {
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      padding-left: 3.2rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      color: #fff;
+    }
+
+    /* Pricing Cards Grid */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 1000px) {
+      .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .pricing-grid { grid-template-columns: 1fr; }
+    }
+
+    .pricing-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      position: relative;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .pricing-card:hover {
+      transform: translateY(-4px);
+    }
+    .pricing-card.starter { border-color: var(--starter); }
+    .pricing-card.starter .plan-badge { background: var(--starter-bg); color: var(--starter); }
+    .pricing-card.starter .price { color: var(--starter); }
+
+    .pricing-card.pro { border-color: var(--pro); }
+    .pricing-card.pro .plan-badge { background: var(--pro-bg); color: var(--pro); }
+    .pricing-card.pro .price { color: var(--pro); }
+
+    .pricing-card.business { border-color: var(--business); }
+    .pricing-card.business .plan-badge { background: var(--business-bg); color: var(--business); }
+    .pricing-card.business .price { color: var(--business); }
+
+    .pricing-card.enterprise { border-color: var(--enterprise); }
+    .pricing-card.enterprise .plan-badge { background: var(--enterprise-bg); color: var(--enterprise); }
+    .pricing-card.enterprise .price { color: var(--enterprise); }
+
+    .popular-tag {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--pro);
+      color: #fff;
+      padding: 0.3rem 1.2rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    .plan-badge {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.75rem;
+    }
+    .plan-name {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.3rem;
+    }
+    .plan-desc {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+      min-height: 40px;
+    }
+    .price {
+      font-size: 2.8rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 0.2rem;
+    }
+    .price-currency {
+      font-size: 1.2rem;
+      font-weight: 600;
+      vertical-align: top;
+    }
+    .price-period {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 0.3rem;
+    }
+    .price-local {
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .feature-list {
+      list-style: none;
+      padding: 0;
+    }
+    .feature-list li {
+      padding: 0.4rem 0;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .feature-list li .icon {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .check { color: var(--green); }
+    .dash { color: var(--text-dim); }
+    .feature-list li.highlight {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: var(--bg-card-alt);
+    }
+    td { color: var(--text); }
+    tr:hover td { background: rgba(99, 102, 241, 0.03); }
+    .col-starter { color: var(--starter); font-weight: 600; }
+    .col-pro { color: var(--pro); font-weight: 600; }
+    .col-business { color: var(--business); font-weight: 600; }
+    .col-enterprise { color: var(--enterprise); font-weight: 600; }
+
+    /* Comparison table header colors */
+    th.th-starter { background: var(--starter-bg); color: var(--starter); }
+    th.th-pro { background: var(--pro-bg); color: var(--pro); }
+    th.th-business { background: var(--business-bg); color: var(--business); }
+    th.th-enterprise { background: var(--enterprise-bg); color: var(--enterprise); }
+
+    /* Add-ons */
+    .addon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    .addon-card {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    .addon-card h4 {
+      font-size: 0.95rem;
+      color: #fff;
+      margin-bottom: 0.3rem;
+    }
+    .addon-price {
+      color: var(--accent-light);
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+    .addon-desc {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+
+    /* Upgrade path */
+    .upgrade-path {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 2rem 0;
+    }
+    .upgrade-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      text-align: center;
+      min-width: 160px;
+    }
+    .upgrade-step.s { border-color: var(--starter); }
+    .upgrade-step.p { border-color: var(--pro); }
+    .upgrade-step.b { border-color: var(--business); }
+    .upgrade-step.e { border-color: var(--enterprise); }
+    .upgrade-step .step-name { font-weight: 700; font-size: 1rem; color: #fff; }
+    .upgrade-step .step-price { font-size: 0.85rem; color: var(--text-muted); }
+    .upgrade-arrow {
+      color: var(--accent);
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    /* Callout */
+    .callout {
+      background: rgba(99, 102, 241, 0.08);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 12px 12px 0;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .callout-warn {
+      background: rgba(245, 158, 11, 0.08);
+      border-left-color: var(--yellow);
+    }
+    .callout-success {
+      background: rgba(34, 197, 94, 0.08);
+      border-left-color: var(--green);
+    }
+    .callout h4 {
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+    .callout p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* ROI */
+    .roi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .roi-card {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .roi-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--green);
+      margin-bottom: 0.3rem;
+    }
+    .roi-label {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* Before/After */
+    .ba-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 700px) {
+      .ba-grid { grid-template-columns: 1fr; }
+    }
+    .ba-card {
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .ba-card.before {
+      background: rgba(239, 68, 68, 0.06);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .ba-card.after {
+      background: rgba(34, 197, 94, 0.06);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+    .ba-card h4 {
+      margin-bottom: 1rem;
+    }
+    .ba-card.before h4 { color: var(--red); }
+    .ba-card.after h4 { color: var(--green); }
+    .ba-card ul {
+      list-style: none;
+      padding: 0;
+    }
+    .ba-card ul li {
+      padding: 0.35rem 0;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    /* Bar chart */
+    .bar-chart {
+      margin: 1.5rem 0;
+    }
+    .bar-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.6rem;
+      gap: 0.75rem;
+    }
+    .bar-label {
+      width: 180px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .bar-track {
+      flex: 1;
+      height: 28px;
+      background: var(--bg-card-alt);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      padding-left: 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    /* Margins table */
+    .margin-good { color: var(--green); font-weight: 700; }
+    .margin-ok { color: var(--yellow); font-weight: 700; }
+    .margin-bad { color: var(--red); font-weight: 700; }
+
+    /* Print */
+    @media print {
+      body { background: #fff; color: #1a1a2e; }
+      .card, .pricing-card, .addon-card, .roi-card { border-color: #ddd; background: #f9f9f9; }
+      .header { background: #f0f0f5; }
+      th { background: #eee; }
+    }
+
+    /* Sticky nav */
+    .nav {
+      background: rgba(10, 10, 15, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 0.75rem 2rem;
+      display: flex;
+      gap: 1.5rem;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav a:hover { color: var(--accent-light); }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 3rem 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-badge">Documento Interno - Confidencial</div>
+  <h1>Estrategia de Pricing v2</h1>
+  <p>Nova estrutura de planos, precos, limites e posicionamento da plataforma Oryen</p>
+  <div class="header-meta">Abril 2026 | Baseado em analise de 8+ concorrentes e 3 experts de IA</div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="#planos">Planos</a>
+  <a href="#comparativo">Comparativo Completo</a>
+  <a href="#addons">Add-ons</a>
+  <a href="#upgrade">Jornada de Upgrade</a>
+  <a href="#margens">Margens e Unit Economics</a>
+  <a href="#roi">ROI para o Cliente</a>
+  <a href="#concorrencia">vs Concorrencia</a>
+  <a href="#antes-depois">Antes vs Depois</a>
+  <a href="#projecao">Projecao de Receita</a>
+  <a href="#implementacao">Implementacao</a>
+</nav>
+
+<div class="container">
+
+  <!-- ============================================================ -->
+  <!-- SECTION 1: PLANOS -->
+  <!-- ============================================================ -->
+  <section class="section" id="planos">
+    <div class="section-title">
+      <span class="num">1</span> Os 4 Planos
+    </div>
+    <p class="section-subtitle">Estrutura progressiva com IA desde o primeiro plano</p>
+
+    <div class="pricing-grid">
+
+      <!-- STARTER -->
+      <div class="pricing-card starter">
+        <div class="plan-badge">Entrada</div>
+        <div class="plan-name">Starter</div>
+        <div class="plan-desc">Para o corretor autonomo que quer profissionalizar com IA</div>
+        <div class="price"><span class="price-currency">$</span>49</div>
+        <div class="price-period">por mes (USD)</div>
+        <div class="price-local">R$249 | CLP 45.000 | MXN 850</div>
+        <ul class="feature-list">
+          <li class="highlight"><span class="icon check">&#10003;</span> 1 usuario</li>
+          <li class="highlight"><span class="icon check">&#10003;</span> 500 leads ativos</li>
+          <li class="highlight"><span class="icon check">&#10003;</span> 500 msgs AI/mes</li>
+          <li><span class="icon check">&#10003;</span> 30 imoveis no portfolio</li>
+          <li><span class="icon check">&#10003;</span> 1 WhatsApp</li>
+          <li><span class="icon check">&#10003;</span> CRM Kanban completo</li>
+          <li><span class="icon check">&#10003;</span> AI SDR completo (ICUVA)</li>
+          <li><span class="icon check">&#10003;</span> Busca de imoveis por IA</li>
+          <li><span class="icon check">&#10003;</span> Agendamento por IA</li>
+          <li><span class="icon check">&#10003;</span> Follow-up 5 etapas</li>
+          <li><span class="icon check">&#10003;</span> Transcricao de audio</li>
+          <li><span class="icon check">&#10003;</span> Deteccao de sentimento</li>
+          <li><span class="icon check">&#10003;</span> Site (subdominio Oryen)</li>
+          <li><span class="icon check">&#10003;</span> 10 documentos/mes</li>
+          <li><span class="icon check">&#10003;</span> Calendario</li>
+          <li><span class="icon check">&#10003;</span> Dashboard basico</li>
+          <li><span class="icon check">&#10003;</span> Central de alertas</li>
+          <li><span class="icon dash">&#8212;</span> Suporte por email (48h)</li>
+        </ul>
+      </div>
+
+      <!-- PRO -->
+      <div class="pricing-card pro">
+        <div class="popular-tag">Mais Popular</div>
+        <div class="plan-badge">Recomendado</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-desc">Para quem quer a IA trabalhando a todo vapor</div>
+        <div class="price"><span class="price-currency">$</span>99</div>
+        <div class="price-period">por mes (USD)</div>
+        <div class="price-local">R$497 | CLP 90.000 | MXN 1.720</div>
+        <ul class="feature-list">
+          <li class="highlight"><span class="icon check">&#10003;</span> 3 usuarios</li>
+          <li class="highlight"><span class="icon check">&#10003;</span> 2.000 leads ativos</li>
+          <li class="highlight"><span class="icon check">&#10003;</span> 3.000 msgs AI/mes</li>
+          <li><span class="icon check">&#10003;</span> 100 imoveis no portfolio</li>
+          <li><span class="icon check">&#10003;</span> 2 WhatsApp</li>
+          <li><span class="icon check">&#10003;</span> CRM Kanban completo</li>
+          <li><span class="icon check">&#10003;</span> AI SDR completo (ICUVA)</li>
+          <li><span class="icon check">&#10003;</span> Follow-up 5 etapas</li>
+          <li><span class="icon check">&#10003;</span> Busca de imoveis por IA</li>
+          <li><span class="icon check">&#10003;</span> Agendamento por IA</li>
+          <li><span class="icon check">&#10003;</span> Transcricao de audio</li>
+          <li><span class="icon check">&#10003;</span> Deteccao de sentimento</li>
+          <li><span class="icon check">&#10003;</span> Importacao CSV</li>
+          <li><span class="icon check">&#10003;</span> Site (dominio proprio)</li>
+          <li><span class="icon check">&#10003;</span> 50 documentos/mes</li>
+          <li><span class="icon check">&#10003;</span> Smart Documents completo</li>
+          <li><span class="icon check">&#10003;</span> Relatorios completos</li>
+          <li><span class="icon check">&#10003;</span> Importacao CSV</li>
+          <li><span class="icon dash">&#8212;</span> Suporte por chat (24h)</li>
+        </ul>
+      </div>
+
+      <!-- BUSINESS -->
+      <div class="pricing-card business">
+        <div class="plan-badge">Equipes</div>
+        <div class="plan-name">Business</div>
+        <div class="plan-desc">Para imobiliarias que operam com equipe e volume</div>
+        <div class="price"><span class="price-currency">$</span>249</div>
+        <div class="price-period">por mes (USD)</div>
+        <div class="price-local">R$1.247 | CLP 230.000 | MXN 4.320</div>
+        <ul class="feature-list">
+          <li class="highlight"><span class="icon check">&#10003;</span> 8 usuarios</li>
+          <li class="highlight"><span class="icon check">&#10003;</span> 8.000 leads ativos</li>
+          <li class="highlight"><span class="icon check">&#10003;</span> 15.000 msgs AI/mes</li>
+          <li><span class="icon check">&#10003;</span> 500 imoveis no portfolio</li>
+          <li><span class="icon check">&#10003;</span> 5 WhatsApp</li>
+          <li><span class="icon check">&#10003;</span> Tudo do Pro</li>
+          <li><span class="icon check">&#10003;</span> AI Hunter (prospeccao)</li>
+          <li><span class="icon check">&#10003;</span> Campanhas em massa</li>
+          <li><span class="icon check">&#10003;</span> E-signature em documentos</li>
+          <li><span class="icon check">&#10003;</span> API + Webhooks</li>
+          <li><span class="icon check">&#10003;</span> Relatorio CPL (custo/lead)</li>
+          <li><span class="icon check">&#10003;</span> 3 sites profissionais</li>
+          <li><span class="icon check">&#10003;</span> 200 documentos/mes</li>
+          <li><span class="icon check">&#10003;</span> Relatorios automatizados (WhatsApp)</li>
+          <li><span class="icon dash">&#8212;</span> Suporte prioritario (4h)</li>
+        </ul>
+      </div>
+
+      <!-- ENTERPRISE -->
+      <div class="pricing-card enterprise">
+        <div class="plan-badge">Escala</div>
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-desc">Para imobiliarias grandes e redes multi-filial</div>
+        <div class="price"><span class="price-currency">$</span>499</div>
+        <div class="price-period">por mes (USD)</div>
+        <div class="price-local">R$2.497 | CLP 460.000 | MXN 8.660</div>
+        <ul class="feature-list">
+          <li class="highlight"><span class="icon check">&#10003;</span> 25 usuarios</li>
+          <li class="highlight"><span class="icon check">&#10003;</span> 30.000 leads ativos</li>
+          <li class="highlight"><span class="icon check">&#10003;</span> 50.000 msgs AI/mes</li>
+          <li><span class="icon check">&#10003;</span> Imoveis ilimitados</li>
+          <li><span class="icon check">&#10003;</span> 15 WhatsApp</li>
+          <li><span class="icon check">&#10003;</span> Tudo do Business</li>
+          <li><span class="icon check">&#10003;</span> 10 sites profissionais</li>
+          <li><span class="icon check">&#10003;</span> Documentos ilimitados</li>
+          <li><span class="icon check">&#10003;</span> Relatorios customizaveis</li>
+          <li><span class="icon check">&#10003;</span> Onboarding assistido (3 sessoes)</li>
+          <li><span class="icon check">&#10003;</span> Suporte dedicado (1h)</li>
+          <li><span class="icon check">&#10003;</span> SLA 99.9% uptime</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="callout">
+      <h4>Principio: Mesma IA em todos os planos</h4>
+      <p>Todos os planos incluem a mesma IA completa — SDR com ICUVA, busca de imoveis, agendamento, follow-up 5 etapas. O que muda entre planos sao os <strong>limites de uso</strong> (mensagens AI, leads, usuarios) e as <strong>features de escala</strong> (Hunter, campanhas em massa, API). O corretor no Starter tem a mesma qualidade de IA que o Enterprise — so usa menos.</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============================================================ -->
+  <!-- SECTION 2: COMPARATIVO COMPLETO -->
+  <!-- ============================================================ -->
+  <section class="section" id="comparativo">
+    <div class="section-title">
+      <span class="num">2</span> Comparativo Completo de Recursos
+    </div>
+    <p class="section-subtitle">Todos os recursos e limites lado a lado</p>
+
+    <div class="card" style="overflow-x: auto;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 30%;">Recurso</th>
+            <th class="th-starter" style="width: 17.5%; text-align: center;">Starter $49</th>
+            <th class="th-pro" style="width: 17.5%; text-align: center;">Pro $99</th>
+            <th class="th-business" style="width: 17.5%; text-align: center;">Business $249</th>
+            <th class="th-enterprise" style="width: 17.5%; text-align: center;">Enterprise $499</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="5" style="font-weight: 700; color: #fff; background: var(--bg-card-alt); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Limites</td></tr>
+          <tr>
+            <td>Usuarios</td>
+            <td class="col-starter" style="text-align: center;">1</td>
+            <td class="col-pro" style="text-align: center;">3</td>
+            <td class="col-business" style="text-align: center;">8</td>
+            <td class="col-enterprise" style="text-align: center;">25</td>
+          </tr>
+          <tr>
+            <td>Leads ativos</td>
+            <td class="col-starter" style="text-align: center;">500</td>
+            <td class="col-pro" style="text-align: center;">2.000</td>
+            <td class="col-business" style="text-align: center;">8.000</td>
+            <td class="col-enterprise" style="text-align: center;">30.000</td>
+          </tr>
+          <tr>
+            <td>Mensagens AI / mes</td>
+            <td class="col-starter" style="text-align: center;">500</td>
+            <td class="col-pro" style="text-align: center;">3.000</td>
+            <td class="col-business" style="text-align: center;">15.000</td>
+            <td class="col-enterprise" style="text-align: center;">50.000</td>
+          </tr>
+          <tr>
+            <td>Imoveis no portfolio</td>
+            <td class="col-starter" style="text-align: center;">30</td>
+            <td class="col-pro" style="text-align: center;">100</td>
+            <td class="col-business" style="text-align: center;">500</td>
+            <td class="col-enterprise" style="text-align: center;">Ilimitado</td>
+          </tr>
+          <tr>
+            <td>Numeros WhatsApp</td>
+            <td class="col-starter" style="text-align: center;">1</td>
+            <td class="col-pro" style="text-align: center;">2</td>
+            <td class="col-business" style="text-align: center;">5</td>
+            <td class="col-enterprise" style="text-align: center;">15</td>
+          </tr>
+          <tr>
+            <td>Documentos / mes</td>
+            <td class="col-starter" style="text-align: center;">10</td>
+            <td class="col-pro" style="text-align: center;">50</td>
+            <td class="col-business" style="text-align: center;">200</td>
+            <td class="col-enterprise" style="text-align: center;">Ilimitado</td>
+          </tr>
+          <tr>
+            <td>Sites profissionais</td>
+            <td class="col-starter" style="text-align: center;">1</td>
+            <td class="col-pro" style="text-align: center;">1</td>
+            <td class="col-business" style="text-align: center;">3</td>
+            <td class="col-enterprise" style="text-align: center;">10</td>
+          </tr>
+
+          <tr><td colspan="5" style="font-weight: 700; color: #fff; background: var(--bg-card-alt); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">CRM e Pipeline</td></tr>
+          <tr>
+            <td>CRM Kanban (drag-and-drop)</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Estagios customizaveis</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Tags coloridas</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Importacao CSV</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+
+          <tr><td colspan="5" style="font-weight: 700; color: #fff; background: var(--bg-card-alt); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Inteligencia Artificial</td></tr>
+          <tr>
+            <td>AI SDR (atendimento WhatsApp)</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Qualificacao ICUVA</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Busca de imoveis por IA</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Agendamento automatico por IA</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Follow-up progressivo (5 etapas)</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>AI Hunter (prospeccao ativa)</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Campanhas em massa</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+
+          <tr><td colspan="5" style="font-weight: 700; color: #fff; background: var(--bg-card-alt); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">WhatsApp</td></tr>
+          <tr>
+            <td>Mensagens bidirecionais</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Transcricao de audio</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Deteccao de sentimento</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+
+          <tr><td colspan="5" style="font-weight: 700; color: #fff; background: var(--bg-card-alt); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Portfolio e Site</td></tr>
+          <tr>
+            <td>Portfolio de imoveis</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Site profissional</td>
+            <td style="text-align: center; color: var(--starter);">Subdominio</td>
+            <td style="text-align: center; color: var(--green);">Dominio proprio</td>
+            <td style="text-align: center; color: var(--green);">Dominio proprio</td>
+            <td style="text-align: center; color: var(--green);">Dominio proprio</td>
+          </tr>
+          <tr>
+            <td>SEO (meta title, OG image)</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Formulario contato -> CRM</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+
+          <tr><td colspan="5" style="font-weight: 700; color: #fff; background: var(--bg-card-alt); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Documentos</td></tr>
+          <tr>
+            <td>Templates basicos</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Smart Documents (variaveis dinamicas)</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Geracao PDF + envio WhatsApp/email</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>E-signature workflow</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+
+          <tr><td colspan="5" style="font-weight: 700; color: #fff; background: var(--bg-card-alt); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Relatorios e Dashboard</td></tr>
+          <tr>
+            <td>Dashboard KPIs</td>
+            <td style="text-align: center; color: var(--starter);">Basico</td>
+            <td style="text-align: center; color: var(--green);">Completo</td>
+            <td style="text-align: center; color: var(--green);">Completo</td>
+            <td style="text-align: center; color: var(--green);">Customizavel</td>
+          </tr>
+          <tr>
+            <td>Graficos (evolucao, origens, sentimento)</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Metas configuraveis</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Custo por lead (CPL)</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+          <tr>
+            <td>Relatorios automatizados (WhatsApp)</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+
+          <tr><td colspan="5" style="font-weight: 700; color: #fff; background: var(--bg-card-alt); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Integracao e API</td></tr>
+          <tr>
+            <td>API + Webhooks</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--text-dim);">&#8212;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+            <td style="text-align: center; color: var(--green);">&#10003;</td>
+          </tr>
+
+          <tr><td colspan="5" style="font-weight: 700; color: #fff; background: var(--bg-card-alt); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Suporte e Onboarding</td></tr>
+          <tr>
+            <td>Nivel de suporte</td>
+            <td style="text-align: center; color: var(--starter);">Email (48h)</td>
+            <td style="text-align: center; color: var(--pro);">Chat (24h)</td>
+            <td style="text-align: center; color: var(--business);">Prioritario (4h)</td>
+            <td style="text-align: center; color: var(--enterprise);">Dedicado (1h)</td>
+          </tr>
+          <tr>
+            <td>Onboarding</td>
+            <td style="text-align: center; color: var(--text-muted);">Self-service</td>
+            <td style="text-align: center; color: var(--text-muted);">Self-service</td>
+            <td style="text-align: center; color: var(--text-muted);">Self-service</td>
+            <td style="text-align: center; color: var(--enterprise);">3 sessoes assistidas</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============================================================ -->
+  <!-- SECTION 3: ADD-ONS -->
+  <!-- ============================================================ -->
+  <section class="section" id="addons">
+    <div class="section-title">
+      <span class="num">3</span> Add-ons
+    </div>
+    <p class="section-subtitle">Disponiveis para qualquer plano. Permitem crescer sem forcar upgrade.</p>
+
+    <div class="addon-grid">
+      <div class="addon-card">
+        <h4>+2.000 mensagens AI</h4>
+        <div class="addon-price">$25/mes</div>
+        <div class="addon-desc">Para quem esgota o limite de IA sem precisar trocar de plano. Margem de ~70%.</div>
+      </div>
+      <div class="addon-card">
+        <h4>+1 usuario</h4>
+        <div class="addon-price">$15/mes</div>
+        <div class="addon-desc">Adicione corretores a equipe. Sem limite de quantidade.</div>
+      </div>
+      <div class="addon-card">
+        <h4>+1 numero WhatsApp</h4>
+        <div class="addon-price">$12/mes</div>
+        <div class="addon-desc">Numero adicional conectado a plataforma.</div>
+      </div>
+      <div class="addon-card">
+        <h4>+1 site profissional</h4>
+        <div class="addon-price">$20/mes</div>
+        <div class="addon-desc">Site extra para marca, regiao ou projeto diferente.</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top: 1.5rem;">
+      <h4>Ponto de virada natural</h4>
+      <p>Quando os add-ons somam mais que a diferenca para o proximo plano, o upgrade se vende sozinho. Exemplo: Business ($249) + 7 usuarios extras ($105) = $354. Nesse ponto, Enterprise a $499 com 25 usuarios inclusos faz mais sentido.</p>
+    </div>
+
+    <div class="card" style="margin-top: 1.5rem;">
+      <h3>Exemplos de custo real por cenario</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Cenario</th>
+            <th>Plano base</th>
+            <th>Add-ons</th>
+            <th>Total/mes</th>
+            <th>Alternativa</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Corretor + 1 assistente</td>
+            <td>Starter $49</td>
+            <td>+1 usuario ($15)</td>
+            <td><strong>$64</strong></td>
+            <td>ou Pro $99 (3 users + mais AI)</td>
+          </tr>
+          <tr>
+            <td>Equipe de 5 corretores</td>
+            <td>Pro $99</td>
+            <td>+2 usuarios ($30)</td>
+            <td><strong>$129</strong></td>
+            <td>--</td>
+          </tr>
+          <tr>
+            <td>Equipe de 5 + muita IA</td>
+            <td>Pro $99</td>
+            <td>+2 users ($30) + 2k AI ($25)</td>
+            <td><strong>$154</strong></td>
+            <td>--</td>
+          </tr>
+          <tr>
+            <td>Imobiliaria 10 pessoas</td>
+            <td>Business $249</td>
+            <td>+2 usuarios ($30)</td>
+            <td><strong>$279</strong></td>
+            <td>--</td>
+          </tr>
+          <tr>
+            <td>Imobiliaria 15 pessoas</td>
+            <td>Business $249</td>
+            <td>+7 usuarios ($105)</td>
+            <td><strong>$354</strong></td>
+            <td>Enterprise $499 (melhor custo-beneficio)</td>
+          </tr>
+          <tr>
+            <td>Rede 30 corretores</td>
+            <td>Enterprise $499</td>
+            <td>+5 usuarios ($75)</td>
+            <td><strong>$574</strong></td>
+            <td>--</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============================================================ -->
+  <!-- SECTION 4: UPGRADE PATH -->
+  <!-- ============================================================ -->
+  <section class="section" id="upgrade">
+    <div class="section-title">
+      <span class="num">4</span> Jornada de Upgrade
+    </div>
+    <p class="section-subtitle">Como o cliente sobe de plano naturalmente</p>
+
+    <div class="upgrade-path">
+      <div class="upgrade-step s">
+        <div class="step-name" style="color: var(--starter);">Starter</div>
+        <div class="step-price">$49/mes</div>
+      </div>
+      <div class="upgrade-arrow">&#8594;</div>
+      <div class="upgrade-step p">
+        <div class="step-name" style="color: var(--pro);">Pro</div>
+        <div class="step-price">$99/mes</div>
+      </div>
+      <div class="upgrade-arrow">&#8594;</div>
+      <div class="upgrade-step b">
+        <div class="step-name" style="color: var(--business);">Business</div>
+        <div class="step-price">$249/mes</div>
+      </div>
+      <div class="upgrade-arrow">&#8594;</div>
+      <div class="upgrade-step e">
+        <div class="step-name" style="color: var(--enterprise);">Enterprise</div>
+        <div class="step-price">$499/mes</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Gatilhos de upgrade (o que faz o cliente PRECISAR subir)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Transicao</th>
+            <th>Salto</th>
+            <th>Gatilho principal</th>
+            <th>Momento tipico</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--starter);">Starter</strong> &#8594; <strong style="color: var(--pro);">Pro</strong></td>
+            <td>2x ($49 &#8594; $99)</td>
+            <td>Esgotou 500 msgs AI (sinal de que a IA esta trazendo resultado). Precisa de mais leads ativos (passou de 500). Quer dominio proprio no site e Smart Documents.</td>
+            <td>30-60 dias</td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--pro);">Pro</strong> &#8594; <strong style="color: var(--business);">Business</strong></td>
+            <td>2.5x ($99 &#8594; $249)</td>
+            <td>Equipe cresceu (precisa de +3 usuarios). Esgotou 3k msgs AI (sinal de sucesso). Quer Hunter + campanhas.</td>
+            <td>6-12 meses</td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--business);">Business</strong> &#8594; <strong style="color: var(--enterprise);">Enterprise</strong></td>
+            <td>2x ($249 &#8594; $499)</td>
+            <td>Equipe passou de 10+ pessoas. Investe em trafego pago e precisa de escala. Add-ons ja custam mais que o upgrade.</td>
+            <td>12-24 meses</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout-success callout">
+      <h4>Saltos saudaveis entre tiers</h4>
+      <p>Starter &#8594; Pro: 2x | Pro &#8594; Business: 2.5x | Business &#8594; Enterprise: 2x. Todos abaixo de 3x, que e o maximo recomendado pela psicologia de pricing para evitar paralisia de decisao. Compare com o pricing antigo onde o salto era de 11.5x.</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============================================================ -->
+  <!-- SECTION 5: MARGENS -->
+  <!-- ============================================================ -->
+  <section class="section" id="margens">
+    <div class="section-title">
+      <span class="num">5</span> Margens e Unit Economics
+    </div>
+    <p class="section-subtitle">Custo estimado para servir cada plano e margem bruta</p>
+
+    <div class="card" style="overflow-x: auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Item de custo</th>
+            <th class="th-starter" style="text-align: center;">Starter $49</th>
+            <th class="th-pro" style="text-align: center;">Pro $99</th>
+            <th class="th-business" style="text-align: center;">Business $249</th>
+            <th class="th-enterprise" style="text-align: center;">Enterprise $499</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Infra rateada</td>
+            <td style="text-align: center;">$0.75</td>
+            <td style="text-align: center;">$1.00</td>
+            <td style="text-align: center;">$1.50</td>
+            <td style="text-align: center;">$3.00</td>
+          </tr>
+          <tr>
+            <td>AI (Claude API)</td>
+            <td style="text-align: center;">$2.50</td>
+            <td style="text-align: center;">$15</td>
+            <td style="text-align: center;">$75</td>
+            <td style="text-align: center;">$250</td>
+          </tr>
+          <tr>
+            <td>WhatsApp</td>
+            <td style="text-align: center;">$3</td>
+            <td style="text-align: center;">$8</td>
+            <td style="text-align: center;">$25</td>
+            <td style="text-align: center;">$60</td>
+          </tr>
+          <tr>
+            <td>Stripe (2.9% + $0.30)</td>
+            <td style="text-align: center;">$1.72</td>
+            <td style="text-align: center;">$3.17</td>
+            <td style="text-align: center;">$7.52</td>
+            <td style="text-align: center;">$14.77</td>
+          </tr>
+          <tr>
+            <td>Suporte (rateado)</td>
+            <td style="text-align: center;">$2</td>
+            <td style="text-align: center;">$4</td>
+            <td style="text-align: center;">$8</td>
+            <td style="text-align: center;">$15</td>
+          </tr>
+          <tr style="font-weight: 700; border-top: 2px solid var(--border);">
+            <td>Custo total estimado</td>
+            <td style="text-align: center;">~$10</td>
+            <td style="text-align: center;">~$31</td>
+            <td style="text-align: center;">~$117</td>
+            <td style="text-align: center;">~$343</td>
+          </tr>
+          <tr style="font-weight: 700;">
+            <td>Margem bruta</td>
+            <td style="text-align: center;" class="margin-good">$39 (80%)</td>
+            <td style="text-align: center;" class="margin-good">$68 (69%)</td>
+            <td style="text-align: center;" class="margin-ok">$132 (53%)</td>
+            <td style="text-align: center;" class="margin-ok">$156 (31%)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout-warn callout">
+      <h4>Atencao: Enterprise com uso maximo</h4>
+      <p>Se um cliente Enterprise usar os 50k msgs AI inteiros, o custo de AI sobe para ~$250. A margem fica em 31%. Para proteger, implementar: (1) metering de uso com dashboard visivel pro cliente, (2) hard cap com overage automatico apos limite, (3) monitorar cost-to-serve por cliente mensalmente.</p>
+    </div>
+
+    <div class="callout-success callout">
+      <h4>Comparacao com pricing antigo</h4>
+      <p>O plano Diamond antigo ($329) com 50k msgs AI tinha margem estimada de <strong>-31% a +2%</strong>. O novo Enterprise ($499) com os mesmos 50k msgs tem margem de <strong>31%+</strong>. A diferenca de $170/mes transforma um plano potencialmente deficitario em lucrativo.</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============================================================ -->
+  <!-- SECTION 6: ROI -->
+  <!-- ============================================================ -->
+  <section class="section" id="roi">
+    <div class="section-title">
+      <span class="num">6</span> ROI para o Cliente
+    </div>
+    <p class="section-subtitle">Argumento de venda: quanto a Oryen se paga em comissoes</p>
+
+    <div class="roi-grid">
+      <div class="roi-card">
+        <div class="roi-value">24x</div>
+        <div class="roi-label">ROI do Starter<br>1 venda extra/trimestre de R$300k<br>(comissao R$18k vs custo R$747)</div>
+      </div>
+      <div class="roi-card">
+        <div class="roi-value">12x</div>
+        <div class="roi-label">ROI do Pro<br>1 venda extra/trimestre de R$300k<br>(comissao R$18k vs custo R$1.491)</div>
+      </div>
+      <div class="roi-card">
+        <div class="roi-value">4.8x</div>
+        <div class="roi-label">ROI do Business<br>1 venda extra/mes de R$300k<br>(comissao R$18k vs custo R$3.741)</div>
+      </div>
+      <div class="roi-card">
+        <div class="roi-value">2.4x</div>
+        <div class="roi-label">ROI do Enterprise<br>2 vendas extras/mes de R$300k<br>(comissao R$36k vs custo R$7.491)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Script de ROI para sessao de vendas</h3>
+      <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;">Use na hora de apresentar investimento (Aula 54 - Smart Sales)</p>
+      <div style="background: var(--bg-card-alt); border-radius: 8px; padding: 1.5rem; font-style: italic; color: var(--text-muted); font-size: 0.9rem; line-height: 1.8;">
+        "Voce me disse que sua comissao media e de [VALOR]. A Oryen custa [PRECO]/mes. Se a IA te ajudar a fechar <strong>uma unica venda extra por trimestre</strong> — uma venda que voce teria perdido por demora no atendimento — voce ja recupera o investimento do ano inteiro em uma unica comissao. O resto e lucro puro."
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============================================================ -->
+  <!-- SECTION 7: CONCORRENCIA -->
+  <!-- ============================================================ -->
+  <section class="section" id="concorrencia">
+    <div class="section-title">
+      <span class="num">7</span> Posicionamento vs Concorrencia
+    </div>
+    <p class="section-subtitle">Como a Oryen se posiciona com o novo pricing</p>
+
+    <div class="bar-chart">
+      <div class="bar-row">
+        <div class="bar-label">Oryen Starter</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 3.3%; min-width: 50px; background: var(--starter);">$49</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Creativaweb (posts)</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 6.3%; min-width: 50px; background: #555;">$95</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="font-weight: 700; color: var(--pro);">Oryen Pro</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 6.6%; min-width: 50px; background: var(--pro);">$99</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Nova IA (chatbot + $750 setup)</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 8.3%; min-width: 50px; background: #555;">$125</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Plataforma Espinoza (imob)</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 11%; min-width: 50px; background: #555;">$165</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">MobileLink (IA clinicas)</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 14%; min-width: 60px; background: #555;">$210</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="font-weight: 700; color: var(--business);">Oryen Business</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 16.6%; min-width: 60px; background: var(--business);">$249</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="font-weight: 700; color: var(--enterprise);">Oryen Enterprise</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 33.3%; min-width: 60px; background: var(--enterprise);">$499</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">BoomTown Launch (EUA)</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 66.7%; min-width: 70px; background: #8b0000;">$1,000 + $750 setup</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">BoomTown Advance (EUA)</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 100%; min-width: 80px; background: #8b0000;">$1,500 + $1,500 setup</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Vantagens competitivas no novo pricing</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Argumento</th>
+            <th>Detalhe</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>vs Nova IA ($125 + $750 setup)</strong></td>
+            <td>Oryen Pro ($99) entrega CRM + Site + Portfolio + IA SDR completa. Nova IA so entrega um chatbot generico. E sem setup fee.</td>
+          </tr>
+          <tr>
+            <td><strong>vs MobileLink ($210 + $105 setup)</strong></td>
+            <td>Oryen Business ($249) entrega tudo do MobileLink + portfolio de imoveis + documentos + Hunter + campanhas. Para nicho imobiliario, sem comparacao.</td>
+          </tr>
+          <tr>
+            <td><strong>vs Plataforma Espinoza ($165)</strong></td>
+            <td>Oryen Pro ($99) e mais barata e tem IA que Espinoza nao tem. Oryen Business ($249) e premium mas com automacao completa.</td>
+          </tr>
+          <tr>
+            <td><strong>vs BoomTown ($1,000-1,500)</strong></td>
+            <td>Oryen Enterprise ($499) e 50-67% mais barata, com IA conversacional no WhatsApp que BoomTown nao tem. Sem contrato de 12 meses.</td>
+          </tr>
+          <tr>
+            <td><strong>vs Agencias de marketing ($150-1,600)</strong></td>
+            <td>Oryen automatiza o que agencias fazem manualmente. Por $99-249/mes, o corretor tem CRM + IA + Site vs pagar $300+ por posts no Instagram.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============================================================ -->
+  <!-- SECTION 8: ANTES vs DEPOIS -->
+  <!-- ============================================================ -->
+  <section class="section" id="antes-depois">
+    <div class="section-title">
+      <span class="num">8</span> Antes vs Depois
+    </div>
+    <p class="section-subtitle">Comparacao direta do pricing antigo com o novo</p>
+
+    <div class="ba-grid">
+      <div class="ba-card before">
+        <h4>ANTES (Pricing v1)</h4>
+        <ul>
+          <li><strong>3 planos:</strong> Basic / Gold / Diamond</li>
+          <li><strong>Basic $19:</strong> sem IA, margem 10-63%</li>
+          <li><strong>Gold $219:</strong> primeiro com IA, margem 42-62%</li>
+          <li><strong>Diamond $329:</strong> margem -31% a +2% (NEGATIVA)</li>
+          <li><strong>Gap:</strong> $19 -> $219 = salto de 11.5x</li>
+          <li><strong>Sem add-ons:</strong> zero expansion revenue</li>
+          <li><strong>Nomes genericos:</strong> Basic/Gold/Diamond</li>
+          <li><strong>Percepcao:</strong> $19 = "sera que funciona?"</li>
+          <li><strong>Sem mecanismo de overage</strong></li>
+        </ul>
+      </div>
+      <div class="ba-card after">
+        <h4>DEPOIS (Pricing v2)</h4>
+        <ul>
+          <li><strong>4 planos:</strong> Starter / Pro / Business / Enterprise</li>
+          <li><strong>Starter $49:</strong> COM IA basica, margem 80%</li>
+          <li><strong>Pro $99:</strong> IA completa, margem 69%</li>
+          <li><strong>Business $249:</strong> equipes, margem 53%</li>
+          <li><strong>Enterprise $499:</strong> escala, margem 31%+</li>
+          <li><strong>Saltos:</strong> 2x -> 2.5x -> 2x (saudaveis)</li>
+          <li><strong>4 add-ons:</strong> AI, usuarios, WhatsApp, sites</li>
+          <li><strong>Percepcao:</strong> $49 = "acessivel e profissional"</li>
+          <li><strong>Metering + overage protegem margem</strong></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============================================================ -->
+  <!-- SECTION 9: PROJECAO -->
+  <!-- ============================================================ -->
+  <section class="section" id="projecao">
+    <div class="section-title">
+      <span class="num">9</span> Projecao de Receita
+    </div>
+    <p class="section-subtitle">Cenarios de MRR com diferentes quantidades de clientes</p>
+
+    <div class="card" style="overflow-x: auto;">
+      <h3>Mix estimado: 35% Starter | 35% Pro | 20% Business | 10% Enterprise</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Total clientes</th>
+            <th>Starter (35%)</th>
+            <th>Pro (35%)</th>
+            <th>Business (20%)</th>
+            <th>Enterprise (10%)</th>
+            <th>MRR base</th>
+            <th>+ Add-ons (~15%)</th>
+            <th>MRR total</th>
+            <th>ARR</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>50</strong></td>
+            <td>17 × $49</td>
+            <td>18 × $99</td>
+            <td>10 × $249</td>
+            <td>5 × $499</td>
+            <td>$7,100</td>
+            <td>+$1,065</td>
+            <td><strong>$8,165</strong></td>
+            <td>$97,980</td>
+          </tr>
+          <tr>
+            <td><strong>100</strong></td>
+            <td>35 × $49</td>
+            <td>35 × $99</td>
+            <td>20 × $249</td>
+            <td>10 × $499</td>
+            <td>$14,170</td>
+            <td>+$2,126</td>
+            <td><strong>$16,296</strong></td>
+            <td>$195,546</td>
+          </tr>
+          <tr>
+            <td><strong>200</strong></td>
+            <td>70 × $49</td>
+            <td>70 × $99</td>
+            <td>40 × $249</td>
+            <td>20 × $499</td>
+            <td>$28,340</td>
+            <td>+$4,251</td>
+            <td><strong>$32,591</strong></td>
+            <td>$391,092</td>
+          </tr>
+          <tr>
+            <td><strong>500</strong></td>
+            <td>175 × $49</td>
+            <td>175 × $99</td>
+            <td>100 × $249</td>
+            <td>50 × $499</td>
+            <td>$70,850</td>
+            <td>+$10,628</td>
+            <td><strong>$81,478</strong></td>
+            <td>$977,730</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout-success callout">
+      <h4>ARPU projetado: $163/mes</h4>
+      <p>Com o mix estimado + add-ons, o ARPU e de ~$163/mes. Compare com o pricing antigo onde o ARPU provavelmente ficava entre $50-80 (peso excessivo do plano Basic a $19). Isso significa que com o MESMO numero de clientes, a receita praticamente dobra.</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============================================================ -->
+  <!-- SECTION 10: IMPLEMENTACAO -->
+  <!-- ============================================================ -->
+  <section class="section" id="implementacao">
+    <div class="section-title">
+      <span class="num">10</span> Plano de Implementacao
+    </div>
+    <p class="section-subtitle">Proximos passos para ativar o novo pricing</p>
+
+    <div class="card">
+      <h3>Checklist de implementacao</h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 5%;">#</th>
+            <th style="width: 55%;">Tarefa</th>
+            <th style="width: 20%;">Prioridade</th>
+            <th style="width: 20%;">Impacto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><strong>Atualizar planos no Stripe</strong> — criar os 4 novos products/prices</td>
+            <td style="color: var(--red); font-weight: 600;">Critica</td>
+            <td>Faturamento</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><strong>Atualizar pagina de onboarding</strong> — novos cards de planos com precos</td>
+            <td style="color: var(--red); font-weight: 600;">Critica</td>
+            <td>Conversao</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><strong>Atualizar landing page</strong> — secao de pricing com 4 tiers</td>
+            <td style="color: var(--red); font-weight: 600;">Critica</td>
+            <td>Conversao</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><strong>Implementar metering de AI msgs</strong> — contador por org/mes com dashboard</td>
+            <td style="color: var(--red); font-weight: 600;">Critica</td>
+            <td>Margem</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><strong>Implementar limites por plano</strong> — leads, imoveis, docs, sites, WhatsApp</td>
+            <td style="color: var(--yellow); font-weight: 600;">Alta</td>
+            <td>Upsell</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><strong>Criar sistema de add-ons no billing</strong> — compra self-service de extras</td>
+            <td style="color: var(--yellow); font-weight: 600;">Alta</td>
+            <td>Expansion revenue</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><strong>Dashboard de uso para o cliente</strong> — "Voce usou X de Y mensagens AI"</td>
+            <td style="color: var(--yellow); font-weight: 600;">Alta</td>
+            <td>Upsell natural</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><strong>Notificacoes de limite</strong> — alertas em 80% e 95% do uso</td>
+            <td style="color: var(--text-muted);">Media</td>
+            <td>Experiencia</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><strong>Plano anual com desconto</strong> — 2 meses gratis (17% off)</td>
+            <td style="color: var(--text-muted);">Media</td>
+            <td>Churn + cash flow</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td><strong>Dashboard interno cost-to-serve</strong> — receita vs custo por cliente</td>
+            <td style="color: var(--text-muted);">Media</td>
+            <td>Controle financeiro</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <h4>Politica de migracao (se houver clientes atuais)</h4>
+      <p>Clientes existentes mantem o preco atual por 6 meses como "early adopter". Apos 6 meses, migram automaticamente para o novo plano mais proximo do que pagam atualmente. Comunicar com 60 dias de antecedencia.</p>
+    </div>
+
+    <div class="card" style="margin-top: 1.5rem;">
+      <h3>Modelo de cobranca recomendado</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Aspecto</th>
+            <th>Decisao</th>
+            <th>Justificativa</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Setup fee</td>
+            <td><strong>$0 (zero)</strong></td>
+            <td>Vantagem competitiva vs todos os concorrentes. Reduz atrito de entrada.</td>
+          </tr>
+          <tr>
+            <td>Contrato minimo</td>
+            <td><strong>Nenhum</strong></td>
+            <td>Diferencial vs BoomTown (12 meses). Confianca no produto.</td>
+          </tr>
+          <tr>
+            <td>Desconto anual</td>
+            <td><strong>2 meses gratis (17%)</strong></td>
+            <td>Melhora cash flow, reduz churn mecanico.</td>
+          </tr>
+          <tr>
+            <td>Trial</td>
+            <td><strong>14 dias no Pro</strong></td>
+            <td>Cliente experimenta a IA completa. Se gostar, converte. Se nao, cai pro Starter.</td>
+          </tr>
+          <tr>
+            <td>Moeda</td>
+            <td><strong>Exibir em moeda local, cobrar em USD</strong></td>
+            <td>Reduz friccao psicologica. Stripe converte automaticamente.</td>
+          </tr>
+          <tr>
+            <td>Overage de AI</td>
+            <td><strong>Hard cap + oferta de add-on</strong></td>
+            <td>Ao atingir limite, IA pausa e mostra oferta de +2k msgs por $25.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- FOOTER -->
+  <div style="text-align: center; padding: 3rem 0; color: var(--text-dim); font-size: 0.85rem;">
+    <p><strong>Oryen</strong> — Estrategia de Pricing v2</p>
+    <p>Documento interno | Abril 2026</p>
+    <p style="margin-top: 1rem; font-size: 0.75rem;">Baseado em analise de: BoomTown (EUA), MobileLink.IA (Chile), Nova IA (Mexico), Code Cloud (Chile), Creaciones Haru (Chile), Creativaweb (Chile), WaMasivo (Chile), Plataforma Espinoza (Chile) + 3 experts de IA (Pricing, Real Estate Tech, Growth & Unit Economics)</p>
+  </div>
+
+</div>
+
+</body>
+</html>

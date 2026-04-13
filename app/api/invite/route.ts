@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { checkPlanLimit } from '@/lib/planLimits'
 
 export async function POST(req: Request) {
   try {
@@ -8,6 +9,17 @@ export async function POST(req: Request) {
     // Validação básica
     if (!email || !orgId) {
       return NextResponse.json({ error: 'Email e Org ID são obrigatórios' }, { status: 400 })
+    }
+
+    // Verificar limite de usuários do plano
+    const limitCheck = await checkPlanLimit(orgId, 'maxUsers', 'users', { status: 'active' })
+    if (!limitCheck.allowed) {
+      return NextResponse.json({
+        error: 'plan_limit_reached',
+        message: `Limite de ${limitCheck.limit} usuários atingido no plano ${limitCheck.plan}. Faça upgrade para adicionar mais.`,
+        limit: limitCheck.limit,
+        current: limitCheck.current,
+      }, { status: 403 })
     }
 
     // Verifica se a chave secreta existe

@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       .insert({
         name: company_name,
         niche: niche || null,
-        plan: 'basic',
+        plan: 'starter',
         plan_status: 'trial',
       })
       .select('id')

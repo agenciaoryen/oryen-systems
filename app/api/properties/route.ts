@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { slugify } from '@/lib/properties/constants'
 import { geocodeAddress } from '@/lib/properties/geocoder'
+import { checkPlanLimit } from '@/lib/planLimits'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -107,6 +108,17 @@ export async function POST(request: NextRequest) {
         { error: 'Missing required fields: org_id, title, property_type, transaction_type' },
         { status: 400 }
       )
+    }
+
+    // Verificar limite de imóveis do plano
+    const propLimit = await checkPlanLimit(org_id, 'maxProperties', 'properties')
+    if (!propLimit.allowed) {
+      return NextResponse.json({
+        error: 'plan_limit_reached',
+        message: `Limite de ${propLimit.limit} imóveis atingido no plano ${propLimit.plan}. Faça upgrade para adicionar mais.`,
+        limit: propLimit.limit,
+        current: propLimit.current,
+      }, { status: 403 })
     }
 
     // Gerar slug único

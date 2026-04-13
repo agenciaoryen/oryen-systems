@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkPlanLimit } from '@/lib/planLimits'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -108,7 +109,17 @@ export async function PUT(request: NextRequest) {
 
       return NextResponse.json({ site: data })
     } else {
-      // Insert
+      // Insert — verificar limite de sites do plano
+      const siteLimit = await checkPlanLimit(org_id, 'maxSites', 'site_settings')
+      if (!siteLimit.allowed) {
+        return NextResponse.json({
+          error: 'plan_limit_reached',
+          message: `Limite de ${siteLimit.limit} site(s) atingido no plano ${siteLimit.plan}. Faça upgrade para criar mais.`,
+          limit: siteLimit.limit,
+          current: siteLimit.current,
+        }, { status: 403 })
+      }
+
       if (!body.slug) {
         return NextResponse.json(
           { error: 'slug is required for new site' },

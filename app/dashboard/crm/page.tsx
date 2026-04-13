@@ -703,6 +703,15 @@ export default function CrmPage() {
     setIsSaving(true)
 
     try {
+      // Verificar limite de leads do plano
+      const limitRes = await fetch(`/api/plan-limit?org_id=${orgId}&resource=leads`)
+      const limitData = await limitRes.json()
+      if (!limitData.allowed) {
+        alert(`Limite de ${limitData.limit} leads atingido. Faça upgrade do plano para adicionar mais.`)
+        setIsSaving(false)
+        return
+      }
+
       const { data, error } = await supabase
         .from('leads')
         .insert({

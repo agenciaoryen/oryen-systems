@@ -28,6 +28,7 @@ import {
 import { runAgent } from '@/lib/sdr/ai-agent'
 import { sendWithHumanization } from '@/lib/sdr/whatsapp-sender'
 import { notifyError } from '@/lib/monitoring/error-notifier'
+import { checkMonthlyPlanLimit } from '@/lib/planLimits'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -150,6 +151,22 @@ export async function POST(request: NextRequest) {
       .eq('id', org_id)
       .single()
     if (orgRow) orgData = orgRow
+
+    // ─── 8b. Verificar limite mensal de mensagens IA do plano ───
+    const msgLimit = await checkMonthlyPlanLimit(
+      org_id, 'maxMonthlyMessages', 'sdr_messages', 'created_at',
+      { role: 'assistant' }
+    )
+    if (!msgLimit.allowed) {
+      console.warn(`[SDR:Process] AI message limit reached for org ${org_id}: ${msgLimit.current}/${msgLimit.limit}`)
+      await releaseProcessLock(org_id, phone)
+      return NextResponse.json({
+        skipped: true,
+        reason: 'plan_message_limit_reached',
+        current: msgLimit.current,
+        limit: msgLimit.limit
+      })
+    }
 
     // ─── 9. Chamar agente IA (Claude + tools) ───
     console.log(`[SDR:Process] Chamando agente IA para lead ${lead_id}...`)

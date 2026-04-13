@@ -541,6 +541,15 @@ export default function CreateDocumentModal({
 
     setCreating(true)
     try {
+      // Verificar limite mensal de documentos do plano
+      const limitRes = await fetch(`/api/plan-limit?org_id=${activeOrgId}&resource=documents`)
+      const limitData = await limitRes.json()
+      if (!limitData.allowed) {
+        toast.error(`Limite de ${limitData.limit} documentos/mês atingido. Faça upgrade do plano.`)
+        setCreating(false)
+        return
+      }
+
       const { data, error } = await createDocument(
         {
           template_id: selectedTemplate.id,

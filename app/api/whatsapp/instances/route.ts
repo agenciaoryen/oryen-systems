@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { PLAN_CONFIGS, type PlanName } from '@/lib/usePlan'
+import { getPlanConfig } from '@/lib/usePlan'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,8 +39,8 @@ export async function GET(request: NextRequest) {
       .eq('id', orgId)
       .single()
 
-    const planName = (org?.plan || 'basic') as PlanName
-    const maxInstances = PLAN_CONFIGS[planName]?.limits?.maxWhatsappNumbers ?? 1
+    const planConfig = getPlanConfig(org?.plan || 'starter')
+    const maxInstances = planConfig.limits.maxWhatsappNumbers ?? 1
 
     return NextResponse.json({
       instances: data || [],
@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
       .eq('id', org_id)
       .single()
 
-    const planName = (org?.plan || 'basic') as PlanName
-    const maxInstances = PLAN_CONFIGS[planName]?.limits?.maxWhatsappNumbers ?? 1
+    const planConfig = getPlanConfig(org?.plan || 'starter')
+    const maxInstances = planConfig.limits.maxWhatsappNumbers ?? 1
 
     if (maxInstances !== -1) {
       const { count } = await supabase
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           error: 'plan_limit_reached',
           limit: maxInstances,
-          plan: planName
+          plan: planConfig.name
         }, { status: 403 })
       }
     }

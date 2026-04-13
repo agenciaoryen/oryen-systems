@@ -8,7 +8,12 @@ import { useMemo } from 'react'
 // TIPOS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type PlanName = 'basic' | 'gold' | 'diamond' | 'enterprise'
+// Novos planos (v2 — Abril 2026)
+export type PlanName = 'starter' | 'pro' | 'business' | 'enterprise'
+// Plano legado (clientes antigos que ainda pagam $19)
+export type LegacyPlanName = 'basic' | 'gold' | 'diamond'
+// Todos os planos válidos (novos + legados)
+export type AnyPlanName = PlanName | LegacyPlanName
 
 export interface PlanFeatures {
   hasAiAgents: boolean
@@ -29,10 +34,13 @@ export interface PlanFeatures {
 }
 
 export interface PlanLimits {
-  maxUsers: number          // -1 = ilimitado
-  maxActiveLeads: number    // -1 = ilimitado
-  maxMonthlyMessages: number // -1 = ilimitado, 0 = só manual
-  maxWhatsappNumbers: number // -1 = ilimitado
+  maxUsers: number            // -1 = ilimitado
+  maxActiveLeads: number      // -1 = ilimitado
+  maxMonthlyMessages: number  // -1 = ilimitado
+  maxWhatsappNumbers: number  // -1 = ilimitado
+  maxProperties: number       // -1 = ilimitado
+  maxDocumentsPerMonth: number // -1 = ilimitado
+  maxSites: number            // -1 = ilimitado
 }
 
 export interface PlanConfig {
@@ -48,14 +56,19 @@ export interface PlanConfig {
 // CONFIGURAÇÃO DOS PLANOS (fallback client-side)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLANOS v2 (Abril 2026)
+// Mesma IA em todos os planos — diferença é limite de uso e features de escala
+// ═══════════════════════════════════════════════════════════════════════════════
+
 const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
-  basic: {
-    name: 'basic',
-    displayName: 'Basic',
-    priceUsd: 19,
-    priceBrl: 97,
+  starter: {
+    name: 'starter',
+    displayName: 'Starter',
+    priceUsd: 49,
+    priceBrl: 249,
     features: {
-      hasAiAgents: false,
+      hasAiAgents: true,
       hasAutomations: false,
       hasReports: false,
       hasApiAccess: false,
@@ -65,7 +78,7 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasAiAnalytics: false,
       hasCustomPipeline: true,
       hasWhatsappIntegration: true,
-      hasOfficialWhatsapp: false, // disponível com +taxa
+      hasOfficialWhatsapp: false,
       hasPrioritySupport: false,
       hasAccountManager: false,
       hasFinancialModule: false,
@@ -73,16 +86,19 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
     },
     limits: {
       maxUsers: 1,
-      maxActiveLeads: 1000,
-      maxMonthlyMessages: 0,
+      maxActiveLeads: 500,
+      maxMonthlyMessages: 500,
       maxWhatsappNumbers: 1,
+      maxProperties: 30,
+      maxDocumentsPerMonth: 10,
+      maxSites: 1,
     }
   },
-  gold: {
-    name: 'gold',
-    displayName: 'Gold',
-    priceUsd: 219,
-    priceBrl: 1097,
+  pro: {
+    name: 'pro',
+    displayName: 'Pro',
+    priceUsd: 99,
+    priceBrl: 497,
     features: {
       hasAiAgents: true,
       hasAutomations: true,
@@ -101,17 +117,20 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasAdvancedFinancial: false,
     },
     limits: {
-      maxUsers: 5,
-      maxActiveLeads: 5000,
-      maxMonthlyMessages: 10000,
-      maxWhatsappNumbers: 5,
+      maxUsers: 3,
+      maxActiveLeads: 2000,
+      maxMonthlyMessages: 3000,
+      maxWhatsappNumbers: 2,
+      maxProperties: 100,
+      maxDocumentsPerMonth: 50,
+      maxSites: 1,
     }
   },
-  diamond: {
-    name: 'diamond',
-    displayName: 'Diamond',
-    priceUsd: 329,
-    priceBrl: 1647,
+  business: {
+    name: 'business',
+    displayName: 'Business',
+    priceUsd: 249,
+    priceBrl: 1247,
     features: {
       hasAiAgents: true,
       hasAutomations: true,
@@ -130,17 +149,20 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasAdvancedFinancial: true,
     },
     limits: {
-      maxUsers: 15,
-      maxActiveLeads: 10000,
-      maxMonthlyMessages: 50000,
-      maxWhatsappNumbers: 15,
+      maxUsers: 8,
+      maxActiveLeads: 8000,
+      maxMonthlyMessages: 15000,
+      maxWhatsappNumbers: 5,
+      maxProperties: 500,
+      maxDocumentsPerMonth: 200,
+      maxSites: 3,
     }
   },
   enterprise: {
     name: 'enterprise',
     displayName: 'Enterprise',
-    priceUsd: 0, // Custom
-    priceBrl: 0,
+    priceUsd: 499,
+    priceBrl: 2497,
     features: {
       hasAiAgents: true,
       hasAutomations: true,
@@ -159,12 +181,44 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       hasAdvancedFinancial: true,
     },
     limits: {
-      maxUsers: -1,
-      maxActiveLeads: -1,
-      maxMonthlyMessages: -1,
-      maxWhatsappNumbers: -1,
+      maxUsers: 25,
+      maxActiveLeads: 30000,
+      maxMonthlyMessages: 50000,
+      maxWhatsappNumbers: 15,
+      maxProperties: -1,
+      maxDocumentsPerMonth: -1,
+      maxSites: 10,
     }
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLANOS LEGADOS (para clientes antigos — NÃO aparecem na UI para novos clientes)
+// Mapeiam para o plano novo mais próximo em termos de features
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const LEGACY_PLAN_MAP: Record<LegacyPlanName, PlanName> = {
+  basic: 'starter',
+  gold: 'pro',
+  diamond: 'business',
+}
+
+/**
+ * Resolve qualquer nome de plano (novo ou legado) para um PlanConfig válido.
+ * Clientes antigos com 'basic'/'gold'/'diamond' no banco são mapeados para
+ * os novos planos equivalentes, mantendo os limites do novo plano.
+ */
+export function resolvePlanConfig(planName: string): PlanConfig {
+  // Plano novo — retorna direto
+  if (planName in PLAN_CONFIGS) {
+    return PLAN_CONFIGS[planName as PlanName]
+  }
+  // Plano legado — mapeia para o equivalente novo
+  if (planName in LEGACY_PLAN_MAP) {
+    return PLAN_CONFIGS[LEGACY_PLAN_MAP[planName as LegacyPlanName]]
+  }
+  // Fallback seguro
+  return PLAN_CONFIGS.starter
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -173,9 +227,11 @@ const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
 
 export function usePlan() {
   const { activePlan, activePlanStatus } = useAuth()
-  
-  const planName = activePlan || 'basic'
-  const planConfig = PLAN_CONFIGS[planName] || PLAN_CONFIGS.basic
+
+  // Resolve plano legado ou novo para config válida
+  const rawPlanName = activePlan || 'starter'
+  const planConfig = resolvePlanConfig(rawPlanName)
+  const planName = planConfig.name // Sempre retorna o nome novo (starter/pro/business/enterprise)
 
   // Helpers memoizados
   const helpers = useMemo(() => ({
@@ -183,7 +239,7 @@ export function usePlan() {
     plan: planName,
     planConfig,
     displayName: planConfig.displayName,
-    
+
     // Verificadores de features
     canUseAiAgents: planConfig.features.hasAiAgents,
     canUseAutomations: planConfig.features.hasAutomations,
@@ -192,49 +248,57 @@ export function usePlan() {
     canUseCampaigns: planConfig.features.hasCampaigns,
     canUseTrafficManager: planConfig.features.hasTrafficManager,
     canUseAdvancedDashboard: planConfig.features.hasAdvancedDashboard,
-    
+
     // Limites
     maxUsers: planConfig.limits.maxUsers,
     maxLeads: planConfig.limits.maxActiveLeads,
     maxMessages: planConfig.limits.maxMonthlyMessages,
-    
-    // Helpers de comparação
-    isBasic: planName === 'basic',
-    isGold: planName === 'gold',
-    isDiamond: planName === 'diamond',
+    maxProperties: planConfig.limits.maxProperties,
+    maxDocuments: planConfig.limits.maxDocumentsPerMonth,
+    maxSites: planConfig.limits.maxSites,
+
+    // Helpers de comparação (novos nomes)
+    isStarter: planName === 'starter',
+    isPro: planName === 'pro',
+    isBusiness: planName === 'business',
     isEnterprise: planName === 'enterprise',
-    isPaid: planName !== 'basic',
-    isPremium: planName === 'diamond' || planName === 'enterprise',
-    
+    isPaid: true, // Todos os planos v2 são pagos
+    isPremium: planName === 'business' || planName === 'enterprise',
+
+    // Compat legado — para não quebrar componentes que usam os nomes antigos
+    isBasic: planName === 'starter',
+    isGold: planName === 'pro',
+    isDiamond: planName === 'business',
+
     // Verificador genérico de feature
     hasFeature: (feature: keyof PlanFeatures): boolean => {
       return planConfig.features[feature] ?? false
     },
-    
+
     // Verificador de limite
     isWithinLimit: (current: number, limitKey: keyof PlanLimits): boolean => {
       const limit = planConfig.limits[limitKey]
       if (limit === -1) return true // ilimitado
       return current < limit
     },
-    
+
     // Próximo plano para upgrade
     getUpgradePlan: (): PlanName | null => {
-      if (planName === 'basic') return 'gold'
-      if (planName === 'gold') return 'diamond'
-      if (planName === 'diamond') return 'enterprise'
+      if (planName === 'starter') return 'pro'
+      if (planName === 'pro') return 'business'
+      if (planName === 'business') return 'enterprise'
       return null
     },
-    
+
     // Config do próximo plano
     getUpgradePlanConfig: (): PlanConfig | null => {
-      const next = planName === 'basic' ? 'gold' 
-                 : planName === 'gold' ? 'diamond'
-                 : planName === 'diamond' ? 'enterprise'
+      const next = planName === 'starter' ? 'pro'
+                 : planName === 'pro' ? 'business'
+                 : planName === 'business' ? 'enterprise'
                  : null
       return next ? PLAN_CONFIGS[next] : null
     },
-    
+
     // Preço formatado
     getFormattedPrice: (currency: 'USD' | 'BRL' = 'USD'): string => {
       const price = currency === 'USD' ? planConfig.priceUsd : planConfig.priceBrl
@@ -259,11 +323,11 @@ export function useCanUseFeature(feature: keyof PlanFeatures): boolean {
 }
 
 /**
- * Hook para verificar se está no plano basic
+ * Hook para verificar se está no plano starter (compat: antes era isBasicPlan)
  */
 export function useIsBasicPlan(): boolean {
-  const { isBasic } = usePlan()
-  return isBasic
+  const { isStarter } = usePlan()
+  return isStarter
 }
 
 /**
@@ -280,10 +344,10 @@ export function useCanUseAI(): boolean {
 
 export { PLAN_CONFIGS }
 
-export function getPlanConfig(planName: PlanName): PlanConfig {
-  return PLAN_CONFIGS[planName] || PLAN_CONFIGS.basic
+export function getPlanConfig(planName: string): PlanConfig {
+  return resolvePlanConfig(planName)
 }
 
 export function getAllPlans(): PlanConfig[] {
-  return Object.values(PLAN_CONFIGS).filter(p => p.name !== 'enterprise')
+  return Object.values(PLAN_CONFIGS)
 }

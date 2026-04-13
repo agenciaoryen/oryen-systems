@@ -188,7 +188,7 @@ const TRANSLATIONS = {
     faq1q: 'Can I change plans anytime?',
     faq1a: 'Yes! Upgrades are applied immediately. Downgrades take effect on the next billing cycle.',
     faq2q: 'How does the trial work?',
-    faq2a: 'New users get 14 days to try the Gold plan for free. No credit card required.',
+    faq2a: 'New users get 14 days to try the Pro plan for free. No credit card required.',
     faq3q: 'Can I cancel anytime?',
     faq3a: 'Yes, no penalties or fees. You keep access until the end of the paid period.',
   },
@@ -263,7 +263,7 @@ const TRANSLATIONS = {
     faq1q: '¿Puedo cambiar de plan en cualquier momento?',
     faq1a: '¡Sí! Las mejoras se aplican inmediatamente. Las reducciones entran en vigor en el próximo ciclo.',
     faq2q: '¿Cómo funciona el período de prueba?',
-    faq2a: 'Los nuevos usuarios tienen 14 días para probar el plan Gold gratis. No se requiere tarjeta.',
+    faq2a: 'Los nuevos usuarios tienen 14 días para probar el plan Pro gratis. No se requiere tarjeta.',
     faq3q: '¿Puedo cancelar cuando quiera?',
     faq3a: 'Sí, sin penalidades. Mantienes acceso hasta el final del período pagado.',
   }
@@ -276,41 +276,41 @@ type Language = keyof typeof TRANSLATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const PLAN_FEATURES: Record<PlanName, string[]> = {
-  basic: ['f_crm', 'f_pipeline', 'f_whatsapp'],
-  gold: ['f_crm', 'f_pipeline', 'f_whatsapp', 'f_ai', 'f_automations', 'f_reports', 'f_dashboard'],
-  diamond: ['f_crm', 'f_pipeline', 'f_whatsapp', 'f_ai', 'f_automations', 'f_reports', 'f_api', 'f_campaigns', 'f_dashboard', 'f_traffic', 'f_support'],
+  starter: ['f_crm', 'f_pipeline', 'f_whatsapp', 'f_ai'],
+  pro: ['f_crm', 'f_pipeline', 'f_whatsapp', 'f_ai', 'f_automations', 'f_reports', 'f_dashboard'],
+  business: ['f_crm', 'f_pipeline', 'f_whatsapp', 'f_ai', 'f_automations', 'f_reports', 'f_api', 'f_campaigns', 'f_dashboard', 'f_traffic', 'f_support'],
   enterprise: ['f_crm', 'f_pipeline', 'f_whatsapp', 'f_ai', 'f_automations', 'f_reports', 'f_api', 'f_campaigns', 'f_dashboard', 'f_traffic', 'f_support', 'f_dedicated'],
 }
 
 const PLAN_ICONS: Record<PlanName, React.ReactNode> = {
-  basic: <Shield className="w-6 h-6" />,
-  gold: <Crown className="w-6 h-6" />,
-  diamond: <Sparkles className="w-6 h-6" />,
+  starter: <Shield className="w-6 h-6" />,
+  pro: <Crown className="w-6 h-6" />,
+  business: <Sparkles className="w-6 h-6" />,
   enterprise: <Zap className="w-6 h-6" />,
 }
 
 const PLAN_COLORS: Record<PlanName, { bg: string; border: string; text: string; gradient: string }> = {
-  basic: { 
-    bg: 'bg-gray-500/10', 
-    border: 'border-gray-500/30', 
+  starter: {
+    bg: 'bg-gray-500/10',
+    border: 'border-gray-500/30',
     text: 'text-gray-400',
     gradient: 'from-gray-600 to-gray-500'
   },
-  gold: { 
-    bg: 'bg-amber-500/10', 
-    border: 'border-amber-500/30', 
+  pro: {
+    bg: 'bg-amber-500/10',
+    border: 'border-amber-500/30',
     text: 'text-amber-400',
     gradient: 'from-amber-500 to-orange-500'
   },
-  diamond: { 
-    bg: 'bg-purple-500/10', 
-    border: 'border-purple-500/30', 
+  business: {
+    bg: 'bg-purple-500/10',
+    border: 'border-purple-500/30',
     text: 'text-purple-400',
     gradient: 'from-purple-500 to-pink-500'
   },
-  enterprise: { 
-    bg: 'bg-blue-500/10', 
-    border: 'border-blue-500/30', 
+  enterprise: {
+    bg: 'bg-blue-500/10',
+    border: 'border-blue-500/30',
     text: 'text-blue-400',
     gradient: 'from-blue-500 to-cyan-500'
   },
@@ -367,7 +367,7 @@ function PlanCard({
   const price = currency === 'BRL' ? config.priceBrl : config.priceUsd
   const currencySymbol = currency === 'BRL' ? 'R$' : '$'
   
-  const isPopular = planName === 'gold'
+  const isPopular = planName === 'pro'
   const isEnterprise = planName === 'enterprise'
 
   return (
@@ -505,7 +505,7 @@ function BillingPageContent() {
     : 0
 
   // Verificar se já tem assinatura ativa (para mostrar botão de gerenciar)
-  const hasActiveSubscription = plan !== 'basic' && activePlanStatus === 'active'
+  const hasActiveSubscription = plan !== 'starter' && activePlanStatus === 'active'
 
   const handleSelectPlan = (newPlan: PlanName) => {
     setSelectedPlan(newPlan)
@@ -674,7 +674,7 @@ function BillingPageContent() {
         <div>
           <h2 className="text-lg font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>{t.comparePlans}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            {(['basic', 'gold', 'diamond', 'enterprise'] as PlanName[]).map((planName) => (
+            {(['starter', 'pro', 'business', 'enterprise'] as PlanName[]).map((planName) => (
               <PlanCard
                 key={planName}
                 planName={planName}

@@ -10,10 +10,16 @@ const supabase = createClient(
 )
 
 // Mapeamento de planos para price_id do Stripe
+// Planos v2 (Abril 2026)
 const PRICE_IDS: Record<string, string> = {
+  starter: 'price_1TLluY3PghkCuiR4OcBt2z9E',
+  pro: 'price_1TLlwh3PghkCuiR4cxbEyOT3',
+  business: 'price_1TLlxl3PghkCuiR4bhofUcOC',
+  enterprise: 'price_1TLlzY3PghkCuiR4nwvO8uy6',
+  // Legado (mantido para compatibilidade caso alguém tente reativar)
   basic: 'price_1T8oZU3PghkCuiR4VQeMLnCJ',
   gold: 'price_1T8odD3PghkCuiR4GEP8EgHp',
-  diamond: 'price_1T8oex3PghkCuiR4nAtWe7qo'
+  diamond: 'price_1T8oex3PghkCuiR4nAtWe7qo',
 }
 
 export async function POST(req: NextRequest) {
