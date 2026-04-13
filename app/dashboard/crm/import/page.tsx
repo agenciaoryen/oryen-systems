@@ -149,12 +149,14 @@ const COL_MAP: Record<string, keyof ParsedRow> = {
   empresa: 'company', company: 'company', 'nome da empresa': 'company', 'company name': 'company', 'nombre empresa': 'company',
 }
 
-function parseCSV(text: string): ParsedRow[] {
+function parseCSV(rawText: string): ParsedRow[] {
+  // Strip BOM character that Excel adds
+  const text = rawText.replace(/^\uFEFF/, '')
   const lines = text.split(/\r?\n/).filter(l => l.trim())
   if (lines.length < 2) return []
 
-  const sep = lines[0].includes(';') ? ';' : ','
-  const headers = lines[0].split(sep).map(h => h.trim().toLowerCase().replace(/^["']|["']$/g, ''))
+  const sep = lines[0].includes(';') ? ';' : lines[0].includes('\t') ? '\t' : ','
+  const headers = lines[0].split(sep).map(h => h.trim().toLowerCase().replace(/^["'\uFEFF]|["']$/g, ''))
   const colIndexes: Partial<Record<keyof ParsedRow, number>> = {}
 
   headers.forEach((h, i) => {
