@@ -69,7 +69,7 @@ const TRANSLATIONS = {
       integrations: 'Integrações',
       leadCard: 'Card do Lead',
       distribution: 'Distribuição',
-      billing: 'Faturamento'
+      billing: 'Minha Assinatura'
     },
     profile: {
       personalData: 'Dados Pessoais',
@@ -229,7 +229,7 @@ const TRANSLATIONS = {
       integrations: 'Integrations',
       leadCard: 'Lead Card',
       distribution: 'Distribution',
-      billing: 'Billing'
+      billing: 'My Subscription'
     },
     profile: {
       personalData: 'Personal Data',
@@ -389,7 +389,7 @@ const TRANSLATIONS = {
       integrations: 'Integraciones',
       leadCard: 'Card del Lead',
       distribution: 'Distribución',
-      billing: 'Facturación'
+      billing: 'Mi Suscripción'
     },
     profile: {
       personalData: 'Datos Personales',

@@ -34,6 +34,7 @@ import {
   TrendingUp,
   DollarSign,
   Target,
+  CreditCard,
   type LucideIcon
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
@@ -60,6 +61,7 @@ const TRANSLATIONS = {
       financing: 'Financiamento',
       financial: 'Financeiro',
       goals: 'Metas',
+      subscription: 'Minha Assinatura',
       portfolio: 'Portfólio',
       propertyStats: 'Estatísticas',
       mySite: 'Meu Site',
@@ -68,6 +70,7 @@ const TRANSLATIONS = {
     sections: {
       commercial: 'Comercial',
       properties: 'Propriedades',
+      finance: 'Finanças',
       tools: 'Ferramentas',
     },
     comingSoon: '(Em Breve)',
@@ -97,6 +100,7 @@ const TRANSLATIONS = {
       financing: 'Financing',
       financial: 'Financial',
       goals: 'Goals',
+      subscription: 'My Subscription',
       portfolio: 'Portfolio',
       propertyStats: 'Statistics',
       mySite: 'My Site',
@@ -105,6 +109,7 @@ const TRANSLATIONS = {
     sections: {
       commercial: 'Commercial',
       properties: 'Properties',
+      finance: 'Finance',
       tools: 'Tools',
     },
     comingSoon: '(Coming Soon)',
@@ -134,6 +139,7 @@ const TRANSLATIONS = {
       financing: 'Financiamiento',
       financial: 'Financiero',
       goals: 'Metas',
+      subscription: 'Mi Suscripción',
       portfolio: 'Portafolio',
       propertyStats: 'Estadísticas',
       mySite: 'Mi Sitio',
@@ -142,6 +148,7 @@ const TRANSLATIONS = {
     sections: {
       commercial: 'Comercial',
       properties: 'Propiedades',
+      finance: 'Finanzas',
       tools: 'Herramientas',
     },
     comingSoon: '(Próximamente)',
@@ -321,6 +328,7 @@ export default function Sidebar() {
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     commercial: true,
     properties: true,
+    finance: true,
     tools: true,
   })
 
@@ -347,7 +355,6 @@ export default function Sidebar() {
         { href: '/dashboard/calendar', label: t.menu.calendar, icon: CalendarDays },
         { href: '/dashboard/follow-up', label: t.menu.followUp, icon: RefreshCw },
         { href: '/dashboard/distribuicao', label: t.menu.distribution, icon: Shuffle },
-        { href: '/dashboard/financeiro', label: t.menu.financial, icon: DollarSign },
         { href: '/dashboard/metas', label: t.menu.goals, icon: Target },
       ],
     },
@@ -359,6 +366,15 @@ export default function Sidebar() {
         { href: '/dashboard/portfolio', label: t.menu.portfolio, icon: Home, requiredNiche: NICHES_WITH_DOCUMENTS },
         { href: '/dashboard/portfolio/estatisticas', label: t.menu.propertyStats, icon: BarChart3, requiredNiche: NICHES_WITH_DOCUMENTS },
         { href: '/dashboard/site', label: t.menu.mySite, icon: Globe, requiredNiche: NICHES_WITH_DOCUMENTS },
+      ],
+    },
+    {
+      key: 'finance',
+      title: t.sections.finance,
+      collapsible: true,
+      items: [
+        { href: '/dashboard/financeiro', label: t.menu.financial, icon: DollarSign },
+        { href: '/dashboard/settings/billing', label: t.menu.subscription, icon: CreditCard },
       ],
     },
     {

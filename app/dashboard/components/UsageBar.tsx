@@ -7,9 +7,10 @@ interface UsageBarProps {
   limit: number
   unit?: string
   monthly?: boolean
+  monthlyLabel?: string
 }
 
-export default function UsageBar({ label, current, limit, unit, monthly }: UsageBarProps) {
+export default function UsageBar({ label, current, limit, unit, monthly, monthlyLabel }: UsageBarProps) {
   const isUnlimited = limit === -1
   const percentage = isUnlimited ? 0 : Math.min((current / limit) * 100, 100)
   const isNearLimit = percentage >= 80
@@ -24,7 +25,7 @@ export default function UsageBar({ label, current, limit, unit, monthly }: Usage
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-xs">
-        <span style={{ color: 'var(--color-text-secondary)' }}>{label}{monthly ? ' (mês)' : ''}</span>
+        <span style={{ color: 'var(--color-text-secondary)' }}>{label}{monthly ? ` (${monthlyLabel || 'mês'})` : ''}</span>
         <span style={{ color: isAtLimit ? 'var(--color-error)' : 'var(--color-text-tertiary)' }}>
           {current.toLocaleString()}{' / '}
           {isUnlimited ? '∞' : limit.toLocaleString()}
