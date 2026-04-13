@@ -874,11 +874,12 @@ export default function DashboardPage() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                <XAxis dataKey="name" stroke="var(--color-text-muted)" fontSize={10} tickLine={false} axisLine={false} dy={10} />
-                <YAxis stroke="var(--color-text-muted)" fontSize={10} tickLine={false} axisLine={false} />
+                <XAxis dataKey="name" tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} dy={10} />
+                <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{ backgroundColor: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', borderRadius: '8px', color: 'var(--color-text-primary)', fontSize: '12px' }}
                   itemStyle={{ color: 'var(--color-text-primary)', fontWeight: 'bold' }}
+                  labelStyle={{ color: 'var(--color-text-primary)' }}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px', color: 'var(--color-text-secondary)' }} formatter={(value: string) => <span style={{ color: 'var(--color-text-secondary)' }}>{value}</span>} />
                 <Area type="monotone" dataKey="valor" stroke={COLORS.blue} strokeWidth={3} fillOpacity={1} fill="url(#colorVendas)" name={t.sales} />
@@ -910,7 +911,7 @@ export default function DashboardPage() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-elevated)', borderRadius: '8px', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)', fontSize: '12px' }} />
+                  <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-elevated)', borderRadius: '8px', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)', fontSize: '12px' }} itemStyle={{ color: 'var(--color-text-secondary)' }} labelStyle={{ color: 'var(--color-text-primary)' }} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -1054,10 +1055,12 @@ export default function DashboardPage() {
                       <stop offset="95%" stopColor={COLORS.purple} stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="hour" stroke="var(--color-text-muted)" fontSize={9} tickLine={false} axisLine={false} dy={5} />
+                  <XAxis dataKey="hour" tick={{ fill: 'var(--color-text-muted)', fontSize: 9 }} tickLine={false} axisLine={false} dy={5} />
                   <Tooltip
                     cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                     contentStyle={{ backgroundColor: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', borderRadius: '8px', color: 'var(--color-text-primary)', fontSize: '12px' }}
+                    itemStyle={{ color: 'var(--color-text-secondary)' }}
+                    labelStyle={{ color: 'var(--color-text-primary)' }}
                   />
                   <Area type="step" dataKey="responses" stroke={COLORS.purple} fill="url(#colorHours)" strokeWidth={2} />
                 </AreaChart>
