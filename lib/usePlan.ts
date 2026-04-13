@@ -14,7 +14,7 @@ import {
 
 // Re-export types and functions so existing imports don't break
 export type { PlanName, LegacyPlanName, AnyPlanName, PlanFeatures, PlanLimits, PlanConfig } from './planConfig'
-export { PLAN_CONFIGS, resolvePlanConfig, getPlanConfig, getAllPlans } from './planConfig'
+export { PLAN_CONFIGS, resolvePlanConfig, getPlanConfig, getAllPlans, PLAN_AGENT_ACCESS, planHasAgent, getMinPlanForAgent } from './planConfig'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HOOK PRINCIPAL

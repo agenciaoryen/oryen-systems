@@ -14,6 +14,7 @@ import {
   tFeatures
 } from '@/lib/agents'
 import type { AgentSolution, Agent, Language } from '@/lib/agents/types'
+import { usePlan, planHasAgent, getMinPlanForAgent, PLAN_CONFIGS } from '@/lib/usePlan'
 import { toast } from 'sonner'
 import {
   Bot, Target, MessageSquare, Zap, Headphones,
@@ -21,7 +22,7 @@ import {
   CheckCircle2, Clock, DollarSign, Users,
   Loader2, Sparkles, ArrowRight, Search,
   Plus, BarChart3, Layers, TrendingUp, X,
-  ShieldCheck, CreditCard, Rocket
+  ShieldCheck, CreditCard, Rocket, Lock
 } from 'lucide-react'
 
 // WhatsApp icon component (Lucide-compatible)
@@ -72,7 +73,7 @@ const UI = {
     title: 'Agentes de IA',
     subtitle: 'Automatize a qualificação e o follow-up de contatos com inteligência artificial',
     myAgents: 'Meus Agentes',
-    marketplace: 'Marketplace',
+    solutions: 'Soluções',
     active: 'Ativo',
     paused: 'Pausado',
     campaigns: 'campanhas',
@@ -82,36 +83,35 @@ const UI = {
     manage: 'Gerenciar',
     viewCampaigns: 'Ver Campanhas',
     configure: 'Configurar',
-    hire: 'Contratar',
-    hiring: 'Contratando...',
-    perMonth: '/mês',
-    setup: 'Setup',
+    activate: 'Ativar Agente',
+    activating: 'Ativando...',
+    includedInPlan: 'Incluso no seu plano',
     features: 'Recursos',
-    limits: 'Limites inclusos',
     noAgents: 'Você ainda não tem agentes',
-    noAgentsHint: 'Explore o marketplace e contrate seu primeiro agente de IA imobiliário',
-    explore: 'Explorar Marketplace',
-    confirmHireTitle: 'Contratar Agente',
-    confirmHireDesc: 'Você está prestes a contratar este agente de IA para sua organização.',
-    whatYouGet: 'O que está incluso',
-    billingInfo: 'A cobrança será processada imediatamente',
-    confirmButton: 'Confirmar Contratação',
+    noAgentsHint: 'Explore as soluções disponíveis no seu plano e ative seu primeiro agente de IA',
+    explore: 'Ver Soluções',
+    confirmActivateTitle: 'Ativar Agente',
+    confirmActivateDesc: 'Este agente será ativado na sua organização sem custo adicional.',
+    confirmButton: 'Ativar',
     cancel: 'Cancelar',
-    hired: 'Agente contratado com sucesso!',
-    error: 'Erro ao contratar',
+    hired: 'Agente ativado com sucesso!',
+    error: 'Erro ao ativar',
     loading: 'Carregando...',
     featured: 'Destaque',
     all: 'Todos',
     prospecting: 'Qualificação',
     conversation: 'Conversação',
     support: 'Suporte',
-    searchPlaceholder: 'Buscar agentes...'
+    searchPlaceholder: 'Buscar agentes...',
+    lockedTitle: 'Disponível no plano',
+    lockedUpgrade: 'Fazer Upgrade',
+    availableIn: 'A partir do plano'
   },
   en: {
     title: 'AI Agents',
     subtitle: 'Automate contact qualification and follow-up with artificial intelligence',
     myAgents: 'My Agents',
-    marketplace: 'Marketplace',
+    solutions: 'Solutions',
     active: 'Active',
     paused: 'Paused',
     campaigns: 'campaigns',
@@ -121,36 +121,35 @@ const UI = {
     manage: 'Manage',
     viewCampaigns: 'View Campaigns',
     configure: 'Configure',
-    hire: 'Hire',
-    hiring: 'Hiring...',
-    perMonth: '/mo',
-    setup: 'Setup',
+    activate: 'Activate Agent',
+    activating: 'Activating...',
+    includedInPlan: 'Included in your plan',
     features: 'Features',
-    limits: 'Included limits',
     noAgents: 'You don\'t have any agents yet',
-    noAgentsHint: 'Explore the marketplace and hire your first real estate AI agent',
-    explore: 'Explore Marketplace',
-    confirmHireTitle: 'Hire Agent',
-    confirmHireDesc: 'You are about to hire this AI agent for your organization.',
-    whatYouGet: 'What\'s included',
-    billingInfo: 'Billing will be processed immediately',
-    confirmButton: 'Confirm Hiring',
+    noAgentsHint: 'Explore the solutions available in your plan and activate your first AI agent',
+    explore: 'View Solutions',
+    confirmActivateTitle: 'Activate Agent',
+    confirmActivateDesc: 'This agent will be activated in your organization at no additional cost.',
+    confirmButton: 'Activate',
     cancel: 'Cancel',
-    hired: 'Agent hired successfully!',
-    error: 'Error hiring',
+    hired: 'Agent activated successfully!',
+    error: 'Error activating',
     loading: 'Loading...',
     featured: 'Featured',
     all: 'All',
     prospecting: 'Qualification',
     conversation: 'Conversation',
     support: 'Support',
-    searchPlaceholder: 'Search solutions...'
+    searchPlaceholder: 'Search solutions...',
+    lockedTitle: 'Available on plan',
+    lockedUpgrade: 'Upgrade',
+    availableIn: 'Starting from plan'
   },
   es: {
     title: 'Agentes de IA',
     subtitle: 'Automatiza la calificación y el seguimiento de contactos con inteligencia artificial',
     myAgents: 'Mis Agentes',
-    marketplace: 'Marketplace',
+    solutions: 'Soluciones',
     active: 'Activo',
     paused: 'Pausado',
     campaigns: 'campañas',
@@ -160,30 +159,29 @@ const UI = {
     manage: 'Gestionar',
     viewCampaigns: 'Ver Campañas',
     configure: 'Configurar',
-    hire: 'Contratar',
-    hiring: 'Contratando...',
-    perMonth: '/mes',
-    setup: 'Setup',
+    activate: 'Activar Agente',
+    activating: 'Activando...',
+    includedInPlan: 'Incluido en tu plan',
     features: 'Recursos',
-    limits: 'Límites incluidos',
     noAgents: 'Aún no tienes agentes',
-    noAgentsHint: 'Explora el marketplace y contrata tu primer agente de IA',
-    explore: 'Explorar Marketplace',
-    confirmHireTitle: 'Contratar Agente',
-    confirmHireDesc: 'Estás a punto de contratar este agente de IA para tu organización.',
-    whatYouGet: 'Qué incluye',
-    billingInfo: 'El cobro se procesará inmediatamente',
-    confirmButton: 'Confirmar Contratación',
+    noAgentsHint: 'Explora las soluciones disponibles en tu plan y activa tu primer agente de IA',
+    explore: 'Ver Soluciones',
+    confirmActivateTitle: 'Activar Agente',
+    confirmActivateDesc: 'Este agente será activado en tu organización sin costo adicional.',
+    confirmButton: 'Activar',
     cancel: 'Cancelar',
-    hired: '¡Agente contratado con éxito!',
-    error: 'Error al contratar',
+    hired: '¡Agente activado con éxito!',
+    error: 'Error al activar',
     loading: 'Cargando...',
     featured: 'Destacado',
     all: 'Todos',
     prospecting: 'Calificación',
     conversation: 'Conversación',
     support: 'Soporte',
-    searchPlaceholder: 'Buscar soluciones...'
+    searchPlaceholder: 'Buscar soluciones...',
+    lockedTitle: 'Disponible en plan',
+    lockedUpgrade: 'Mejorar Plan',
+    availableIn: 'A partir del plan'
   }
 }
 
@@ -311,44 +309,50 @@ function AgentCard({
   )
 }
 
-// Card do Marketplace
-function MarketplaceCard({
+// Card de Solução (disponível ou bloqueada por plano)
+function SolutionCard({
   solution,
   lang,
   ui,
   isHired,
   isHiring,
-  onHire
+  isAvailable,
+  minPlanName,
+  onActivate,
+  onUpgrade
 }: {
   solution: AgentSolution
   lang: Language
   ui: typeof UI.es
   isHired: boolean
   isHiring: boolean
-  onHire: () => void
+  isAvailable: boolean
+  minPlanName: string
+  onActivate: () => void
+  onUpgrade: () => void
 }) {
   const Icon = SOLUTION_ICONS[solution.slug] || Bot
   const CategoryIcon = CATEGORY_ICONS[solution.category] || Zap
   const features = tFeatures(solution.features, lang)
-  const hasSetup = solution.price_setup > 0
+  const isLocked = !isAvailable && !isHired
 
   return (
     <div
-      className={`relative rounded-2xl p-5 transition-all duration-300 ${isHired ? 'opacity-60' : ''}`}
+      className={`relative rounded-2xl p-5 transition-all duration-300 ${isLocked ? 'opacity-60' : ''}`}
       style={{
         background: 'var(--color-bg-surface)',
-        border: `1px solid var(--color-border-subtle)`,
-        boxShadow: solution.is_featured ? '0 0 0 1px var(--color-primary-subtle)' : undefined,
+        border: `1px solid ${isLocked ? 'var(--color-border-subtle)' : 'var(--color-border-subtle)'}`,
+        boxShadow: solution.is_featured && !isLocked ? '0 0 0 1px var(--color-primary-subtle)' : undefined,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = 'var(--color-primary-subtle)'
+        if (!isLocked) e.currentTarget.style.borderColor = 'var(--color-primary-subtle)'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = 'var(--color-border-subtle)'
       }}
     >
       {/* Featured Badge */}
-      {solution.is_featured && !isHired && (
+      {solution.is_featured && !isHired && !isLocked && (
         <div className="absolute -top-2 -right-2 z-10">
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold uppercase rounded-full shadow-lg"
@@ -368,7 +372,7 @@ function MarketplaceCard({
             style={{ background: 'var(--color-success-subtle)', border: '1px solid var(--color-success-subtle)', color: 'var(--color-success)' }}
           >
             <CheckCircle2 size={14} />
-            Contratado
+            {ui.active}
           </span>
         </div>
       )}
@@ -383,7 +387,11 @@ function MarketplaceCard({
       <div className="flex items-start gap-3 mb-4">
         <div
           className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-tertiary)' }}
+          style={{
+            background: isLocked ? 'var(--color-bg-hover)' : 'var(--color-bg-elevated)',
+            border: '1px solid var(--color-border-subtle)',
+            color: isLocked ? 'var(--color-text-muted)' : 'var(--color-text-tertiary)',
+          }}
         >
           <Icon size={22} />
         </div>
@@ -401,71 +409,67 @@ function MarketplaceCard({
       <div className="space-y-1.5 mb-4">
         {features.slice(0, 4).map((feature, i) => (
           <div key={i} className="flex items-center gap-2 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-            <CheckCircle2 size={10} className="shrink-0" style={{ color: 'var(--color-primary)' }} />
+            <CheckCircle2 size={10} className="shrink-0" style={{ color: isLocked ? 'var(--color-text-muted)' : 'var(--color-primary)' }} />
             <span className="truncate">{feature}</span>
           </div>
         ))}
       </div>
 
-      {/* Limits */}
-      {solution.default_limits && (
-        <div
-          className="flex items-center gap-3 mb-4 py-2 px-3 rounded-lg"
-          style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
-        >
-          <div className="flex items-center gap-1.5 text-xs">
-            <TrendingUp size={10} style={{ color: 'var(--color-success)' }} />
-            <span style={{ color: 'var(--color-text-tertiary)' }}>
-              {solution.default_limits.leads_per_month} {ui.leadsMonth}
-            </span>
-          </div>
-          {solution.default_limits.campaigns_max && (
-            <div className="flex items-center gap-1.5 text-xs">
-              <Layers size={10} style={{ color: 'var(--color-primary)' }} />
-              <span style={{ color: 'var(--color-text-tertiary)' }}>
-                {solution.default_limits.campaigns_max} {ui.campaigns}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Price */}
-      <div className="flex items-end justify-between mb-4">
-        <div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              ${solution.price_monthly}
-            </span>
-            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{ui.perMonth}</span>
-          </div>
-          {hasSetup && (
-            <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
-              + ${solution.price_setup} {ui.setup}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* CTA */}
-      <button
-        onClick={onHire}
-        disabled={isHired || isHiring}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        style={{ background: 'var(--gradient-brand)', color: '#fff' }}
+      {/* Plan badge — incluso ou requer upgrade */}
+      <div
+        className="flex items-center gap-2 mb-4 py-2 px-3 rounded-lg"
+        style={{
+          background: isLocked ? 'var(--color-accent-subtle)' : 'var(--color-success-subtle)',
+          border: `1px solid ${isLocked ? 'rgba(217, 165, 84, 0.2)' : 'rgba(84, 217, 140, 0.2)'}`,
+        }}
       >
-        {isHiring ? (
+        {isLocked ? (
           <>
-            <Loader2 size={14} className="animate-spin" />
-            {ui.hiring}
+            <Lock size={12} style={{ color: 'var(--color-accent)' }} />
+            <span className="text-xs font-medium" style={{ color: 'var(--color-accent)' }}>
+              {ui.availableIn} {minPlanName}
+            </span>
           </>
         ) : (
           <>
-            {ui.hire}
-            <ArrowRight size={14} />
+            <CheckCircle2 size={12} style={{ color: 'var(--color-success)' }} />
+            <span className="text-xs font-medium" style={{ color: 'var(--color-success)' }}>
+              {ui.includedInPlan}
+            </span>
           </>
         )}
-      </button>
+      </div>
+
+      {/* CTA */}
+      {isLocked ? (
+        <button
+          onClick={onUpgrade}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all"
+          style={{ background: 'var(--color-bg-hover)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border-subtle)' }}
+        >
+          <CreditCard size={14} />
+          {ui.lockedUpgrade}
+        </button>
+      ) : (
+        <button
+          onClick={onActivate}
+          disabled={isHired || isHiring}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ background: 'var(--gradient-brand)', color: '#fff' }}
+        >
+          {isHiring ? (
+            <>
+              <Loader2 size={14} className="animate-spin" />
+              {ui.activating}
+            </>
+          ) : (
+            <>
+              {ui.activate}
+              <ArrowRight size={14} />
+            </>
+          )}
+        </button>
+      )}
     </div>
   )
 }
@@ -477,13 +481,14 @@ function MarketplaceCard({
 export default function AgentsPage() {
   const router = useRouter()
   const { user, org, loading: authLoading } = useAuth()
+  const { plan } = usePlan()
 
   // Dados
   const { solutions, loading: loadingSolutions } = useAgentSolutions()
   const { agents, loading: loadingAgents, refresh } = useOrgAgents(org?.id)
 
   // UI State
-  const [activeTab, setActiveTab] = useState<'agents' | 'marketplace'>('marketplace')
+  const [activeTab, setActiveTab] = useState<'agents' | 'solutions'>('solutions')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [hiring, setHiring] = useState<string | null>(null)
@@ -537,6 +542,7 @@ export default function AgentsPage() {
   useEffect(() => {
     if (!loadingAgents && !tabInitialized) {
       if (filteredAgents.length > 0) setActiveTab('agents')
+      else setActiveTab('solutions')
       setTabInitialized(true)
     }
   }, [loadingAgents, filteredAgents.length, tabInitialized])
@@ -626,17 +632,17 @@ export default function AgentsPage() {
             )}
           </button>
           <button
-            onClick={() => setActiveTab('marketplace')}
+            onClick={() => setActiveTab('solutions')}
             className={`
               flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
             `}
-            style={activeTab === 'marketplace'
+            style={activeTab === 'solutions'
               ? { background: 'var(--color-text-primary)', color: 'var(--color-bg-base)' }
               : { color: 'var(--color-text-tertiary)' }
             }
           >
             <Sparkles size={14} />
-            {ui.marketplace}
+            {ui.solutions}
           </button>
         </div>
       </div>
@@ -655,7 +661,7 @@ export default function AgentsPage() {
               <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>{ui.noAgents}</h3>
               <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>{ui.noAgentsHint}</p>
               <button
-                onClick={() => setActiveTab('marketplace')}
+                onClick={() => setActiveTab('solutions')}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors"
                 style={{ background: 'var(--color-primary)', color: '#fff' }}
               >
@@ -688,8 +694,8 @@ export default function AgentsPage() {
         </>
       )}
 
-      {/* Marketplace Tab */}
-      {activeTab === 'marketplace' && (
+      {/* Solutions Tab */}
+      {activeTab === 'solutions' && (
         <>
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
@@ -702,7 +708,7 @@ export default function AgentsPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={ui.searchPlaceholder}
                 className="w-full rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none transition-colors"
-                style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)', placeholderColor: 'var(--color-text-muted)' }}
+                style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
               />
             </div>
 
@@ -724,41 +730,56 @@ export default function AgentsPage() {
             </div>
           </div>
 
-          {/* Solutions Grid */}
+          {/* Solutions Grid — disponíveis primeiro, bloqueados depois */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredSolutions.map(solution => {
-              const isHired = agents.some(a => a.solution_slug === solution.slug)
-              return (
-                <MarketplaceCard
-                  key={solution.slug}
-                  solution={solution}
-                  lang={lang}
-                  ui={ui}
-                  isHired={isHired}
-                  isHiring={hiring === solution.slug}
-                  onHire={() => setConfirmModal(solution)}
-                />
-              )
-            })}
+            {[...filteredSolutions]
+              .sort((a, b) => {
+                const aAvail = planHasAgent(plan, a.slug) ? 0 : 1
+                const bAvail = planHasAgent(plan, b.slug) ? 0 : 1
+                return aAvail - bAvail
+              })
+              .map(solution => {
+                const isHired = agents.some(a => a.solution_slug === solution.slug)
+                const isAvailable = planHasAgent(plan, solution.slug)
+                const minPlan = getMinPlanForAgent(solution.slug)
+                const minPlanDisplay = PLAN_CONFIGS[minPlan]?.displayName || minPlan
+
+                return (
+                  <SolutionCard
+                    key={solution.slug}
+                    solution={solution}
+                    lang={lang}
+                    ui={ui}
+                    isHired={isHired}
+                    isHiring={hiring === solution.slug}
+                    isAvailable={isAvailable}
+                    minPlanName={minPlanDisplay}
+                    onActivate={() => setConfirmModal(solution)}
+                    onUpgrade={() => router.push('/dashboard/settings/billing')}
+                  />
+                )
+              })}
           </div>
 
           {filteredSolutions.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <Search size={32} style={{ color: 'var(--color-text-muted)' }} className="mb-4" />
-              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Nenhuma solução encontrada</p>
+              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                {lang === 'en' ? 'No solutions found' : lang === 'es' ? 'No se encontraron soluciones' : 'Nenhuma solução encontrada'}
+              </p>
             </div>
           )}
         </>
       )}
 
-      {/* Modal de Confirmação */}
+      {/* Modal de Confirmação — Ativar Agente (sem preço) */}
       {confirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4" style={{ background: 'var(--color-bg-overlay)' }}>
           <div
             className="rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"
             style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
           >
-            {/* Header com gradiente */}
+            {/* Header */}
             <div className="relative p-6 pb-10" style={{ background: 'var(--gradient-brand)' }}>
               <button
                 onClick={() => setConfirmModal(null)}
@@ -767,14 +788,13 @@ export default function AgentsPage() {
               >
                 <X size={16} />
               </button>
-
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl backdrop-blur flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.2)' }}>
                   <Rocket size={24} style={{ color: 'var(--color-text-primary)' }} />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                    {ui.confirmHireTitle}
+                    {ui.confirmActivateTitle}
                   </h3>
                   <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
                     {t(confirmModal.name, lang)}
@@ -783,76 +803,30 @@ export default function AgentsPage() {
               </div>
             </div>
 
-            {/* Preço destacado */}
+            {/* Badge incluso no plano */}
             <div className="relative -mt-5 mx-5">
               <div
-                className="rounded-xl p-4 flex items-center justify-between"
+                className="rounded-xl p-4 flex items-center gap-3"
                 style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}
               >
-                <div>
-                  <p className="text-[10px] uppercase font-bold" style={{ color: 'var(--color-text-muted)' }}>Precio mensual</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>${confirmModal.price_monthly}</span>
-                    <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{ui.perMonth}</span>
-                  </div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--color-success-subtle)' }}>
+                  <CheckCircle2 size={20} style={{ color: 'var(--color-success)' }} />
                 </div>
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center"
-                  style={{ background: 'var(--color-success-subtle)' }}
-                >
-                  <CreditCard size={20} style={{ color: 'var(--color-success)' }} />
+                <div>
+                  <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{ui.includedInPlan}</p>
+                  <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{ui.confirmActivateDesc}</p>
                 </div>
               </div>
             </div>
 
-            {/* Conteúdo */}
-            <div className="p-5 space-y-4">
-              <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-                {ui.confirmHireDesc}
-              </p>
-
-              {/* O que inclui */}
-              <div>
-                <h4 className="text-xs font-bold uppercase mb-3 flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
-                  <ShieldCheck size={12} />
-                  {ui.whatYouGet}
-                </h4>
-                <div className="space-y-2">
-                  {confirmModal.default_limits?.leads_per_month && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 size={14} style={{ color: 'var(--color-success)' }} />
-                      <span style={{ color: 'var(--color-text-secondary)' }}>
-                        {confirmModal.default_limits.leads_per_month} {ui.leadsMonth}
-                      </span>
-                    </div>
-                  )}
-                  {confirmModal.default_limits?.campaigns_max && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 size={14} style={{ color: 'var(--color-success)' }} />
-                      <span style={{ color: 'var(--color-text-secondary)' }}>
-                        Hasta {confirmModal.default_limits.campaigns_max} campañas activas
-                      </span>
-                    </div>
-                  )}
-                  {tFeatures(confirmModal.features, lang).slice(0, 3).map((feature, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 size={14} style={{ color: 'var(--color-success)' }} />
-                      <span style={{ color: 'var(--color-text-secondary)' }}>{feature}</span>
-                    </div>
-                  ))}
+            {/* Features */}
+            <div className="p-5 space-y-3">
+              {tFeatures(confirmModal.features, lang).slice(0, 4).map((feature, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
+                  <CheckCircle2 size={14} style={{ color: 'var(--color-success)' }} />
+                  <span style={{ color: 'var(--color-text-secondary)' }}>{feature}</span>
                 </div>
-              </div>
-
-              {/* Aviso de cobrança */}
-              <div
-                className="flex items-start gap-2 p-3 rounded-lg"
-                style={{ background: 'var(--color-accent-subtle)', border: '1px solid var(--color-accent-subtle)' }}
-              >
-                <CreditCard size={14} className="mt-0.5 shrink-0" style={{ color: 'var(--color-accent)' }} />
-                <p className="text-xs" style={{ color: 'var(--color-accent)' }}>
-                  {ui.billingInfo}
-                </p>
-              </div>
+              ))}
             </div>
 
             {/* Botões */}
@@ -873,7 +847,7 @@ export default function AgentsPage() {
                 {hiring === confirmModal.slug ? (
                   <>
                     <Loader2 size={14} className="animate-spin" />
-                    {ui.hiring}
+                    {ui.activating}
                   </>
                 ) : (
                   <>

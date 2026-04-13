@@ -212,3 +212,41 @@ export function getPlanConfig(planName: string): PlanConfig {
 export function getAllPlans(): PlanConfig[] {
   return Object.values(PLAN_CONFIGS)
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AGENTES DISPONÍVEIS POR PLANO
+// ═══════════════════════════════════════════════════════════════════════════════
+// Define quais agent_solutions (por slug) cada plano inclui.
+// Slugs com sufixo _imobiliario são variantes de nicho — mapeados automaticamente.
+// '*' = todos os agentes disponíveis.
+
+export const PLAN_AGENT_ACCESS: Record<PlanName, string[] | '*'> = {
+  starter: ['sdr', 'sdr_imobiliario', 'followup', 'followup_imobiliario'],
+  pro: ['sdr', 'sdr_imobiliario', 'followup', 'followup_imobiliario', 'support'],
+  business: '*',
+  enterprise: '*',
+}
+
+/**
+ * Verifica se um plano tem acesso a um determinado agente.
+ */
+export function planHasAgent(planName: string, agentSlug: string): boolean {
+  const config = resolvePlanConfig(planName)
+  const access = PLAN_AGENT_ACCESS[config.name]
+  if (access === '*') return true
+  return access.includes(agentSlug)
+}
+
+/**
+ * Retorna o plano mínimo necessário para acessar um agente.
+ */
+export function getMinPlanForAgent(agentSlug: string): PlanName {
+  const planOrder: PlanName[] = ['starter', 'pro', 'business', 'enterprise']
+  for (const plan of planOrder) {
+    const access = PLAN_AGENT_ACCESS[plan]
+    if (access === '*' || access.includes(agentSlug)) {
+      return plan
+    }
+  }
+  return 'enterprise'
+}
