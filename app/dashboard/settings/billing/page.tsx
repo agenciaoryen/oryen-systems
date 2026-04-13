@@ -732,15 +732,20 @@ function BillingPageContent() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erro ao abrir portal')
+        if (data.error === 'portal_not_configured') {
+          alert(data.message)
+        } else {
+          throw new Error(data.error || 'Erro ao abrir portal')
+        }
+        return
       }
 
       if (data.url) {
         window.location.href = data.url
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao abrir portal:', err)
-      alert('Erro ao abrir portal de gerenciamento.')
+      alert(err?.message || 'Erro ao abrir portal de gerenciamento.')
     } finally {
       setLoading(false)
     }
