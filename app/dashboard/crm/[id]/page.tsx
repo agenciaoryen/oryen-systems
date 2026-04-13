@@ -788,7 +788,13 @@ export default function LeadProfilePage() {
       {/* HEADER */}
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <button
-          onClick={() => router.back()}
+          onClick={() => {
+            if (window.history.length > 1) {
+              router.back()
+            } else {
+              router.push('/dashboard/crm')
+            }
+          }}
           className="flex items-center gap-2 text-sm font-medium transition-colors group"
           style={{ color: 'var(--color-text-muted)' }}
         >
