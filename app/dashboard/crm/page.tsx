@@ -33,9 +33,6 @@ import {
   Upload
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
-import dynamic from 'next/dynamic'
-
-const CsvImport = dynamic(() => import('./components/CsvImport'), { ssr: false })
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -437,7 +434,6 @@ export default function CrmPage() {
 
   // Estados do Modal
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [showCsvImport, setShowCsvImport] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [newLeadData, setNewLeadData] = useState({
     name: '',
@@ -803,7 +799,7 @@ export default function CrmPage() {
         <div className="flex items-center gap-2 md:gap-3 w-full lg:w-auto flex-wrap">
           {/* Botão Import CSV */}
           <button
-            onClick={() => setShowCsvImport(true)}
+            onClick={() => router.push('/dashboard/crm/import')}
             className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
             style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
           >
@@ -1472,17 +1468,6 @@ export default function CrmPage() {
           </div>
         </div>
       </footer>
-
-      {/* MODAL IMPORT CSV */}
-      {showCsvImport && orgId && (
-        <CsvImport
-          orgId={orgId}
-          defaultStage={pipelineStages[0]?.name || 'captado'}
-          onClose={() => setShowCsvImport(false)}
-          onSuccess={() => { setShowCsvImport(false); fetchData() }}
-          lang={lang as 'pt' | 'en' | 'es'}
-        />
-      )}
 
       {/* MODAL CRIAR LEAD */}
       {isModalOpen && (
