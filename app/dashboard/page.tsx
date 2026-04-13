@@ -880,6 +880,7 @@ export default function DashboardPage() {
                   contentStyle={{ backgroundColor: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', borderRadius: '8px', color: 'var(--color-text-primary)', fontSize: '12px' }}
                   itemStyle={{ color: 'var(--color-text-primary)', fontWeight: 'bold' }}
                 />
+                <Legend wrapperStyle={{ fontSize: '11px', color: 'var(--color-text-secondary)' }} formatter={(value: string) => <span style={{ color: 'var(--color-text-secondary)' }}>{value}</span>} />
                 <Area type="monotone" dataKey="valor" stroke={COLORS.blue} strokeWidth={3} fillOpacity={1} fill="url(#colorVendas)" name={t.sales} />
                 <Area type="monotone" dataKey="leads" stroke={COLORS.success} strokeWidth={3} fillOpacity={1} fill="url(#colorLeads)" name="Leads" />
               </AreaChart>

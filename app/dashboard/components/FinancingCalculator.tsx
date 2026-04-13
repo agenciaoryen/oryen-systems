@@ -1002,11 +1002,14 @@ export default function FinancingCalculator({
                   />
                   <RechartsTooltip
                     contentStyle={{
-                      background: 'var(--color-bg-surface)',
+                      background: 'var(--color-bg-elevated)',
                       border: '1px solid var(--color-border)',
                       borderRadius: '8px',
                       fontSize: '13px',
+                      color: 'var(--color-text-primary)',
                     }}
+                    itemStyle={{ color: 'var(--color-text-secondary)' }}
+                    labelStyle={{ color: 'var(--color-text-primary)' }}
                     formatter={(value: any, name: any) => [
                       fmt(value),
                       name === 'sac' ? t.sacLabel : (hasSAC ? t.priceLabel : t.fixedLabel),
@@ -1015,7 +1018,7 @@ export default function FinancingCalculator({
                   />
                   <Legend
                     verticalAlign="top"
-                    formatter={(value: string) => (value === 'sac' ? t.sacLabel : (hasSAC ? t.priceLabel : t.fixedLabel))}
+                    formatter={(value: string) => <span style={{ color: 'var(--color-text-secondary)' }}>{value === 'sac' ? t.sacLabel : (hasSAC ? t.priceLabel : t.fixedLabel)}</span>}
                     wrapperStyle={{ fontSize: '13px' }}
                   />
                   {hasSAC && (

@@ -336,12 +336,14 @@ export default function PropertyStatsPage() {
                       fontSize: '12px',
                       color: 'var(--color-text-primary)',
                     }}
+                    itemStyle={{ color: 'var(--color-text-secondary)' }}
+                    labelStyle={{ color: 'var(--color-text-primary)' }}
                     labelFormatter={(v: string) => {
                       const d = new Date(v + 'T00:00:00')
                       return d.toLocaleDateString(lang === 'pt' ? 'pt-BR' : lang === 'es' ? 'es' : 'en', { day: 'numeric', month: 'short' })
                     }}
                   />
-                  <Legend wrapperStyle={{ fontSize: '11px', color: 'var(--color-text-secondary)' }} />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} formatter={(value: string) => <span style={{ color: 'var(--color-text-secondary)' }}>{value}</span>} />
                   <Line
                     type="monotone"
                     dataKey="views"

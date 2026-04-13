@@ -327,11 +327,12 @@ export default function DistribuicaoPage() {
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis dataKey="name" stroke="var(--color-text-muted)" fontSize={12} />
-                <YAxis stroke="var(--color-text-muted)" fontSize={12} />
+                <XAxis dataKey="name" tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} tickLine={false} axisLine={false} />
                 <Tooltip
-                  contentStyle={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', borderRadius: 8 }}
+                  contentStyle={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', borderRadius: 8, color: 'var(--color-text-primary)' }}
                   labelStyle={{ color: 'var(--color-text-primary)' }}
+                  itemStyle={{ color: 'var(--color-text-secondary)' }}
                 />
                 <Bar dataKey="leads" radius={[6, 6, 0, 0]}>
                   {chartData.map((entry, i) => (

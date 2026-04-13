@@ -113,7 +113,10 @@ export default function HistoricalChart({ progressList, month, lang = 'pt' }: Pr
               border: '1px solid var(--color-border)',
               borderRadius: '12px',
               fontSize: '12px',
+              color: 'var(--color-text-primary)',
             }}
+            itemStyle={{ color: 'var(--color-text-secondary)' }}
+            labelStyle={{ color: 'var(--color-text-primary)' }}
           />
           <Line
             type="monotone"
@@ -130,7 +133,7 @@ export default function HistoricalChart({ progressList, month, lang = 'pt' }: Pr
             strokeDasharray="6 4"
             label={{ value: t.target, fill: 'var(--color-text-muted)', fontSize: 11 }}
           />
-          <Legend />
+          <Legend wrapperStyle={{ fontSize: '12px' }} formatter={(value: string) => <span style={{ color: 'var(--color-text-secondary)' }}>{value}</span>} />
         </LineChart>
       </ResponsiveContainer>
     </div>
