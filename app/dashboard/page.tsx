@@ -9,7 +9,7 @@ import NoOrganizationState from './components/NoOrganizationState'
 import DailyPriorities from './components/DailyPriorities'
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
+  PieChart, Pie, Cell
 } from 'recharts'
 import { 
   TrendingUp, Users, Calendar, DollarSign, 
@@ -881,7 +881,6 @@ export default function DashboardPage() {
                   itemStyle={{ color: 'var(--color-text-primary)', fontWeight: 'bold' }}
                   labelStyle={{ color: 'var(--color-text-primary)' }}
                 />
-                <Legend wrapperStyle={{ fontSize: '11px', color: 'var(--color-text-secondary)' }} formatter={(value: string) => <span style={{ color: 'var(--color-text-secondary)' }}>{value}</span>} />
                 <Area type="monotone" dataKey="valor" stroke={COLORS.blue} strokeWidth={3} fillOpacity={1} fill="url(#colorVendas)" name={t.sales} />
                 <Area type="monotone" dataKey="leads" stroke={COLORS.success} strokeWidth={3} fillOpacity={1} fill="url(#colorLeads)" name="Leads" />
               </AreaChart>
