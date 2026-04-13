@@ -543,7 +543,7 @@ export default function Sidebar() {
                       group.collapsible && 'cursor-pointer group/section'
                     )}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-widest transition-colors" style={{ color: 'var(--color-text-muted)' }}>
+                    <p className="text-[11px] font-bold uppercase tracking-widest transition-colors" style={{ color: 'var(--color-text-muted)' }}>
                       {group.title}
                     </p>
                     {group.collapsible && (
@@ -575,7 +575,7 @@ export default function Sidebar() {
                         key={link.href}
                         href={link.href}
                         onClick={() => setIsMobileOpen(false)}
-                        className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 group"
+                        className="flex items-center justify-between rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-200 group"
                         style={isActive
                           ? { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }
                           : { color: 'var(--color-text-tertiary)', border: '1px solid transparent' }
@@ -584,7 +584,7 @@ export default function Sidebar() {
                         onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' } }}
                       >
                         <div className="flex items-center gap-3 truncate">
-                          <Icon size={17} style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)' }} />
+                          <Icon size={18} style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)' }} />
                           <span className="truncate">
                             {link.label}
                             {link.isComingSoon && (
@@ -630,7 +630,7 @@ export default function Sidebar() {
           {/* Toggle de tema */}
           <button
             onClick={toggleTheme}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all mb-1 border border-transparent"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all mb-1 border border-transparent"
             style={{ color: 'var(--color-text-secondary)' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-secondary)' }}
@@ -642,7 +642,7 @@ export default function Sidebar() {
           {/* Logout */}
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all"
             style={{ color: 'var(--color-text-muted)', border: '1px solid transparent' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-error-subtle)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-error)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(217, 84, 84, 0.2)' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'transparent' }}
