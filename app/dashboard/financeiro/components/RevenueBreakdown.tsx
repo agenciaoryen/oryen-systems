@@ -258,7 +258,8 @@ export default function RevenueBreakdown({ brokers, sources, currency, lang }: P
               />
               <Legend
                 verticalAlign="bottom"
-                wrapperStyle={{ color: 'var(--color-text-tertiary)', fontSize: 13 }}
+                wrapperStyle={{ fontSize: 13 }}
+                formatter={(value: string) => <span style={{ color: 'var(--color-text-secondary)' }}>{value}</span>}
               />
             </PieChart>
           </ResponsiveContainer>
