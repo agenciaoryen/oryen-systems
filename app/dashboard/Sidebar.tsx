@@ -543,12 +543,12 @@ export default function Sidebar() {
                       group.collapsible && 'cursor-pointer group/section'
                     )}
                   >
-                    <p className="text-[11px] font-bold uppercase tracking-widest transition-colors" style={{ color: 'var(--color-text-muted)' }}>
+                    <p className="text-xs font-bold uppercase tracking-widest transition-colors" style={{ color: 'var(--color-text-muted)' }}>
                       {group.title}
                     </p>
                     {group.collapsible && (
                       <ChevronDown
-                        size={12}
+                        size={14}
                         className={cn(
                           'transition-transform duration-200',
                           isCollapsed && '-rotate-90'
