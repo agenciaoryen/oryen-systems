@@ -57,6 +57,8 @@ const T = {
   coverImage: 'Imagem de capa',
   primaryColor: 'Cor principal',
   accentColor: 'Cor de destaque',
+  heroTextColor: 'Cor do texto da capa',
+  heroPreview: 'Pré-visualização da capa',
   // Sobre
   avatar: 'Foto do corretor',
   bio: 'Bio / Sobre',
@@ -150,6 +152,7 @@ export default function SiteSettingsPage() {
     cover_image_url: '',
     primary_color: '#4B6BFB',
     accent_color: '#F0A030',
+    hero_text_color: '#FFFFFF',
     currency: 'BRL',
     bio: '',
     avatar_url: '',
@@ -188,6 +191,7 @@ export default function SiteSettingsPage() {
           cover_image_url: data.site.cover_image_url || '',
           primary_color: data.site.primary_color || '#4B6BFB',
           accent_color: data.site.accent_color || '#F0A030',
+          hero_text_color: data.site.hero_text_color || '#FFFFFF',
           currency: data.site.currency || 'BRL',
           bio: data.site.bio || '',
           avatar_url: data.site.avatar_url || '',
@@ -599,20 +603,20 @@ export default function SiteSettingsPage() {
             </div>
           ) : (
             /* Input para adicionar domínio */
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={domainInput}
                 onChange={e => setDomainInput(e.target.value.toLowerCase().replace(/\s/g, ''))}
                 placeholder={T.domainPlaceholder}
                 onKeyDown={e => e.key === 'Enter' && handleAddDomain()}
-                className="flex-1 rounded-xl p-3 text-sm outline-none transition-all"
+                className="flex-1 min-w-0 rounded-xl p-3 text-sm outline-none transition-all"
                 style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
               />
               <button
                 onClick={handleAddDomain}
                 disabled={!domainInput.trim() || domainAction === 'adding'}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all disabled:opacity-50 shrink-0"
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 whitespace-nowrap"
                 style={{ background: 'var(--color-primary)', color: '#fff' }}
               >
                 {domainAction === 'adding' ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
@@ -771,6 +775,76 @@ export default function SiteSettingsPage() {
                 style={inputStyle}
                 maxLength={7}
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Cor do texto da capa */}
+        <div>
+          <label className={labelClass} style={labelStyle}>{T.heroTextColor}</label>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {['#FFFFFF', '#F1F5F9', '#0F172A', '#1E293B', '#EDEDF5', '#FEF3C7', '#E0E7FF'].map((c) => (
+              <button
+                key={c}
+                onClick={() => updateField('hero_text_color', c)}
+                className="w-7 h-7 rounded-lg cursor-pointer transition-all hover:scale-110 border-2"
+                style={{
+                  background: c,
+                  borderColor: form.hero_text_color === c ? 'var(--color-primary)' : 'var(--color-border)',
+                  boxShadow: form.hero_text_color === c ? `0 0 0 2px var(--color-primary)` : 'none',
+                }}
+                title={c}
+              />
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={form.hero_text_color}
+              onChange={(e) => updateField('hero_text_color', e.target.value)}
+              className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0"
+            />
+            <input
+              type="text"
+              value={form.hero_text_color}
+              onChange={(e) => updateField('hero_text_color', e.target.value)}
+              className={inputClass + ' flex-1'}
+              style={inputStyle}
+              maxLength={7}
+            />
+          </div>
+        </div>
+
+        {/* Pré-visualização da capa */}
+        <div>
+          <label className={labelClass} style={labelStyle}>{T.heroPreview}</label>
+          <div
+            className="relative rounded-xl overflow-hidden"
+            style={{ height: 180 }}
+          >
+            {/* Background */}
+            <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${form.primary_color} 0%, color-mix(in srgb, ${form.primary_color} 70%, #000) 100%)` }} />
+            {form.cover_image_url && (
+              <div className="absolute inset-0">
+                <img src={form.cover_image_url} alt="" className="w-full h-full object-cover opacity-30" />
+                <div className="absolute inset-0" style={{ background: `linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.2))` }} />
+              </div>
+            )}
+            {/* Conteúdo */}
+            <div className="relative flex flex-col items-center justify-center h-full px-4 text-center">
+              {form.tagline && (
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: form.accent_color }}>
+                  {form.tagline}
+                </p>
+              )}
+              <h3 className="text-lg sm:text-xl font-bold leading-tight" style={{ color: form.hero_text_color }}>
+                {form.site_name || 'Nome do Site'}
+              </h3>
+              {form.bio && (
+                <p className="text-[10px] mt-1 opacity-70 line-clamp-1" style={{ color: form.hero_text_color }}>
+                  {form.bio}
+                </p>
+              )}
             </div>
           </div>
         </div>

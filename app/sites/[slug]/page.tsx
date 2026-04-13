@@ -109,11 +109,11 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
                 {site.tagline}
               </p>
             )}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4" style={{ color: 'var(--color-text-primary)' }}>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4" style={{ color: site.hero_text_color || '#FFFFFF' }}>
               {site.site_name || 'Imóveis'}
             </h1>
             {site.bio && (
-              <p className="text-lg mb-8 line-clamp-2" style={{ color: 'var(--color-text-tertiary)' }}>
+              <p className="text-lg mb-8 line-clamp-2" style={{ color: site.hero_text_color || '#FFFFFF', opacity: 0.75 }}>
                 {site.bio}
               </p>
             )}

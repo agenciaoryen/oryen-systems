@@ -127,6 +127,7 @@ export async function PUT(request: NextRequest) {
           cover_image_url: body.cover_image_url || null,
           primary_color: body.primary_color || '#4B6BFB',
           accent_color: body.accent_color || '#F0A030',
+          hero_text_color: body.hero_text_color || '#FFFFFF',
           bio: body.bio || null,
           avatar_url: body.avatar_url || null,
           creci: body.creci || null,
