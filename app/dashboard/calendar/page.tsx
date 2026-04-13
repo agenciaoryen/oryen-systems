@@ -584,21 +584,21 @@ function CreateEventModal({
 
   return (
     <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={onClose}>
-      <div className="rounded-2xl w-full max-w-lg" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }} onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+      <div className="rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }} onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-3 shrink-0" style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
           <h2 className="text-base font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.newEvent}</h2>
           <button onClick={onClose} style={{ color: 'var(--color-text-muted)' }}><X size={18} /></button>
         </div>
 
-        <div className="px-5 py-3 space-y-3">
+        <div className="px-5 py-3 space-y-3 overflow-y-auto flex-1">
           {/* Title */}
           <div>
             <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.eventTitle}</label>
             <input value={title} onChange={e => setTitle(e.target.value)} className={inputClass} style={inputStyle} placeholder="Ex: Visita apartamento 2 quartos" />
           </div>
 
-          {/* Type + Date + Times em uma linha */}
-          <div className="grid gap-2" style={{ gridTemplateColumns: '1fr 1.3fr 0.85fr 0.85fr' }}>
+          {/* Type + Date */}
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.eventType}</label>
               <CustomSelect
@@ -616,6 +616,10 @@ function CreateEventModal({
               <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.date}</label>
               <input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} className={inputClass} style={inputStyle} />
             </div>
+          </div>
+
+          {/* Start + End Times */}
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.startTime}</label>
               <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className={inputClass} style={inputStyle} />
@@ -668,7 +672,7 @@ function CreateEventModal({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-5 py-3" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+        <div className="flex justify-end gap-3 px-5 py-3 shrink-0" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
           <button onClick={onClose} className="px-4 py-2 text-sm transition-colors" style={{ color: 'var(--color-text-tertiary)' }}>{t.cancel}</button>
           <button onClick={handleSave} disabled={saving || !title.trim()} className="px-5 py-2 disabled:opacity-50 rounded-xl font-medium text-sm transition-colors flex items-center gap-2" style={{ background: 'var(--color-primary)', color: '#fff' }}>
             {saving && <Loader2 size={14} className="animate-spin" />}
