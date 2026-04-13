@@ -539,7 +539,7 @@ export default function Sidebar() {
                   <button
                     onClick={() => group.collapsible && toggleSection(group.key)}
                     className={cn(
-                      'w-full flex items-center justify-between px-2 pt-4 pb-1.5',
+                      'w-full flex items-center justify-between px-2 pt-5 pb-2',
                       group.collapsible && 'cursor-pointer group/section'
                     )}
                   >
