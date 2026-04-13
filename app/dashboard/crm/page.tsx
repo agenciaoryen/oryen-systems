@@ -33,7 +33,9 @@ import {
   Upload
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
-import CsvImport from './components/CsvImport'
+import dynamic from 'next/dynamic'
+
+const CsvImport = dynamic(() => import('./components/CsvImport'), { ssr: false })
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
