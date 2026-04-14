@@ -1,7 +1,7 @@
 // app/dashboard/agents/[id]/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import {
@@ -1043,6 +1043,21 @@ export default function AgentDetailPage() {
   const { agent, campaigns, loading, error, refresh } = useAgent(agentId)
   const [showCreateModal, setShowCreateModal] = useState(false)
 
+  // Uso real da API (contagens reais do banco)
+  const [realMessages, setRealMessages] = useState<{ current: number; limit: number }>({ current: 0, limit: 0 })
+  const [realLeads, setRealLeads] = useState<{ current: number; limit: number }>({ current: 0, limit: 0 })
+
+  useEffect(() => {
+    if (!org?.id) return
+    Promise.all([
+      fetch(`/api/plan-limit?org_id=${org.id}&resource=messages`).then(r => r.json()).catch(() => ({ current: 0, limit: 0 })),
+      fetch(`/api/plan-limit?org_id=${org.id}&resource=leads`).then(r => r.json()).catch(() => ({ current: 0, limit: 0 })),
+    ]).then(([msgs, lds]) => {
+      setRealMessages({ current: msgs.current || 0, limit: msgs.limit ?? 0 })
+      setRealLeads({ current: lds.current || 0, limit: lds.limit ?? 0 })
+    })
+  }, [org?.id])
+
   const lang = ((user as any)?.language as Language) || 'es'
   const ui = UI[lang]
   const dateLocale = { pt: ptBR, en: enUS, es }[lang]
@@ -1105,13 +1120,12 @@ export default function AgentDetailPage() {
   const isFollowUp = agent.solution_slug?.includes('followup')
   const isSingleConfig = SINGLE_CONFIG_SLUGS.includes(agent.solution_slug)
 
-  // Resolver limites do plano para este agente
+  // Resolver uso REAL do agente (da API, não do agent row)
   const slug = agent.solution_slug
-  const rawUsed = agent.current_usage?.leads_captured || 0
-  const isMessageAgent = slug.includes('followup') || slug === 'support'
-  const planLimit = isMessageAgent
-    ? planConfig.limits.maxMonthlyMessages
-    : planConfig.limits.maxActiveLeads
+  const isMessageAgent = slug.includes('sdr') || slug.includes('hunter') || slug.includes('followup') || slug === 'support'
+  const realData = isMessageAgent ? realMessages : realLeads
+  const rawUsed = realData.current
+  const planLimit = realData.limit
   const isUnlimited = planLimit === -1
   const usagePercentage = isUnlimited ? 0 : planLimit > 0 ? (rawUsed / planLimit) * 100 : 0
   const usageRemaining = isUnlimited ? -1 : Math.max(planLimit - rawUsed, 0)

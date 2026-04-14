@@ -201,32 +201,38 @@ const UI = {
 // COMPONENTES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Helper: resolver limite e label do agente baseado no plano
+// Tipo para dados de uso real vindos da API
+interface RealUsageData {
+  messages: { current: number; limit: number }
+  leads: { current: number; limit: number }
+}
+
+// Helper: resolver uso real e label do agente
 function getAgentPlanUsage(
   agent: Agent,
   planConfig: PlanConfig,
+  realUsage: RealUsageData,
   ui: typeof UI.es
 ): { used: number; limit: number; remaining: number; percentage: number; label: string } {
   const slug = agent.solution_slug
-  const used = agent.current_usage?.leads_captured || 0
 
-  // SDR/hunter → maxActiveLeads (contatos qualificados)
+  // SDR/hunter → mensagens IA (contagem real da tabela sdr_messages)
   if (slug.includes('sdr') || slug.includes('hunter')) {
-    const limit = planConfig.limits.maxActiveLeads
-    const remaining = limit === -1 ? -1 : Math.max(limit - used, 0)
-    const percentage = limit === -1 ? 0 : limit > 0 ? (used / limit) * 100 : 0
-    return { used, limit, remaining, percentage, label: ui.leadsMonth }
-  }
-
-  // Follow-up/support → maxMonthlyMessages (mensagens)
-  if (slug.includes('followup') || slug === 'support') {
-    const limit = planConfig.limits.maxMonthlyMessages
+    const { current: used, limit } = realUsage.messages
     const remaining = limit === -1 ? -1 : Math.max(limit - used, 0)
     const percentage = limit === -1 ? 0 : limit > 0 ? (used / limit) * 100 : 0
     return { used, limit, remaining, percentage, label: ui.messagesMonth }
   }
 
-  // Fallback: usar limits do agent row
+  // Follow-up/support → mensagens IA (mesmo pool compartilhado)
+  if (slug.includes('followup') || slug === 'support') {
+    const { current: used, limit } = realUsage.messages
+    const remaining = limit === -1 ? -1 : Math.max(limit - used, 0)
+    const percentage = limit === -1 ? 0 : limit > 0 ? (used / limit) * 100 : 0
+    return { used, limit, remaining, percentage, label: ui.messagesMonth }
+  }
+
+  // Fallback
   const fallback = calculateUsage(agent)
   return { ...fallback, label: ui.leadsMonth }
 }
@@ -237,17 +243,19 @@ function AgentCard({
   lang,
   ui,
   planConfig,
+  realUsage,
   onManage
 }: {
   agent: Agent
   lang: Language
   ui: typeof UI.es
   planConfig: PlanConfig
+  realUsage: RealUsageData
   onManage: () => void
 }) {
   const solution = agent.solution
   const Icon = SOLUTION_ICONS[agent.solution_slug] || Bot
-  const usage = getAgentPlanUsage(agent, planConfig, ui)
+  const usage = getAgentPlanUsage(agent, planConfig, realUsage, ui)
   const isActive = agent.status === 'active'
   const isUnlimited = usage.limit === -1
 
@@ -547,6 +555,29 @@ export default function AgentsPage() {
   const { solutions, loading: loadingSolutions } = useAgentSolutions()
   const { agents, loading: loadingAgents, refresh } = useOrgAgents(org?.id)
 
+  // Uso real da API (contagens reais do banco)
+  const [realUsage, setRealUsage] = useState<RealUsageData>({
+    messages: { current: 0, limit: 0 },
+    leads: { current: 0, limit: 0 },
+  })
+
+  useEffect(() => {
+    if (!org?.id) return
+    const resources = ['messages', 'leads'] as const
+    Promise.all(
+      resources.map(r =>
+        fetch(`/api/plan-limit?org_id=${org.id}&resource=${r}`)
+          .then(res => res.json())
+          .then(data => ({ resource: r, current: data.current || 0, limit: data.limit ?? 0 }))
+          .catch(() => ({ resource: r, current: 0, limit: 0 }))
+      )
+    ).then(results => {
+      const map: any = {}
+      results.forEach(r => { map[r.resource] = { current: r.current, limit: r.limit } })
+      setRealUsage(map as RealUsageData)
+    })
+  }, [org?.id])
+
   // UI State
   const [activeTab, setActiveTab] = useState<'agents' | 'solutions'>('solutions')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
@@ -738,6 +769,7 @@ export default function AgentsPage() {
                   lang={lang}
                   ui={ui}
                   planConfig={planConfig}
+                  realUsage={realUsage}
                   onManage={() => {
                     // Redirecionar para a página correta baseado no tipo de agente
                     if (agent.solution_slug.includes('followup')) {
