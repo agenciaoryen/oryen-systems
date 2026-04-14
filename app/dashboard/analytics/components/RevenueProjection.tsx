@@ -144,6 +144,7 @@ export default function RevenueProjectionChart({ projection, lang, currency }: P
                 tickFormatter={(v) => formatCompact(v, currency)}
               />
               <Tooltip
+                cursor={false}
                 contentStyle={{
                   background: 'var(--color-bg-elevated)',
                   border: '1px solid var(--color-border)',

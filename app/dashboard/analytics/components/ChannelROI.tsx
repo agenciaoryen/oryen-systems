@@ -241,6 +241,7 @@ export default function ChannelROI({ sources, lang, currency }: Props) {
                 tickFormatter={(v) => formatCompact(v, currency)}
               />
               <Tooltip
+                cursor={false}
                 contentStyle={{
                   background: 'var(--color-bg-elevated)',
                   border: '1px solid var(--color-border)',

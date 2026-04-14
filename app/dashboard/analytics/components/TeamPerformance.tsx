@@ -151,6 +151,7 @@ export default function TeamPerformance({ brokers, followUp, lang }: Props) {
               />
               <YAxis tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} allowDecimals={false} />
               <Tooltip
+                cursor={false}
                 contentStyle={{
                   background: 'var(--color-bg-elevated)',
                   border: '1px solid var(--color-border)',
@@ -189,6 +190,7 @@ export default function TeamPerformance({ brokers, followUp, lang }: Props) {
                 tickFormatter={(v) => formatTime(v)}
               />
               <Tooltip
+                cursor={false}
                 contentStyle={{
                   background: 'var(--color-bg-elevated)',
                   border: '1px solid var(--color-border)',
@@ -232,6 +234,7 @@ export default function TeamPerformance({ brokers, followUp, lang }: Props) {
                   ))}
                 </Pie>
                 <Tooltip
+                  cursor={false}
                   contentStyle={{
                     background: 'var(--color-bg-elevated)',
                     border: '1px solid var(--color-border)',

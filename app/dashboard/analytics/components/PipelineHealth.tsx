@@ -124,6 +124,7 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
                 tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
               />
               <Tooltip
+                cursor={false}
                 contentStyle={{
                   background: 'var(--color-bg-elevated)',
                   border: '1px solid var(--color-border)',
