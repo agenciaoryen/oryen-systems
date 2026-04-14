@@ -2,12 +2,7 @@
 // Desconecta uma instância WhatsApp
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, supabaseAdmin as supabase } from '@/lib/api-auth'
 
 /**
  * POST /api/whatsapp/disconnect
@@ -15,6 +10,9 @@ const supabase = createClient(
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const { instance_id } = await request.json()
     if (!instance_id) {
       return NextResponse.json({ error: 'instance_id required' }, { status: 400 })

@@ -3,13 +3,8 @@
 // GET: get score and recent activities for a lead
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import { calculateLeadScore, recalculateAllScores } from '@/lib/scoring/lead-scorer'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 /**
  * GET /api/leads/score?lead_id=xxx
@@ -17,6 +12,9 @@ const supabase = createClient(
  */
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = request.nextUrl
     const leadId = searchParams.get('lead_id')
 
@@ -65,12 +63,12 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { org_id, lead_id } = body
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id) {
-      return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-    }
+    const body = await request.json()
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { lead_id } = body
 
     let updated = 0
 

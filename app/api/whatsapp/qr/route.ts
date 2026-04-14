@@ -1,12 +1,7 @@
 // app/api/whatsapp/qr/route.ts
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, supabaseAdmin as supabase } from '@/lib/api-auth'
 
 /**
  * Configura o webhook na UAZAPI automaticamente após conexão
@@ -46,6 +41,9 @@ async function setupWebhook(apiUrl: string, token: string): Promise<boolean> {
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const instanceId = request.nextUrl.searchParams.get('instance_id')
     if (!instanceId) {
       return NextResponse.json({ error: 'instance_id required' }, { status: 400 })

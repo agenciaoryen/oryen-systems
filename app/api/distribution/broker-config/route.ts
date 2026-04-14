@@ -3,17 +3,14 @@
 // PUT: atualiza config de um corretor específico
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 
 export async function GET(req: NextRequest) {
   try {
-    const orgId = req.nextUrl.searchParams.get('org_id')
-    if (!orgId) return NextResponse.json({ error: 'org_id required' }, { status: 400 })
+    const auth = await requireAuth(req)
+    if (auth instanceof NextResponse) return auth
+
+    const orgId = resolveOrgId(auth, req.nextUrl.searchParams.get('org_id'))
 
     // Buscar todos os usuários elegíveis da org
     const { data: users } = await supabase
@@ -49,11 +46,15 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { org_id, user_id, ...configFields } = body
+    const auth = await requireAuth(req)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id || !user_id) {
-      return NextResponse.json({ error: 'org_id and user_id required' }, { status: 400 })
+    const body = await req.json()
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { user_id, ...configFields } = body
+
+    if (!user_id) {
+      return NextResponse.json({ error: 'user_id required' }, { status: 400 })
     }
 
     const updateData: any = {

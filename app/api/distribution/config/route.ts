@@ -3,18 +3,15 @@
 // PUT: atualiza config (admin/owner only)
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import { DEFAULT_DISTRIBUTION_CONFIG } from '@/lib/distribution/types'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export async function GET(req: NextRequest) {
   try {
-    const orgId = req.nextUrl.searchParams.get('org_id')
-    if (!orgId) return NextResponse.json({ error: 'org_id required' }, { status: 400 })
+    const auth = await requireAuth(req)
+    if (auth instanceof NextResponse) return auth
+
+    const orgId = resolveOrgId(auth, req.nextUrl.searchParams.get('org_id'))
 
     const { data } = await supabase
       .from('orgs')
@@ -34,11 +31,15 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { org_id, config } = body
+    const auth = await requireAuth(req)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id || !config) {
-      return NextResponse.json({ error: 'org_id and config required' }, { status: 400 })
+    const body = await req.json()
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { config } = body
+
+    if (!config) {
+      return NextResponse.json({ error: 'config required' }, { status: 400 })
     }
 
     // Validar campos

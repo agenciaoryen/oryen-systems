@@ -2,13 +2,8 @@
 // GET: buscar config do site | PUT: atualizar config do site
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import { checkPlanLimit } from '@/lib/planLimits'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 /**
  * GET /api/site?org_id=X  (dashboard)
@@ -17,29 +12,34 @@ const supabase = createClient(
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl
-    const orgId = searchParams.get('org_id')
     const slug = searchParams.get('slug')
 
-    if (!orgId && !slug) {
+    // Public access by slug (no auth needed)
+    if (slug) {
+      const { data, error } = await supabase.from('site_settings').select('*').eq('slug', slug).eq('is_published', true).single()
+      if (error && error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Site not found' }, { status: 404 })
+      }
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
+      return NextResponse.json({ site: data })
+    }
+
+    // Dashboard access (auth required)
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
+    const orgId = resolveOrgId(auth, searchParams.get('org_id'))
+
+    if (!orgId) {
       return NextResponse.json({ error: 'org_id or slug required' }, { status: 400 })
     }
 
-    let query = supabase.from('site_settings').select('*')
-
-    if (slug) {
-      query = query.eq('slug', slug).eq('is_published', true)
-    } else {
-      query = query.eq('org_id', orgId!)
-    }
-
-    const { data, error } = await query.single()
+    const { data, error } = await supabase.from('site_settings').select('*').eq('org_id', orgId).single()
 
     if (error && error.code === 'PGRST116') {
-      // Nenhum registro encontrado
-      if (orgId) {
-        return NextResponse.json({ site: null })
-      }
-      return NextResponse.json({ error: 'Site not found' }, { status: 404 })
+      return NextResponse.json({ site: null })
     }
 
     if (error) {
@@ -59,12 +59,11 @@ export async function GET(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { org_id } = body
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id) {
-      return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-    }
+    const body = await request.json()
+    const org_id = resolveOrgId(auth, body.org_id)
 
     // Verificar se já existe
     const { data: existing } = await supabase

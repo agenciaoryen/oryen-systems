@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin } from '@/lib/api-auth'
 
 // GET — list active goals for org + month
 export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl
-  const orgId = searchParams.get('org_id')
-  const month = searchParams.get('month') // format: YYYY-MM-01
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
 
-  if (!orgId) {
-    return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-  }
+  const { searchParams } = req.nextUrl
+  const orgId = resolveOrgId(auth, searchParams.get('org_id'))
+  const month = searchParams.get('month') // format: YYYY-MM-01
 
   let query = supabaseAdmin
     .from('org_goals')
@@ -38,10 +32,14 @@ export async function GET(req: NextRequest) {
 
 // POST — create or activate a goal
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const { org_id, template_id, period_start, target_value, broker_id, custom_name, custom_description, created_by } = body
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
 
-  if (!org_id || !template_id || !period_start || !target_value) {
+  const body = await req.json()
+  const org_id = resolveOrgId(auth, body.org_id)
+  const { template_id, period_start, target_value, broker_id, custom_name, custom_description, created_by } = body
+
+  if (!template_id || !period_start || !target_value) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
@@ -79,6 +77,9 @@ export async function POST(req: NextRequest) {
 
 // DELETE — deactivate a goal
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
+
   const { searchParams } = req.nextUrl
   const id = searchParams.get('id')
 

@@ -2,12 +2,15 @@
 // GET: leads estagnados da org
 
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth, resolveOrgId } from '@/lib/api-auth'
 import { detectStaleLeads } from '@/lib/distribution/stale-detector'
 
 export async function GET(req: NextRequest) {
   try {
-    const orgId = req.nextUrl.searchParams.get('org_id')
-    if (!orgId) return NextResponse.json({ error: 'org_id required' }, { status: 400 })
+    const auth = await requireAuth(req)
+    if (auth instanceof NextResponse) return auth
+
+    const orgId = resolveOrgId(auth, req.nextUrl.searchParams.get('org_id'))
 
     const staleLeads = await detectStaleLeads(orgId)
 

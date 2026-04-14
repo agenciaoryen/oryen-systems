@@ -2,13 +2,8 @@
 // POST: manually boost a lead's score by +20
 
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import { trackActivity } from '@/lib/scoring/activity-tracker'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 /**
  * POST /api/leads/score/boost
@@ -17,12 +12,16 @@ const supabase = createClient(
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { org_id, lead_id } = body
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id || !lead_id) {
+    const body = await request.json()
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { lead_id } = body
+
+    if (!lead_id) {
       return NextResponse.json(
-        { error: 'org_id and lead_id required' },
+        { error: 'lead_id required' },
         { status: 400 }
       )
     }

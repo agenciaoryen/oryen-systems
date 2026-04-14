@@ -17,12 +17,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 
 const GRAPH_API = `https://graph.facebook.com/${process.env.CLOUD_API_VERSION || 'v21.0'}`
 const META_TOKEN = process.env.META_SYSTEM_USER_TOKEN!
@@ -31,10 +26,15 @@ const APP_SECRET = process.env.META_APP_SECRET!
 
 export async function POST(request: NextRequest) {
   try {
-    const { auth_code, org_id } = await request.json()
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!auth_code || !org_id) {
-      return NextResponse.json({ error: 'auth_code and org_id required' }, { status: 400 })
+    const body = await request.json()
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { auth_code } = body
+
+    if (!auth_code) {
+      return NextResponse.json({ error: 'auth_code required' }, { status: 400 })
     }
 
     console.log(`[EmbeddedSignup] Processing auth_code for org ${org_id}`)

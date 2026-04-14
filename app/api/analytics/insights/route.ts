@@ -2,14 +2,9 @@
 // POST: Gera insights com Claude AI a partir dos dados do CRM
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import Anthropic from '@anthropic-ai/sdk'
 import { buildInsightPayload } from '@/lib/analytics/aggregations'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // Rate limiting simples (in-memory, resets on cold start)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
@@ -38,12 +33,12 @@ const LANG_MAP: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { org_id, lang = 'pt', range_days = 30 } = body
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id) {
-      return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-    }
+    const body = await request.json()
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { lang = 'pt', range_days = 30 } = body
 
     // Rate limit check
     if (!checkRateLimit(org_id)) {

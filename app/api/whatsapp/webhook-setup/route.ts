@@ -2,12 +2,7 @@
 // Configura ou verifica o webhook de uma instância na UAZAPI
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, supabaseAdmin as supabase } from '@/lib/api-auth'
 
 /**
  * POST /api/whatsapp/webhook-setup
@@ -16,6 +11,9 @@ const supabase = createClient(
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const { instance_id } = await request.json()
     if (!instance_id) {
       return NextResponse.json({ error: 'instance_id required' }, { status: 400 })
@@ -98,6 +96,9 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const instanceId = request.nextUrl.searchParams.get('instance_id')
     if (!instanceId) {
       return NextResponse.json({ error: 'instance_id required' }, { status: 400 })

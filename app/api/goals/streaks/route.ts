@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin } from '@/lib/api-auth'
 
 // GET — current streaks for org
 export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl
-  const orgId = searchParams.get('org_id')
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
 
-  if (!orgId) {
-    return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-  }
+  const { searchParams } = req.nextUrl
+  const orgId = resolveOrgId(auth, searchParams.get('org_id'))
 
   const { data, error } = await supabaseAdmin
     .from('goal_streaks')
@@ -29,11 +23,15 @@ export async function GET(req: NextRequest) {
 
 // POST — evaluate month-end streaks
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const { org_id, month } = body
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
 
-  if (!org_id || !month) {
-    return NextResponse.json({ error: 'org_id and month required' }, { status: 400 })
+  const body = await req.json()
+  const org_id = resolveOrgId(auth, body.org_id)
+  const { month } = body
+
+  if (!month) {
+    return NextResponse.json({ error: 'month required' }, { status: 400 })
   }
 
   // Get all goals for the month

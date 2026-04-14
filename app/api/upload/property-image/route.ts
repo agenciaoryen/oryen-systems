@@ -2,12 +2,7 @@
 // POST: upload de imagem de imóvel para Supabase Storage
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
@@ -18,14 +13,17 @@ const MAX_SIZE = 5 * 1024 * 1024 // 5MB
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const formData = await request.formData()
     const file = formData.get('file') as File | null
-    const orgId = formData.get('org_id') as string | null
+    const orgId = resolveOrgId(auth, formData.get('org_id') as string | null)
     const propertyId = formData.get('property_id') as string | null
 
-    if (!file || !orgId || !propertyId) {
+    if (!file || !propertyId) {
       return NextResponse.json(
-        { error: 'Missing required fields: file, org_id, property_id' },
+        { error: 'Missing required fields: file, property_id' },
         { status: 400 }
       )
     }

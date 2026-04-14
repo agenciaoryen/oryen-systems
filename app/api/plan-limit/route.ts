@@ -3,6 +3,7 @@
 // Retorna { allowed, current, limit } para o frontend validar antes de inserir
 
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth, resolveOrgId } from '@/lib/api-auth'
 import { checkPlanLimit, checkMonthlyPlanLimit } from '@/lib/planLimits'
 
 // Mapeamento recurso → { limitKey, table, monthly?, filters? }
@@ -22,11 +23,14 @@ const RESOURCE_MAP: Record<string, {
 
 export async function GET(request: NextRequest) {
   try {
-    const orgId = request.nextUrl.searchParams.get('org_id')
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
+    const orgId = resolveOrgId(auth, request.nextUrl.searchParams.get('org_id'))
     const resource = request.nextUrl.searchParams.get('resource')
 
-    if (!orgId || !resource) {
-      return NextResponse.json({ error: 'org_id and resource required' }, { status: 400 })
+    if (!resource) {
+      return NextResponse.json({ error: 'resource required' }, { status: 400 })
     }
 
     const config = RESOURCE_MAP[resource]

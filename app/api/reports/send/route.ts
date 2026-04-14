@@ -8,15 +8,10 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import { aggregateReportData } from '@/lib/reports/aggregator'
 import { formatReportMessage } from '@/lib/reports/formatter'
 import { sendWithHumanization } from '@/lib/sdr/whatsapp-sender'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 const CRON_SECRET = process.env.CRON_SECRET || ''
 
@@ -88,11 +83,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { reportId, orgId } = body
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!reportId || !orgId) {
-      return NextResponse.json({ error: 'reportId and orgId required' }, { status: 400 })
+    const body = await request.json()
+    const orgId = resolveOrgId(auth, body.orgId)
+    const { reportId } = body
+
+    if (!reportId) {
+      return NextResponse.json({ error: 'reportId required' }, { status: 400 })
     }
 
     const { data: config, error } = await supabase

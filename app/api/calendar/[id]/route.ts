@@ -2,12 +2,7 @@
 // PATCH: atualizar evento | DELETE: remover evento
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, supabaseAdmin as supabase } from '@/lib/api-auth'
 
 /**
  * PATCH /api/calendar/[id]
@@ -18,6 +13,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const { id } = await params
     const body = await request.json()
 
@@ -56,6 +54,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const { id } = await params
 
     const { error } = await supabase

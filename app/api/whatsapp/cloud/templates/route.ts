@@ -9,12 +9,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 
 const GRAPH_API = `https://graph.facebook.com/${process.env.CLOUD_API_VERSION || 'v21.0'}`
 const META_TOKEN = process.env.META_SYSTEM_USER_TOKEN!
@@ -24,14 +19,13 @@ const META_TOKEN = process.env.META_SYSTEM_USER_TOKEN!
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request)
+  if (auth instanceof NextResponse) return auth
+
   const { searchParams } = request.nextUrl
-  const orgId = searchParams.get('org_id')
+  const orgId = resolveOrgId(auth, searchParams.get('org_id'))
   const wabaId = searchParams.get('waba_id')
   const syncMeta = searchParams.get('sync') === 'true'
-
-  if (!orgId) {
-    return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-  }
 
   // Se sync=true, sincronizar do Meta primeiro
   if (syncMeta && wabaId) {
@@ -56,11 +50,15 @@ export async function GET(request: NextRequest) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export async function POST(request: NextRequest) {
-  const body = await request.json()
-  const { org_id, waba_id, template_name, language, category, body_text, header_text, footer_text, buttons, purpose } = body
+  const auth = await requireAuth(request)
+  if (auth instanceof NextResponse) return auth
 
-  if (!org_id || !waba_id || !template_name || !body_text) {
-    return NextResponse.json({ error: 'org_id, waba_id, template_name, body_text required' }, { status: 400 })
+  const body = await request.json()
+  const org_id = resolveOrgId(auth, body.org_id)
+  const { waba_id, template_name, language, category, body_text, header_text, footer_text, buttons, purpose } = body
+
+  if (!waba_id || !template_name || !body_text) {
+    return NextResponse.json({ error: 'waba_id, template_name, body_text required' }, { status: 400 })
   }
 
   // ─── Submeter ao Meta ───
@@ -167,6 +165,9 @@ export async function POST(request: NextRequest) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export async function PATCH(request: NextRequest) {
+  const auth = await requireAuth(request)
+  if (auth instanceof NextResponse) return auth
+
   const body = await request.json()
   const { id, body_text, header_text, footer_text, buttons } = body
 
@@ -257,6 +258,9 @@ export async function PATCH(request: NextRequest) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export async function DELETE(request: NextRequest) {
+  const auth = await requireAuth(request)
+  if (auth instanceof NextResponse) return auth
+
   const { searchParams } = request.nextUrl
   const id = searchParams.get('id')
   const wabaId = searchParams.get('waba_id')

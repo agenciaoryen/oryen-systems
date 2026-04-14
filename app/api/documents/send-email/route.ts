@@ -1,18 +1,15 @@
 // app/api/documents/send-email/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, supabaseAdmin } from '@/lib/api-auth'
 import { Resend } from 'resend'
 
 export async function POST(request: NextRequest) {
   try {
-    // Inicializar clients dentro da função para evitar erro no build
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-    
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const resend = new Resend(process.env.RESEND_API_KEY)
-    
+
     const { documentId, toEmail, toName, subject, message } = await request.json()
 
     if (!documentId || !toEmail) {

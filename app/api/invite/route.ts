@@ -1,14 +1,19 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth, resolveOrgId, supabaseAdmin } from '@/lib/api-auth'
 import { checkPlanLimit } from '@/lib/planLimits'
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { email, orgId } = await req.json()
+    const auth = await requireAuth(req)
+    if (auth instanceof NextResponse) return auth
+
+    const body = await req.json()
+    const orgId = resolveOrgId(auth, body.orgId)
+    const { email } = body
 
     // Validação básica
-    if (!email || !orgId) {
-      return NextResponse.json({ error: 'Email e Org ID são obrigatórios' }, { status: 400 })
+    if (!email) {
+      return NextResponse.json({ error: 'Email é obrigatório' }, { status: 400 })
     }
 
     // Verificar limite de usuários do plano
@@ -21,24 +26,6 @@ export async function POST(req: Request) {
         current: limitCheck.current,
       }, { status: 403 })
     }
-
-    // Verifica se a chave secreta existe
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('CRÍTICO: SUPABASE_SERVICE_ROLE_KEY não encontrada no .env.local')
-      return NextResponse.json({ error: 'Erro de configuração do servidor.' }, { status: 500 })
-    }
-
-    // Cria cliente ADMIN
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
 
     console.log(`[API] Convidando ${email} para Org ${orgId}...`)
 

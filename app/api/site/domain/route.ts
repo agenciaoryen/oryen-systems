@@ -3,12 +3,7 @@
 // Usa a Vercel API para registrar domínios no projeto
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN || ''
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID || ''
@@ -40,10 +35,15 @@ async function vercelFetch(path: string, options: RequestInit = {}) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { org_id, domain } = await request.json()
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id || !domain) {
-      return NextResponse.json({ error: 'org_id and domain required' }, { status: 400 })
+    const body = await request.json()
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { domain } = body
+
+    if (!domain) {
+      return NextResponse.json({ error: 'domain required' }, { status: 400 })
     }
 
     // Normalizar domínio
@@ -110,10 +110,10 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const orgId = request.nextUrl.searchParams.get('org_id')
-    if (!orgId) {
-      return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-    }
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
+    const orgId = resolveOrgId(auth, request.nextUrl.searchParams.get('org_id'))
 
     const { data: site } = await supabase
       .from('site_settings')
@@ -186,11 +186,11 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const { org_id } = await request.json()
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id) {
-      return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-    }
+    const body = await request.json()
+    const org_id = resolveOrgId(auth, body.org_id)
 
     // Buscar domínio atual
     const { data: site } = await supabase

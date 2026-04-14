@@ -2,12 +2,15 @@
 // GET: stats de carga da equipe
 
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth, resolveOrgId } from '@/lib/api-auth'
 import { getTeamWorkload } from '@/lib/distribution/metrics'
 
 export async function GET(req: NextRequest) {
   try {
-    const orgId = req.nextUrl.searchParams.get('org_id')
-    if (!orgId) return NextResponse.json({ error: 'org_id required' }, { status: 400 })
+    const auth = await requireAuth(req)
+    if (auth instanceof NextResponse) return auth
+
+    const orgId = resolveOrgId(auth, req.nextUrl.searchParams.get('org_id'))
 
     const workload = await getTeamWorkload(orgId)
 

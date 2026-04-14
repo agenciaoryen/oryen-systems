@@ -4,16 +4,11 @@
 // DELETE: cancelar add-on
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import Stripe from 'stripe'
 import { ADDON_CONFIGS, type AddonType, ALL_ADDON_TYPES } from '@/lib/addons'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 
 /**
@@ -22,10 +17,10 @@ const supabase = createClient(
  */
 export async function GET(request: NextRequest) {
   try {
-    const orgId = request.nextUrl.searchParams.get('org_id')
-    if (!orgId) {
-      return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-    }
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
+    const orgId = resolveOrgId(auth, request.nextUrl.searchParams.get('org_id'))
 
     const { data: addons, error } = await supabase
       .from('org_addons')
@@ -61,11 +56,15 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { orgId, addonType, quantity = 1, userId, userEmail } = body
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!orgId || !addonType || !userId) {
-      return NextResponse.json({ error: 'orgId, addonType, userId required' }, { status: 400 })
+    const body = await request.json()
+    const orgId = resolveOrgId(auth, body.orgId)
+    const { addonType, quantity = 1, userId, userEmail } = body
+
+    if (!addonType || !userId) {
+      return NextResponse.json({ error: 'addonType, userId required' }, { status: 400 })
     }
 
     const config = ADDON_CONFIGS[addonType as AddonType]
@@ -135,6 +134,9 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const { addonId } = await request.json()
     if (!addonId) {
       return NextResponse.json({ error: 'addonId required' }, { status: 400 })

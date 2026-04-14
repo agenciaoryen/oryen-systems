@@ -2,15 +2,20 @@
 // POST: reatribuir lead manualmente ou via engine
 
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth, resolveOrgId } from '@/lib/api-auth'
 import { reassignLead } from '@/lib/distribution/engine'
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { org_id, lead_id, new_assignee_id } = body
+    const auth = await requireAuth(req)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id || !lead_id) {
-      return NextResponse.json({ error: 'org_id and lead_id required' }, { status: 400 })
+    const body = await req.json()
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { lead_id, new_assignee_id } = body
+
+    if (!lead_id) {
+      return NextResponse.json({ error: 'lead_id required' }, { status: 400 })
     }
 
     const result = await reassignLead(

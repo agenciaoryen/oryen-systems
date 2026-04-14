@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin } from '@/lib/api-auth'
 
 // GET — historical snapshots for a goal
 export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
+
   const { searchParams } = req.nextUrl
   const goalId = searchParams.get('goal_id')
-  const orgId = searchParams.get('org_id')
+  const orgId = searchParams.get('org_id') ? resolveOrgId(auth, searchParams.get('org_id')) : null
 
   if (!goalId && !orgId) {
     return NextResponse.json({ error: 'goal_id or org_id required' }, { status: 400 })
@@ -35,12 +33,11 @@ export async function GET(req: NextRequest) {
 
 // POST — save daily snapshot for all active goals of an org
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const { org_id } = body
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
 
-  if (!org_id) {
-    return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-  }
+  const body = await req.json()
+  const org_id = resolveOrgId(auth, body.org_id)
 
   const today = new Date().toISOString().split('T')[0]
 

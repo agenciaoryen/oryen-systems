@@ -2,12 +2,7 @@
 // POST: toggle publicação do site (com validação de campos mínimos)
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 
 /**
  * POST /api/site/publish
@@ -15,11 +10,16 @@ const supabase = createClient(
  */
 export async function POST(request: NextRequest) {
   try {
-    const { org_id, publish } = await request.json()
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id || typeof publish !== 'boolean') {
+    const body = await request.json()
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { publish } = body
+
+    if (typeof publish !== 'boolean') {
       return NextResponse.json(
-        { error: 'org_id and publish (boolean) required' },
+        { error: 'publish (boolean) required' },
         { status: 400 }
       )
     }

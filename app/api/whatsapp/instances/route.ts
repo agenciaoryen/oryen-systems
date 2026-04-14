@@ -2,13 +2,8 @@
 // CRUD de instâncias WhatsApp — cria na UAZAPI automaticamente com admintoken
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import { getPlanConfig } from '@/lib/planConfig'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 const UAZAPI_URL = process.env.UAZAPI_API_URL!
 const UAZAPI_ADMIN_TOKEN = process.env.UAZAPI_ADMIN_TOKEN!
@@ -19,10 +14,10 @@ const UAZAPI_ADMIN_TOKEN = process.env.UAZAPI_ADMIN_TOKEN!
  */
 export async function GET(request: NextRequest) {
   try {
-    const orgId = request.nextUrl.searchParams.get('org_id')
-    if (!orgId) {
-      return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-    }
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
+    const orgId = resolveOrgId(auth, request.nextUrl.searchParams.get('org_id'))
 
     const { data, error } = await supabase
       .from('whatsapp_instances')
@@ -58,12 +53,12 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { org_id, agent_id, campaign_id, display_name } = body
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id) {
-      return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-    }
+    const body = await request.json()
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { agent_id, campaign_id, display_name } = body
 
     // Verificar limite do plano
     const { data: org } = await supabase
@@ -168,6 +163,9 @@ export async function POST(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json()
     const { instance_id, agent_id, campaign_id } = body
 
@@ -200,6 +198,9 @@ export async function PATCH(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const { instance_id } = await request.json()
     if (!instance_id) {
       return NextResponse.json({ error: 'instance_id required' }, { status: 400 })

@@ -2,22 +2,17 @@
 // GET: retorna invoices, método de pagamento e próxima cobrança do Stripe
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export async function GET(request: NextRequest) {
   try {
-    const orgId = request.nextUrl.searchParams.get('org_id')
-    if (!orgId) {
-      return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-    }
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
+    const orgId = resolveOrgId(auth, request.nextUrl.searchParams.get('org_id'))
 
     // Buscar customer_id da org
     const { data: org } = await supabase

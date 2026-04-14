@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin } from '@/lib/api-auth'
 import { computeGoalValue } from '@/lib/goals/aggregations'
 import { getPaceStatus, getProjectedValue, getDaysElapsed, getDaysRemaining, getDaysTotal, getProgressPercentage } from '@/lib/goals/pace'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 // GET — compute real-time progress for all active goals
 export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl
-  const orgId = searchParams.get('org_id')
-  const month = searchParams.get('month')
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
 
-  if (!orgId) {
-    return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-  }
+  const { searchParams } = req.nextUrl
+  const orgId = resolveOrgId(auth, searchParams.get('org_id'))
+  const month = searchParams.get('month')
 
   // Fetch active goals
   let goalsQuery = supabaseAdmin

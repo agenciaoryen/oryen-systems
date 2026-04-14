@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth, resolveOrgId } from '@/lib/api-auth'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -21,11 +22,15 @@ function checkRateLimit(orgId: string): boolean {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const { org_id, lang = 'pt', payload } = body
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
 
-  if (!org_id || !payload) {
-    return NextResponse.json({ error: 'org_id and payload required' }, { status: 400 })
+  const body = await req.json()
+  const org_id = resolveOrgId(auth, body.org_id)
+  const { lang = 'pt', payload } = body
+
+  if (!payload) {
+    return NextResponse.json({ error: 'payload required' }, { status: 400 })
   }
 
   if (!checkRateLimit(org_id)) {

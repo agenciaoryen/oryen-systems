@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // Mapeamento de planos para price_id do Stripe
 // Planos v2 (Abril 2026)
@@ -24,12 +19,16 @@ const PRICE_IDS: Record<string, string> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { orgId, planName, userId, userEmail } = body
+    const auth = await requireAuth(req)
+    if (auth instanceof NextResponse) return auth
 
-    if (!orgId || !planName || !userId) {
+    const body = await req.json()
+    const orgId = resolveOrgId(auth, body.orgId)
+    const { planName, userId, userEmail } = body
+
+    if (!planName || !userId) {
       return NextResponse.json(
-        { error: 'Missing required fields: orgId, planName, userId' },
+        { error: 'Missing required fields: planName, userId' },
         { status: 400 }
       )
     }

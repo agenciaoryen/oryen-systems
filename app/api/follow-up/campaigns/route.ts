@@ -3,14 +3,9 @@
 // POST: preview (conta leads) ou dispatch (enfileira leads)
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import { checkMonthlyPlanLimit } from '@/lib/planLimits'
 import { getPlanConfig } from '@/lib/planConfig'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 interface CampaignFilters {
   stages?: string[]          // estágios do pipeline
@@ -36,16 +31,16 @@ interface CampaignConfig {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json()
-    const { action, org_id, filters, config } = body as {
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { action, filters, config } = body as {
       action: 'preview' | 'dispatch'
-      org_id: string
+      org_id?: string
       filters: CampaignFilters
       config?: CampaignConfig
-    }
-
-    if (!org_id) {
-      return NextResponse.json({ error: 'org_id required' }, { status: 400 })
     }
 
     if (action === 'preview') {

@@ -2,27 +2,21 @@
 // GET: listar eventos por período | POST: criar evento
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 
 /**
  * GET /api/calendar?org_id=X&from=YYYY-MM-DD&to=YYYY-MM-DD&status=scheduled
  */
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = request.nextUrl
-    const orgId = searchParams.get('org_id')
+    const orgId = resolveOrgId(auth, searchParams.get('org_id'))
     const from = searchParams.get('from')
     const to = searchParams.get('to')
     const status = searchParams.get('status')
-
-    if (!orgId) {
-      return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-    }
 
     let query = supabase
       .from('calendar_events')
@@ -53,11 +47,15 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { org_id, title, event_type, event_date, start_time } = body
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id || !title || !event_date || !start_time) {
-      return NextResponse.json({ error: 'Missing required fields: org_id, title, event_date, start_time' }, { status: 400 })
+    const body = await request.json()
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { title, event_type, event_date, start_time } = body
+
+    if (!title || !event_date || !start_time) {
+      return NextResponse.json({ error: 'Missing required fields: title, event_date, start_time' }, { status: 400 })
     }
 
     const { data, error } = await supabase

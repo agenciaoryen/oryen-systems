@@ -1,15 +1,12 @@
 // app/api/documents/mark-sent/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, supabaseAdmin } from '@/lib/api-auth'
 
 export async function POST(request: NextRequest) {
   try {
-    // Inicializar client dentro da função para evitar erro no build
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-    
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const { documentId, via, to } = await request.json()
 
     if (!documentId) {
