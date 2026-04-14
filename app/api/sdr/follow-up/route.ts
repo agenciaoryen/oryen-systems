@@ -27,6 +27,179 @@ const supabase = createClient(
 
 const CRON_SECRET = process.env.CRON_SECRET || ''
 const MAX_PER_RUN = 20 // máximo de follow-ups por execução do cron
+const SILENCE_THRESHOLD_HOURS = 4 // horas sem resposta do lead para considerar "silencioso"
+
+// Estágios que indicam conversão — NÃO precisam de follow-up
+const CONVERTED_STAGES = [
+  'visita_agendada', 'visita_realizada', 'venda_fechada', 'won', 'lost',
+  'visit_scheduled', 'visit_done', 'deal_closed',
+]
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DETECTAR LEADS SILENCIOSOS (sem resposta há X horas)
+// Busca leads onde:
+// - A última mensagem no sdr_messages foi do assistant (agente respondeu)
+// - O lead NÃO respondeu há mais de SILENCE_THRESHOLD_HOURS
+// - Conversa NÃO está finalizada (ainda "aberta")
+// - NÃO tem follow-up já na fila
+// - NÃO está em estágio de conversão
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function detectSilentLeads(now: Date): Promise<number> {
+  try {
+    const threshold = new Date(now.getTime() - SILENCE_THRESHOLD_HOURS * 60 * 60 * 1000)
+
+    // Buscar as últimas mensagens por lead onde a última foi do assistant
+    // e a mensagem foi enviada antes do threshold (lead não respondeu a tempo)
+    const { data: silentMessages, error } = await supabase
+      .rpc('fn_find_silent_leads', {
+        p_threshold: threshold.toISOString(),
+        p_converted_stages: CONVERTED_STAGES
+      })
+
+    if (error) {
+      // Se a function não existe, usar fallback com query direta
+      if (error.message.includes('fn_find_silent_leads')) {
+        return await detectSilentLeadsFallback(now, threshold)
+      }
+      console.error('[FollowUp:Detect] RPC error:', error.message)
+      return 0
+    }
+
+    if (!silentMessages || silentMessages.length === 0) {
+      return 0
+    }
+
+    let enqueued = 0
+    for (const row of silentMessages) {
+      try {
+        await enqueueSilentLead(row, now)
+        enqueued++
+      } catch (e: any) {
+        console.warn(`[FollowUp:Detect] Erro ao enfileirar lead ${row.lead_id}: ${e.message}`)
+      }
+    }
+
+    if (enqueued > 0) {
+      console.log(`[FollowUp:Detect] ${enqueued} lead(s) silencioso(s) enfileirado(s) para follow-up`)
+    }
+
+    return enqueued
+  } catch (err: any) {
+    console.error('[FollowUp:Detect] Error:', err.message)
+    return 0
+  }
+}
+
+/**
+ * Fallback: query direta (sem RPC function) para detectar leads silenciosos.
+ * Funciona sem migration, porém mais lento que a RPC.
+ */
+async function detectSilentLeadsFallback(now: Date, threshold: Date): Promise<number> {
+  // Buscar instâncias conectadas com agente de follow-up
+  const { data: instances } = await supabase
+    .from('whatsapp_instances')
+    .select('org_id, instance_name, agent_id, campaign_id')
+    .eq('status', 'connected')
+
+  if (!instances || instances.length === 0) return 0
+
+  let enqueued = 0
+
+  for (const inst of instances) {
+    // Buscar leads ativos desta org que receberam mensagem do SDR antes do threshold
+    // e cuja última mensagem foi do agente (não do lead)
+    const { data: lastMessages } = await supabase
+      .from('sdr_messages')
+      .select('lead_id, role, created_at, body')
+      .eq('org_id', inst.org_id)
+      .eq('instance_name', inst.instance_name)
+      .gte('created_at', new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()) // últimos 7 dias
+      .order('created_at', { ascending: false })
+      .limit(500)
+
+    if (!lastMessages || lastMessages.length === 0) continue
+
+    // Agrupar por lead_id e pegar a mensagem mais recente de cada
+    const lastByLead = new Map<string, { role: string; created_at: string; body: string }>()
+    for (const msg of lastMessages) {
+      if (!lastByLead.has(msg.lead_id)) {
+        lastByLead.set(msg.lead_id, msg)
+      }
+    }
+
+    for (const [leadId, lastMsg] of lastByLead) {
+      // Só enfileirar se a última mensagem foi do ASSISTANT e foi antes do threshold
+      if (lastMsg.role !== 'assistant') continue
+      if (new Date(lastMsg.created_at) > threshold) continue
+
+      // Verificar se o lead não está em estágio de conversão
+      const { data: lead } = await supabase
+        .from('leads')
+        .select('id, stage, conversa_finalizada')
+        .eq('id', leadId)
+        .eq('org_id', inst.org_id)
+        .single()
+
+      if (!lead) continue
+      if (lead.conversa_finalizada) continue // conversa já foi encerrada pelo SDR
+      if (CONVERTED_STAGES.includes(lead.stage || '')) continue
+
+      // Verificar se já tem follow-up na fila
+      const { data: existing } = await supabase
+        .from('follow_up_queue')
+        .select('id')
+        .eq('lead_id', leadId)
+        .eq('org_id', inst.org_id)
+        .in('status', ['pending', 'active'])
+        .limit(1)
+
+      if (existing && existing.length > 0) continue
+
+      // Enfileirar
+      try {
+        await enqueueSilentLead({
+          org_id: inst.org_id,
+          lead_id: leadId,
+          instance_name: inst.instance_name,
+          agent_id: inst.agent_id,
+          campaign_id: inst.campaign_id,
+          lead_stage: lead.stage,
+          last_message: lastMsg.body,
+        }, now)
+        enqueued++
+      } catch (e: any) {
+        console.warn(`[FollowUp:Detect] Erro ao enfileirar lead ${leadId}: ${e.message}`)
+      }
+    }
+  }
+
+  if (enqueued > 0) {
+    console.log(`[FollowUp:Detect:Fallback] ${enqueued} lead(s) silencioso(s) enfileirado(s)`)
+  }
+
+  return enqueued
+}
+
+async function enqueueSilentLead(row: any, now: Date) {
+  const firstAttempt = new Date(now.getTime() + 1 * 60 * 60 * 1000) // 1h a partir de agora
+
+  await supabase.from('follow_up_queue').insert({
+    org_id: row.org_id,
+    lead_id: row.lead_id,
+    attempt_number: 0,
+    max_attempts: 5,
+    next_attempt_at: firstAttempt.toISOString(),
+    last_lead_message_at: now.toISOString(),
+    cadence_hours: [1, 24, 72, 120, 168], // 1ª tentativa rápida (já esperou 4h+)
+    status: 'pending',
+    last_conversation_summary: row.last_message ? `Lead silencioso. Última msg do agente: "${(row.last_message || '').slice(0, 200)}"` : 'Lead parou de responder após mensagem do agente',
+    lead_stage: row.lead_stage || null,
+    instance_name: row.instance_name,
+    agent_id: row.agent_id || null,
+    campaign_id: row.campaign_id || null,
+  })
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/sdr/follow-up — Vercel cron chama via GET
@@ -43,6 +216,9 @@ export async function GET(request: NextRequest) {
   console.log(`[FollowUp] Cron executado: ${now.toISOString()}`)
 
   try {
+    // ─── 0. Detectar leads silenciosos e enfileirar automaticamente ───
+    const enqueued = await detectSilentLeads(now)
+
     // ─── 1. Buscar items prontos para follow-up ───
     const { data: queue, error } = await supabase
       .from('follow_up_queue')
@@ -62,8 +238,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (!queue || queue.length === 0) {
-      console.log('[FollowUp] Nenhum follow-up pendente')
-      return NextResponse.json({ processed: 0, message: 'no pending follow-ups' })
+      console.log(`[FollowUp] Nenhum follow-up pendente (${enqueued} novos enfileirados)`)
+      return NextResponse.json({ processed: 0, enqueued, message: 'no pending follow-ups ready' })
     }
 
     console.log(`[FollowUp] ${queue.length} follow-up(s) para processar`)
@@ -89,12 +265,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log(`[FollowUp] Concluído: ${processed} enviados, ${skipped} pulados, ${errors} erros`)
+    console.log(`[FollowUp] Concluído: ${processed} enviados, ${skipped} pulados, ${errors} erros, ${enqueued} novos`)
 
     return NextResponse.json({
       processed,
       skipped,
       errors,
+      enqueued,
       total: queue.length
     })
 
