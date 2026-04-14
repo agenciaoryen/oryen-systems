@@ -130,6 +130,8 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
                   borderRadius: '8px',
                   fontSize: '12px',
                 }}
+                itemStyle={{ color: 'var(--color-text-primary)' }}
+                labelStyle={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}
                 formatter={(value: number) => [`${value} ${l.days}`, l.medianDays]}
               />
               <Bar dataKey="medianDays" radius={[0, 4, 4, 0]}>

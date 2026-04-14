@@ -157,6 +157,8 @@ export default function TeamPerformance({ brokers, followUp, lang }: Props) {
                   borderRadius: '8px',
                   fontSize: '12px',
                 }}
+                itemStyle={{ color: 'var(--color-text-primary)' }}
+                labelStyle={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}
                 formatter={(value: number) => [value, l.wonLeads]}
               />
               <Bar dataKey="wonLeads" fill="#6366f1" radius={[4, 4, 0, 0]} />
@@ -193,6 +195,8 @@ export default function TeamPerformance({ brokers, followUp, lang }: Props) {
                   borderRadius: '8px',
                   fontSize: '12px',
                 }}
+                itemStyle={{ color: 'var(--color-text-primary)' }}
+                labelStyle={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}
                 formatter={(value: number) => [formatTime(value), l.avgTime]}
               />
               <Bar dataKey="avgResponseTimeMin" radius={[4, 4, 0, 0]}>
@@ -234,6 +238,8 @@ export default function TeamPerformance({ brokers, followUp, lang }: Props) {
                     borderRadius: '8px',
                     fontSize: '12px',
                   }}
+                  itemStyle={{ color: 'var(--color-text-primary)' }}
+                  labelStyle={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}
                 />
               </PieChart>
             </ResponsiveContainer>

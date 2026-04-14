@@ -150,6 +150,8 @@ export default function RevenueProjectionChart({ projection, lang, currency }: P
                   borderRadius: '8px',
                   fontSize: '12px',
                 }}
+                itemStyle={{ color: 'var(--color-text-primary)' }}
+                labelStyle={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}
                 formatter={(value: number, name: string) => {
                   if (name === 'totalValue') return [formatCurrency(value, lang, currency), l.totalValue]
                   return [formatCurrency(value, lang, currency), l.weighted]

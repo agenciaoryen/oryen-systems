@@ -103,6 +103,63 @@ const tdStyle: React.CSSProperties = {
 
 type SortKey = 'source' | 'totalLeads' | 'wonLeads' | 'conversionRate' | 'avgDealValue' | 'estimatedRevenue'
 
+// Mapeamento de nomes do banco para nomes amigáveis
+const SOURCE_LABELS: Record<string, Record<string, string>> = {
+  pt: {
+    site: 'Site',
+    csv_import: 'Importação CSV',
+    whatsapp_inbound: 'WhatsApp',
+    whatsapp: 'WhatsApp',
+    manual: 'Manual',
+    facebook: 'Facebook',
+    instagram: 'Instagram',
+    google: 'Google',
+    referral: 'Indicação',
+    api: 'API',
+    landing_page: 'Landing Page',
+    email: 'E-mail',
+    phone: 'Telefone',
+    other: 'Outro',
+  },
+  en: {
+    site: 'Website',
+    csv_import: 'CSV Import',
+    whatsapp_inbound: 'WhatsApp',
+    whatsapp: 'WhatsApp',
+    manual: 'Manual',
+    facebook: 'Facebook',
+    instagram: 'Instagram',
+    google: 'Google',
+    referral: 'Referral',
+    api: 'API',
+    landing_page: 'Landing Page',
+    email: 'Email',
+    phone: 'Phone',
+    other: 'Other',
+  },
+  es: {
+    site: 'Sitio Web',
+    csv_import: 'Importación CSV',
+    whatsapp_inbound: 'WhatsApp',
+    whatsapp: 'WhatsApp',
+    manual: 'Manual',
+    facebook: 'Facebook',
+    instagram: 'Instagram',
+    google: 'Google',
+    referral: 'Referencia',
+    api: 'API',
+    landing_page: 'Landing Page',
+    email: 'Correo',
+    phone: 'Teléfono',
+    other: 'Otro',
+  },
+}
+
+function friendlySource(source: string, lang: string): string {
+  const labels = SOURCE_LABELS[lang] || SOURCE_LABELS.pt
+  return labels[source] || source.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 function formatCurrency(value: number, lang: string, currency: string) {
   return value.toLocaleString(
     lang === 'pt' ? 'pt-BR' : lang === 'es' ? 'es' : 'en-US',
@@ -147,7 +204,7 @@ export default function ChannelROI({ sources, lang, currency }: Props) {
   const chartData = isEmpty
     ? []
     : sources.map((s) => ({
-        source: s.source,
+        source: friendlySource(s.source, lang),
         totalLeads: s.totalLeads,
         avgDealValue: s.avgDealValue,
       }))
@@ -190,14 +247,20 @@ export default function ChannelROI({ sources, lang, currency }: Props) {
                   borderRadius: '8px',
                   fontSize: '12px',
                 }}
+                itemStyle={{ color: 'var(--color-text-primary)' }}
+                labelStyle={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}
                 formatter={(value: number, name: string) => {
                   if (name === 'avgDealValue') return [formatCurrency(value, lang, currency), l.avgDealValue]
                   return [value, l.totalLeads]
                 }}
               />
               <Legend
-                wrapperStyle={{ fontSize: '11px', color: 'var(--color-text-muted)' }}
-                formatter={(value) => (value === 'totalLeads' ? l.totalLeads : l.avgDealValue)}
+                wrapperStyle={{ fontSize: '11px' }}
+                formatter={(value) => (
+                  <span style={{ color: 'var(--color-text-secondary)' }}>
+                    {value === 'totalLeads' ? l.totalLeads : l.avgDealValue}
+                  </span>
+                )}
               />
               <Bar yAxisId="left" dataKey="totalLeads" fill="#6366f1" radius={[4, 4, 0, 0]} />
               <Bar yAxisId="right" dataKey="avgDealValue" fill="#22d3ee" radius={[4, 4, 0, 0]} />
@@ -239,7 +302,7 @@ export default function ChannelROI({ sources, lang, currency }: Props) {
               <tbody>
                 {sorted.map((s) => (
                   <tr key={s.source}>
-                    <td style={tdStyle}>{s.source}</td>
+                    <td style={tdStyle}>{friendlySource(s.source, lang)}</td>
                     <td style={{ ...tdStyle, textAlign: 'right' }}>{s.totalLeads}</td>
                     <td style={{ ...tdStyle, textAlign: 'right' }}>{s.wonLeads}</td>
                     <td style={{ ...tdStyle, textAlign: 'right' }}>{s.conversionRate.toFixed(1)}%</td>
