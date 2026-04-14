@@ -74,7 +74,11 @@ export async function getLeadFunnelByStage(
   const leads = leadsRes.data || []
   const now = new Date()
 
-  const result: FunnelStage[] = stages.map((stage, idx) => {
+  // Build array imperatively — needs previous stage count for conversion calc
+  const result: FunnelStage[] = []
+
+  for (let idx = 0; idx < stages.length; idx++) {
+    const stage = stages[idx]
     const stageLeads = leads.filter(l => l.stage === stage.name)
     const values = stageLeads.map(l => l.total_em_vendas || 0)
     const daysInStage = stageLeads.map(l => {
@@ -88,7 +92,7 @@ export async function getLeadFunnelByStage(
       ? Math.round((stageLeads.length / prevStageCount) * 100)
       : 0
 
-    return {
+    result.push({
       id: stage.id,
       name: stage.name,
       label: stage.label || stage.name,
@@ -101,8 +105,8 @@ export async function getLeadFunnelByStage(
       medianDays: Math.round(median(daysInStage) * 10) / 10,
       totalValue: values.reduce((a, b) => a + b, 0),
       conversionFromPrev,
-    }
-  })
+    })
+  }
 
   return result
 }
