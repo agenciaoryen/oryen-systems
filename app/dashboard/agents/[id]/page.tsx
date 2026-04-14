@@ -17,6 +17,7 @@ import {
   tFeatures
 } from '@/lib/agents'
 import type { Agent, AgentCampaign, Language, ConfigField } from '@/lib/agents/types'
+import { usePlan, type PlanConfig } from '@/lib/usePlan'
 import { formatDistanceToNow, format } from 'date-fns'
 import { ptBR, enUS, es } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -24,7 +25,8 @@ import {
   ArrowLeft, Bot, Target, Plus, Loader2, PlayCircle, PauseCircle,
   Settings, Trash2, Clock, Calendar, TrendingUp, Users, X,
   CheckCircle2, AlertTriangle, ChevronRight, BarChart3, Zap,
-  Search, Filter, MoreVertical, Edit2, Copy, ExternalLink
+  Search, Filter, MoreVertical, Edit2, Copy, ExternalLink,
+  ShieldCheck
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
@@ -94,6 +96,10 @@ const UI = {
     notConfiguredHint: 'Preencha as informações abaixo para que seu agente comece a trabalhar',
     agentActive: 'Ativo',
     agentPaused: 'Pausado',
+    messagesMonth: 'mensagens/mês',
+    planLimit: 'Limite do plano',
+    unlimited: 'Ilimitado',
+    planName: 'Plano',
   },
   en: {
     back: 'Back',
@@ -154,6 +160,10 @@ const UI = {
     notConfiguredHint: 'Fill in the information below so your agent can start working',
     agentActive: 'Active',
     agentPaused: 'Paused',
+    messagesMonth: 'messages/mo',
+    planLimit: 'Plan limit',
+    unlimited: 'Unlimited',
+    planName: 'Plan',
   },
   es: {
     back: 'Volver',
@@ -214,6 +224,10 @@ const UI = {
     notConfiguredHint: 'Completa la información abajo para que tu agente comience a trabajar',
     agentActive: 'Activo',
     agentPaused: 'Pausado',
+    messagesMonth: 'mensajes/mes',
+    planLimit: 'Límite del plan',
+    unlimited: 'Ilimitado',
+    planName: 'Plan',
   }
 }
 
@@ -1023,6 +1037,7 @@ export default function AgentDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { user, org } = useAuth()
+  const { planConfig, displayName: planDisplayName } = usePlan()
   const agentId = params.id as string
 
   const { agent, campaigns, loading, error, refresh } = useAgent(agentId)
@@ -1087,9 +1102,20 @@ export default function AgentDetailPage() {
   }
 
   const solution = agent.solution
-  const usage = calculateUsage(agent)
   const isFollowUp = agent.solution_slug?.includes('followup')
   const isSingleConfig = SINGLE_CONFIG_SLUGS.includes(agent.solution_slug)
+
+  // Resolver limites do plano para este agente
+  const slug = agent.solution_slug
+  const rawUsed = agent.current_usage?.leads_captured || 0
+  const isMessageAgent = slug.includes('followup') || slug === 'support'
+  const planLimit = isMessageAgent
+    ? planConfig.limits.maxMonthlyMessages
+    : planConfig.limits.maxActiveLeads
+  const isUnlimited = planLimit === -1
+  const usagePercentage = isUnlimited ? 0 : planLimit > 0 ? (rawUsed / planLimit) * 100 : 0
+  const usageRemaining = isUnlimited ? -1 : Math.max(planLimit - rawUsed, 0)
+  const usageLabel = isMessageAgent ? ui.messagesMonth : ui.leadsMonth
 
   // Follow-up agents redirect to their dedicated management page
   if (isFollowUp) {
@@ -1169,26 +1195,40 @@ export default function AgentDetailPage() {
         className="rounded-2xl p-5"
         style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}
       >
-        <h3 className="text-sm font-bold uppercase mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
-          <BarChart3 size={14} />
-          {ui.usage}
-        </h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <h3 className="text-sm font-bold uppercase flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
+            <BarChart3 size={14} />
+            {ui.usage}
+          </h3>
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg"
+            style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
+          >
+            <ShieldCheck size={12} style={{ color: 'var(--color-primary)' }} />
+            <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+              {ui.planName} <strong style={{ color: 'var(--color-primary)' }}>{planDisplayName}</strong>
+              {' · '}{ui.planLimit}: <strong style={{ color: 'var(--color-text-secondary)' }}>
+                {isUnlimited ? ui.unlimited : planLimit.toLocaleString()}
+              </strong> {!isUnlimited && usageLabel}
+            </span>
+          </div>
+        </div>
 
-        <div className="flex items-center gap-6">
-          <div className="flex-1">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+          <div className="flex-1 w-full">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span style={{ color: 'var(--color-text-tertiary)' }}>{ui.leadsMonth}</span>
+              <span style={{ color: 'var(--color-text-tertiary)' }}>{usageLabel}</span>
               <span className="font-mono font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                {usage.used} / {usage.limit}
+                {rawUsed.toLocaleString()} / {isUnlimited ? '∞' : planLimit.toLocaleString()}
               </span>
             </div>
             <div className="h-3 rounded-full overflow-hidden" style={{ background: 'var(--color-bg-elevated)' }}>
               <div
                 className="h-full rounded-full transition-all"
                 style={{
-                  width: `${Math.min(usage.percentage, 100)}%`,
-                  background: usage.percentage > 90 ? 'var(--color-error)' :
-                    usage.percentage > 70 ? 'var(--color-accent)' :
+                  width: isUnlimited ? '5%' : `${Math.min(usagePercentage, 100)}%`,
+                  background: !isUnlimited && usagePercentage > 90 ? 'var(--color-error)' :
+                    !isUnlimited && usagePercentage > 70 ? 'var(--color-accent)' :
                     'var(--gradient-brand)'
                 }}
               />
@@ -1197,11 +1237,13 @@ export default function AgentDetailPage() {
 
           <div className="flex gap-6 text-center">
             <div>
-              <div className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{usage.used}</div>
+              <div className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{rawUsed.toLocaleString()}</div>
               <div className="text-[10px] uppercase" style={{ color: 'var(--color-text-muted)' }}>{ui.used}</div>
             </div>
             <div>
-              <div className="text-2xl font-bold" style={{ color: 'var(--color-success)' }}>{usage.remaining}</div>
+              <div className="text-2xl font-bold" style={{ color: 'var(--color-success)' }}>
+                {isUnlimited ? '∞' : usageRemaining.toLocaleString()}
+              </div>
               <div className="text-[10px] uppercase" style={{ color: 'var(--color-text-muted)' }}>{ui.remaining}</div>
             </div>
           </div>

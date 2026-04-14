@@ -35,6 +35,8 @@ import {
   DollarSign,
   Target,
   CreditCard,
+  Sparkles,
+  Zap,
   type LucideIcon
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
@@ -68,6 +70,7 @@ const TRANSLATIONS = {
       settings: 'Configurações'
     },
     sections: {
+      ai: 'IA & Automação',
       commercial: 'Comercial',
       properties: 'Propriedades',
       finance: 'Finanças',
@@ -107,6 +110,7 @@ const TRANSLATIONS = {
       settings: 'Settings'
     },
     sections: {
+      ai: 'AI & Automation',
       commercial: 'Commercial',
       properties: 'Properties',
       finance: 'Finance',
@@ -146,6 +150,7 @@ const TRANSLATIONS = {
       settings: 'Configuración'
     },
     sections: {
+      ai: 'IA & Automatización',
       commercial: 'Comercial',
       properties: 'Propiedades',
       finance: 'Finanzas',
@@ -326,6 +331,7 @@ export default function Sidebar() {
 
   // ─── COLLAPSED STATE (fechado por default) ───
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+    ai: false,
     commercial: true,
     properties: true,
     finance: true,
@@ -346,6 +352,16 @@ export default function Sidebar() {
       ],
     },
     {
+      key: 'ai',
+      title: t.sections.ai,
+      collapsible: true,
+      items: [
+        { href: '/dashboard/agents', label: t.menu.agents, icon: Bot },
+        { href: '/dashboard/follow-up', label: t.menu.followUp, icon: Zap },
+        { href: '/dashboard/analytics', label: t.menu.analytics, icon: TrendingUp },
+      ],
+    },
+    {
       key: 'commercial',
       title: t.sections.commercial,
       collapsible: true,
@@ -353,7 +369,6 @@ export default function Sidebar() {
         { href: '/dashboard/crm', label: t.menu.crm, icon: Users },
         { href: '/dashboard/messages', label: t.menu.conversations, icon: MessageSquare },
         { href: '/dashboard/calendar', label: t.menu.calendar, icon: CalendarDays },
-        { href: '/dashboard/follow-up', label: t.menu.followUp, icon: RefreshCw },
         { href: '/dashboard/distribuicao', label: t.menu.distribution, icon: Shuffle },
         { href: '/dashboard/metas', label: t.menu.goals, icon: Target },
       ],
@@ -382,10 +397,8 @@ export default function Sidebar() {
       title: t.sections.tools,
       collapsible: true,
       items: [
-        { href: '/dashboard/agents', label: t.menu.agents, icon: Bot },
         { href: '/dashboard/whatsapp', label: t.menu.whatsapp, icon: Smartphone, requiredNiche: NICHES_WITH_DOCUMENTS },
         { href: '/dashboard/documents', label: t.menu.documents, icon: FileText, requiredNiche: NICHES_WITH_DOCUMENTS },
-        { href: '/dashboard/analytics', label: t.menu.analytics, icon: TrendingUp },
         { href: '/dashboard/relatorios', label: t.menu.reports, icon: BarChart3 },
         { href: '/dashboard/financiamento', label: t.menu.financing, icon: Calculator, requiredNiche: NICHES_WITH_DOCUMENTS },
       ],
@@ -556,10 +569,13 @@ export default function Sidebar() {
                     onClick={() => group.collapsible && toggleSection(group.key)}
                     className={cn(
                       'w-full flex items-center justify-between px-2 pt-5 pb-2',
-                      group.collapsible && 'cursor-pointer group/section'
+                      group.collapsible && 'cursor-pointer group/section',
+                      group.key === 'ai' && 'rounded-lg px-3 mt-1'
                     )}
+                    style={group.key === 'ai' ? { background: 'var(--color-primary-subtle)', border: '1px solid rgba(90, 122, 230, 0.15)' } : undefined}
                   >
-                    <p className="text-xs font-bold uppercase tracking-widest transition-colors" style={{ color: 'var(--color-text-muted)' }}>
+                    <p className="text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5" style={{ color: group.key === 'ai' ? 'var(--color-primary)' : 'var(--color-text-muted)' }}>
+                      {group.key === 'ai' && <Sparkles size={12} />}
                       {group.title}
                     </p>
                     {group.collapsible && (
@@ -569,7 +585,7 @@ export default function Sidebar() {
                           'transition-transform duration-200',
                           isCollapsed && '-rotate-90'
                         )}
-                        style={{ color: 'var(--color-text-muted)' }}
+                        style={{ color: group.key === 'ai' ? 'var(--color-primary)' : 'var(--color-text-muted)' }}
                       />
                     )}
                   </button>

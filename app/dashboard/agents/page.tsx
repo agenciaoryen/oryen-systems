@@ -14,7 +14,7 @@ import {
   tFeatures
 } from '@/lib/agents'
 import type { AgentSolution, Agent, Language } from '@/lib/agents/types'
-import { usePlan, planHasAgent, getMinPlanForAgent, PLAN_CONFIGS } from '@/lib/usePlan'
+import { usePlan, planHasAgent, getMinPlanForAgent, PLAN_CONFIGS, type PlanConfig } from '@/lib/usePlan'
 import { toast } from 'sonner'
 import {
   Bot, Target, MessageSquare, Zap, Headphones,
@@ -78,6 +78,7 @@ const UI = {
     paused: 'Pausado',
     campaigns: 'campanhas',
     leadsMonth: 'contatos/mês',
+    messagesMonth: 'mensagens/mês',
     used: 'usados',
     remaining: 'restantes',
     manage: 'Gerenciar',
@@ -105,7 +106,10 @@ const UI = {
     searchPlaceholder: 'Buscar agentes...',
     lockedTitle: 'Disponível no plano',
     lockedUpgrade: 'Fazer Upgrade',
-    availableIn: 'A partir do plano'
+    availableIn: 'A partir do plano',
+    planLimit: 'Limite do plano',
+    unlimited: 'Ilimitado',
+    ofPlan: 'do plano'
   },
   en: {
     title: 'AI Agents',
@@ -116,6 +120,7 @@ const UI = {
     paused: 'Paused',
     campaigns: 'campaigns',
     leadsMonth: 'contacts/mo',
+    messagesMonth: 'messages/mo',
     used: 'used',
     remaining: 'remaining',
     manage: 'Manage',
@@ -143,7 +148,10 @@ const UI = {
     searchPlaceholder: 'Search solutions...',
     lockedTitle: 'Available on plan',
     lockedUpgrade: 'Upgrade',
-    availableIn: 'Starting from plan'
+    availableIn: 'Starting from plan',
+    planLimit: 'Plan limit',
+    unlimited: 'Unlimited',
+    ofPlan: 'of plan'
   },
   es: {
     title: 'Agentes de IA',
@@ -154,6 +162,7 @@ const UI = {
     paused: 'Pausado',
     campaigns: 'campañas',
     leadsMonth: 'contactos/mes',
+    messagesMonth: 'mensajes/mes',
     used: 'usados',
     remaining: 'restantes',
     manage: 'Gestionar',
@@ -181,7 +190,10 @@ const UI = {
     searchPlaceholder: 'Buscar soluciones...',
     lockedTitle: 'Disponible en plan',
     lockedUpgrade: 'Mejorar Plan',
-    availableIn: 'A partir del plan'
+    availableIn: 'A partir del plan',
+    planLimit: 'Límite del plan',
+    unlimited: 'Ilimitado',
+    ofPlan: 'del plan'
   }
 }
 
@@ -189,22 +201,55 @@ const UI = {
 // COMPONENTES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Helper: resolver limite e label do agente baseado no plano
+function getAgentPlanUsage(
+  agent: Agent,
+  planConfig: PlanConfig,
+  ui: typeof UI.es
+): { used: number; limit: number; remaining: number; percentage: number; label: string } {
+  const slug = agent.solution_slug
+  const used = agent.current_usage?.leads_captured || 0
+
+  // SDR/hunter → maxActiveLeads (contatos qualificados)
+  if (slug.includes('sdr') || slug.includes('hunter')) {
+    const limit = planConfig.limits.maxActiveLeads
+    const remaining = limit === -1 ? -1 : Math.max(limit - used, 0)
+    const percentage = limit === -1 ? 0 : limit > 0 ? (used / limit) * 100 : 0
+    return { used, limit, remaining, percentage, label: ui.leadsMonth }
+  }
+
+  // Follow-up/support → maxMonthlyMessages (mensagens)
+  if (slug.includes('followup') || slug === 'support') {
+    const limit = planConfig.limits.maxMonthlyMessages
+    const remaining = limit === -1 ? -1 : Math.max(limit - used, 0)
+    const percentage = limit === -1 ? 0 : limit > 0 ? (used / limit) * 100 : 0
+    return { used, limit, remaining, percentage, label: ui.messagesMonth }
+  }
+
+  // Fallback: usar limits do agent row
+  const fallback = calculateUsage(agent)
+  return { ...fallback, label: ui.leadsMonth }
+}
+
 // Card de Agente Contratado
 function AgentCard({
   agent,
   lang,
   ui,
+  planConfig,
   onManage
 }: {
   agent: Agent
   lang: Language
   ui: typeof UI.es
+  planConfig: PlanConfig
   onManage: () => void
 }) {
   const solution = agent.solution
   const Icon = SOLUTION_ICONS[agent.solution_slug] || Bot
-  const usage = calculateUsage(agent)
+  const usage = getAgentPlanUsage(agent, planConfig, ui)
   const isActive = agent.status === 'active'
+  const isUnlimited = usage.limit === -1
 
   return (
     <div
@@ -257,28 +302,43 @@ function AgentCard({
         </div>
       </div>
 
+      {/* Plan Limit Badge */}
+      <div
+        className="flex items-center gap-2 mb-3 py-1.5 px-3 rounded-lg"
+        style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
+      >
+        <ShieldCheck size={11} style={{ color: 'var(--color-primary)' }} />
+        <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+          {ui.planLimit}: <strong style={{ color: 'var(--color-text-secondary)' }}>
+            {isUnlimited ? ui.unlimited : usage.limit.toLocaleString()}
+          </strong> {!isUnlimited && usage.label}
+        </span>
+      </div>
+
       {/* Usage Bar */}
       <div className="mb-4">
         <div className="flex items-center justify-between text-xs mb-1.5">
-          <span style={{ color: 'var(--color-text-tertiary)' }}>{ui.leadsMonth}</span>
+          <span style={{ color: 'var(--color-text-tertiary)' }}>{usage.label}</span>
           <span className="font-mono" style={{ color: 'var(--color-text-secondary)' }}>
-            {usage.used} / {usage.limit}
+            {usage.used.toLocaleString()} / {isUnlimited ? '∞' : usage.limit.toLocaleString()}
           </span>
         </div>
         <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--color-bg-elevated)' }}>
           <div
             className={`h-full rounded-full transition-all`}
             style={{
-              width: `${Math.min(usage.percentage, 100)}%`,
-              background: usage.percentage > 90 ? 'var(--color-error)' :
-                usage.percentage > 70 ? 'var(--color-accent)' :
+              width: isUnlimited ? '5%' : `${Math.min(usage.percentage, 100)}%`,
+              background: !isUnlimited && usage.percentage > 90 ? 'var(--color-error)' :
+                !isUnlimited && usage.percentage > 70 ? 'var(--color-accent)' :
                 'var(--gradient-brand)'
             }}
           />
         </div>
         <div className="flex justify-between text-[10px] mt-1">
-          <span style={{ color: 'var(--color-text-muted)' }}>{usage.used} {ui.used}</span>
-          <span style={{ color: 'var(--color-success)' }}>{usage.remaining} {ui.remaining}</span>
+          <span style={{ color: 'var(--color-text-muted)' }}>{usage.used.toLocaleString()} {ui.used}</span>
+          <span style={{ color: 'var(--color-success)' }}>
+            {isUnlimited ? ui.unlimited : `${usage.remaining.toLocaleString()} ${ui.remaining}`}
+          </span>
         </div>
       </div>
 
@@ -481,7 +541,7 @@ function SolutionCard({
 export default function AgentsPage() {
   const router = useRouter()
   const { user, org, loading: authLoading } = useAuth()
-  const { plan } = usePlan()
+  const { plan, planConfig } = usePlan()
 
   // Dados
   const { solutions, loading: loadingSolutions } = useAgentSolutions()
@@ -677,6 +737,7 @@ export default function AgentsPage() {
                   agent={agent}
                   lang={lang}
                   ui={ui}
+                  planConfig={planConfig}
                   onManage={() => {
                     // Redirecionar para a página correta baseado no tipo de agente
                     if (agent.solution_slug.includes('followup')) {
