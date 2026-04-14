@@ -2,14 +2,9 @@
 // PUT: atualizar imóvel | DELETE: deletar imóvel (com cleanup de imagens)
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import { slugify } from '@/lib/properties/constants'
 import { geocodeAddress } from '@/lib/properties/geocoder'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 /**
  * GET /api/properties/[id]
@@ -20,6 +15,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const { id } = await params
 
     const { data, error } = await supabase

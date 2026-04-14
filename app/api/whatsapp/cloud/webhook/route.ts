@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { validateMetaSignature } from '@/lib/api-auth'
 import { isValidPhone } from '@/lib/sdr/normalize-phone'
 import { recordInboundTimestamp } from '@/lib/sdr/messaging-window'
 import { processInboundMessage, type NormalizedInbound } from '@/lib/sdr/webhook-processor'
@@ -42,7 +43,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    // Validar assinatura HMAC da Meta (se META_APP_SECRET estiver configurado)
+    const rawBody = await request.text()
+    const isValid = await validateMetaSignature(request, rawBody)
+    if (!isValid && process.env.META_APP_SECRET) {
+      console.warn('[CloudAPI:Webhook] Assinatura HMAC inválida — rejeitado')
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    }
+
+    const body = JSON.parse(rawBody)
 
     if (body.object !== 'whatsapp_business_account') {
       return NextResponse.json({ skipped: true, reason: 'not_whatsapp' }, { status: 200 })

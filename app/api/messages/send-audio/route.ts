@@ -2,24 +2,22 @@
 // Envia áudio do atendente (dashboard) via UAZAPI + seta STOP
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import { stopSet } from '@/lib/sdr/redis'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const formData = await request.formData()
-    const orgId = formData.get('org_id') as string
+    const orgId = resolveOrgId(auth, formData.get('org_id') as string)
     const leadId = formData.get('lead_id') as string
     const phone = formData.get('phone') as string
     const audioFile = formData.get('audio') as File
 
-    if (!orgId || !phone || !audioFile) {
-      return NextResponse.json({ error: 'Missing org_id, phone, or audio' }, { status: 400 })
+    if (!phone || !audioFile) {
+      return NextResponse.json({ error: 'Missing phone or audio' }, { status: 400 })
     }
 
     // 1. Buscar instância conectada

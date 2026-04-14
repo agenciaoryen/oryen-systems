@@ -1,6 +1,7 @@
 // app/api/agents/scheduler/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { validateCronSecret } from '@/lib/api-auth'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,27 +10,18 @@ const supabase = createClient(
 
 /**
  * GET /api/agents/scheduler
- * 
+ *
  * Verifica campanhas que precisam ser executadas (next_run_at <= now)
  * e dispara a execução de cada uma.
- * 
+ *
  * Este endpoint deve ser chamado por um cron job externo (ex: Vercel Cron, n8n schedule)
  * a cada 5-15 minutos.
- * 
- * Headers opcionais:
- * - x-cron-secret: string (para segurança)
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verificar secret (opcional, mas recomendado em produção)
-    const cronSecret = request.headers.get('x-cron-secret')
-    const expectedSecret = process.env.CRON_SECRET
-    
-    if (expectedSecret && cronSecret !== expectedSecret) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    // Validar CRON_SECRET (obrigatório)
+    if (!validateCronSecret(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const now = new Date().toISOString()

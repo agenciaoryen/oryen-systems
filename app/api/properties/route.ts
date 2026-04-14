@@ -2,23 +2,21 @@
 // GET: listar imóveis (com filtros) | POST: criar imóvel
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import { slugify } from '@/lib/properties/constants'
 import { geocodeAddress } from '@/lib/properties/geocoder'
 import { checkPlanLimit } from '@/lib/planLimits'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 /**
  * GET /api/properties?org_id=X&status=active&type=apartment&transaction=sale&search=texto&page=1&limit=20
  */
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = request.nextUrl
-    const orgId = searchParams.get('org_id')
+    const orgId = resolveOrgId(auth, searchParams.get('org_id'))
     const status = searchParams.get('status')
     const type = searchParams.get('type')
     const transaction = searchParams.get('transaction')
@@ -100,12 +98,16 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { org_id, title, property_type, transaction_type } = body
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id || !title || !property_type || !transaction_type) {
+    const body = await request.json()
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { title, property_type, transaction_type } = body
+
+    if (!title || !property_type || !transaction_type) {
       return NextResponse.json(
-        { error: 'Missing required fields: org_id, title, property_type, transaction_type' },
+        { error: 'Missing required fields: title, property_type, transaction_type' },
         { status: 400 }
       )
     }

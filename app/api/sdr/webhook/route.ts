@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { validateUazapiToken, maskPhone } from '@/lib/api-auth'
 import { transcribeAudio, isTranscriptionAvailable } from '@/lib/sdr/transcribe'
 import { extractPhone, isValidPhone } from '@/lib/sdr/normalize-phone'
 import { processInboundMessage, type NormalizedInbound } from '@/lib/sdr/webhook-processor'
@@ -32,12 +33,18 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    // Validar token do webhook (se UAZAPI_WEBHOOK_SECRET estiver configurado)
+    if (!validateUazapiToken(request)) {
+      console.warn('[SDR] Webhook rejeitado: token inválido')
+      return NextResponse.json({ error: 'Invalid webhook token' }, { status: 401 })
+    }
+
     const rawPayload = await request.json()
     const payload = normalizeV2Payload(rawPayload)
 
     const instName = payload.instanceName || '(sem nome)'
     const msgText = payload.body || ''
-    console.log(`[SDR] Webhook recebido | instance: ${instName} | fromMe: ${payload.fromMe} | type: ${payload.type} | text: "${msgText.slice(0, 60)}" | phone: ${payload.chatId || '?'}`)
+    console.log(`[SDR] Webhook recebido | instance: ${instName} | fromMe: ${payload.fromMe} | type: ${payload.type} | text: "${msgText.slice(0, 30)}..." | phone: ${maskPhone(payload.chatId || '')}`)
 
     // ─── 1. Filtros rápidos ───
     const filterResult = applyFilters(payload)

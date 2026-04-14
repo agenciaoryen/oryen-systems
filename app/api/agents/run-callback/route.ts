@@ -9,9 +9,18 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    // Validar shared secret (se configurado)
+    const secret = process.env.N8N_CALLBACK_SECRET
+    if (secret) {
+      const provided = request.headers.get('x-callback-secret')
+      if (provided !== secret) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+    }
+
     const body = await request.json()
-    
-    console.log('=== RUN CALLBACK RECEIVED ===')
+
+    console.log('[Agents:Callback] Run callback received')
     console.log('Body:', JSON.stringify(body, null, 2))
     
     const {

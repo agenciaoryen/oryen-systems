@@ -2,24 +2,18 @@
 // Endpoint autenticado para buscar métricas agregadas de imóveis.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import { getPortfolioOverview, getPropertyStats, getDailyViews } from '@/lib/properties/analytics'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = new URL(request.url)
-    const orgId = searchParams.get('org_id')
+    const orgId = resolveOrgId(auth, searchParams.get('org_id'))
     const days = parseInt(searchParams.get('days') || '30', 10)
     const propertyId = searchParams.get('property_id')
-
-    if (!orgId) {
-      return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-    }
 
     const validDays = [7, 15, 30, 90].includes(days) ? days : 30
 

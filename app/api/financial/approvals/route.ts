@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin } from '@/lib/api-auth'
 
 // GET — list pending approvals
 export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl
-  const orgId = searchParams.get('org_id')
-  const status = searchParams.get('status') || 'pending'
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
 
-  if (!orgId) {
-    return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-  }
+  const { searchParams } = req.nextUrl
+  const orgId = resolveOrgId(auth, searchParams.get('org_id'))
+  const status = searchParams.get('status') || 'pending'
 
   const { data, error } = await supabaseAdmin
     .from('expense_approvals')
@@ -32,6 +26,9 @@ export async function GET(req: NextRequest) {
 
 // PATCH — approve or reject
 export async function PATCH(req: NextRequest) {
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
+
   const body = await req.json()
   const { id, action, reviewed_by, rejection_reason } = body
 

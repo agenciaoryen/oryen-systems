@@ -25,7 +25,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const CRON_SECRET = process.env.CRON_SECRET || ''
+const CRON_SECRET = process.env.CRON_SECRET
 const MAX_PER_RUN = 20 // máximo de follow-ups por execução do cron
 const SILENCE_THRESHOLD_HOURS = 4 // horas sem resposta do lead para considerar "silencioso"
 
@@ -206,9 +206,9 @@ async function enqueueSilentLead(row: any, now: Date) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export async function GET(request: NextRequest) {
-  // Verificar autenticação do cron
+  // Verificar autenticação do cron (obrigatório)
   const authHeader = request.headers.get('authorization')
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

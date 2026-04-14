@@ -2,21 +2,20 @@
 // Envia mensagem do atendente (dashboard) via UAZAPI + seta STOP
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import { stopSet } from '@/lib/sdr/redis'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { org_id, lead_id, phone, message } = body
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!org_id || !phone || !message) {
-      return NextResponse.json({ error: 'Missing org_id, phone, or message' }, { status: 400 })
+    const body = await request.json()
+    const org_id = resolveOrgId(auth, body.org_id)
+    const { lead_id, phone, message } = body
+
+    if (!phone || !message) {
+      return NextResponse.json({ error: 'Missing phone or message' }, { status: 400 })
     }
 
     // 1. Buscar instância conectada da org

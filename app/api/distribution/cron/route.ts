@@ -2,8 +2,9 @@
 // GET: cron job (cada 15min) — reassign timeout + stale + métricas
 // Chamado pelo Vercel Cron
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { validateCronSecret } from '@/lib/api-auth'
 import { processTimeoutReassignments } from '@/lib/distribution/auto-reassign'
 import { processStaleReassignments } from '@/lib/distribution/stale-detector'
 import { updateBrokerMetrics } from '@/lib/distribution/metrics'
@@ -13,8 +14,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Validar CRON_SECRET
+    if (!validateCronSecret(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     // Buscar todas as orgs com distribuição ativa
     const { data: orgs } = await supabase
       .from('orgs')

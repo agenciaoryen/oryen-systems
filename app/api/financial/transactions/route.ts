@@ -1,24 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin } from '@/lib/api-auth'
 
 // GET — list transactions with filters
 export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
+
   const { searchParams } = req.nextUrl
-  const orgId = searchParams.get('org_id')
+  const orgId = resolveOrgId(auth, searchParams.get('org_id'))
   const type = searchParams.get('type')
   const category = searchParams.get('category')
   const from = searchParams.get('from')
   const to = searchParams.get('to')
   const status = searchParams.get('status')
-
-  if (!orgId) {
-    return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-  }
 
   let query = supabaseAdmin
     .from('financial_transactions')
@@ -44,10 +38,14 @@ export async function GET(req: NextRequest) {
 
 // POST — create a transaction (expense or manual revenue)
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const { org_id, type, category, amount, currency, description, transaction_date, notes, lead_id, broker_id, created_by } = body
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
 
-  if (!org_id || !type || !category || !amount || !transaction_date) {
+  const body = await req.json()
+  const org_id = resolveOrgId(auth, body.org_id)
+  const { type, category, amount, currency, description, transaction_date, notes, lead_id, broker_id, created_by } = body
+
+  if (!type || !category || !amount || !transaction_date) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
@@ -88,6 +86,10 @@ export async function POST(req: NextRequest) {
 
 // PATCH — update transaction status
 export async function PATCH(req: NextRequest) {
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
+  const orgId = resolveOrgId(auth)
+
   const body = await req.json()
   const { id, status, approved_by } = body
 
@@ -109,6 +111,7 @@ export async function PATCH(req: NextRequest) {
     .from('financial_transactions')
     .update(update)
     .eq('id', id)
+    .eq('org_id', orgId)
     .select()
     .single()
 

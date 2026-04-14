@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin } from '@/lib/api-auth'
 
 // POST — generate monthly recurring expense transactions
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const { org_id } = body
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
 
-  if (!org_id) {
-    return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-  }
+  const body = await req.json()
+  const org_id = resolveOrgId(auth, body.org_id)
 
   const now = new Date()
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`

@@ -116,6 +116,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const activePlan: PlanName = activeOrg?.plan || 'starter'
   const activePlanStatus: PlanStatus = activeOrg?.plan_status || 'active'
 
+  // ─── Migração: localStorage → cookies (one-time) ───
+  useEffect(() => {
+    const LEGACY_KEY = 'supabase.auth.token'
+    if (typeof window === 'undefined') return
+    const stored = localStorage.getItem(LEGACY_KEY)
+    if (!stored) return
+    try {
+      const parsed = JSON.parse(stored)
+      if (parsed?.access_token && parsed?.refresh_token) {
+        supabase.auth.setSession({
+          access_token: parsed.access_token,
+          refresh_token: parsed.refresh_token,
+        }).then(() => {
+          localStorage.removeItem(LEGACY_KEY)
+        }).catch(() => {
+          localStorage.removeItem(LEGACY_KEY)
+        })
+      } else {
+        localStorage.removeItem(LEGACY_KEY)
+      }
+    } catch {
+      localStorage.removeItem(LEGACY_KEY)
+    }
+  }, [])
+
   // ─── Effect principal de autenticação ───
   useEffect(() => {
     const fetchUserData = async (sessionUser: User) => {

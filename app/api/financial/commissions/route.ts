@@ -1,21 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireAuth, resolveOrgId, supabaseAdmin } from '@/lib/api-auth'
 
 // GET — list commissions with filters
 export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
+
   const { searchParams } = req.nextUrl
-  const orgId = searchParams.get('org_id')
+  const orgId = resolveOrgId(auth, searchParams.get('org_id'))
   const status = searchParams.get('status')
   const brokerId = searchParams.get('broker_id')
-
-  if (!orgId) {
-    return NextResponse.json({ error: 'org_id required' }, { status: 400 })
-  }
 
   let query = supabaseAdmin
     .from('commissions')
@@ -38,6 +32,9 @@ export async function GET(req: NextRequest) {
 
 // PATCH — approve, pay, or cancel a commission
 export async function PATCH(req: NextRequest) {
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
+
   const body = await req.json()
   const { id, action, approved_by } = body
 
