@@ -35,7 +35,6 @@ import {
   DollarSign,
   Target,
   CreditCard,
-  Sparkles,
   Zap,
   type LucideIcon
 } from 'lucide-react'
@@ -569,13 +568,10 @@ export default function Sidebar() {
                     onClick={() => group.collapsible && toggleSection(group.key)}
                     className={cn(
                       'w-full flex items-center justify-between px-2 pt-5 pb-2',
-                      group.collapsible && 'cursor-pointer group/section',
-                      group.key === 'ai' && 'rounded-lg px-3 mt-1'
+                      group.collapsible && 'cursor-pointer group/section'
                     )}
-                    style={group.key === 'ai' ? { background: 'var(--color-primary-subtle)', border: '1px solid rgba(90, 122, 230, 0.15)' } : undefined}
                   >
-                    <p className="text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5" style={{ color: group.key === 'ai' ? 'var(--color-primary)' : 'var(--color-text-muted)' }}>
-                      {group.key === 'ai' && <Sparkles size={12} />}
+                    <p className="text-xs font-bold uppercase tracking-widest transition-colors" style={{ color: 'var(--color-text-muted)' }}>
                       {group.title}
                     </p>
                     {group.collapsible && (
@@ -585,7 +581,7 @@ export default function Sidebar() {
                           'transition-transform duration-200',
                           isCollapsed && '-rotate-90'
                         )}
-                        style={{ color: group.key === 'ai' ? 'var(--color-primary)' : 'var(--color-text-muted)' }}
+                        style={{ color: 'var(--color-text-muted)' }}
                       />
                     )}
                   </button>
