@@ -106,7 +106,7 @@ function AnimatedValue({ value, suffix = '' }: { value: string; suffix?: string 
 // i18n
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type Lang = 'pt' | 'es'
+type Lang = 'pt' | 'en' | 'es'
 
 const T: Record<Lang, Record<string, any>> = {
   pt: {
@@ -198,28 +198,40 @@ const T: Record<Lang, Record<string, any>> = {
       subtitle: 'Sem surpresas. Sem taxas escondidas. Cancele quando quiser.',
       popular: 'Mais popular',
       cta: 'Começar agora',
-      ctaSecondary: 'Começar grátis',
+      ctaSecondary: 'Começar agora',
       perMonth: '/mês',
       orUsd: 'ou',
       usdSuffix: '/mês em USD',
       enterprise: 'Precisa de mais?',
-      enterpriseLink: 'Fale conosco sobre o plano Enterprise',
+      enterpriseLink: 'Fale conosco sobre o plano Enterprise — a partir de R$2.497/mês',
       plans: [
         {
-          name: 'Basic', price: 97, priceUsd: 19, description: 'Para corretores autônomos',
-          features: ['1 usuário', 'Até 1.000 leads ativos', 'CRM com pipeline visual', 'WhatsApp (1 número)', 'Site de imóveis', 'Documentos e templates'],
-          notIncluded: ['Agentes de IA', 'Automações', 'Relatórios avançados'],
+          name: 'Starter', price: 249, priceUsd: 49, description: 'Para corretores autônomos',
+          features: ['1 usuário', 'Até 500 leads ativos', 'CRM com pipeline visual', 'WhatsApp (1 número)', 'Agentes de IA (SDR + Follow-up)', '500 mensagens IA/mês', 'Site de imóveis', 'Até 30 imóveis'],
+          notIncluded: ['Automações', 'Relatórios avançados', 'WhatsApp oficial'],
         },
         {
-          name: 'Gold', price: 1097, priceUsd: 219, description: 'Para equipes em crescimento',
-          features: ['Até 5 usuários', 'Até 5.000 leads ativos', 'Tudo do Basic +', 'Agentes de IA (SDR + Hunter)', 'Automações inteligentes', 'WhatsApp oficial (5 números)', 'Relatórios e dashboard avançado', '10.000 mensagens IA/mês'],
-          notIncluded: ['API e integrações avançadas', 'Campanhas em massa'],
+          name: 'Pro', price: 497, priceUsd: 99, description: 'Para equipes em crescimento',
+          features: ['Até 3 usuários', 'Até 2.000 leads ativos', 'Tudo do Starter +', 'Agentes de IA (SDR + Follow-up + Suporte)', 'Automações inteligentes', 'WhatsApp oficial (2 números)', 'Dashboard avançado + Analytics IA', '3.000 mensagens IA/mês', 'Até 100 imóveis', 'Módulo financeiro'],
+          notIncluded: ['API e integrações', 'Campanhas em massa'],
         },
         {
-          name: 'Diamond', price: 1647, priceUsd: 329, description: 'Para imobiliárias completas',
-          features: ['Até 15 usuários', 'Até 10.000 leads ativos', 'Tudo do Gold +', 'API e integrações avançadas', 'Campanhas em massa', 'WhatsApp oficial (15 números)', 'Suporte prioritário', '50.000 mensagens IA/mês'],
+          name: 'Business', price: 1247, priceUsd: 249, description: 'Para imobiliárias completas',
+          features: ['Até 8 usuários', 'Até 8.000 leads ativos', 'Tudo do Pro +', 'Todos os agentes de IA', 'API e integrações avançadas', 'Campanhas em massa', 'WhatsApp oficial (5 números)', 'Suporte prioritário', '15.000 mensagens IA/mês', 'Até 500 imóveis', 'Gestor de tráfego', 'Financeiro avançado'],
           notIncluded: [],
         },
+      ],
+    },
+    whyOryen: {
+      badge: 'Por que Oryen',
+      title_1: 'Por que as melhores imobiliárias ',
+      title_2: 'escolhem Oryen',
+      subtitle: 'Não somos apenas mais um CRM. Construímos uma plataforma que realmente fecha negócios.',
+      items: [
+        { title: 'IA que funciona de verdade', description: 'Agentes de IA reais que prospectam, qualificam e agendam visitas 24/7 — não apenas chatbots com respostas prontas.' },
+        { title: 'Tudo em um só lugar', description: 'CRM, WhatsApp, site, documentos, financeiro e IA em uma única plataforma. Pare de pagar por 6 ferramentas diferentes.' },
+        { title: 'Feito para imobiliário', description: 'Cada funcionalidade desenhada especificamente para como profissionais do mercado imobiliário trabalham. Não é um CRM genérico com rótulo de imobiliária.' },
+        { title: 'Escale sem caos', description: 'De 1 corretor a 25 usuários. A plataforma cresce com você sem precisar migrar ou perder dados.' },
       ],
     },
     faq: {
@@ -243,6 +255,155 @@ const T: Record<Lang, Record<string, any>> = {
       product: 'Produto',
       contact: 'Contato',
       rights: 'Todos os direitos reservados.',
+    },
+  },
+
+  en: {
+    nav: {
+      features: 'Features',
+      howItWorks: 'How it works',
+      plans: 'Pricing',
+      faq: 'FAQ',
+      login: 'Log in',
+      cta: 'Get started',
+    },
+    hero: {
+      badge: 'AI-Powered Platform',
+      h1_1: 'You close.',
+      h1_2: 'We handle',
+      h1_3: 'the rest.',
+      subtitle: 'CRM, automation, and AI agents built exclusively for real estate agents and brokerages. Everything in one place.',
+      cta1: 'Get started',
+      cta2: 'See features',
+      trust1: 'Encrypted data',
+      trust2: '2-minute setup',
+      trust3: 'No installation',
+    },
+    features: {
+      badge: 'Features',
+      title_1: 'Everything you need to ',
+      title_2: 'sell more',
+      subtitle: 'A complete platform that replaces dozens of tools. From first contact to closing.',
+      items: [
+        { title: 'Real Estate CRM', description: 'Visual pipeline with real estate stages. Drag and drop leads between phases like New Lead, Visit Scheduled, Proposal, and Closing.' },
+        { title: 'AI Agents', description: 'SDR and Hunter automate prospecting and lead qualification. Your agents work 24/7 sending messages and scheduling visits.' },
+        { title: 'Integrated WhatsApp', description: 'Bidirectional support directly in the system. Complete conversation history, sentiment detection, and quick replies.' },
+        { title: 'Property Website', description: 'Professional online portfolio generated automatically. Contact form integrated with CRM and automatic lead distribution.' },
+        { title: 'Smart Documents', description: 'Proposals and contracts with customizable templates. Generate PDFs, send by email or WhatsApp, and track the signing cycle.' },
+        { title: 'Dashboard & Reports', description: 'Real-time KPIs, conversion charts, and automated reports. Know exactly how your operation is performing.' },
+      ],
+    },
+    howItWorks: {
+      badge: 'Easy to use',
+      title_1: 'Start in ',
+      title_2: '3 steps',
+      subtitle: 'From signup to your first qualified lead in minutes, not weeks.',
+      steps: [
+        { title: 'Create your account', description: 'Sign up, set up your company, and choose the ideal plan in under 2 minutes.' },
+        { title: 'Set up your pipeline', description: 'A default pipeline for real estate is ready to go. Customize stages, tags, and team.' },
+        { title: 'Close more deals', description: 'Let AI agents prospect and qualify while you focus on what matters: closing.' },
+      ],
+    },
+    highlightAi: {
+      badge: 'Artificial Intelligence',
+      title: 'Your agents work while you sleep',
+      subtitle: 'Oryen AI agents prospect new leads, qualify contacts, and schedule visits automatically. You wake up with hot leads ready to close.',
+      items: [
+        'SDR automates first contact via WhatsApp',
+        'Hunter finds new prospects in your market',
+        'Smart qualification based on behavior',
+        'Automatic visit scheduling',
+      ],
+      cards: [
+        { label: 'Qualified Leads', value: '847', trend: '+23%' },
+        { label: 'Messages Sent', value: '12.4k', trend: '+18%' },
+        { label: 'Visits Scheduled', value: '156', trend: '+31%' },
+        { label: 'Conversion Rate', value: '34%', trend: '+5%' },
+      ],
+    },
+    highlightWa: {
+      badge: 'WhatsApp + CRM',
+      title: 'Every conversation becomes an opportunity',
+      subtitle: 'All WhatsApp messages centralized in the CRM. Complete history, AI sentiment detection, and automatic distribution to the right agent.',
+      items: [
+        'Bidirectional real-time messages',
+        'Automatic sentiment detection',
+        'Website lead goes straight to CRM and WhatsApp',
+        'Smart distribution among agents',
+      ],
+      chat: {
+        online: 'Online now',
+        msg1: 'Hi! I saw the apartment in downtown, is it still available?',
+        msg2: 'Hi Maria! Yes, it\'s available. Can I schedule a visit for you this week?',
+        msg3: 'Wednesday afternoon would be perfect!',
+        msg4: 'Perfect! Scheduled for Wednesday, 2 PM. I sent the details to your email.',
+        sentiment: 'Sentiment: Positive — Hot lead',
+      },
+    },
+    pricing: {
+      badge: 'Pricing',
+      title_1: 'Plans that ',
+      title_2: 'fit your budget',
+      subtitle: 'No surprises. No hidden fees. Cancel anytime.',
+      popular: 'Most popular',
+      cta: 'Get started',
+      ctaSecondary: 'Get started',
+      perMonth: '/mo',
+      orUsd: '',
+      usdSuffix: '',
+      enterprise: 'Need more?',
+      enterpriseLink: 'Talk to us about the Enterprise plan — starting at $499/mo',
+      plans: [
+        {
+          name: 'Starter', price: 49, priceUsd: 49, description: 'For independent agents',
+          features: ['1 user', 'Up to 500 active leads', 'CRM with visual pipeline', 'WhatsApp (1 number)', 'AI Agents (SDR + Follow-up)', '500 AI messages/mo', 'Property website', 'Up to 30 properties'],
+          notIncluded: ['Automations', 'Advanced reports', 'Official WhatsApp'],
+        },
+        {
+          name: 'Pro', price: 99, priceUsd: 99, description: 'For growing teams',
+          features: ['Up to 3 users', 'Up to 2,000 active leads', 'Everything in Starter +', 'AI Agents (SDR + Follow-up + Support)', 'Smart automations', 'Official WhatsApp (2 numbers)', 'Advanced dashboard + AI Analytics', '3,000 AI messages/mo', 'Up to 100 properties', 'Financial module'],
+          notIncluded: ['API & integrations', 'Mass campaigns'],
+        },
+        {
+          name: 'Business', price: 249, priceUsd: 249, description: 'For full brokerages',
+          features: ['Up to 8 users', 'Up to 8,000 active leads', 'Everything in Pro +', 'All AI agents', 'API & advanced integrations', 'Mass campaigns', 'Official WhatsApp (5 numbers)', 'Priority support', '15,000 AI messages/mo', 'Up to 500 properties', 'Traffic manager', 'Advanced financial'],
+          notIncluded: [],
+        },
+      ],
+    },
+    whyOryen: {
+      badge: 'Why Oryen',
+      title_1: 'Why top brokerages ',
+      title_2: 'choose Oryen',
+      subtitle: 'We\'re not just another CRM. We built a platform that actually closes deals.',
+      items: [
+        { title: 'AI that actually works', description: 'Real AI agents that prospect, qualify, and schedule visits 24/7 — not just chatbots with scripted answers.' },
+        { title: 'All-in-one platform', description: 'CRM, WhatsApp, website, documents, financial, and AI in one place. Stop paying for 6 different tools.' },
+        { title: 'Built for real estate', description: 'Every feature designed specifically for how real estate professionals work. Not a generic CRM with a real estate label.' },
+        { title: 'Scale without chaos', description: 'From 1 agent to 25 users. The platform grows with you without needing to migrate or lose data.' },
+      ],
+    },
+    faq: {
+      title: 'Frequently asked questions',
+      items: [
+        { q: 'Do I need to install anything?', a: 'No. Oryen is 100% cloud-based. It works in your computer or phone browser, no installation needed.' },
+        { q: 'Can I try before paying?', a: 'We offer a demo period so you can explore the platform. Contact our team to schedule.' },
+        { q: 'How does WhatsApp integration work?', a: 'You connect your WhatsApp number directly in the panel. All messages arrive in the system in real time, with complete history and sentiment detection.' },
+        { q: 'Do AI agents replace my team?', a: 'No. Agents automate repetitive tasks like prospecting and qualification, freeing your team to focus on personalized service and closing.' },
+        { q: 'Can I cancel anytime?', a: 'Yes. No lock-in and no penalty. You can upgrade, downgrade, or cancel directly in the settings panel.' },
+        { q: 'Does the property website replace my current site?', a: 'It can be your main site or a complement. It\'s a professional site automatically generated from your portfolio, with a custom domain and form integrated with the CRM.' },
+      ],
+    },
+    finalCta: {
+      title: 'Ready to close more deals?',
+      subtitle: 'Join the agents and brokerages already using AI to sell more and work less.',
+      cta: 'Get started',
+    },
+    footer: {
+      description: 'The complete CRM, automation, and artificial intelligence platform for real estate agents and brokerages.',
+      product: 'Product',
+      contact: 'Contact',
+      rights: 'All rights reserved.',
     },
   },
 
@@ -335,28 +496,40 @@ const T: Record<Lang, Record<string, any>> = {
       subtitle: 'Sin sorpresas. Sin cargos ocultos. Cancela cuando quieras.',
       popular: 'Más popular',
       cta: 'Empezar ahora',
-      ctaSecondary: 'Empezar gratis',
+      ctaSecondary: 'Empezar ahora',
       perMonth: '/mes',
-      orUsd: 'o',
-      usdSuffix: '/mes en USD',
+      orUsd: '',
+      usdSuffix: '',
       enterprise: '¿Necesitas más?',
-      enterpriseLink: 'Habla con nosotros sobre el plan Enterprise',
+      enterpriseLink: 'Habla con nosotros sobre el plan Enterprise — desde $499/mes',
       plans: [
         {
-          name: 'Basic', price: 19, priceUsd: 19, description: 'Para corredores independientes',
-          features: ['1 usuario', 'Hasta 1.000 leads activos', 'CRM con pipeline visual', 'WhatsApp (1 número)', 'Sitio de propiedades', 'Documentos y plantillas'],
-          notIncluded: ['Agentes de IA', 'Automatizaciones', 'Reportes avanzados'],
+          name: 'Starter', price: 49, priceUsd: 49, description: 'Para corredores independientes',
+          features: ['1 usuario', 'Hasta 500 leads activos', 'CRM con pipeline visual', 'WhatsApp (1 número)', 'Agentes de IA (SDR + Follow-up)', '500 mensajes IA/mes', 'Sitio de propiedades', 'Hasta 30 propiedades'],
+          notIncluded: ['Automatizaciones', 'Reportes avanzados', 'WhatsApp oficial'],
         },
         {
-          name: 'Gold', price: 219, priceUsd: 219, description: 'Para equipos en crecimiento',
-          features: ['Hasta 5 usuarios', 'Hasta 5.000 leads activos', 'Todo de Basic +', 'Agentes de IA (SDR + Hunter)', 'Automatizaciones inteligentes', 'WhatsApp oficial (5 números)', 'Reportes y dashboard avanzado', '10.000 mensajes IA/mes'],
-          notIncluded: ['API e integraciones avanzadas', 'Campañas masivas'],
+          name: 'Pro', price: 99, priceUsd: 99, description: 'Para equipos en crecimiento',
+          features: ['Hasta 3 usuarios', 'Hasta 2.000 leads activos', 'Todo del Starter +', 'Agentes de IA (SDR + Follow-up + Soporte)', 'Automatizaciones inteligentes', 'WhatsApp oficial (2 números)', 'Dashboard avanzado + Analytics IA', '3.000 mensajes IA/mes', 'Hasta 100 propiedades', 'Módulo financiero'],
+          notIncluded: ['API e integraciones', 'Campañas masivas'],
         },
         {
-          name: 'Diamond', price: 329, priceUsd: 329, description: 'Para inmobiliarias completas',
-          features: ['Hasta 15 usuarios', 'Hasta 10.000 leads activos', 'Todo de Gold +', 'API e integraciones avanzadas', 'Campañas masivas', 'WhatsApp oficial (15 números)', 'Soporte prioritario', '50.000 mensajes IA/mes'],
+          name: 'Business', price: 249, priceUsd: 249, description: 'Para inmobiliarias completas',
+          features: ['Hasta 8 usuarios', 'Hasta 8.000 leads activos', 'Todo del Pro +', 'Todos los agentes de IA', 'API e integraciones avanzadas', 'Campañas masivas', 'WhatsApp oficial (5 números)', 'Soporte prioritario', '15.000 mensajes IA/mes', 'Hasta 500 propiedades', 'Gestor de tráfico', 'Financiero avanzado'],
           notIncluded: [],
         },
+      ],
+    },
+    whyOryen: {
+      badge: 'Por qué Oryen',
+      title_1: 'Por qué las mejores inmobiliarias ',
+      title_2: 'eligen Oryen',
+      subtitle: 'No somos solo otro CRM. Construimos una plataforma que realmente cierra negocios.',
+      items: [
+        { title: 'IA que funciona de verdad', description: 'Agentes de IA reales que prospectan, califican y agendan visitas 24/7 — no solo chatbots con respuestas programadas.' },
+        { title: 'Todo en un solo lugar', description: 'CRM, WhatsApp, sitio web, documentos, financiero e IA en una sola plataforma. Deja de pagar por 6 herramientas diferentes.' },
+        { title: 'Hecho para inmobiliario', description: 'Cada funcionalidad diseñada específicamente para cómo trabajan los profesionales inmobiliarios. No es un CRM genérico con etiqueta de inmobiliaria.' },
+        { title: 'Escala sin caos', description: 'De 1 corredor a 25 usuarios. La plataforma crece contigo sin necesidad de migrar o perder datos.' },
       ],
     },
     faq: {
@@ -488,6 +661,7 @@ export default function LandingPage() {
     if (typeof navigator !== 'undefined') {
       const browserLang = navigator.language?.toLowerCase() || ''
       if (browserLang.startsWith('es')) setLang('es')
+      else if (browserLang.startsWith('en')) setLang('en')
     }
   }, [])
 
@@ -498,7 +672,10 @@ export default function LandingPage() {
   }, [])
 
   const t = T[lang]
-  const isEs = lang === 'es'
+  const currencySymbol = lang === 'pt' ? 'R$' : '$'
+  const nextLang = (): Lang => lang === 'pt' ? 'en' : lang === 'en' ? 'es' : 'pt'
+  const langLabel = (l: Lang) => ({ pt: 'PT', en: 'EN', es: 'ES' }[l])
+  const langLabelFull = (l: Lang) => ({ pt: 'Português', en: 'English', es: 'Español' }[l])
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-primary)' }}>
@@ -554,12 +731,12 @@ export default function LandingPage() {
 
             <div className="hidden md:flex items-center gap-3">
               <button
-                onClick={() => setLang(lang === 'pt' ? 'es' : 'pt')}
+                onClick={() => setLang(nextLang())}
                 className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-150"
                 style={{ color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border)' }}
               >
                 <Globe size={13} />
-                {lang === 'pt' ? 'ES' : 'PT'}
+                {langLabel(nextLang())}
               </button>
               <Link
                 href="/login"
@@ -617,10 +794,10 @@ export default function LandingPage() {
                 ))}
               </div>
               <div className="pt-3 flex flex-col gap-2 px-4">
-                <button onClick={() => setLang(lang === 'pt' ? 'es' : 'pt')}
+                <button onClick={() => setLang(nextLang())}
                   className="flex items-center justify-center gap-2 text-sm px-4 py-2.5 rounded-lg"
                   style={{ color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border)' }}>
-                  <Globe size={14} /> {lang === 'pt' ? 'Español' : 'Português'}
+                  <Globe size={14} /> {langLabelFull(nextLang())}
                 </button>
                 <Link href="/login" className="text-center text-sm font-medium px-4 py-2.5 rounded-lg"
                   style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
@@ -1000,9 +1177,71 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
+          WHY ORYEN — Competitive advantages
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="py-24 md:py-36 relative overflow-hidden">
+        <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[400px] h-[400px] opacity-[0.06]" style={{
+          background: 'radial-gradient(circle, var(--color-primary), transparent 70%)',
+        }} />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-6"
+                style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary-subtle-fg)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
+                <Shield size={12} /> {t.whyOryen.badge}
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-h2)' }}>
+                {t.whyOryen.title_1}
+                <span className="gradient-text" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>{t.whyOryen.title_2}</span>
+              </h2>
+              <p className="mt-4 text-base md:text-lg" style={{ color: 'var(--color-text-secondary)' }}>{t.whyOryen.subtitle}</p>
+            </div>
+          </Reveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
+            {t.whyOryen.items.map((item: any, i: number) => {
+              const icons = [Bot, Zap, Building2, TrendingUp]
+              const gradients = [
+                'linear-gradient(135deg, #F0A030, #FF8C42)',
+                'linear-gradient(135deg, #4F6FFF, #6E5FFF)',
+                'linear-gradient(135deg, #22C55E, #16A34A)',
+                'linear-gradient(135deg, #38BDF8, #0284C7)',
+              ]
+              const Icon = icons[i]
+              return (
+                <Reveal key={i} delay={i * 100}>
+                  <div className="group relative p-6 rounded-2xl transition-all duration-300 hover:-translate-y-1 h-full"
+                    style={{
+                      background: 'var(--color-bg-surface)',
+                      border: '1px solid var(--color-border)',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.borderColor = 'var(--color-border-strong)'
+                      e.currentTarget.style.boxShadow = 'var(--shadow-lg)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = 'var(--color-border)'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }}>
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110"
+                      style={{ background: gradients[i] }}>
+                      <Icon size={20} style={{ color: '#fff' }} />
+                    </div>
+                    <h3 className="text-base font-semibold mb-2" style={{ fontFamily: 'var(--font-display)' }}>{item.title}</h3>
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{item.description}</p>
+                  </div>
+                </Reveal>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
           PRICING — Gradient border on popular plan
           ═══════════════════════════════════════════════════════════════════ */}
-      <section id="pricing" className="py-24 md:py-36 relative">
+      <section id="pricing" className="py-24 md:py-36 relative" style={{ background: 'var(--color-bg-surface)' }}>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] opacity-[0.05]" style={{
           background: 'radial-gradient(ellipse at center, var(--color-primary), transparent 70%)',
         }} />
@@ -1049,11 +1288,11 @@ export default function LandingPage() {
                       </div>
                       <div className="mb-6">
                         <div className="flex items-baseline gap-1">
-                          <span className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{isEs ? '$' : 'R$'}</span>
+                          <span className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{currencySymbol}</span>
                           <span className="text-4xl font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.03em' }}>{plan.price}</span>
                           <span className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{t.pricing.perMonth}</span>
                         </div>
-                        {!isEs && (
+                        {lang === 'pt' && (
                           <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
                             {t.pricing.orUsd} ${plan.priceUsd}{t.pricing.usdSuffix}
                           </p>
