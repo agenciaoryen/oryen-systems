@@ -77,6 +77,7 @@ export default function AnalyticsPage() {
 
   const [range, setRange] = useState<AnalyticsRange>(30)
   const [loading, setLoading] = useState(true)
+  const [debugInfo, setDebugInfo] = useState<string | null>(null)
 
   // Data states
   const [funnel, setFunnel] = useState<FunnelStage[]>([])
@@ -89,10 +90,45 @@ export default function AnalyticsPage() {
   const startDate = useMemo(() => subDays(new Date(), range), [range])
 
   const loadData = useCallback(async () => {
-    if (!activeOrgId) return
+    if (!activeOrgId) {
+      console.warn('[Analytics] activeOrgId is null — skipping data load')
+      setDebugInfo('activeOrgId is null')
+      setLoading(false)
+      return
+    }
     setLoading(true)
+    setDebugInfo(null)
 
     try {
+      // Diagnóstico: verificar se pipeline_stages e leads existem para esta org
+      const [stagesCheck, leadsCheck] = await Promise.all([
+        supabase
+          .from('pipeline_stages')
+          .select('id, name, position', { count: 'exact', head: true })
+          .eq('org_id', activeOrgId)
+          .eq('is_active', true),
+        supabase
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('org_id', activeOrgId)
+          .gte('created_at', startDate.toISOString()),
+      ])
+
+      const stagesCount = stagesCheck.count ?? 0
+      const leadsCount = leadsCheck.count ?? 0
+
+      console.log(`[Analytics] org=${activeOrgId} | pipeline_stages=${stagesCount} | leads(${range}d)=${leadsCount}`)
+      if (stagesCheck.error) console.error('[Analytics] pipeline_stages error:', stagesCheck.error)
+      if (leadsCheck.error) console.error('[Analytics] leads error:', leadsCheck.error)
+
+      if (stagesCount === 0 || leadsCount === 0) {
+        setDebugInfo(
+          stagesCount === 0
+            ? `no_pipeline_stages (org: ${activeOrgId.slice(0, 8)}…)`
+            : `no_leads_in_period (stages: ${stagesCount}, leads ${range}d: ${leadsCount})`
+        )
+      }
+
       const [funnelData, sourcesData, velocityData, brokersData, followUpData, projectionData] = await Promise.all([
         getLeadFunnelByStage(supabase, activeOrgId, startDate),
         getConversionBySource(supabase, activeOrgId, startDate),
@@ -102,6 +138,8 @@ export default function AnalyticsPage() {
         getRevenueProjection(supabase, activeOrgId),
       ])
 
+      console.log(`[Analytics] Results — funnel: ${funnelData.length}, sources: ${sourcesData.length}, velocity: ${velocityData.length}, brokers: ${brokersData.length}`)
+
       setFunnel(funnelData)
       setSources(sourcesData)
       setVelocity(velocityData)
@@ -109,7 +147,8 @@ export default function AnalyticsPage() {
       setFollowUp(followUpData)
       setProjection(projectionData)
     } catch (err) {
-      console.error('Analytics load error:', err)
+      console.error('[Analytics] load error:', err)
+      setDebugInfo(`error: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setLoading(false)
     }
@@ -164,6 +203,44 @@ export default function AnalyticsPage() {
         <div className="text-center py-20" style={{ color: 'var(--color-text-muted)' }}>
           <RefreshCw size={24} className="animate-spin mx-auto mb-3" />
           <p>{t.loading}</p>
+        </div>
+      )}
+
+      {/* Debug banner — visible only when issue detected */}
+      {!loading && debugInfo && (
+        <div className="rounded-lg p-4 text-sm" style={{
+          background: 'var(--color-warning-subtle, rgba(245,158,11,0.1))',
+          border: '1px solid rgba(245,158,11,0.3)',
+          color: 'var(--color-text-secondary)',
+        }}>
+          <strong style={{ color: '#f59e0b' }}>
+            {debugInfo.startsWith('no_pipeline_stages')
+              ? (lang === 'pt' ? 'Pipeline não configurado' : lang === 'es' ? 'Pipeline no configurado' : 'Pipeline not configured')
+              : debugInfo.startsWith('no_leads')
+              ? (lang === 'pt' ? 'Sem leads no período' : lang === 'es' ? 'Sin leads en el período' : 'No leads in period')
+              : debugInfo.startsWith('activeOrgId')
+              ? (lang === 'pt' ? 'Organização não carregada' : lang === 'es' ? 'Organización no cargada' : 'Organization not loaded')
+              : (lang === 'pt' ? 'Erro ao carregar dados' : lang === 'es' ? 'Error al cargar datos' : 'Error loading data')
+            }
+          </strong>
+          {' — '}
+          {debugInfo.startsWith('no_pipeline_stages')
+            ? (lang === 'pt'
+              ? 'Vá em Configurações → Pipeline para criar as etapas do funil.'
+              : lang === 'es'
+              ? 'Ve a Configuración → Pipeline para crear las etapas del embudo.'
+              : 'Go to Settings → Pipeline to create funnel stages.')
+            : debugInfo.startsWith('no_leads')
+            ? (lang === 'pt'
+              ? `Nenhum lead foi criado nos últimos ${range} dias. Tente ampliar o período.`
+              : lang === 'es'
+              ? `Ningún lead fue creado en los últimos ${range} días. Intenta ampliar el período.`
+              : `No leads created in the last ${range} days. Try a longer period.`)
+            : debugInfo.startsWith('activeOrgId')
+            ? (lang === 'pt' ? 'Recarregue a página.' : lang === 'es' ? 'Recarga la página.' : 'Reload the page.')
+            : debugInfo
+          }
+          <span className="block mt-1 text-xs" style={{ opacity: 0.6 }}>debug: {debugInfo}</span>
         </div>
       )}
 
