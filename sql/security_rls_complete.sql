@@ -299,22 +299,17 @@ DO $$ BEGIN
 END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- 11. DOCUMENT_TEMPLATES — Templates de documentos (por org)
+-- 11. DOCUMENT_TEMPLATES — Tabela global do sistema (sem org_id)
+--     Filtrada por niche no código. Leitura pública, escrita só via service_role.
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'document_templates' AND table_schema = 'public') THEN
     ALTER TABLE public.document_templates ENABLE ROW LEVEL SECURITY;
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'document_templates_select_org' AND tablename = 'document_templates') THEN
-      CREATE POLICY document_templates_select_org ON public.document_templates
-        FOR SELECT USING (org_id = public.get_user_org_id());
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'document_templates_manage_org' AND tablename = 'document_templates') THEN
-      CREATE POLICY document_templates_manage_org ON public.document_templates
-        FOR ALL USING (org_id = public.get_user_org_id())
-        WITH CHECK (org_id = public.get_user_org_id());
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'document_templates_public_read' AND tablename = 'document_templates') THEN
+      CREATE POLICY document_templates_public_read ON public.document_templates
+        FOR SELECT USING (true);
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'document_templates_service_role' AND tablename = 'document_templates') THEN
@@ -325,22 +320,17 @@ DO $$ BEGIN
 END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- 12. DOCUMENT_CATEGORIES — Categorias de documentos (por org)
+-- 12. DOCUMENT_CATEGORIES — Tabela global do sistema (sem org_id)
+--     Filtrada por niche no código. Leitura pública, escrita só via service_role.
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'document_categories' AND table_schema = 'public') THEN
     ALTER TABLE public.document_categories ENABLE ROW LEVEL SECURITY;
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'document_categories_select_org' AND tablename = 'document_categories') THEN
-      CREATE POLICY document_categories_select_org ON public.document_categories
-        FOR SELECT USING (org_id = public.get_user_org_id());
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'document_categories_manage_org' AND tablename = 'document_categories') THEN
-      CREATE POLICY document_categories_manage_org ON public.document_categories
-        FOR ALL USING (org_id = public.get_user_org_id())
-        WITH CHECK (org_id = public.get_user_org_id());
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'document_categories_public_read' AND tablename = 'document_categories') THEN
+      CREATE POLICY document_categories_public_read ON public.document_categories
+        FOR SELECT USING (true);
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'document_categories_service_role' AND tablename = 'document_categories') THEN
@@ -377,16 +367,19 @@ DO $$ BEGIN
 END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- 14. LEAD_EVENTS — Eventos/atividades de leads
+-- 14. LEAD_EVENTS — Eventos/atividades de leads (sem org_id, usa lead_id)
+--     Leitura via join com leads da org. Escrita só via service_role.
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'lead_events' AND table_schema = 'public') THEN
     ALTER TABLE public.lead_events ENABLE ROW LEVEL SECURITY;
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'lead_events_select_org' AND tablename = 'lead_events') THEN
-      CREATE POLICY lead_events_select_org ON public.lead_events
-        FOR SELECT USING (org_id = public.get_user_org_id());
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'lead_events_select_via_lead' AND tablename = 'lead_events') THEN
+      CREATE POLICY lead_events_select_via_lead ON public.lead_events
+        FOR SELECT USING (
+          lead_id IN (SELECT id FROM public.leads WHERE org_id = public.get_user_org_id())
+        );
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'lead_events_service_role' AND tablename = 'lead_events') THEN
@@ -397,16 +390,21 @@ DO $$ BEGIN
 END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- 15. ALERTS — Alertas do sistema
+-- 15. ALERTS — Alertas do sistema (usa user_id, não org_id)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'alerts' AND table_schema = 'public') THEN
     ALTER TABLE public.alerts ENABLE ROW LEVEL SECURITY;
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'alerts_select_org' AND tablename = 'alerts') THEN
-      CREATE POLICY alerts_select_org ON public.alerts
-        FOR SELECT USING (org_id = public.get_user_org_id());
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'alerts_select_own' AND tablename = 'alerts') THEN
+      CREATE POLICY alerts_select_own ON public.alerts
+        FOR SELECT USING (user_id = auth.uid());
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'alerts_update_own' AND tablename = 'alerts') THEN
+      CREATE POLICY alerts_update_own ON public.alerts
+        FOR UPDATE USING (user_id = auth.uid());
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'alerts_service_role' AND tablename = 'alerts') THEN
