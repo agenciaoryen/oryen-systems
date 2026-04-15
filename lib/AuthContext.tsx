@@ -146,16 +146,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const fetchUserData = async (sessionUser: User) => {
       try {
         // Busca Profile
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from('users')
           .select('*')
           .eq('id', sessionUser.id)
           .maybeSingle()
-
-        if (profileError) {
-          console.error('[Auth] Erro ao buscar profile:', profileError.message, profileError.code)
-        }
-        console.log('[Auth] Profile result:', profile ? { id: profile.id, org_id: profile.org_id, role: profile.role } : 'NULL')
 
         // Monta objeto do usuário
         const appUser: AppUser = { 
@@ -207,16 +202,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           // Usuário normal: buscar apenas sua org (com campos de plano)
           if (appUser.org_id) {
-            const { data: orgData, error: orgError } = await supabase
+            const { data: orgData } = await supabase
               .from('orgs')
               .select('id, name, plan, plan_status, plan_started_at, niche')
               .eq('id', appUser.org_id)
               .maybeSingle()
-
-            if (orgError) {
-              console.error('[Auth] Erro ao buscar org:', orgError.message, orgError.code)
-            }
-            console.log('[Auth] Org result:', orgData ? { id: orgData.id, name: orgData.name, plan_status: orgData.plan_status } : 'NULL')
 
             if (orgData) {
               setOrg({
