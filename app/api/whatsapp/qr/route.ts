@@ -7,7 +7,8 @@ import { requireAuth, supabaseAdmin as supabase } from '@/lib/api-auth'
  * Configura o webhook na UAZAPI automaticamente após conexão
  */
 async function setupWebhook(apiUrl: string, token: string): Promise<boolean> {
-  const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/sdr/webhook`
+  const secret = process.env.UAZAPI_WEBHOOK_SECRET
+  const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/sdr/webhook${secret ? `?token=${secret}` : ''}`
 
   try {
     // Modo simples da UAZAPI: sem action/id → cria ou atualiza automaticamente

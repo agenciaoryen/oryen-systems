@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing api_url or token' }, { status: 400 })
     }
 
-    const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/sdr/webhook`
+    const secret = process.env.UAZAPI_WEBHOOK_SECRET
+    const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/sdr/webhook${secret ? `?token=${secret}` : ''}`
 
     // ─── 1. Verificar webhook atual ───
     let currentWebhook = null
