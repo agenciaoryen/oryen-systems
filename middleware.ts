@@ -47,6 +47,7 @@ const AUTH_EXEMPT_API = [
   '/api/agents/run-campaign',      // chamado pelo scheduler
   '/api/site-leads',               // formulário público do site
   '/api/properties/track',         // tracking público de visualização
+  '/api/whatsapp/migrate-webhooks', // migração de webhooks (protegido por CRON_SECRET)
 ]
 
 export async function middleware(request: NextRequest) {
