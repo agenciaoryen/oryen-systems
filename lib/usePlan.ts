@@ -26,16 +26,18 @@ export function usePlan() {
   // Resolve plano legado ou novo para config válida
   const rawPlanName = activePlan || 'starter'
   const planConfig = resolvePlanConfig(rawPlanName)
-  const planName = rawPlanName // Preserva o nome real (inclusive legados como 'basic')
+  // resolvedName para comparações (starter/pro/business/enterprise)
+  // rawPlanName para planHasAgent (preserva 'basic' etc.)
+  const resolvedName = planConfig.name
 
   // Helpers memoizados
   const helpers = useMemo(() => ({
-    // Info do plano
-    plan: planName,
+    // Info do plano — plan usa raw para que planHasAgent resolva corretamente
+    plan: rawPlanName,
     planConfig,
     displayName: planConfig.displayName,
 
-    // Verificadores de features
+    // Verificadores de features (usam planConfig, já resolvido)
     canUseAiAgents: planConfig.features.hasAiAgents,
     canUseAutomations: planConfig.features.hasAutomations,
     canUseReports: planConfig.features.hasReports,
@@ -52,18 +54,18 @@ export function usePlan() {
     maxDocuments: planConfig.limits.maxDocumentsPerMonth,
     maxSites: planConfig.limits.maxSites,
 
-    // Helpers de comparação (novos nomes)
-    isStarter: planName === 'starter',
-    isPro: planName === 'pro',
-    isBusiness: planName === 'business',
-    isEnterprise: planName === 'enterprise',
-    isPaid: true, // Todos os planos v2 são pagos
-    isPremium: planName === 'business' || planName === 'enterprise',
+    // Helpers de comparação (usam resolvedName para funcionar com legados)
+    isStarter: resolvedName === 'starter',
+    isPro: resolvedName === 'pro',
+    isBusiness: resolvedName === 'business',
+    isEnterprise: resolvedName === 'enterprise',
+    isPaid: true,
+    isPremium: resolvedName === 'business' || resolvedName === 'enterprise',
 
-    // Compat legado — para não quebrar componentes que usam os nomes antigos
-    isBasic: planName === 'starter',
-    isGold: planName === 'pro',
-    isDiamond: planName === 'business',
+    // Compat legado
+    isBasic: resolvedName === 'starter',
+    isGold: resolvedName === 'pro',
+    isDiamond: resolvedName === 'business',
 
     // Verificador genérico de feature
     hasFeature: (feature: keyof PlanFeatures): boolean => {
@@ -77,19 +79,19 @@ export function usePlan() {
       return current < limit
     },
 
-    // Próximo plano para upgrade
+    // Próximo plano para upgrade (usa resolvedName)
     getUpgradePlan: (): PlanName | null => {
-      if (planName === 'starter') return 'pro'
-      if (planName === 'pro') return 'business'
-      if (planName === 'business') return 'enterprise'
+      if (resolvedName === 'starter') return 'pro'
+      if (resolvedName === 'pro') return 'business'
+      if (resolvedName === 'business') return 'enterprise'
       return null
     },
 
     // Config do próximo plano
     getUpgradePlanConfig: (): PlanConfig | null => {
-      const next = planName === 'starter' ? 'pro'
-                 : planName === 'pro' ? 'business'
-                 : planName === 'business' ? 'enterprise'
+      const next = resolvedName === 'starter' ? 'pro'
+                 : resolvedName === 'pro' ? 'business'
+                 : resolvedName === 'business' ? 'enterprise'
                  : null
       return next ? PLAN_CONFIGS[next] : null
     },
@@ -100,7 +102,7 @@ export function usePlan() {
       const symbol = currency === 'USD' ? '$' : 'R$'
       return `${symbol}${price.toFixed(0)}`
     }
-  }), [planName, planConfig])
+  }), [rawPlanName, resolvedName, planConfig])
 
   return helpers
 }
