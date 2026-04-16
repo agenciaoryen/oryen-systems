@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { supabase } from '@/lib/supabase'
+// Data fetched via /api/staff/orgs/[orgId] (supabaseAdmin, bypasses RLS)
 import { resolvePlanConfig, PLAN_CONFIGS, type PlanName } from '@/lib/planConfig'
 import {
   ArrowLeft, Building2, Users, Bot, MessageSquare, Calendar,
@@ -109,26 +109,21 @@ export default function StaffOrgDetailPage() {
     }
   }, [authLoading, user, isStaff, router])
 
-  // Load org data
+  // Load org data via API (usa supabaseAdmin, bypass RLS)
   const loadData = useCallback(async () => {
     if (!orgId) return
     setLoading(true)
     try {
-      const [orgRes, usersRes, instancesRes, agentsRes, leadsRes, msgsRes] = await Promise.all([
-        supabase.from('orgs').select('*').eq('id', orgId).single(),
-        supabase.from('users').select('id, full_name, email, role, created_at').eq('org_id', orgId).order('created_at'),
-        supabase.from('whatsapp_instances').select('id, instance_name, status, phone_number, created_at').eq('org_id', orgId),
-        supabase.from('agents').select('id, name, agent_type, is_active').eq('org_id', orgId),
-        supabase.from('leads').select('id', { count: 'exact', head: true }).eq('org_id', orgId),
-        supabase.from('leads').select('id', { count: 'exact', head: true }).eq('org_id', orgId).not('last_message_at', 'is', null),
-      ])
+      const res = await fetch(`/api/staff/orgs/${orgId}`)
+      if (!res.ok) throw new Error('Erro ao buscar org')
+      const data = await res.json()
 
-      if (orgRes.data) setOrg(orgRes.data)
-      if (usersRes.data) setUsers(usersRes.data)
-      if (instancesRes.data) setInstances(instancesRes.data)
-      if (agentsRes.data) setAgents(agentsRes.data)
-      setLeadCount(leadsRes.count || 0)
-      setMessageCount(msgsRes.count || 0)
+      setOrg(data.org)
+      setUsers(data.users)
+      setInstances(data.instances)
+      setAgents(data.agents)
+      setLeadCount(data.lead_count)
+      setMessageCount(data.message_count)
     } catch (err) {
       console.error('Error loading org:', err)
     } finally {

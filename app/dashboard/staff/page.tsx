@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { supabase } from '@/lib/supabase'
+// Data fetched via /api/staff/orgs (supabaseAdmin, bypasses RLS)
 import {
   Building2, Users, Search, ChevronRight, Shield,
   Wifi, WifiOff, Bot, MessageSquare, Calendar,
@@ -73,35 +73,14 @@ export default function StaffOrgsPage() {
     }
   }, [authLoading, user, isStaff, router])
 
-  // Carregar orgs com contagens
+  // Carregar orgs via API (usa supabaseAdmin, bypass RLS)
   const loadOrgs = useCallback(async () => {
     setLoading(true)
     try {
-      const { data: orgsData } = await supabase
-        .from('orgs')
-        .select('id, name, plan, plan_status, niche, created_at')
-        .order('created_at', { ascending: false })
-
-      if (!orgsData) { setLoading(false); return }
-
-      // Buscar contagens em paralelo
-      const enriched = await Promise.all(
-        orgsData.map(async (org) => {
-          const [usersRes, leadsRes, agentsRes] = await Promise.all([
-            supabase.from('users').select('id', { count: 'exact', head: true }).eq('org_id', org.id),
-            supabase.from('leads').select('id', { count: 'exact', head: true }).eq('org_id', org.id),
-            supabase.from('agents').select('id', { count: 'exact', head: true }).eq('org_id', org.id),
-          ])
-          return {
-            ...org,
-            _user_count: usersRes.count || 0,
-            _lead_count: leadsRes.count || 0,
-            _agent_count: agentsRes.count || 0,
-          }
-        })
-      )
-
-      setOrgs(enriched)
+      const res = await fetch('/api/staff/orgs')
+      if (!res.ok) throw new Error('Erro ao buscar orgs')
+      const data = await res.json()
+      setOrgs(data)
     } catch (err) {
       console.error('Error loading orgs:', err)
     } finally {
