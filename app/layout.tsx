@@ -79,8 +79,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                var t = localStorage.getItem('oryen-theme');
-                if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+                if (!/^\\/sites\\//.test(window.location.pathname)) {
+                  var t = localStorage.getItem('oryen-theme');
+                  if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+                }
               } catch(e) {}
             `,
           }}

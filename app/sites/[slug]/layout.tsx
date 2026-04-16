@@ -8,6 +8,7 @@ import SiteHeader from './components/SiteHeader'
 import SiteFooter from './components/SiteFooter'
 import WhatsAppButton from './components/WhatsAppButton'
 import CookieConsent from './components/CookieConsent'
+import ForceDarkTheme from './components/ForceDarkTheme'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -68,6 +69,7 @@ export default async function SiteLayout({
         '--site-accent': site.accent_color || '#F0A030',
       } as React.CSSProperties}
     >
+      <ForceDarkTheme />
       <SiteHeader site={site} />
       <main className="flex-1">
         {children}
