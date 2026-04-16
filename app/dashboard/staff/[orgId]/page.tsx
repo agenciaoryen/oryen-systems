@@ -25,7 +25,6 @@ interface OrgDetail {
   plan_started_at: string | null
   trial_ends_at: string | null
   niche: string | null
-  created_at: string
 }
 
 interface OrgUser {
@@ -241,7 +240,6 @@ export default function StaffOrgDetailPage() {
           </div>
           <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
             {org.niche && <span>{NICHE_LABELS[org.niche] || org.niche}</span>}
-            <span>Criada em {new Date(org.created_at).toLocaleDateString('pt-BR')}</span>
             {org.plan_started_at && (
               <span>Plano desde {new Date(org.plan_started_at).toLocaleDateString('pt-BR')}</span>
             )}

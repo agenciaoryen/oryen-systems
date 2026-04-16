@@ -22,8 +22,8 @@ export async function GET(request: NextRequest) {
 
     const { data: orgsData, error } = await supabaseAdmin
       .from('orgs')
-      .select('id, name, plan, plan_status, niche, created_at')
-      .order('created_at', { ascending: false })
+      .select('id, name, plan, plan_status, plan_started_at, niche')
+      .order('name')
 
     if (error) {
       console.error('[Staff Orgs] Supabase error:', error.message, error.details, error.hint)

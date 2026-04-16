@@ -20,8 +20,9 @@ interface OrgRow {
   name: string
   plan: string
   plan_status: string
+  plan_started_at: string | null
   niche: string | null
-  created_at: string
+  trial_ends_at: string | null
   _user_count?: number
   _lead_count?: number
   _agent_count?: number
