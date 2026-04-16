@@ -186,10 +186,56 @@ export const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
 // PLANOS LEGADOS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const LEGACY_PLAN_MAP: Record<LegacyPlanName, PlanName> = {
-  basic: 'starter',
-  gold: 'pro',
-  diamond: 'business',
+// Configs dedicados para planos legados (não mapeiam 1:1 para os novos)
+const LEGACY_PLAN_CONFIGS: Record<LegacyPlanName, PlanConfig> = {
+  basic: {
+    name: 'starter', // resolve para starter na tipagem, mas com features próprias
+    displayName: 'Basic (Legado)',
+    priceUsd: 19,
+    priceBrl: 97,
+    features: {
+      hasAiAgents: false,
+      hasAutomations: false,
+      hasReports: false,
+      hasApiAccess: false,
+      hasCampaigns: false,
+      hasTrafficManager: false,
+      hasAdvancedDashboard: false,
+      hasAiAnalytics: false,
+      hasCustomPipeline: true,
+      hasWhatsappIntegration: true,
+      hasOfficialWhatsapp: false,
+      hasPrioritySupport: false,
+      hasAccountManager: false,
+      hasFinancialModule: false,
+      hasAdvancedFinancial: false,
+    },
+    limits: {
+      maxUsers: 1,
+      maxActiveLeads: 300,
+      maxMonthlyMessages: 300,
+      maxWhatsappNumbers: 1,
+      maxProperties: 20,
+      maxDocumentsPerMonth: 5,
+      maxSites: 1,
+    }
+  },
+  gold: {
+    name: 'pro',
+    displayName: 'Gold (Legado)',
+    priceUsd: 49,
+    priceBrl: 247,
+    features: { ...PLAN_CONFIGS.pro.features },
+    limits: { ...PLAN_CONFIGS.pro.limits },
+  },
+  diamond: {
+    name: 'business',
+    displayName: 'Diamond (Legado)',
+    priceUsd: 99,
+    priceBrl: 497,
+    features: { ...PLAN_CONFIGS.business.features },
+    limits: { ...PLAN_CONFIGS.business.limits },
+  },
 }
 
 /**
@@ -199,8 +245,8 @@ export function resolvePlanConfig(planName: string): PlanConfig {
   if (planName in PLAN_CONFIGS) {
     return PLAN_CONFIGS[planName as PlanName]
   }
-  if (planName in LEGACY_PLAN_MAP) {
-    return PLAN_CONFIGS[LEGACY_PLAN_MAP[planName as LegacyPlanName]]
+  if (planName in LEGACY_PLAN_CONFIGS) {
+    return LEGACY_PLAN_CONFIGS[planName as LegacyPlanName]
   }
   return PLAN_CONFIGS.starter
 }
@@ -232,6 +278,8 @@ export const PLAN_AGENT_ACCESS: Record<PlanName, string[] | '*'> = {
  */
 export function planHasAgent(planName: string, agentSlug: string): boolean {
   const config = resolvePlanConfig(planName)
+  // Plano sem AI não tem acesso a nenhum agente
+  if (!config.features.hasAiAgents) return false
   const access = PLAN_AGENT_ACCESS[config.name]
   if (access === '*') return true
   return access.includes(agentSlug)
