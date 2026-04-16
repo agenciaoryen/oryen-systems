@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contrato de Licenca SaaS — Oryen + Cartao de Todos / Amor Saude</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #1a1a2e;
+    background: #fff;
+    padding: 40px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  @media print {
+    body { padding: 20px; font-size: 11px; }
+    .page-break { page-break-before: always; }
+    .no-print { display: none; }
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 4px;
+    color: #0d0d1a;
+    letter-spacing: -0.3px;
+  }
+
+  h2 {
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    color: #5a7ae6;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 32px;
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0d0d1a;
+    margin: 28px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e8ecf4;
+  }
+
+  h4 {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    margin: 16px 0 8px;
+  }
+
+  p { margin: 8px 0; text-align: justify; }
+
+  .header-block {
+    text-align: center;
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 3px solid #5a7ae6;
+  }
+
+  .header-block .logo {
+    font-family: 'Inter', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 8px;
+    color: #5a7ae6;
+    margin-bottom: 16px;
+  }
+
+  .parties {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0 32px;
+  }
+
+  .party-box {
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #e8ecf4;
+    background: #f8f9fc;
+  }
+
+  .party-box .label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #5a7ae6;
+    margin-bottom: 8px;
+  }
+
+  .party-box .name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0d0d1a;
+    margin-bottom: 4px;
+  }
+
+  .party-box .detail {
+    font-size: 11px;
+    color: #555;
+    line-height: 1.5;
+  }
+
+  .clause { margin: 20px 0; }
+
+  .clause-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0d0d1a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: #f0f2f8;
+    border-left: 4px solid #5a7ae6;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .evolution-box {
+    margin: 16px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fc 0%, #eef1fa 100%);
+    border: 1px solid #d4daf0;
+    border-radius: 10px;
+  }
+
+  .evolution-box h4 {
+    color: #5a7ae6;
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+
+  .evolution-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .evo-card {
+    padding: 12px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e0e4ef;
+  }
+
+  .evo-card .evo-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .evo-card .evo-before { color: #999; }
+  .evo-card .evo-after { color: #5a7ae6; }
+
+  .evo-card .evo-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+
+  th {
+    background: #f0f2f8;
+    color: #333;
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 12px;
+    border: 1px solid #dde1ec;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  td {
+    padding: 10px 12px;
+    border: 1px solid #e8ecf4;
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) td { background: #fafbfe; }
+
+  ul, ol {
+    margin: 8px 0 8px 24px;
+  }
+
+  li {
+    margin: 4px 0;
+    text-align: justify;
+  }
+
+  .highlight {
+    background: #eef1fa;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-left: 4px solid #5a7ae6;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+
+  .signatures {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 60px;
+    padding-top: 20px;
+  }
+
+  .sig-block {
+    text-align: center;
+    padding-top: 60px;
+    border-top: 1px solid #333;
+  }
+
+  .sig-block .sig-name {
+    font-weight: 700;
+    font-size: 12px;
+    color: #0d0d1a;
+  }
+
+  .sig-block .sig-role {
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+  }
+
+  .sig-block .sig-cnpj {
+    font-size: 10px;
+    color: #999;
+    margin-top: 2px;
+  }
+
+  .footer-note {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid #e8ecf4;
+    font-size: 10px;
+    color: #999;
+    text-align: center;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-included { background: #dcfce7; color: #166534; }
+  .badge-addon { background: #fef3c7; color: #92400e; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CABECALHO -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="header-block">
+  <div class="logo">ORYEN</div>
+  <h1>Contrato de Licenca de Software como Servico (SaaS)</h1>
+  <h2>Plataforma de Inteligencia Artificial para Gestao Comercial</h2>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- PARTES -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="parties">
+  <div class="party-box">
+    <div class="label">Contratante 1</div>
+    <div class="name">Administradora de Cartao de Todos Lajeado RS Ltda</div>
+    <div class="detail">
+      CNPJ: 37.761.093/0001-87<br>
+      Rua Coronel Joao Batista de Mello, 375<br>
+      Centro, Lajeado/RS — CEP 95.900-182
+    </div>
+  </div>
+  <div class="party-box">
+    <div class="label">Contratante 2</div>
+    <div class="name">Amor Saude Lajeado Rio Grande do Sul Ltda</div>
+    <div class="detail">
+      CNPJ: 38.444.272/0001-53<br>
+      Rua Carlos Fett Filho, 66<br>
+      Centro, Lajeado/RS — CEP 95.900-038
+    </div>
+  </div>
+</div>
+
+<div class="party-box" style="margin-bottom: 24px;">
+  <div class="label">Contratada</div>
+  <div class="name">Oryen Company</div>
+  <div class="detail">
+    CNPJ: 53.788.433/0001-10<br>
+    Lajeado, Rio Grande do Sul<br>
+    Doravante denominada <strong>ORYEN</strong>
+  </div>
+</div>
+
+<p>As partes acima qualificadas, doravante denominadas em conjunto <strong>CONTRATANTES</strong> (Cartao de Todos e Amor Saude) e <strong>CONTRATADA</strong> (Oryen), celebram o presente Contrato de Licenca de Software como Servico (SaaS), conforme as clausulas e condicoes a seguir:</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- PREAMBULO: EVOLUCAO DA PLATAFORMA -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<h3>Preambulo — Evolucao da Plataforma Oryen</h3>
+
+<p>As partes reconhecem que, desde as negociacoes iniciais, a plataforma Oryen passou por uma <strong>evolucao significativa</strong> em sua arquitetura, capacidades e modelo de negocio. O presente contrato substitui integralmente qualquer proposta, orcamento ou acordo anterior entre as partes, refletindo o estado atual da tecnologia.</p>
+
+<div class="evolution-box">
+  <h4>O que mudou na Oryen</h4>
+  <div class="evolution-grid">
+    <div class="evo-card">
+      <div class="evo-label evo-before">Antes (2025)</div>
+      <div class="evo-value">Automacoes customizadas em N8N, montadas caso a caso para cada cliente. Cada implementacao exigia semanas de desenvolvimento manual.</div>
+    </div>
+    <div class="evo-card">
+      <div class="evo-label evo-after">Agora (2026)</div>
+      <div class="evo-value">Plataforma SaaS completa com IA nativa, multi-tenant, pronta para uso. Sistema unificado com CRM, SDR, Follow-up, Analytics, tudo integrado.</div>
+    </div>
+  </div>
+
+  <h4 style="margin-top: 16px;">Principais avancos</h4>
+  <table>
+    <thead>
+      <tr><th>Recurso</th><th>Descricao</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Agente SDR com IA</strong></td>
+        <td>Atendimento automatico 24h via WhatsApp com inteligencia artificial. Qualifica leads, responde perguntas, agenda visitas e coleta informacoes — tudo de forma autonoma, com linguagem natural e personalizada para o nicho do cliente.</td>
+      </tr>
+      <tr>
+        <td><strong>Follow-up Inteligente</strong></td>
+        <td>Sistema automatizado de reengajamento de leads inativos. Sequencias personalizadas por IA que identificam o momento certo de retomar contato, com ate 5 tentativas progressivas.</td>
+      </tr>
+      <tr>
+        <td><strong>CRM Integrado</strong></td>
+        <td>Gestao completa de leads com pipeline visual, historico de conversas, tags, distribuicao entre vendedores e timeline de eventos — tudo alimentado automaticamente pela IA.</td>
+      </tr>
+      <tr>
+        <td><strong>Analytics com IA</strong></td>
+        <td>Dashboard de inteligencia de dados com funil de conversao, velocidade do pipeline, deteccao de gargalos, performance da equipe e projecao de receita.</td>
+      </tr>
+      <tr>
+        <td><strong>Site Profissional</strong></td>
+        <td>Site gerado automaticamente com SEO, formulario de contato integrado ao CRM e design responsivo.</td>
+      </tr>
+      <tr>
+        <td><strong>Documentos Inteligentes</strong></td>
+        <td>Templates de propostas e contratos com variaveis dinamicas, geracao automatica em PDF.</td>
+      </tr>
+      <tr>
+        <td><strong>Multi-WhatsApp</strong></td>
+        <td>Conexao de multiplos numeros de WhatsApp com roteamento inteligente de conversas.</td>
+      </tr>
+      <tr>
+        <td><strong>Alertas em Tempo Real</strong></td>
+        <td>Notificacoes instantaneas de leads quentes, visitas agendadas e acoes que requerem atencao humana.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="highlight">
+  <strong>Em resumo:</strong> a Oryen deixou de ser um servico de automacao customizada e se tornou uma plataforma de inteligencia artificial completa para gestao comercial. O cliente agora acessa um produto pronto, em constante evolucao, com atualizacoes automaticas e sem necessidade de desenvolvimento individual.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CLAUSULA 1: OBJETO -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="clause">
+  <div class="clause-title">Clausula 1a — Do Objeto</div>
+
+  <p><strong>1.1.</strong> O presente contrato tem por objeto a concessao de licenca de uso nao exclusiva da plataforma <strong>Oryen</strong>, na modalidade Software como Servico (SaaS), para utilizacao pelas CONTRATANTES em suas operacoes comerciais.</p>
+
+  <p><strong>1.2.</strong> A plataforma sera adaptada para o <strong>nicho de saude</strong> (clinicas, franquias de saude popular), contemplando as especificidades do setor em termos de linguagem, fluxos de atendimento e qualificacao de leads.</p>
+
+  <p><strong>1.3.</strong> Cada empresa CONTRATANTE tera sua propria <strong>organizacao (workspace) independente</strong> dentro da plataforma, com dados, usuarios, configuracoes e limites separados.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CLAUSULA 2: PLANOS E PRECOS -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="clause">
+  <div class="clause-title">Clausula 2a — Dos Planos, Precos e Recursos</div>
+
+  <p><strong>2.1.</strong> Cada organizacao (workspace) contratara individualmente um dos planos disponiveis da plataforma Oryen, conforme a tabela abaixo:</p>
+
+  <table>
+    <thead>
+      <tr><th>Plano</th><th>Usuarios</th><th>Leads Ativos</th><th>Msgs IA/mes</th><th>WhatsApp</th><th>Valor Mensal</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Starter</strong></td>
+        <td>1</td>
+        <td>500</td>
+        <td>500</td>
+        <td>1</td>
+        <td>R$ 249/mes</td>
+      </tr>
+      <tr>
+        <td><strong>Pro</strong></td>
+        <td>3</td>
+        <td>2.000</td>
+        <td>3.000</td>
+        <td>3</td>
+        <td>R$ 497/mes</td>
+      </tr>
+      <tr>
+        <td><strong>Business</strong></td>
+        <td>8</td>
+        <td>8.000</td>
+        <td>15.000</td>
+        <td>5</td>
+        <td>R$ 1.247/mes</td>
+      </tr>
+      <tr>
+        <td><strong>Enterprise</strong></td>
+        <td>25</td>
+        <td>30.000</td>
+        <td>50.000</td>
+        <td>10</td>
+        <td>Sob consulta</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>2.2.</strong> A escolha do plano para cada organizacao cabe exclusivamente as CONTRATANTES, conforme suas necessidades operacionais. A alteracao de plano (upgrade ou downgrade) pode ser solicitada a qualquer momento, com efeito no ciclo de cobranca seguinte.</p>
+
+  <p><strong>2.3.</strong> Caso uma organizacao necessite de limites superiores aos do plano contratado (ex: usuarios adicionais), poderao ser adquiridos <strong>add-ons</strong> avulsos:</p>
+
+  <table>
+    <thead>
+      <tr><th>Add-on</th><th>Unidade</th><th>Valor Mensal</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Usuario extra</td><td>+1 usuario</td><td>R$ 75/mes</td></tr>
+      <tr><td>Mensagens IA extras</td><td>+2.000 msgs</td><td>R$ 125/mes</td></tr>
+      <tr><td>WhatsApp extra</td><td>+1 numero</td><td>R$ 60/mes</td></tr>
+      <tr><td>Site extra</td><td>+1 site</td><td>R$ 100/mes</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>2.4.</strong> Os valores dos planos e add-ons sao os mesmos praticados para todos os clientes da plataforma Oryen, sem distincao de nicho ou segmento, garantindo transparencia e igualdade comercial.</p>
+
+  <p><strong>2.5.</strong> Nao ha cobranca de taxa de setup, implementacao ou configuracao inicial.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CLAUSULA 3: SERVICOS ADICIONAIS -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="clause">
+  <div class="clause-title">Clausula 3a — Dos Servicos Adicionais (Add-ons de Servico)</div>
+
+  <p><strong>3.1.</strong> Alem da licenca da plataforma, a ORYEN podera oferecer servicos complementares opcionais, contratados separadamente:</p>
+
+  <table>
+    <thead>
+      <tr><th>Servico</th><th>Descricao</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Gestao de Trafego Pago</strong></td>
+        <td>Criacao, otimizacao e gestao de campanhas em Meta Ads e Google Ads para geracao de leads qualificados</td>
+        <td><span class="badge badge-addon">Disponivel em Breve</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>3.2.</strong> Os servicos adicionais possuem precificacao e termos proprios, independentes da licenca da plataforma, e serao formalizados mediante aditivo contratual quando contratados.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CLAUSULA 4: PRAZO DE ATIVACAO -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="clause">
+  <div class="clause-title">Clausula 4a — Do Prazo de Ativacao e Vigencia</div>
+
+  <p><strong>4.1. Prazo de ativacao:</strong> A ORYEN tera o prazo maximo de <strong>21 (vinte e um) dias corridos</strong> a partir da assinatura deste contrato para disponibilizar a plataforma adaptada ao nicho de saude e pronta para uso pelas CONTRATANTES.</p>
+
+  <p><strong>4.2. Data de inicio da cobranca:</strong> A cobranca da primeira mensalidade ocorrera somente apos a ativacao efetiva da plataforma para cada organizacao, nao incidindo valores durante o periodo de implementacao.</p>
+
+  <p><strong>4.3. Vigencia:</strong> O presente contrato tem vigencia por prazo <strong>indeterminado</strong>, podendo ser rescindido por qualquer das partes mediante comunicacao por escrito com antecedencia minima de <strong>30 (trinta) dias</strong>.</p>
+
+  <p><strong>4.4.</strong> Nao ha clausula de permanencia minima. As CONTRATANTES podem cancelar a qualquer momento, respeitado o aviso previo do paragrafo anterior.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CLAUSULA 5: PAGAMENTO -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="clause">
+  <div class="clause-title">Clausula 5a — Da Contraprestacao e Pagamento</div>
+
+  <p><strong>5.1.</strong> O pagamento sera realizado mensalmente, ate o <strong>5o (quinto) dia util</strong> de cada mes de vigencia, mediante boleto bancario, PIX ou cartao de credito, conforme preferencia das CONTRATANTES.</p>
+
+  <p><strong>5.2.</strong> Cada organizacao (workspace) gera uma fatura independente, podendo as CONTRATANTES optar por planos diferentes para cada operacao.</p>
+
+  <p><strong>5.3.</strong> Em caso de atraso no pagamento superior a <strong>15 (quinze) dias</strong>, a ORYEN podera suspender temporariamente o acesso a plataforma, reativando-o em ate 24 horas apos a regularizacao do pagamento.</p>
+
+  <p><strong>5.4.</strong> Os valores poderao ser reajustados anualmente pelo IPCA acumulado dos ultimos 12 meses, mediante comunicacao previa de 60 dias.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CLAUSULA 6: OBRIGACOES ORYEN -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="clause">
+  <div class="clause-title">Clausula 6a — Das Obrigacoes da Oryen</div>
+
+  <p>Sao obrigacoes da ORYEN:</p>
+  <ul>
+    <li>Disponibilizar a plataforma em ambiente cloud com disponibilidade minima de <strong>99,5%</strong> (uptime), exceto manutencoes programadas com aviso previo de 48 horas;</li>
+    <li>Adaptar a plataforma para o nicho de saude dentro do prazo estabelecido na Clausula 4a;</li>
+    <li>Prestar suporte tecnico via WhatsApp e e-mail em ate <strong>24 horas uteis</strong>;</li>
+    <li>Realizar atualizacoes periodicas de seguranca, performance e novas funcionalidades;</li>
+    <li>Fornecer treinamento basico a equipe das CONTRATANTES sobre uso da plataforma;</li>
+    <li>Manter a confidencialidade de todos os dados e informacoes das CONTRATANTES;</li>
+    <li>Garantir conformidade com a <strong>Lei Geral de Protecao de Dados (LGPD)</strong>.</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CLAUSULA 7: OBRIGACOES CONTRATANTES -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="clause">
+  <div class="clause-title">Clausula 7a — Das Obrigacoes das Contratantes</div>
+
+  <p>Sao obrigacoes das CONTRATANTES:</p>
+  <ul>
+    <li>Fornecer as informacoes necessarias para configuracao da plataforma (dados da empresa, equipe, fluxos comerciais);</li>
+    <li>Designar um interlocutor para acompanhamento da implementacao;</li>
+    <li>Efetuar os pagamentos nas datas estabelecidas;</li>
+    <li>Utilizar a plataforma em conformidade com a legislacao vigente e os termos de uso;</li>
+    <li>Nao compartilhar credenciais de acesso com terceiros nao autorizados;</li>
+    <li>Comunicar a ORYEN sobre qualquer irregularidade ou problema tecnico identificado.</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CLAUSULA 8: PROPRIEDADE INTELECTUAL -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="clause">
+  <div class="clause-title">Clausula 8a — Da Propriedade Intelectual</div>
+
+  <p><strong>8.1.</strong> Todo o codigo-fonte, algoritmos, prompts de IA, logica de funcionamento, arquitetura tecnica, integracoes, metodologias e demais elementos que compoem a plataforma Oryen constituem <strong>propriedade exclusiva e integral da ORYEN</strong>.</p>
+
+  <p><strong>8.2.</strong> As CONTRATANTES adquirem exclusivamente o <strong>direito de uso</strong> da plataforma durante a vigencia contratual, nao adquirindo direitos de propriedade sobre a tecnologia.</p>
+
+  <p><strong>8.3.</strong> E expressamente proibido:</p>
+  <ul>
+    <li>Reproduzir, copiar ou clonar a plataforma ou qualquer de seus componentes;</li>
+    <li>Realizar engenharia reversa, descompilacao ou extracao de codigo;</li>
+    <li>Sublicenciar, ceder ou transferir o acesso a terceiros;</li>
+    <li>Utilizar a plataforma para desenvolver solucao concorrente.</li>
+  </ul>
+
+  <p><strong>8.4.</strong> Os dados inseridos pelas CONTRATANTES (leads, conversas, documentos) sao de <strong>propriedade exclusiva das CONTRATANTES</strong>. Em caso de rescisao, a ORYEN disponibilizara exportacao dos dados em formato padrao (CSV/JSON) pelo prazo de 30 dias apos o encerramento.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CLAUSULA 9: CONFIDENCIALIDADE -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="clause">
+  <div class="clause-title">Clausula 9a — Da Confidencialidade e Protecao de Dados</div>
+
+  <p><strong>9.1.</strong> As partes se comprometem a manter em sigilo todas as informacoes confidenciais obtidas em razao deste contrato, incluindo dados comerciais, estrategias, bases de dados e informacoes de clientes/pacientes.</p>
+
+  <p><strong>9.2.</strong> A ORYEN se compromete a tratar os dados pessoais em conformidade com a <strong>LGPD (Lei 13.709/2018)</strong>, atuando como operadora de dados, sendo as CONTRATANTES as controladoras.</p>
+
+  <p><strong>9.3.</strong> A obrigacao de confidencialidade permanece vigente por <strong>2 (dois) anos</strong> apos o termino deste contrato.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CLAUSULA 10: RESCISAO -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="clause">
+  <div class="clause-title">Clausula 10a — Da Rescisao</div>
+
+  <p><strong>10.1.</strong> O contrato podera ser rescindido:</p>
+  <ul>
+    <li><strong>Sem justa causa:</strong> por qualquer das partes, mediante comunicacao escrita com 30 dias de antecedencia;</li>
+    <li><strong>Por justa causa:</strong> imediatamente, em caso de descumprimento de clausula contratual nao sanado em 15 dias apos notificacao;</li>
+    <li><strong>Por inadimplencia:</strong> apos 30 dias de atraso no pagamento, a ORYEN podera rescindir unilateralmente com efeito imediato.</li>
+  </ul>
+
+  <p><strong>10.2.</strong> Em caso de rescisao por qualquer motivo, as CONTRATANTES perdem o acesso a plataforma apos o ultimo dia do periodo pago, ressalvado o direito de exportacao de dados conforme Clausula 8.4.</p>
+
+  <p><strong>10.3.</strong> Nao ha multa rescisoria.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CLAUSULA 11: SLA -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="clause">
+  <div class="clause-title">Clausula 11a — Do Nivel de Servico (SLA)</div>
+
+  <p><strong>11.1.</strong> A ORYEN garante os seguintes niveis de servico:</p>
+
+  <table>
+    <thead>
+      <tr><th>Metrica</th><th>Garantia</th><th>Compensacao</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Disponibilidade (uptime)</td>
+        <td>99,5% mensal</td>
+        <td>Credito de 10% da mensalidade por violacao</td>
+      </tr>
+      <tr>
+        <td>Suporte tecnico</td>
+        <td>Resposta em ate 24h uteis</td>
+        <td>Priorizacao do chamado</td>
+      </tr>
+      <tr>
+        <td>Manutencoes programadas</td>
+        <td>Aviso previo de 48h</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>11.2.</strong> Nao se consideram indisponibilidade: manutencoes programadas, indisponibilidade de servicos de terceiros (WhatsApp, APIs externas), ou eventos de forca maior.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CLAUSULA 12: DISPOSICOES GERAIS -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="clause">
+  <div class="clause-title">Clausula 12a — Das Disposicoes Gerais</div>
+
+  <p><strong>12.1.</strong> O presente contrato substitui integralmente qualquer proposta, orcamento, pre-contrato ou acordo anterior entre as partes, verbal ou escrito.</p>
+
+  <p><strong>12.2.</strong> Alteracoes neste contrato somente serao validas mediante aditivo por escrito assinado por ambas as partes.</p>
+
+  <p><strong>12.3.</strong> A tolerancia de qualquer das partes quanto ao descumprimento de clausula nao constituira novacao ou renunciaa ao direito de exigir seu cumprimento.</p>
+
+  <p><strong>12.4.</strong> As partes elegem o foro da Comarca de <strong>Lajeado/RS</strong> para dirimir quaisquer controversias oriundas deste contrato, com exclusao de qualquer outro, por mais privilegiado que seja.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- ASSINATURAS -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<p style="text-align: center; margin-top: 40px; color: #666; font-size: 12px;">
+  Lajeado/RS, _____ de __________________ de 2026.
+</p>
+
+<div class="signatures">
+  <div class="sig-block">
+    <div class="sig-name">Oryen Company</div>
+    <div class="sig-role">Contratada</div>
+    <div class="sig-cnpj">CNPJ: 53.788.433/0001-10</div>
+  </div>
+  <div class="sig-block">
+    <div class="sig-name">Adm. Cartao de Todos Lajeado RS Ltda</div>
+    <div class="sig-role">Contratante 1</div>
+    <div class="sig-cnpj">CNPJ: 37.761.093/0001-87</div>
+  </div>
+</div>
+
+<div class="signatures" style="margin-top: 40px;">
+  <div class="sig-block">
+    <div class="sig-name">Amor Saude Lajeado RS Ltda</div>
+    <div class="sig-role">Contratante 2</div>
+    <div class="sig-cnpj">CNPJ: 38.444.272/0001-53</div>
+  </div>
+  <div class="sig-block">
+    <div class="sig-name">Testemunha</div>
+    <div class="sig-role">Nome: ___________________________</div>
+    <div class="sig-cnpj">CPF: ___________________________</div>
+  </div>
+</div>
+
+<div class="footer-note">
+  Este contrato foi elaborado em 2 (duas) vias de igual teor e forma, para um so efeito juridico.<br>
+  Plataforma Oryen — oryen.ai
+</div>
+
+</body>
+</html>
