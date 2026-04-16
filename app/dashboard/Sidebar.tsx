@@ -36,6 +36,7 @@ import {
   Target,
   CreditCard,
   Zap,
+  Shield,
   type LucideIcon
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
@@ -66,7 +67,8 @@ const TRANSLATIONS = {
       portfolio: 'Portfólio',
       propertyStats: 'Estatísticas',
       mySite: 'Meu Site',
-      settings: 'Configurações'
+      settings: 'Configurações',
+      staffPanel: 'Painel Staff',
     },
     sections: {
       ai: 'IA & Automação',
@@ -74,6 +76,7 @@ const TRANSLATIONS = {
       properties: 'Propriedades',
       finance: 'Finanças',
       tools: 'Ferramentas',
+      staff: 'Staff',
     },
     comingSoon: '(Em Breve)',
     logout: 'Sair da Conta',
@@ -106,7 +109,8 @@ const TRANSLATIONS = {
       portfolio: 'Portfolio',
       propertyStats: 'Statistics',
       mySite: 'My Site',
-      settings: 'Settings'
+      settings: 'Settings',
+      staffPanel: 'Staff Panel',
     },
     sections: {
       ai: 'AI & Automation',
@@ -114,6 +118,7 @@ const TRANSLATIONS = {
       properties: 'Properties',
       finance: 'Finance',
       tools: 'Tools',
+      staff: 'Staff',
     },
     comingSoon: '(Coming Soon)',
     logout: 'Logout',
@@ -146,7 +151,8 @@ const TRANSLATIONS = {
       portfolio: 'Portafolio',
       propertyStats: 'Estadísticas',
       mySite: 'Mi Sitio',
-      settings: 'Configuración'
+      settings: 'Configuración',
+      staffPanel: 'Panel Staff',
     },
     sections: {
       ai: 'IA & Automatización',
@@ -154,6 +160,7 @@ const TRANSLATIONS = {
       properties: 'Propiedades',
       finance: 'Finanzas',
       tools: 'Herramientas',
+      staff: 'Staff',
     },
     comingSoon: '(Próximamente)',
     logout: 'Cerrar Sesión',
@@ -335,6 +342,7 @@ export default function Sidebar() {
     properties: true,
     finance: true,
     tools: true,
+    staff: false,
   })
 
   const toggleSection = (key: string) => {
@@ -402,6 +410,15 @@ export default function Sidebar() {
         { href: '/dashboard/financiamento', label: t.menu.financing, icon: Calculator, requiredNiche: NICHES_WITH_DOCUMENTS },
       ],
     },
+    // Staff section — only rendered when isStaff is true
+    ...(isStaff ? [{
+      key: 'staff',
+      title: t.sections.staff,
+      collapsible: true,
+      items: [
+        { href: '/dashboard/staff', label: t.menu.staffPanel, icon: Shield },
+      ],
+    }] : []),
     {
       key: 'config',
       items: [
