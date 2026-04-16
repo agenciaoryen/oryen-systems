@@ -614,7 +614,7 @@ function BillingPageContent() {
   const [cancelingAddon, setCancelingAddon] = useState<string | null>(null)
   const [confirmCancelAddonId, setConfirmCancelAddonId] = useState<string | null>(null)
 
-  const colors = PLAN_COLORS[plan]
+  const colors = (PLAN_COLORS as any)[plan] || PLAN_COLORS.starter
 
   // Carregar uso atual de cada recurso
   useEffect(() => {
@@ -867,7 +867,7 @@ function BillingPageContent() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className={`p-3 rounded-xl ${colors.bg} ${colors.text}`}>
-                {PLAN_ICONS[plan]}
+                {(PLAN_ICONS as any)[plan] || PLAN_ICONS.starter}
               </div>
               <div>
                 <div className="flex items-center gap-3">
