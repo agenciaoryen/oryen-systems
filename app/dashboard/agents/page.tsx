@@ -548,7 +548,7 @@ function SolutionCard({
 
 export default function AgentsPage() {
   const router = useRouter()
-  const { user, org, loading: authLoading } = useAuth()
+  const { user, org, activeOrg, loading: authLoading } = useAuth()
   const { plan, planConfig } = usePlan()
 
   // Dados
@@ -590,7 +590,7 @@ export default function AgentsPage() {
   const ui = UI[lang]
 
   // Nicho da org ativa
-  const activeNiche = org?.niche || null
+  const activeNiche = activeOrg?.niche || org?.niche || null
 
   // Filtrar soluções por nicho + categoria + busca
   const filteredSolutions = solutions.filter(s => {
