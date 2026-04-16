@@ -26,7 +26,7 @@ export function usePlan() {
   // Resolve plano legado ou novo para config válida
   const rawPlanName = activePlan || 'starter'
   const planConfig = resolvePlanConfig(rawPlanName)
-  const planName = planConfig.name // Sempre retorna o nome novo (starter/pro/business/enterprise)
+  const planName = rawPlanName // Preserva o nome real (inclusive legados como 'basic')
 
   // Helpers memoizados
   const helpers = useMemo(() => ({
