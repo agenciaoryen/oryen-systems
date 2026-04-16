@@ -10,8 +10,10 @@ import {
   ArrowLeft, Building2, Users, Bot, MessageSquare, Calendar,
   Crown, Zap, Star, Shield, Loader2, Clock, CheckCircle2,
   XCircle, AlertTriangle, ChevronDown, Smartphone, TrendingUp,
-  CreditCard, Play, Pause, UserPlus, Mail, Globe
+  CreditCard, Play, Pause, UserPlus, Mail, Globe, SlidersHorizontal,
+  Plus, Minus, Save
 } from 'lucide-react'
+import { ADDON_CONFIGS, calculateAddonBonus, type AddonType } from '@/lib/addons'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -50,6 +52,13 @@ interface AgentRow {
   is_active: boolean
 }
 
+interface OrgAddon {
+  id: string
+  addon_type: string
+  quantity: number
+  status: string
+}
+
 const PLAN_COLORS: Record<string, { color: string; bg: string; icon: any }> = {
   starter: { color: '#9CA3AF', bg: 'rgba(156,163,175,0.12)', icon: Star },
   pro: { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', icon: Zap },
@@ -86,6 +95,7 @@ export default function StaffOrgDetailPage() {
   const [users, setUsers] = useState<OrgUser[]>([])
   const [instances, setInstances] = useState<WhatsAppInstance[]>([])
   const [agents, setAgents] = useState<AgentRow[]>([])
+  const [addons, setAddons] = useState<OrgAddon[]>([])
   const [loading, setLoading] = useState(true)
   const [leadCount, setLeadCount] = useState(0)
   const [messageCount, setMessageCount] = useState(0)
@@ -121,6 +131,7 @@ export default function StaffOrgDetailPage() {
       setUsers(data.users)
       setInstances(data.instances)
       setAgents(data.agents)
+      setAddons(data.addons || [])
       setLeadCount(data.lead_count)
       setMessageCount(data.message_count)
     } catch (err) {
@@ -309,6 +320,14 @@ export default function StaffOrgDetailPage() {
           <CreditCard size={16} /> Alterar Plano
         </button>
       </div>
+
+      {/* Limit Overrides */}
+      <LimitOverrides
+        orgId={org.id}
+        planConfig={planConfig}
+        addons={addons}
+        onUpdate={loadData}
+      />
 
       {/* Users Table */}
       <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
@@ -562,6 +581,130 @@ export default function StaffOrgDetailPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENTE: AJUSTE DE LIMITES (STAFF)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const LIMIT_ADJUSTMENTS: { addonType: AddonType; label: string; unitLabel: string; icon: any; color: string }[] = [
+  { addonType: 'extra_users', label: 'Usuarios extras', unitLabel: 'usuarios', icon: Users, color: 'var(--color-primary)' },
+  { addonType: 'extra_messages', label: 'Msgs IA extras', unitLabel: '(x2.000)', icon: MessageSquare, color: '#8B5CF6' },
+  { addonType: 'extra_whatsapp', label: 'WhatsApp extras', unitLabel: 'numeros', icon: Smartphone, color: '#25D366' },
+  { addonType: 'extra_sites', label: 'Sites extras', unitLabel: 'sites', icon: Globe, color: '#3B82F6' },
+]
+
+function LimitOverrides({
+  orgId,
+  planConfig,
+  addons,
+  onUpdate,
+}: {
+  orgId: string
+  planConfig: ReturnType<typeof resolvePlanConfig>
+  addons: OrgAddon[]
+  onUpdate: () => void
+}) {
+  const [saving, setSaving] = useState<string | null>(null)
+
+  const getAddonQty = (type: string) => {
+    const addon = addons.find(a => a.addon_type === type && a.status === 'active')
+    return addon?.quantity || 0
+  }
+
+  const handleChange = async (addonType: AddonType, delta: number) => {
+    const current = getAddonQty(addonType)
+    const newQty = Math.max(0, current + delta)
+
+    setSaving(addonType)
+    try {
+      const res = await fetch('/api/staff/addons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ org_id: orgId, addon_type: addonType, quantity: newQty }),
+      })
+      if (!res.ok) throw new Error('Erro ao salvar')
+      onUpdate()
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  const limitKeyMap: Record<AddonType, keyof typeof planConfig.limits> = {
+    extra_users: 'maxUsers',
+    extra_messages: 'maxMonthlyMessages',
+    extra_whatsapp: 'maxWhatsappNumbers',
+    extra_sites: 'maxSites',
+  }
+
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+      <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--color-border)' }}>
+        <SlidersHorizontal size={16} style={{ color: 'var(--color-text-secondary)' }} />
+        <h2 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+          Ajuste de Limites
+        </h2>
+        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ color: '#F59E0B', background: 'rgba(245,158,11,0.12)' }}>
+          Staff
+        </span>
+      </div>
+
+      <div className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
+        {LIMIT_ADJUSTMENTS.map(({ addonType, label, unitLabel, icon: Icon, color }) => {
+          const qty = getAddonQty(addonType)
+          const config = ADDON_CONFIGS[addonType]
+          const baseLimit = planConfig.limits[limitKeyMap[addonType]] ?? 0
+          const bonus = qty * config.unitAmount
+          const effective = baseLimit === -1 ? -1 : baseLimit + bonus
+          const isSaving = saving === addonType
+
+          return (
+            <div key={addonType} className="px-4 py-3 flex items-center gap-3">
+              <Icon size={16} style={{ color }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                  {label}
+                </p>
+                <p className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
+                  Base: {baseLimit === -1 ? '∞' : baseLimit}
+                  {bonus > 0 && <span style={{ color: '#22C55E' }}> +{bonus}</span>}
+                  {' = '}
+                  <strong>{effective === -1 ? '∞' : effective}</strong>
+                  {' '}{unitLabel}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => handleChange(addonType, -1)}
+                  disabled={qty === 0 || isSaving}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg transition-all disabled:opacity-30"
+                  style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}
+                >
+                  <Minus size={12} style={{ color: 'var(--color-text-secondary)' }} />
+                </button>
+
+                <span className="w-8 text-center text-sm font-bold" style={{ color: qty > 0 ? '#22C55E' : 'var(--color-text-disabled)' }}>
+                  {isSaving ? <Loader2 size={14} className="animate-spin mx-auto" style={{ color: 'var(--color-text-secondary)' }} /> : qty}
+                </span>
+
+                <button
+                  onClick={() => handleChange(addonType, 1)}
+                  disabled={isSaving}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg transition-all disabled:opacity-30"
+                  style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}
+                >
+                  <Plus size={12} style={{ color: 'var(--color-text-secondary)' }} />
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

@@ -20,13 +20,14 @@ export async function GET(
 
     const { orgId } = await params
 
-    const [orgRes, usersRes, instancesRes, agentsRes, leadsRes, msgsRes] = await Promise.all([
+    const [orgRes, usersRes, instancesRes, agentsRes, leadsRes, msgsRes, addonsRes] = await Promise.all([
       supabaseAdmin.from('orgs').select('*').eq('id', orgId).single(),
       supabaseAdmin.from('users').select('id, full_name, email, role, created_at').eq('org_id', orgId).order('created_at'),
       supabaseAdmin.from('whatsapp_instances').select('id, instance_name, status, phone_number, created_at').eq('org_id', orgId),
       supabaseAdmin.from('agents').select('id, name, agent_type, is_active').eq('org_id', orgId),
       supabaseAdmin.from('leads').select('id', { count: 'exact', head: true }).eq('org_id', orgId),
       supabaseAdmin.from('leads').select('id', { count: 'exact', head: true }).eq('org_id', orgId).not('last_message_at', 'is', null),
+      supabaseAdmin.from('org_addons').select('id, addon_type, quantity, status').eq('org_id', orgId).eq('status', 'active'),
     ])
 
     if (!orgRes.data) {
@@ -40,6 +41,7 @@ export async function GET(
       agents: agentsRes.data || [],
       lead_count: leadsRes.count || 0,
       message_count: msgsRes.count || 0,
+      addons: addonsRes.data || [],
     })
   } catch (err) {
     return safeErrorResponse(err, 'Erro ao buscar organização')
