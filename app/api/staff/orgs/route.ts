@@ -9,7 +9,12 @@ import { requireAuth, supabaseAdmin, safeErrorResponse } from '@/lib/api-auth'
 export async function GET(request: NextRequest) {
   try {
     const auth = await requireAuth(request)
-    if (auth instanceof NextResponse) return auth
+    if (auth instanceof NextResponse) {
+      console.error('[Staff Orgs] Auth failed — user not authenticated')
+      return auth
+    }
+
+    console.log('[Staff Orgs] Auth OK:', { userId: auth.userId, role: auth.role, isStaff: auth.isStaff })
 
     if (!auth.isStaff) {
       return NextResponse.json({ error: 'Acesso restrito a staff' }, { status: 403 })
@@ -21,7 +26,7 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('[Staff Orgs] Error:', error)
+      console.error('[Staff Orgs] Supabase error:', error.message, error.details, error.hint)
       return NextResponse.json({ error: 'Erro ao buscar organizações' }, { status: 500 })
     }
 
@@ -48,6 +53,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(enriched)
   } catch (err) {
+    console.error('[Staff Orgs] Uncaught error:', err instanceof Error ? err.message : err)
     return safeErrorResponse(err, 'Erro ao buscar organizações')
   }
 }
