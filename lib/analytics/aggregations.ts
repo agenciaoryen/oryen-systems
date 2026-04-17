@@ -238,9 +238,9 @@ export async function getBrokerPerformance(
       .gte('created_at', startDate.toISOString()),
     supabase
       .from('users')
-      .select('id, full_name, name')
+      .select('id, full_name')
       .eq('org_id', orgId)
-      .in('role', ['owner', 'admin', 'vendedor']),
+      .in('role', ['admin', 'vendedor']),
     supabase
       .from('follow_up_queue')
       .select('lead_id, status')
@@ -255,7 +255,7 @@ export async function getBrokerPerformance(
   const users = usersRes.data || []
   const followUps = followUpRes.data || []
 
-  const userMap = new Map(users.map(u => [u.id, u.full_name || u.name || 'Sem nome']))
+  const userMap = new Map(users.map(u => [u.id, u.full_name || 'Sem nome']))
 
   // Agrupar leads e follow-ups por assigned_to
   const brokerData: Record<string, {
