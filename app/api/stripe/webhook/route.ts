@@ -74,18 +74,28 @@ export async function POST(req: NextRequest) {
           // ─── Plano principal checkout ───
           const planName = session.metadata.plan_name
 
+          // Buscar subscription para detectar trial
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+          const isTrialing = subscription.status === 'trialing'
+
+          const updateData: any = {
+            plan: planName,
+            plan_status: isTrialing ? 'trial' : 'active',
+            plan_started_at: new Date().toISOString(),
+            billing_customer_id: session.customer as string,
+            billing_subscription_id: subscriptionId,
+          }
+
+          if (isTrialing && subscription.trial_end) {
+            updateData.trial_ends_at = new Date(subscription.trial_end * 1000).toISOString()
+          }
+
           await supabase
             .from('orgs')
-            .update({
-              plan: planName,
-              plan_status: 'active',
-              plan_started_at: new Date().toISOString(),
-              billing_customer_id: session.customer as string,
-              billing_subscription_id: subscriptionId
-            })
+            .update(updateData)
             .eq('id', orgId)
 
-          console.log(`✅ Checkout completed: org ${orgId} upgraded to ${planName}`)
+          console.log(`✅ Checkout completed: org ${orgId} -> ${planName} (${isTrialing ? 'trial' : 'active'})`)
         }
         break
       }
@@ -110,9 +120,16 @@ export async function POST(req: NextRequest) {
           const updateData: any = {
             plan_status: planStatus
           }
-          
+
           if (planName) {
             updateData.plan = planName
+          }
+
+          // Manter trial_ends_at quando em trial, limpar quando ativa
+          if (subscription.status === 'trialing' && subscription.trial_end) {
+            updateData.trial_ends_at = new Date(subscription.trial_end * 1000).toISOString()
+          } else if (subscription.status === 'active') {
+            updateData.trial_ends_at = null
           }
 
           await supabase

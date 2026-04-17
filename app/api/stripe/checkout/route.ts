@@ -78,11 +78,22 @@ export async function POST(req: NextRequest) {
       ? `${baseUrl}${body.cancelUrl}`
       : `${baseUrl}/dashboard/settings/billing?canceled=true`
 
+    // Detectar se é o primeiro checkout da org (elegível ao trial de 3 dias)
+    const { data: orgForTrial } = await supabase
+      .from('orgs')
+      .select('billing_subscription_id, plan_status')
+      .eq('id', orgId)
+      .single()
+
+    const isFirstCheckout = !orgForTrial?.billing_subscription_id
+    const trialDays = isFirstCheckout ? 3 : undefined
+
     // Criar sessão de checkout
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
+      payment_method_collection: 'always',
       line_items: [
         {
           price: priceId,
@@ -92,6 +103,7 @@ export async function POST(req: NextRequest) {
       success_url: successUrl,
       cancel_url: cancelUrl,
       subscription_data: {
+        ...(trialDays ? { trial_period_days: trialDays } : {}),
         metadata: {
           org_id: orgId,
           plan_name: planName
