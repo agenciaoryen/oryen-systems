@@ -32,10 +32,6 @@ const T = {
     niche: 'Segmento',
     nicheOptions: {
       real_estate: 'Imobiliária / Corretor',
-      insurance: 'Seguros',
-      solar: 'Energia Solar',
-      consulting: 'Consultoria',
-      other: 'Outro',
     },
     step2Title: 'Suas Preferências',
     step2Subtitle: 'Configure idioma, moeda e fuso horário.',
@@ -76,10 +72,6 @@ const T = {
     niche: 'Industry',
     nicheOptions: {
       real_estate: 'Real Estate',
-      insurance: 'Insurance',
-      solar: 'Solar Energy',
-      consulting: 'Consulting',
-      other: 'Other',
     },
     step2Title: 'Your Preferences',
     step2Subtitle: 'Set your language, currency and timezone.',
@@ -120,10 +112,6 @@ const T = {
     niche: 'Segmento',
     nicheOptions: {
       real_estate: 'Inmobiliaria / Corredor',
-      insurance: 'Seguros',
-      solar: 'Energía Solar',
-      consulting: 'Consultoría',
-      other: 'Otro',
     },
     step2Title: 'Tus Preferencias',
     step2Subtitle: 'Configura idioma, moneda y zona horaria.',
@@ -470,9 +458,9 @@ function OnboardingPage() {
                   value={lang}
                   onChange={(v) => setLang(v as Lang)}
                   options={[
-                    { value: 'pt', label: 'Portugues' },
+                    { value: 'pt', label: 'Português' },
                     { value: 'en', label: 'English' },
-                    { value: 'es', label: 'Espanol' },
+                    { value: 'es', label: 'Español' },
                   ]}
                 />
               </div>

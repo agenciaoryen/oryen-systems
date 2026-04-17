@@ -76,7 +76,6 @@ export async function POST(request: NextRequest) {
         currency: currency || 'BRL',
         timezone: timezone || 'America/Sao_Paulo',
         status: 'active',
-        updated_at: new Date().toISOString(),
       })
       .eq('id', user_id)
 
