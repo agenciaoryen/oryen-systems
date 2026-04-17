@@ -210,10 +210,14 @@ function DocumentCard({ doc, lang, t, onRefresh }: { doc: LeadDocument; lang: La
   return (
     <>
       <div
-        className="rounded-xl p-3 sm:p-4 transition-all group"
+        role="button"
+        tabIndex={0}
+        onClick={handleView}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleView() } }}
+        className="rounded-xl p-3 sm:p-4 transition-all cursor-pointer"
         style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-hover)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-subtle)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.background = 'var(--color-bg-hover)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-subtle)'; e.currentTarget.style.background = 'var(--color-bg-elevated)' }}
       >
         <div className="flex items-start gap-2 sm:gap-3">
           {/* Icon */}
@@ -225,42 +229,55 @@ function DocumentCard({ doc, lang, t, onRefresh }: { doc: LeadDocument; lang: La
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-medium text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>{doc.name}</h3>
-              {/* Menu */}
-              <div className="relative shrink-0">
+              {/* Action buttons */}
+              <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                {/* Ver button - sempre visivel */}
                 <button
-                  onClick={() => setShowMenu(!showMenu)}
-                  className="p-1.5 rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100"
-                  style={{ color: 'var(--color-text-muted)' }}
+                  onClick={handleView}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                  style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}
+                  title={t.view}
                 >
-                  <MoreVertical size={16} />
+                  <Eye size={14} />
+                  <span className="hidden sm:inline">{t.view}</span>
                 </button>
-                {showMenu && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                    <div
-                      className="absolute right-0 top-full mt-1 rounded-lg shadow-xl z-20 py-1 min-w-[140px]"
-                      style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
-                    >
-                      <button onClick={handleView} className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors hover:bg-[var(--color-bg-hover)]" style={{ color: 'var(--color-text-secondary)' }}>
-                        <Eye size={14} /> {t.view}
-                      </button>
-                      {(doc.status === 'draft' || doc.status === 'ready') && doc.lead && (
-                        <button onClick={() => { setShowMenu(false); setShowSendModal(true) }} className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors hover:bg-[var(--color-bg-hover)]" style={{ color: 'var(--color-text-secondary)' }}>
-                          <Send size={14} /> {t.send}
+                {/* Menu */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="p-1.5 rounded-lg transition-colors"
+                    style={{ color: 'var(--color-text-secondary)', background: 'var(--color-bg-hover)', border: '1px solid var(--color-border-subtle)' }}
+                    title={t.actions}
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+                  {showMenu && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                      <div
+                        className="absolute right-0 top-full mt-1 rounded-lg shadow-xl z-20 py-1 min-w-[160px]"
+                        style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}
+                      >
+                        {(doc.status === 'draft' || doc.status === 'ready') && doc.lead && (
+                          <button onClick={() => { setShowMenu(false); setShowSendModal(true) }} className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors hover:bg-[var(--color-bg-hover)]" style={{ color: 'var(--color-text-secondary)' }}>
+                            <Send size={14} /> {t.send}
+                          </button>
+                        )}
+                        {doc.file_url && (
+                          <a href={doc.file_url} target="_blank" rel="noopener noreferrer" onClick={() => setShowMenu(false)} className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors hover:bg-[var(--color-bg-hover)]" style={{ color: 'var(--color-text-secondary)' }}>
+                            <Download size={14} /> {t.download}
+                          </a>
+                        )}
+                        {(((doc.status === 'draft' || doc.status === 'ready') && doc.lead) || doc.file_url) && (
+                          <hr style={{ borderColor: 'var(--color-border-subtle)' }} className="my-1" />
+                        )}
+                        <button onClick={() => { setShowMenu(false); setShowDeleteConfirm(true) }} className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors hover:bg-[var(--color-bg-hover)]" style={{ color: 'var(--color-error)' }}>
+                          <Trash2 size={14} /> {t.delete}
                         </button>
-                      )}
-                      {doc.file_url && (
-                        <a href={doc.file_url} target="_blank" rel="noopener noreferrer" onClick={() => setShowMenu(false)} className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors hover:bg-[var(--color-bg-hover)]" style={{ color: 'var(--color-text-secondary)' }}>
-                          <Download size={14} /> {t.download}
-                        </a>
-                      )}
-                      <hr style={{ borderColor: 'var(--color-border-subtle)' }} className="my-1" />
-                      <button onClick={() => { setShowMenu(false); setShowDeleteConfirm(true) }} className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors hover:bg-[var(--color-bg-hover)]" style={{ color: 'var(--color-error)' }}>
-                        <Trash2 size={14} /> {t.delete}
-                      </button>
-                    </div>
-                  </>
-                )}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -269,6 +286,7 @@ function DocumentCard({ doc, lang, t, onRefresh }: { doc: LeadDocument; lang: La
               {doc.lead && (
                 <Link
                   href={`/dashboard/crm/${doc.lead.id}`}
+                  onClick={(e) => e.stopPropagation()}
                   className="text-xs flex items-center gap-1 transition-colors"
                   style={{ color: 'var(--color-text-muted)' }}
                 >

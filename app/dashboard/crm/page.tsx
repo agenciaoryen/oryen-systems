@@ -873,7 +873,7 @@ export default function CrmPage() {
             </button>
 
             {isTagFilterOpen && (
-              <div className="absolute top-full right-0 mt-2 w-56 rounded-xl shadow-2xl z-50 overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+              <div className="fixed inset-x-4 bottom-4 sm:absolute sm:inset-x-auto sm:bottom-auto sm:top-full sm:right-0 sm:mt-2 sm:w-56 rounded-xl shadow-2xl z-50 overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
                 <div className="p-2 flex justify-between items-center" style={{ borderBottom: '1px solid var(--color-border)' }}>
                   <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{t.filterByTags}</span>
                   {selectedTags.length > 0 && (
@@ -886,7 +886,7 @@ export default function CrmPage() {
                     </button>
                   )}
                 </div>
-                <div className="max-h-[200px] overflow-y-auto p-2 space-y-1">
+                <div className="max-h-[60vh] sm:max-h-[200px] overflow-y-auto p-2 space-y-1">
                   {tags.length === 0 ? (
                     <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>Nenhuma tag criada</p>
                   ) : (
@@ -1596,7 +1596,7 @@ export default function CrmPage() {
       {/* Click outside para fechar filtro de tags */}
       {isTagFilterOpen && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-40 sm:bg-transparent bg-black/40"
           onClick={() => setIsTagFilterOpen(false)}
         />
       )}
