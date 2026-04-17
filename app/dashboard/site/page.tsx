@@ -153,6 +153,7 @@ export default function SiteSettingsPage() {
     primary_color: '#4B6BFB',
     accent_color: '#F0A030',
     hero_text_color: '#FFFFFF',
+    site_theme: 'dark' as 'dark' | 'light',
     currency: 'BRL',
     bio: '',
     avatar_url: '',
@@ -192,6 +193,7 @@ export default function SiteSettingsPage() {
           primary_color: data.site.primary_color || '#4B6BFB',
           accent_color: data.site.accent_color || '#F0A030',
           hero_text_color: data.site.hero_text_color || '#FFFFFF',
+          site_theme: data.site.site_theme || 'dark',
           currency: data.site.currency || 'BRL',
           bio: data.site.bio || '',
           avatar_url: data.site.avatar_url || '',
@@ -704,6 +706,31 @@ export default function SiteSettingsPage() {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Tema do Site */}
+        <div>
+          <label className={labelClass} style={labelStyle}>Tema do site</label>
+          <div className="flex gap-3">
+            {([
+              { value: 'dark', label: 'Escuro', desc: 'Fundo escuro, texto claro', bg: '#0A0A0F', text: '#fff', border: '#2A2A3C' },
+              { value: 'light', label: 'Claro', desc: 'Fundo claro, texto escuro', bg: '#FFFFFF', text: '#1A1A2E', border: '#E2E2EC' },
+            ] as const).map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => updateField('site_theme', opt.value)}
+                className="flex-1 rounded-xl p-4 text-left transition-all"
+                style={{
+                  background: opt.bg,
+                  border: `2px solid ${form.site_theme === opt.value ? 'var(--color-primary)' : opt.border}`,
+                  boxShadow: form.site_theme === opt.value ? '0 0 0 3px rgba(75,107,251,0.2)' : 'none',
+                }}
+              >
+                <p className="text-sm font-bold" style={{ color: opt.text }}>{opt.label}</p>
+                <p className="text-[11px] mt-0.5" style={{ color: opt.text, opacity: 0.6 }}>{opt.desc}</p>
+              </button>
+            ))}
           </div>
         </div>
 

@@ -150,6 +150,7 @@ export async function PUT(request: NextRequest) {
           meta_description: body.meta_description || null,
           og_image_url: body.og_image_url || null,
           currency: body.currency || 'BRL',
+          site_theme: body.site_theme || 'dark',
           is_published: false,
           custom_domain: body.custom_domain || null,
           domain_status: null,

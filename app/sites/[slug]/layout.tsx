@@ -69,7 +69,7 @@ export default async function SiteLayout({
         '--site-accent': site.accent_color || '#F0A030',
       } as React.CSSProperties}
     >
-      <SiteThemeLock />
+      <SiteThemeLock theme={site.site_theme || 'dark'} />
       <SiteHeader site={site} />
       <main className="flex-1">
         {children}
