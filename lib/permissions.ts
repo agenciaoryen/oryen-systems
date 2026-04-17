@@ -9,8 +9,6 @@
 //   - <custom>   → roles criados pelo admin (ex: "gestor", "aux_financas").
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { supabaseAdmin } from './api-auth'
-
 // ─── MÓDULOS DISPONÍVEIS (chaves de permissão) ───
 
 export const PERMISSION_MODULES = [
@@ -121,56 +119,3 @@ export function evaluatePermission(
   return role.permissions?.[module] === true
 }
 
-// ─── FETCH: carrega o role completo do usuário ───
-
-export async function getUserRole(
-  userId: string,
-  orgId: string | null
-): Promise<{ roleSlug: string; orgRole: OrgRole | null }> {
-  const { data: user } = await supabaseAdmin
-    .from('users')
-    .select('role')
-    .eq('id', userId)
-    .single()
-
-  const roleSlug = user?.role || 'vendedor'
-
-  // staff não tem entrada em org_roles — é global
-  if (roleSlug === 'staff' || !orgId) {
-    return { roleSlug, orgRole: null }
-  }
-
-  const { data: role } = await supabaseAdmin
-    .from('org_roles')
-    .select('*')
-    .eq('org_id', orgId)
-    .eq('slug', roleSlug)
-    .maybeSingle()
-
-  return { roleSlug, orgRole: role as OrgRole | null }
-}
-
-// ─── SERVER HELPER: checar permissão numa API route ───
-
-export async function checkPermission(
-  userId: string,
-  orgId: string | null,
-  module: PermissionModule
-): Promise<boolean> {
-  const { roleSlug, orgRole } = await getUserRole(userId, orgId)
-  if (hasFullAccess(roleSlug)) return true
-  return evaluatePermission(orgRole, module)
-}
-
-// ─── LIST: roles de uma org ───
-
-export async function listOrgRoles(orgId: string): Promise<OrgRole[]> {
-  const { data } = await supabaseAdmin
-    .from('org_roles')
-    .select('*')
-    .eq('org_id', orgId)
-    .order('is_system', { ascending: false })
-    .order('created_at', { ascending: true })
-
-  return (data as OrgRole[]) || []
-}
