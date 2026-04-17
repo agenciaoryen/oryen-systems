@@ -66,12 +66,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create organization' }, { status: 500 })
     }
 
-    // 2. Vincular user à org como owner + salvar preferências
+    // 2. Vincular user à org como admin + salvar preferências
     const { error: userError } = await supabase
       .from('users')
       .update({
         org_id: org.id,
-        role: 'owner',
+        role: 'admin',
         language: language || 'pt',
         currency: currency || 'BRL',
         timezone: timezone || 'America/Sao_Paulo',
@@ -99,6 +99,51 @@ export async function POST(request: NextRequest) {
     if (stagesError) {
       console.error('[Onboarding] Erro ao criar pipeline stages:', stagesError)
       // Não faz rollback — org e user já estão ok, stages pode ser criado depois
+    }
+
+    // 4. Criar roles de sistema da org (admin + vendedor)
+    const { error: rolesError } = await supabase
+      .from('org_roles')
+      .insert([
+        {
+          org_id: org.id,
+          name: 'Administrador',
+          slug: 'admin',
+          is_system: true,
+          is_admin: true,
+          permissions: {},
+        },
+        {
+          org_id: org.id,
+          name: 'Vendedor',
+          slug: 'vendedor',
+          is_system: true,
+          is_admin: false,
+          permissions: {
+            crm: true,
+            messages: true,
+            calendar: true,
+            distribution: false,
+            goals: true,
+            agents: false,
+            follow_up: false,
+            analytics: false,
+            portfolio: true,
+            property_stats: false,
+            site: false,
+            financial: false,
+            subscription: false,
+            whatsapp: false,
+            documents: true,
+            reports: true,
+            financing: false,
+          },
+        },
+      ])
+
+    if (rolesError) {
+      console.error('[Onboarding] Erro ao criar org_roles:', rolesError)
+      // Não faz rollback — roles do sistema podem ser recriados depois via seeder
     }
 
     return NextResponse.json({
