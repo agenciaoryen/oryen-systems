@@ -40,6 +40,8 @@ import {
   type LucideIcon
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
+import { usePermissions } from '@/lib/usePermissions'
+import type { PermissionModule } from '@/lib/permissions'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -201,6 +203,7 @@ interface SidebarItem {
   badge?: boolean
   isComingSoon?: boolean
   requiredNiche?: string[]
+  permission?: PermissionModule
 }
 
 interface SidebarGroup {
@@ -232,6 +235,9 @@ export default function Sidebar() {
   // Configurações de Localização
   const userLang = ((user as any)?.language as Language) || 'pt'
   const t = TRANSLATIONS[userLang]
+
+  // Permissões por role
+  const { can: canAccess, loading: permsLoading } = usePermissions()
 
   // Estados
   const { theme, toggleTheme } = useTheme()
@@ -363,9 +369,9 @@ export default function Sidebar() {
       title: t.sections.ai,
       collapsible: true,
       items: [
-        { href: '/dashboard/agents', label: t.menu.agents, icon: Bot },
-        { href: '/dashboard/follow-up', label: t.menu.followUp, icon: Zap },
-        { href: '/dashboard/analytics', label: t.menu.analytics, icon: TrendingUp },
+        { href: '/dashboard/agents', label: t.menu.agents, icon: Bot, permission: 'agents' },
+        { href: '/dashboard/follow-up', label: t.menu.followUp, icon: Zap, permission: 'follow_up' },
+        { href: '/dashboard/analytics', label: t.menu.analytics, icon: TrendingUp, permission: 'analytics' },
       ],
     },
     {
@@ -373,11 +379,11 @@ export default function Sidebar() {
       title: t.sections.commercial,
       collapsible: true,
       items: [
-        { href: '/dashboard/crm', label: t.menu.crm, icon: Users },
-        { href: '/dashboard/messages', label: t.menu.conversations, icon: MessageSquare },
-        { href: '/dashboard/calendar', label: t.menu.calendar, icon: CalendarDays },
-        { href: '/dashboard/distribuicao', label: t.menu.distribution, icon: Shuffle },
-        { href: '/dashboard/metas', label: t.menu.goals, icon: Target },
+        { href: '/dashboard/crm', label: t.menu.crm, icon: Users, permission: 'crm' },
+        { href: '/dashboard/messages', label: t.menu.conversations, icon: MessageSquare, permission: 'messages' },
+        { href: '/dashboard/calendar', label: t.menu.calendar, icon: CalendarDays, permission: 'calendar' },
+        { href: '/dashboard/distribuicao', label: t.menu.distribution, icon: Shuffle, permission: 'distribution' },
+        { href: '/dashboard/metas', label: t.menu.goals, icon: Target, permission: 'goals' },
       ],
     },
     {
@@ -385,9 +391,9 @@ export default function Sidebar() {
       title: t.sections.properties,
       collapsible: true,
       items: [
-        { href: '/dashboard/portfolio', label: t.menu.portfolio, icon: Home, requiredNiche: NICHES_WITH_DOCUMENTS },
-        { href: '/dashboard/portfolio/estatisticas', label: t.menu.propertyStats, icon: BarChart3, requiredNiche: NICHES_WITH_DOCUMENTS },
-        { href: '/dashboard/site', label: t.menu.mySite, icon: Globe, requiredNiche: NICHES_WITH_DOCUMENTS },
+        { href: '/dashboard/portfolio', label: t.menu.portfolio, icon: Home, requiredNiche: NICHES_WITH_DOCUMENTS, permission: 'portfolio' },
+        { href: '/dashboard/portfolio/estatisticas', label: t.menu.propertyStats, icon: BarChart3, requiredNiche: NICHES_WITH_DOCUMENTS, permission: 'property_stats' },
+        { href: '/dashboard/site', label: t.menu.mySite, icon: Globe, requiredNiche: NICHES_WITH_DOCUMENTS, permission: 'site' },
       ],
     },
     {
@@ -395,8 +401,8 @@ export default function Sidebar() {
       title: t.sections.finance,
       collapsible: true,
       items: [
-        { href: '/dashboard/financeiro', label: t.menu.financial, icon: DollarSign },
-        { href: '/dashboard/settings/billing', label: t.menu.subscription, icon: CreditCard },
+        { href: '/dashboard/financeiro', label: t.menu.financial, icon: DollarSign, permission: 'financial' },
+        { href: '/dashboard/settings/billing', label: t.menu.subscription, icon: CreditCard, permission: 'subscription' },
       ],
     },
     {
@@ -404,10 +410,10 @@ export default function Sidebar() {
       title: t.sections.tools,
       collapsible: true,
       items: [
-        { href: '/dashboard/whatsapp', label: t.menu.whatsapp, icon: Smartphone, requiredNiche: NICHES_WITH_DOCUMENTS },
-        { href: '/dashboard/documents', label: t.menu.documents, icon: FileText, requiredNiche: NICHES_WITH_DOCUMENTS },
-        { href: '/dashboard/relatorios', label: t.menu.reports, icon: BarChart3 },
-        { href: '/dashboard/financiamento', label: t.menu.financing, icon: Calculator, requiredNiche: NICHES_WITH_DOCUMENTS },
+        { href: '/dashboard/whatsapp', label: t.menu.whatsapp, icon: Smartphone, requiredNiche: NICHES_WITH_DOCUMENTS, permission: 'whatsapp' },
+        { href: '/dashboard/documents', label: t.menu.documents, icon: FileText, requiredNiche: NICHES_WITH_DOCUMENTS, permission: 'documents' },
+        { href: '/dashboard/relatorios', label: t.menu.reports, icon: BarChart3, permission: 'reports' },
+        { href: '/dashboard/financiamento', label: t.menu.financing, icon: Calculator, requiredNiche: NICHES_WITH_DOCUMENTS, permission: 'financing' },
       ],
     },
     // Staff section — only rendered when isStaff is true
@@ -427,18 +433,25 @@ export default function Sidebar() {
     },
   ]
 
-  // Filtrar links baseado no nicho da org e remover grupos vazios
+  // Filtrar links baseado no nicho da org, permissões do role e remover grupos vazios
   const groups = useMemo(() => {
     return allGroups
       .map(group => ({
         ...group,
         items: group.items.filter(link => {
-          if (!link.requiredNiche) return true
-          return activeNiche && link.requiredNiche.includes(activeNiche)
+          // Filtro por nicho
+          if (link.requiredNiche && !(activeNiche && link.requiredNiche.includes(activeNiche))) {
+            return false
+          }
+          // Filtro por permissão (enquanto carregando, deixa passar)
+          if (link.permission && !permsLoading && !canAccess(link.permission)) {
+            return false
+          }
+          return true
         }),
       }))
       .filter(group => group.items.length > 0)
-  }, [allGroups, activeNiche])
+  }, [allGroups, activeNiche, canAccess, permsLoading])
 
 
   return (

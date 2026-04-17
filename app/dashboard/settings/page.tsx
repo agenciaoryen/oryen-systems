@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
+import PermissionsTab from './PermissionsTab'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -572,7 +573,9 @@ export default function SettingsPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<string>('vendedor')
   const [inviteLoading, setInviteLoading] = useState(false)
+  const [availableRoles, setAvailableRoles] = useState<{ slug: string; name: string }[]>([])
 
   // Estados para Empresa
   const [orgName, setOrgName] = useState('')
@@ -738,6 +741,23 @@ export default function SettingsPage() {
     if (activeTab === 'tags') fetchTags()
   }, [activeTab, fetchTeam, fetchPipeline, fetchTags])
 
+  // Carregar roles disponíveis para o modal de convite
+  useEffect(() => {
+    if (!isInviteModalOpen || !orgId) return
+    fetch(`/api/permissions/roles?orgId=${orgId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const list: { slug: string; name: string }[] = (data.roles || [])
+          .filter((r: any) => r.slug !== 'admin')
+          .map((r: any) => ({ slug: r.slug, name: r.name }))
+        // Adicionar admin ao final (opção de convidar outro admin)
+        const adminRole = (data.roles || []).find((r: any) => r.slug === 'admin')
+        if (adminRole) list.push({ slug: 'admin', name: adminRole.name })
+        setAvailableRoles(list)
+      })
+      .catch(() => setAvailableRoles([{ slug: 'vendedor', name: 'Vendedor' }]))
+  }, [isInviteModalOpen, orgId])
+
   // ─── FUNÇÕES DE PERFIL ───
   async function handleSaveProfile() {
     if (!user) return
@@ -812,7 +832,7 @@ export default function SettingsPage() {
       const response = await fetch('/api/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail, orgId: orgId })
+        body: JSON.stringify({ email: inviteEmail, orgId: orgId, role: inviteRole })
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error)
@@ -1139,6 +1159,7 @@ export default function SettingsPage() {
     { id: 'leadCard', label: t.tabs.leadCard, icon: Eye, adminOnly: true },
     { id: 'integrations', label: t.tabs.integrations, icon: Globe, adminOnly: true },
     { id: 'distribution', label: t.tabs.distribution, icon: Users, adminOnly: true },
+    { id: 'permissions', label: 'Permissões', icon: Shield, adminOnly: true },
   ]
 
   return (
@@ -1170,6 +1191,22 @@ export default function SettingsPage() {
                   className="w-full rounded-lg p-3 outline-none"
                   style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1 uppercase" style={{ color: 'var(--color-text-tertiary)' }}>Role / Permissão</label>
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value)}
+                  className="w-full rounded-lg p-3 outline-none"
+                  style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
+                >
+                  {availableRoles.map((r) => (
+                    <option key={r.slug} value={r.slug}>{r.name}</option>
+                  ))}
+                </select>
+                <p className="text-[10px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                  Configure permissões por role na aba <strong>Permissões</strong>.
+                </p>
               </div>
               <button
                 type="submit"
@@ -2394,6 +2431,11 @@ export default function SettingsPage() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* ABA: PERMISSÕES */}
+          {activeTab === 'permissions' && isAdmin && orgId && (
+            <PermissionsTab orgId={orgId} />
           )}
 
           {/* VERSÃO DO SISTEMA */}

@@ -9,11 +9,36 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
     const orgId = resolveOrgId(auth, body.orgId)
-    const { email } = body
+    const { email, role: requestedRole } = body
 
     // Validação básica
     if (!email) {
       return NextResponse.json({ error: 'Email é obrigatório' }, { status: 400 })
+    }
+
+    // ─── Resolver e validar o role solicitado ───
+    // Default: vendedor. Admin pode escolher qualquer role existente na org.
+    // Não permite atribuir 'staff' por convite.
+    let assignedRole = 'vendedor'
+    if (requestedRole && typeof requestedRole === 'string') {
+      if (requestedRole === 'staff') {
+        return NextResponse.json({ error: 'Role inválido' }, { status: 400 })
+      }
+      // Apenas admin/staff pode escolher role customizado
+      if (auth.role !== 'admin' && !auth.isStaff && requestedRole !== 'vendedor') {
+        return NextResponse.json({ error: 'Apenas admin pode definir roles' }, { status: 403 })
+      }
+      // Validar que o role existe na org
+      const { data: roleExists } = await supabaseAdmin
+        .from('org_roles')
+        .select('slug')
+        .eq('org_id', orgId)
+        .eq('slug', requestedRole)
+        .maybeSingle()
+      if (!roleExists) {
+        return NextResponse.json({ error: 'Role não existe nesta organização' }, { status: 400 })
+      }
+      assignedRole = requestedRole
     }
 
     // Verificar limite de usuários do plano
@@ -76,7 +101,7 @@ export async function POST(req: NextRequest) {
         .update({
           org_id: orgId,
           status: 'active',
-          role: 'vendedor'
+          role: assignedRole
         })
         .eq('id', userId)
       dbError = error
@@ -89,11 +114,9 @@ export async function POST(req: NextRequest) {
           id: userId,
           email: email,
           org_id: orgId,
-          role: 'vendedor',
+          role: assignedRole,
           status: 'active',
-          // --- CORREÇÃO AQUI ---
-          // Antes estava 'name', agora usamos 'full_name' que é o que existe no seu banco
-          full_name: email.split('@')[0] 
+          full_name: email.split('@')[0]
         })
       dbError = error
     }
