@@ -548,12 +548,12 @@ function SolutionCard({
 
 export default function AgentsPage() {
   const router = useRouter()
-  const { user, org, activeOrg, loading: authLoading } = useAuth()
+  const { user, activeOrg, activeOrgId, loading: authLoading } = useAuth()
   const { plan, planConfig } = usePlan()
 
   // Dados
   const { solutions, loading: loadingSolutions } = useAgentSolutions()
-  const { agents, loading: loadingAgents, refresh } = useOrgAgents(org?.id)
+  const { agents, loading: loadingAgents, refresh } = useOrgAgents(activeOrgId || undefined)
 
   // Uso real da API (contagens reais do banco)
   const [realUsage, setRealUsage] = useState<RealUsageData>({
@@ -562,11 +562,11 @@ export default function AgentsPage() {
   })
 
   useEffect(() => {
-    if (!org?.id) return
+    if (!activeOrgId) return
     const resources = ['messages', 'leads'] as const
     Promise.all(
       resources.map(r =>
-        fetch(`/api/plan-limit?org_id=${org.id}&resource=${r}`)
+        fetch(`/api/plan-limit?org_id=${activeOrgId}&resource=${r}`)
           .then(res => res.json())
           .then(data => ({ resource: r, current: data.current || 0, limit: data.limit ?? 0 }))
           .catch(() => ({ resource: r, current: 0, limit: 0 }))
@@ -576,7 +576,7 @@ export default function AgentsPage() {
       results.forEach(r => { map[r.resource] = { current: r.current, limit: r.limit } })
       setRealUsage(map as RealUsageData)
     })
-  }, [org?.id])
+  }, [activeOrgId])
 
   // UI State
   const [activeTab, setActiveTab] = useState<'agents' | 'solutions'>('solutions')
@@ -590,7 +590,7 @@ export default function AgentsPage() {
   const ui = UI[lang]
 
   // Nicho da org ativa
-  const activeNiche = activeOrg?.niche || org?.niche || null
+  const activeNiche = activeOrg?.niche || null
 
   // Filtrar soluções por nicho + categoria + busca
   const filteredSolutions = solutions.filter(s => {
@@ -640,7 +640,7 @@ export default function AgentsPage() {
 
   // Handlers
   const handleHire = async (solution: AgentSolution) => {
-    if (!org?.id) {
+    if (!activeOrgId) {
       toast.error('Organización no encontrada')
       return
     }
@@ -649,7 +649,7 @@ export default function AgentsPage() {
     setConfirmModal(null)
 
     try {
-      const { agent, error } = await hireAgent(org.id, solution.slug)
+      const { agent, error } = await hireAgent(activeOrgId, solution.slug)
 
       if (error) {
         toast.error(`${ui.error}: ${error}`)

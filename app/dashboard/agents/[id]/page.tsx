@@ -1036,7 +1036,7 @@ function CreateCampaignModal({
 export default function AgentDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { user, org } = useAuth()
+  const { user, activeOrgId } = useAuth()
   const { planConfig, displayName: planDisplayName } = usePlan()
   const agentId = params.id as string
 
@@ -1048,15 +1048,15 @@ export default function AgentDetailPage() {
   const [realLeads, setRealLeads] = useState<{ current: number; limit: number }>({ current: 0, limit: 0 })
 
   useEffect(() => {
-    if (!org?.id) return
+    if (!activeOrgId) return
     Promise.all([
-      fetch(`/api/plan-limit?org_id=${org.id}&resource=messages`).then(r => r.json()).catch(() => ({ current: 0, limit: 0 })),
-      fetch(`/api/plan-limit?org_id=${org.id}&resource=leads`).then(r => r.json()).catch(() => ({ current: 0, limit: 0 })),
+      fetch(`/api/plan-limit?org_id=${activeOrgId}&resource=messages`).then(r => r.json()).catch(() => ({ current: 0, limit: 0 })),
+      fetch(`/api/plan-limit?org_id=${activeOrgId}&resource=leads`).then(r => r.json()).catch(() => ({ current: 0, limit: 0 })),
     ]).then(([msgs, lds]) => {
       setRealMessages({ current: msgs.current || 0, limit: msgs.limit ?? 0 })
       setRealLeads({ current: lds.current || 0, limit: lds.limit ?? 0 })
     })
-  }, [org?.id])
+  }, [activeOrgId])
 
   const lang = ((user as any)?.language as Language) || 'es'
   const ui = UI[lang]
@@ -1326,7 +1326,7 @@ export default function AgentDetailPage() {
           <CreateCampaignModal
             isOpen={showCreateModal}
             agentId={agentId}
-            orgId={org?.id || ''}
+            orgId={activeOrgId || ''}
             userId={user?.id || ''}
             configSchema={solution?.campaign_config_schema || { fields: [] }}
             lang={lang}
