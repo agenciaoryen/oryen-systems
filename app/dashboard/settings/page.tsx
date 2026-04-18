@@ -541,20 +541,55 @@ type Language = keyof typeof TRANSLATIONS
 // CORES DISPONÍVEIS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+const COLOR_LABELS: Record<string, { pt: string; en: string; es: string }> = {
+  gray:    { pt: 'Cinza',     en: 'Gray',     es: 'Gris' },
+  blue:    { pt: 'Azul',      en: 'Blue',     es: 'Azul' },
+  amber:   { pt: 'Âmbar',     en: 'Amber',    es: 'Ámbar' },
+  cyan:    { pt: 'Ciano',     en: 'Cyan',     es: 'Cian' },
+  purple:  { pt: 'Roxo',      en: 'Purple',   es: 'Morado' },
+  indigo:  { pt: 'Índigo',    en: 'Indigo',   es: 'Índigo' },
+  emerald: { pt: 'Esmeralda', en: 'Emerald',  es: 'Esmeralda' },
+  rose:    { pt: 'Rosa',      en: 'Rose',     es: 'Rosa' },
+  green:   { pt: 'Verde',     en: 'Green',    es: 'Verde' },
+  red:     { pt: 'Vermelho',  en: 'Red',      es: 'Rojo' },
+  yellow:  { pt: 'Amarelo',   en: 'Yellow',   es: 'Amarillo' },
+  pink:    { pt: 'Pink',      en: 'Pink',     es: 'Rosa claro' },
+}
+
 const AVAILABLE_COLORS = [
-  { name: 'gray', label: 'Cinza', class: 'bg-gray-500' },
-  { name: 'blue', label: 'Azul', class: 'bg-blue-500' },
-  { name: 'amber', label: 'Âmbar', class: 'bg-amber-500' },
-  { name: 'cyan', label: 'Ciano', class: 'bg-cyan-500' },
-  { name: 'purple', label: 'Roxo', class: 'bg-purple-500' },
-  { name: 'indigo', label: 'Índigo', class: 'bg-indigo-500' },
-  { name: 'emerald', label: 'Esmeralda', class: 'bg-emerald-500' },
-  { name: 'rose', label: 'Rosa', class: 'bg-rose-500' },
-  { name: 'green', label: 'Verde', class: 'bg-green-500' },
-  { name: 'red', label: 'Vermelho', class: 'bg-red-500' },
-  { name: 'yellow', label: 'Amarelo', class: 'bg-yellow-500' },
-  { name: 'pink', label: 'Pink', class: 'bg-pink-500' },
+  { name: 'gray', class: 'bg-gray-500' },
+  { name: 'blue', class: 'bg-blue-500' },
+  { name: 'amber', class: 'bg-amber-500' },
+  { name: 'cyan', class: 'bg-cyan-500' },
+  { name: 'purple', class: 'bg-purple-500' },
+  { name: 'indigo', class: 'bg-indigo-500' },
+  { name: 'emerald', class: 'bg-emerald-500' },
+  { name: 'rose', class: 'bg-rose-500' },
+  { name: 'green', class: 'bg-green-500' },
+  { name: 'red', class: 'bg-red-500' },
+  { name: 'yellow', class: 'bg-yellow-500' },
+  { name: 'pink', class: 'bg-pink-500' },
 ]
+
+const DEFAULT_STAGE_LABELS: Record<string, { pt: string; en: string; es: string }> = {
+  new:             { pt: 'Novo Lead',        en: 'New Lead',         es: 'Nuevo Lead' },
+  contacted:       { pt: 'Em Atendimento',   en: 'In Contact',       es: 'En Contacto' },
+  visit_scheduled: { pt: 'Visita Agendada',  en: 'Visit Scheduled',  es: 'Visita Programada' },
+  visit_done:      { pt: 'Visita Realizada', en: 'Visit Done',       es: 'Visita Realizada' },
+  proposal:        { pt: 'Proposta Enviada', en: 'Proposal Sent',    es: 'Propuesta Enviada' },
+  negotiation:     { pt: 'Em Negociação',    en: 'In Negotiation',   es: 'En Negociación' },
+  won:             { pt: 'Fechado',          en: 'Closed Won',       es: 'Cerrado' },
+  lost:            { pt: 'Perdido',          en: 'Lost',             es: 'Perdido' },
+  qualified:       { pt: 'Qualificado',      en: 'Qualified',        es: 'Calificado' },
+}
+
+function getStageDisplayLabel(stage: { name: string; label: string }, lang: 'pt' | 'en' | 'es'): string {
+  const defaults = DEFAULT_STAGE_LABELS[stage.name]
+  if (!defaults) return stage.label
+  const allDefaults = [defaults.pt, defaults.en, defaults.es]
+  if (allDefaults.includes(stage.label)) return defaults[lang]
+  return stage.label
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
@@ -1722,7 +1757,7 @@ export default function SettingsPage() {
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <input
                           type="text"
-                          value={stage.label}
+                          value={getStageDisplayLabel(stage, userLang)}
                           onChange={(e) => {
                             const newLabel = e.target.value
                             setPipelineStages(prev => prev.map(s => s.id === stage.id ? { ...s, label: newLabel } : s))
@@ -1740,7 +1775,7 @@ export default function SettingsPage() {
                         <CustomSelect
                           value={stage.color}
                           onChange={(v) => handleUpdateStage(stage.id, { color: v })}
-                          options={AVAILABLE_COLORS.map(color => ({ value: color.name, label: color.label }))}
+                          options={AVAILABLE_COLORS.map(color => ({ value: color.name, label: COLOR_LABELS[color.name]?.[userLang] || color.name }))}
                         />
                       </div>
 
@@ -1798,7 +1833,7 @@ export default function SettingsPage() {
                     <CustomSelect
                       value={newStageColor}
                       onChange={(v) => setNewStageColor(v)}
-                      options={AVAILABLE_COLORS.map(color => ({ value: color.name, label: color.label }))}
+                      options={AVAILABLE_COLORS.map(color => ({ value: color.name, label: COLOR_LABELS[color.name]?.[userLang] || color.name }))}
                     />
                   </div>
                   <button
@@ -1876,7 +1911,7 @@ export default function SettingsPage() {
                     <CustomSelect
                       value={newTagColor}
                       onChange={(v) => setNewTagColor(v)}
-                      options={AVAILABLE_COLORS.map(color => ({ value: color.name, label: color.label }))}
+                      options={AVAILABLE_COLORS.map(color => ({ value: color.name, label: COLOR_LABELS[color.name]?.[userLang] || color.name }))}
                     />
                   </div>
                   <button

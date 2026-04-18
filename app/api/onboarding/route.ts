@@ -9,18 +9,26 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// Pipeline stages padrão para novas orgs
-// Pipeline padrão para imobiliárias/corretores
-const DEFAULT_PIPELINE_STAGES = [
-  { name: 'new', label: 'Novo Lead', color: '#6B7280', position: 0, is_active: true, is_won: false, is_lost: false },
-  { name: 'contacted', label: 'Em Atendimento', color: '#3B82F6', position: 1, is_active: true, is_won: false, is_lost: false },
-  { name: 'visit_scheduled', label: 'Visita Agendada', color: '#8B5CF6', position: 2, is_active: true, is_won: false, is_lost: false },
-  { name: 'visit_done', label: 'Visita Realizada', color: '#F59E0B', position: 3, is_active: true, is_won: false, is_lost: false },
-  { name: 'proposal', label: 'Proposta Enviada', color: '#F97316', position: 4, is_active: true, is_won: false, is_lost: false },
-  { name: 'negotiation', label: 'Em Negociação', color: '#EC4899', position: 5, is_active: true, is_won: false, is_lost: false },
-  { name: 'won', label: 'Fechado', color: '#10B981', position: 6, is_active: true, is_won: true, is_lost: false },
-  { name: 'lost', label: 'Perdido', color: '#EF4444', position: 7, is_active: true, is_won: false, is_lost: true },
-]
+// Pipeline stages padrão para novas orgs — labels por idioma
+const STAGE_LABELS = {
+  pt: { new: 'Novo Lead', contacted: 'Em Atendimento', visit_scheduled: 'Visita Agendada', visit_done: 'Visita Realizada', proposal: 'Proposta Enviada', negotiation: 'Em Negociação', won: 'Fechado', lost: 'Perdido' },
+  en: { new: 'New Lead', contacted: 'In Contact', visit_scheduled: 'Visit Scheduled', visit_done: 'Visit Done', proposal: 'Proposal Sent', negotiation: 'In Negotiation', won: 'Closed Won', lost: 'Lost' },
+  es: { new: 'Nuevo Lead', contacted: 'En Contacto', visit_scheduled: 'Visita Programada', visit_done: 'Visita Realizada', proposal: 'Propuesta Enviada', negotiation: 'En Negociación', won: 'Cerrado', lost: 'Perdido' },
+} as const
+
+function buildDefaultStages(lang: 'pt' | 'en' | 'es') {
+  const L = STAGE_LABELS[lang] || STAGE_LABELS.pt
+  return [
+    { name: 'new',             label: L.new,             color: '#6B7280', position: 0, is_active: true, is_won: false, is_lost: false },
+    { name: 'contacted',       label: L.contacted,       color: '#3B82F6', position: 1, is_active: true, is_won: false, is_lost: false },
+    { name: 'visit_scheduled', label: L.visit_scheduled, color: '#8B5CF6', position: 2, is_active: true, is_won: false, is_lost: false },
+    { name: 'visit_done',      label: L.visit_done,      color: '#F59E0B', position: 3, is_active: true, is_won: false, is_lost: false },
+    { name: 'proposal',        label: L.proposal,        color: '#F97316', position: 4, is_active: true, is_won: false, is_lost: false },
+    { name: 'negotiation',     label: L.negotiation,     color: '#EC4899', position: 5, is_active: true, is_won: false, is_lost: false },
+    { name: 'won',             label: L.won,             color: '#10B981', position: 6, is_active: true, is_won: true,  is_lost: false },
+    { name: 'lost',            label: L.lost,            color: '#EF4444', position: 7, is_active: true, is_won: false, is_lost: true },
+  ]
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -86,8 +94,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to link user to organization' }, { status: 500 })
     }
 
-    // 3. Criar pipeline stages padrão
-    const stages = DEFAULT_PIPELINE_STAGES.map(s => ({
+    // 3. Criar pipeline stages padrão (no idioma do usuário)
+    const userLang = (language === 'en' || language === 'es' ? language : 'pt') as 'pt' | 'en' | 'es'
+    const stages = buildDefaultStages(userLang).map(s => ({
       ...s,
       org_id: org.id,
     }))
