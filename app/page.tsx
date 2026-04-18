@@ -207,17 +207,17 @@ const T: Record<Lang, Record<string, any>> = {
       plans: [
         {
           name: 'Starter', price: 249, priceUsd: 49, description: 'Para corretores autônomos',
-          features: ['1 usuário', 'Até 500 leads ativos', 'CRM com pipeline visual', 'WhatsApp (1 número)', 'Agentes de IA (SDR + Follow-up)', '500 mensagens IA/mês', 'Site de imóveis', 'Até 30 imóveis'],
+          features: ['1 usuário', 'Até 500 leads ativos', 'CRM com pipeline visual', 'WhatsApp (1 número)', 'Agentes de IA (SDR + Follow-up)', '500 mensagens IA/mês', '1 site com domínio próprio', 'Até 30 imóveis', '30 documentos/mês'],
           notIncluded: ['Automações', 'Relatórios avançados', 'WhatsApp oficial'],
         },
         {
           name: 'Pro', price: 497, priceUsd: 99, description: 'Para equipes em crescimento',
-          features: ['Até 3 usuários', 'Até 2.000 leads ativos', 'Tudo do Starter +', 'Agentes de IA (SDR + Follow-up + Suporte)', 'Automações inteligentes', 'WhatsApp oficial (2 números)', 'Dashboard avançado + Analytics IA', '3.000 mensagens IA/mês', 'Até 100 imóveis', 'Módulo financeiro'],
+          features: ['Até 3 usuários', 'Até 2.000 leads ativos', 'Tudo do Starter +', 'Agentes de IA (SDR + Follow-up + Suporte)', 'Automações inteligentes', 'WhatsApp oficial (2 números)', 'Dashboard avançado + Analytics IA', '3.000 mensagens IA/mês', 'Até 100 imóveis', '100 documentos/mês', 'Módulo financeiro'],
           notIncluded: ['API e integrações', 'Campanhas em massa'],
         },
         {
           name: 'Business', price: 1247, priceUsd: 249, description: 'Para imobiliárias completas',
-          features: ['Até 8 usuários', 'Até 8.000 leads ativos', 'Tudo do Pro +', 'Todos os agentes de IA', 'API e integrações avançadas', 'Campanhas em massa', 'WhatsApp oficial (5 números)', 'Suporte prioritário', '15.000 mensagens IA/mês', 'Até 500 imóveis', 'Gestor de tráfego', 'Financeiro avançado'],
+          features: ['Até 8 usuários', 'Até 8.000 leads ativos', 'Tudo do Pro +', 'Todos os agentes de IA', 'API e integrações avançadas', 'Campanhas em massa', 'WhatsApp oficial (5 números)', 'Suporte prioritário', '15.000 mensagens IA/mês', 'Até 500 imóveis', '300 documentos/mês', 'Gestor de tráfego', 'Financeiro avançado'],
           notIncluded: [],
         },
       ],
@@ -356,17 +356,17 @@ const T: Record<Lang, Record<string, any>> = {
       plans: [
         {
           name: 'Starter', price: 49, priceUsd: 49, description: 'For independent agents',
-          features: ['1 user', 'Up to 500 active leads', 'CRM with visual pipeline', 'WhatsApp (1 number)', 'AI Agents (SDR + Follow-up)', '500 AI messages/mo', 'Property website', 'Up to 30 properties'],
+          features: ['1 user', 'Up to 500 active leads', 'CRM with visual pipeline', 'WhatsApp (1 number)', 'AI Agents (SDR + Follow-up)', '500 AI messages/mo', '1 site with custom domain', 'Up to 30 properties', '30 documents/mo'],
           notIncluded: ['Automations', 'Advanced reports', 'Official WhatsApp'],
         },
         {
           name: 'Pro', price: 99, priceUsd: 99, description: 'For growing teams',
-          features: ['Up to 3 users', 'Up to 2,000 active leads', 'Everything in Starter +', 'AI Agents (SDR + Follow-up + Support)', 'Smart automations', 'Official WhatsApp (2 numbers)', 'Advanced dashboard + AI Analytics', '3,000 AI messages/mo', 'Up to 100 properties', 'Financial module'],
+          features: ['Up to 3 users', 'Up to 2,000 active leads', 'Everything in Starter +', 'AI Agents (SDR + Follow-up + Support)', 'Smart automations', 'Official WhatsApp (2 numbers)', 'Advanced dashboard + AI Analytics', '3,000 AI messages/mo', 'Up to 100 properties', '100 documents/mo', 'Financial module'],
           notIncluded: ['API & integrations', 'Mass campaigns'],
         },
         {
           name: 'Business', price: 249, priceUsd: 249, description: 'For full brokerages',
-          features: ['Up to 8 users', 'Up to 8,000 active leads', 'Everything in Pro +', 'All AI agents', 'API & advanced integrations', 'Mass campaigns', 'Official WhatsApp (5 numbers)', 'Priority support', '15,000 AI messages/mo', 'Up to 500 properties', 'Traffic manager', 'Advanced financial'],
+          features: ['Up to 8 users', 'Up to 8,000 active leads', 'Everything in Pro +', 'All AI agents', 'API & advanced integrations', 'Mass campaigns', 'Official WhatsApp (5 numbers)', 'Priority support', '15,000 AI messages/mo', 'Up to 500 properties', '300 documents/mo', 'Traffic manager', 'Advanced financial'],
           notIncluded: [],
         },
       ],
@@ -505,17 +505,17 @@ const T: Record<Lang, Record<string, any>> = {
       plans: [
         {
           name: 'Starter', price: 49, priceUsd: 49, description: 'Para corredores independientes',
-          features: ['1 usuario', 'Hasta 500 leads activos', 'CRM con pipeline visual', 'WhatsApp (1 número)', 'Agentes de IA (SDR + Follow-up)', '500 mensajes IA/mes', 'Sitio de propiedades', 'Hasta 30 propiedades'],
+          features: ['1 usuario', 'Hasta 500 leads activos', 'CRM con pipeline visual', 'WhatsApp (1 número)', 'Agentes de IA (SDR + Follow-up)', '500 mensajes IA/mes', '1 sitio con dominio propio', 'Hasta 30 propiedades', '30 documentos/mes'],
           notIncluded: ['Automatizaciones', 'Reportes avanzados', 'WhatsApp oficial'],
         },
         {
           name: 'Pro', price: 99, priceUsd: 99, description: 'Para equipos en crecimiento',
-          features: ['Hasta 3 usuarios', 'Hasta 2.000 leads activos', 'Todo del Starter +', 'Agentes de IA (SDR + Follow-up + Soporte)', 'Automatizaciones inteligentes', 'WhatsApp oficial (2 números)', 'Dashboard avanzado + Analytics IA', '3.000 mensajes IA/mes', 'Hasta 100 propiedades', 'Módulo financiero'],
+          features: ['Hasta 3 usuarios', 'Hasta 2.000 leads activos', 'Todo del Starter +', 'Agentes de IA (SDR + Follow-up + Soporte)', 'Automatizaciones inteligentes', 'WhatsApp oficial (2 números)', 'Dashboard avanzado + Analytics IA', '3.000 mensajes IA/mes', 'Hasta 100 propiedades', '100 documentos/mes', 'Módulo financiero'],
           notIncluded: ['API e integraciones', 'Campañas masivas'],
         },
         {
           name: 'Business', price: 249, priceUsd: 249, description: 'Para inmobiliarias completas',
-          features: ['Hasta 8 usuarios', 'Hasta 8.000 leads activos', 'Todo del Pro +', 'Todos los agentes de IA', 'API e integraciones avanzadas', 'Campañas masivas', 'WhatsApp oficial (5 números)', 'Soporte prioritario', '15.000 mensajes IA/mes', 'Hasta 500 propiedades', 'Gestor de tráfico', 'Financiero avanzado'],
+          features: ['Hasta 8 usuarios', 'Hasta 8.000 leads activos', 'Todo del Pro +', 'Todos los agentes de IA', 'API e integraciones avanzadas', 'Campañas masivas', 'WhatsApp oficial (5 números)', 'Soporte prioritario', '15.000 mensajes IA/mes', 'Hasta 500 propiedades', '300 documentos/mes', 'Gestor de tráfico', 'Financiero avanzado'],
           notIncluded: [],
         },
       ],

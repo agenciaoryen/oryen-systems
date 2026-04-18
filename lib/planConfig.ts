@@ -80,7 +80,7 @@ export const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       maxMonthlyMessages: 500,
       maxWhatsappNumbers: 1,
       maxProperties: 30,
-      maxDocumentsPerMonth: 10,
+      maxDocumentsPerMonth: 30,
       maxSites: 1,
     }
   },
@@ -112,7 +112,7 @@ export const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       maxMonthlyMessages: 3000,
       maxWhatsappNumbers: 2,
       maxProperties: 100,
-      maxDocumentsPerMonth: 50,
+      maxDocumentsPerMonth: 100,
       maxSites: 1,
     }
   },
@@ -144,8 +144,8 @@ export const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       maxMonthlyMessages: 15000,
       maxWhatsappNumbers: 5,
       maxProperties: 500,
-      maxDocumentsPerMonth: 200,
-      maxSites: 3,
+      maxDocumentsPerMonth: 300,
+      maxSites: 1,
     }
   },
   enterprise: {
@@ -177,7 +177,7 @@ export const PLAN_CONFIGS: Record<PlanName, PlanConfig> = {
       maxWhatsappNumbers: 15,
       maxProperties: -1,
       maxDocumentsPerMonth: -1,
-      maxSites: 10,
+      maxSites: 1,
     }
   }
 }
