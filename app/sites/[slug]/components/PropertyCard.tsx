@@ -45,14 +45,14 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
         {/* Transaction badge */}
         <div
           className="absolute top-3 left-3 px-3 py-1 rounded-lg text-xs font-bold"
-          style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
+          style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
         >
           {TRANSACTION_TYPES[property.transaction_type]?.pt || property.transaction_type}
         </div>
 
         {/* Price */}
         {property.price && (
-          <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg backdrop-blur-sm font-bold text-sm" style={{ background: 'var(--color-bg-overlay)', color: 'var(--color-text-primary)' }}>
+          <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg backdrop-blur-sm font-bold text-sm" style={{ background: 'var(--color-bg-overlay)', color: '#FFFFFF' }}>
             {formatPrice(property.price, currency)}
           </div>
         )}

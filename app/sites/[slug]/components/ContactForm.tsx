@@ -146,7 +146,7 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
         type="submit"
         disabled={status === 'sending'}
         className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 disabled:opacity-60 shadow-sm"
-        style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
+        style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
       >
         {status === 'sending' ? 'Enviando...' : 'Enviar Mensagem'}
       </button>

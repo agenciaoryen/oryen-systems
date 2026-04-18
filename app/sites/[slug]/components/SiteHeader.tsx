@@ -20,7 +20,7 @@ export default function SiteHeader({ site }: SiteHeaderProps) {
             ) : (
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm"
-                style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
+                style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
               >
                 {(site.site_name || 'S')[0].toUpperCase()}
               </div>
@@ -49,7 +49,7 @@ export default function SiteHeader({ site }: SiteHeaderProps) {
             <Link
               href={`/sites/${slug}#contato`}
               className="px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:opacity-90 shadow-sm"
-              style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
+              style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
             >
               Contato
             </Link>
@@ -59,7 +59,7 @@ export default function SiteHeader({ site }: SiteHeaderProps) {
           <Link
             href={`/sites/${slug}/properties`}
             className="sm:hidden px-3 py-2 rounded-lg text-xs font-semibold"
-            style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
+            style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Ver Imóveis
           </Link>

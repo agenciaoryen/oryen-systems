@@ -17,7 +17,7 @@ export default function WhatsAppButton({ phone, message }: WhatsAppButtonProps) 
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 hover:opacity-90 active:scale-95"
-      style={{ background: 'var(--color-success)', color: 'var(--color-text-primary)' }}
+      style={{ background: 'var(--color-success)', color: '#FFFFFF' }}
       title="Fale pelo WhatsApp"
     >
       <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">

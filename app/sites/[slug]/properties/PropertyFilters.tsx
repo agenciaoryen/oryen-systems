@@ -94,7 +94,7 @@ export default function PropertyFilters({ slug, neighborhoods = [] }: PropertyFi
       <button
         onClick={applyFilters}
         className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
-        style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
+        style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
       >
         Filtrar
       </button>

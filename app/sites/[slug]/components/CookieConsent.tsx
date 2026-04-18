@@ -33,7 +33,7 @@ export default function CookieConsent() {
         <button
           onClick={accept}
           className="shrink-0 px-6 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90"
-          style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
+          style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
         >
           Aceitar
         </button>

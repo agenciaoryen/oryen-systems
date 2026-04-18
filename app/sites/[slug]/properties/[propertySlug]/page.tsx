@@ -135,7 +135,7 @@ export default async function PropertyDetailPage({
                 <div className="flex items-center gap-2 mb-2">
                   <span
                     className="px-3 py-1 rounded-lg text-xs font-bold"
-                    style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
+                    style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
                   >
                     {TRANSACTION_TYPES[property.transaction_type]?.pt}
                   </span>

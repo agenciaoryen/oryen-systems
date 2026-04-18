@@ -80,7 +80,7 @@ export default function HeroSearch({ slug, neighborhoods }: HeroSearchProps) {
         <button
           onClick={handleSearch}
           className="px-8 py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 shadow-lg flex items-center justify-center gap-2"
-          style={{ background: 'var(--site-primary)', color: 'var(--color-text-primary)' }}
+          style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
         >
           <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
