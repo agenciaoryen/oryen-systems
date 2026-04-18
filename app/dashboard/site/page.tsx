@@ -2,7 +2,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useActiveOrgId } from '@/lib/AuthContext'
+import { useActiveOrgId, useAuth } from '@/lib/AuthContext'
 import { toast } from 'sonner'
 import {
   Globe,
@@ -32,98 +32,165 @@ import CustomSelect from '@/app/dashboard/components/CustomSelect'
 // TRADUÇÕES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const T = {
-  title: 'Meu Site',
-  subtitle: 'Configure e publique seu site profissional de imóveis.',
-  saving: 'Salvando...',
-  save: 'Salvar Alterações',
-  saved: 'Alterações salvas!',
-  // Seções
-  sections: {
-    branding: 'Branding',
-    about: 'Sobre o Corretor',
-    contact: 'Contato',
-    social: 'Redes Sociais',
-    seo: 'SEO',
-    url: 'URL do Site',
-    publish: 'Publicação',
+type Lang = 'pt' | 'en' | 'es'
+
+const TRANSLATIONS = {
+  pt: {
+    title: 'Meu Site',
+    subtitle: 'Configure e publique seu site profissional de imóveis.',
+    saving: 'Salvando...',
+    save: 'Salvar Alterações',
+    saved: 'Alterações salvas!',
+    sections: { branding: 'Branding', about: 'Sobre o Corretor', contact: 'Contato', social: 'Redes Sociais', seo: 'SEO', url: 'URL do Site', publish: 'Publicação' },
+    siteName: 'Nome do site', siteNamePlaceholder: 'Ex: João Corretor Imóveis',
+    tagline: 'Tagline', taglinePlaceholder: 'Ex: Encontre o imóvel dos seus sonhos',
+    logo: 'Logo', coverImage: 'Imagem de capa',
+    primaryColor: 'Cor principal', accentColor: 'Cor de destaque',
+    heroTextColor: 'Cor do texto da capa', heroPreview: 'Pré-visualização da capa',
+    themeLabel: 'Tema do site', themeDark: 'Escuro', themeDarkDesc: 'Fundo escuro, texto claro',
+    themeLight: 'Claro', themeLightDesc: 'Fundo claro, texto escuro',
+    currencyLabel: 'Moeda dos preços', currencyHint: 'Esta moeda será exibida nos preços do seu site público.',
+    previewSiteNameFallback: 'Nome do Site',
+    avatar: 'Foto do corretor', bio: 'Bio / Sobre', bioPlaceholder: 'Conte um pouco sobre você e sua experiência...',
+    creci: 'CRECI', creciPlaceholder: 'Ex: 12345-F',
+    email: 'E-mail', phone: 'Telefone', whatsapp: 'WhatsApp', address: 'Endereço',
+    instagram: 'Instagram', facebook: 'Facebook', linkedin: 'LinkedIn', youtube: 'YouTube', tiktok: 'TikTok',
+    socialPlaceholder: 'https://',
+    metaTitle: 'Meta title', metaTitlePlaceholder: 'Título para buscadores (Google)',
+    metaDescription: 'Meta description', metaDescriptionPlaceholder: 'Descrição curta para buscadores (até 160 caracteres)',
+    ogImage: 'Imagem de compartilhamento (OG)', ogHint: '1200×630 recomendado',
+    upload: 'Upload',
+    removeLogo: 'Remover logo', removeCover: 'Remover imagem de capa', removeAvatar: 'Remover foto', removeOg: 'Remover imagem OG',
+    slug: 'Slug (URL)', slugHint: 'Seu site ficará em:', slugChecking: 'Verificando...', slugAvailable: 'Disponível!', slugTaken: 'Já está em uso',
+    domainTitle: 'Domínio Próprio', domainDesc: 'Use seu próprio domínio para um site ainda mais profissional.',
+    domainLabel: 'Seu domínio', domainPlaceholder: 'Ex: www.meusite.com.br',
+    domainAdd: 'Conectar Domínio', domainAdding: 'Conectando...',
+    domainRemove: 'Remover', domainRemoving: 'Removendo...',
+    domainVerify: 'Verificar DNS', domainVerifying: 'Verificando...',
+    domainStatusActive: 'Conectado', domainStatusPending: 'Aguardando DNS', domainStatusMisconfigured: 'DNS incorreto',
+    domainDnsTitle: 'Configure o DNS do seu domínio:',
+    domainDnsOption1: 'Opção 1 — CNAME (recomendado para subdomínios como www):',
+    domainDnsOption2: 'Opção 2 — Registro A (para domínio raiz):',
+    domainDnsType: 'Tipo', domainDnsName: 'Nome', domainDnsValue: 'Valor',
+    domainDnsHint: 'Após configurar o DNS, clique em "Verificar DNS". A propagação pode levar até 48h.',
+    domainCurrentUrl: 'URL atual (gratuita):', domainOr: 'ou',
+    publishTitle: 'Publicar site', publishDesc: 'Ao publicar, seu site ficará acessível publicamente.',
+    publishBtn: 'Publicar Site', unpublishBtn: 'Despublicar',
+    publishing: 'Publicando...', published: 'Site publicado com sucesso!', unpublished: 'Site despublicado.',
+    requirements: 'Requisitos para publicar:', preview: 'Pré-visualizar', visitSite: 'Visitar Site',
+    saveBeforePreview: 'Salve as alterações primeiro',
+    saveBeforePublish: 'Salve as alterações antes de pré-visualizar ou publicar.',
+    toastSaveError: 'Erro ao salvar', toastSaveGenericError: 'Erro ao salvar configurações',
+    toastDomainConnected: 'Domínio conectado! Configure o DNS.', toastDomainConnectError: 'Erro ao conectar domínio',
+    toastDomainRemoved: 'Domínio removido', toastDomainRemoveError: 'Erro ao remover domínio',
+    toastDnsOk: 'DNS verificado! Domínio ativo.', toastDnsPending: 'DNS ainda não propagou. Tente novamente mais tarde.',
+    toastPublishError: 'Erro ao publicar', toastPublishGenericError: 'Erro ao publicar site',
+    toastImageOk: 'Imagem enviada!', toastImageError: 'Erro ao enviar imagem',
+    toastCopied: 'Copiado!',
   },
-  // Branding
-  siteName: 'Nome do site',
-  siteNamePlaceholder: 'Ex: João Corretor Imóveis',
-  tagline: 'Tagline',
-  taglinePlaceholder: 'Ex: Encontre o imóvel dos seus sonhos',
-  logo: 'Logo',
-  coverImage: 'Imagem de capa',
-  primaryColor: 'Cor principal',
-  accentColor: 'Cor de destaque',
-  heroTextColor: 'Cor do texto da capa',
-  heroPreview: 'Pré-visualização da capa',
-  // Sobre
-  avatar: 'Foto do corretor',
-  bio: 'Bio / Sobre',
-  bioPlaceholder: 'Conte um pouco sobre você e sua experiência...',
-  creci: 'CRECI',
-  creciPlaceholder: 'Ex: 12345-F',
-  // Contato
-  email: 'E-mail',
-  phone: 'Telefone',
-  whatsapp: 'WhatsApp',
-  address: 'Endereço',
-  // Social
-  instagram: 'Instagram',
-  facebook: 'Facebook',
-  linkedin: 'LinkedIn',
-  youtube: 'YouTube',
-  tiktok: 'TikTok',
-  socialPlaceholder: 'https://',
-  // SEO
-  metaTitle: 'Meta title',
-  metaTitlePlaceholder: 'Título para buscadores (Google)',
-  metaDescription: 'Meta description',
-  metaDescriptionPlaceholder: 'Descrição curta para buscadores (até 160 caracteres)',
-  ogImage: 'Imagem de compartilhamento (OG)',
-  // URL
-  slug: 'Slug (URL)',
-  slugHint: 'Seu site ficará em:',
-  slugChecking: 'Verificando...',
-  slugAvailable: 'Disponível!',
-  slugTaken: 'Já está em uso',
-  // Custom Domain
-  domainTitle: 'Domínio Próprio',
-  domainDesc: 'Use seu próprio domínio para um site ainda mais profissional.',
-  domainLabel: 'Seu domínio',
-  domainPlaceholder: 'Ex: www.meusite.com.br',
-  domainAdd: 'Conectar Domínio',
-  domainAdding: 'Conectando...',
-  domainRemove: 'Remover',
-  domainRemoving: 'Removendo...',
-  domainVerify: 'Verificar DNS',
-  domainVerifying: 'Verificando...',
-  domainStatusActive: 'Conectado',
-  domainStatusPending: 'Aguardando DNS',
-  domainStatusMisconfigured: 'DNS incorreto',
-  domainDnsTitle: 'Configure o DNS do seu domínio:',
-  domainDnsOption1: 'Opção 1 — CNAME (recomendado para subdomínios como www):',
-  domainDnsOption2: 'Opção 2 — Registro A (para domínio raiz):',
-  domainDnsType: 'Tipo',
-  domainDnsName: 'Nome',
-  domainDnsValue: 'Valor',
-  domainDnsHint: 'Após configurar o DNS, clique em "Verificar DNS". A propagação pode levar até 48h.',
-  domainCurrentUrl: 'URL atual (gratuita):',
-  domainOr: 'ou',
-  // Publish
-  publishTitle: 'Publicar site',
-  publishDesc: 'Ao publicar, seu site ficará acessível publicamente.',
-  publishBtn: 'Publicar Site',
-  unpublishBtn: 'Despublicar',
-  publishing: 'Publicando...',
-  published: 'Site publicado com sucesso!',
-  unpublished: 'Site despublicado.',
-  requirements: 'Requisitos para publicar:',
-  preview: 'Pré-visualizar',
-  visitSite: 'Visitar Site',
-}
+  en: {
+    title: 'My Site',
+    subtitle: 'Set up and publish your professional real estate site.',
+    saving: 'Saving...', save: 'Save Changes', saved: 'Changes saved!',
+    sections: { branding: 'Branding', about: 'About the Agent', contact: 'Contact', social: 'Social Media', seo: 'SEO', url: 'Site URL', publish: 'Publishing' },
+    siteName: 'Site name', siteNamePlaceholder: 'Ex: John Realtor',
+    tagline: 'Tagline', taglinePlaceholder: 'Ex: Find the home of your dreams',
+    logo: 'Logo', coverImage: 'Cover image',
+    primaryColor: 'Primary color', accentColor: 'Accent color',
+    heroTextColor: 'Hero text color', heroPreview: 'Hero preview',
+    themeLabel: 'Site theme', themeDark: 'Dark', themeDarkDesc: 'Dark background, light text',
+    themeLight: 'Light', themeLightDesc: 'Light background, dark text',
+    currencyLabel: 'Price currency', currencyHint: 'This currency will be shown in prices on your public site.',
+    previewSiteNameFallback: 'Site Name',
+    avatar: 'Agent photo', bio: 'Bio / About', bioPlaceholder: 'Tell a bit about yourself and your experience...',
+    creci: 'License', creciPlaceholder: 'Ex: 12345-F',
+    email: 'E-mail', phone: 'Phone', whatsapp: 'WhatsApp', address: 'Address',
+    instagram: 'Instagram', facebook: 'Facebook', linkedin: 'LinkedIn', youtube: 'YouTube', tiktok: 'TikTok',
+    socialPlaceholder: 'https://',
+    metaTitle: 'Meta title', metaTitlePlaceholder: 'Title for search engines (Google)',
+    metaDescription: 'Meta description', metaDescriptionPlaceholder: 'Short description for search engines (up to 160 characters)',
+    ogImage: 'Sharing image (OG)', ogHint: '1200×630 recommended',
+    upload: 'Upload',
+    removeLogo: 'Remove logo', removeCover: 'Remove cover image', removeAvatar: 'Remove photo', removeOg: 'Remove OG image',
+    slug: 'Slug (URL)', slugHint: 'Your site will be at:', slugChecking: 'Checking...', slugAvailable: 'Available!', slugTaken: 'Already in use',
+    domainTitle: 'Custom Domain', domainDesc: 'Use your own domain for an even more professional site.',
+    domainLabel: 'Your domain', domainPlaceholder: 'Ex: www.mysite.com',
+    domainAdd: 'Connect Domain', domainAdding: 'Connecting...',
+    domainRemove: 'Remove', domainRemoving: 'Removing...',
+    domainVerify: 'Verify DNS', domainVerifying: 'Verifying...',
+    domainStatusActive: 'Connected', domainStatusPending: 'Waiting DNS', domainStatusMisconfigured: 'DNS incorrect',
+    domainDnsTitle: 'Configure your domain DNS:',
+    domainDnsOption1: 'Option 1 — CNAME (recommended for subdomains like www):',
+    domainDnsOption2: 'Option 2 — A Record (for root domain):',
+    domainDnsType: 'Type', domainDnsName: 'Name', domainDnsValue: 'Value',
+    domainDnsHint: 'After configuring DNS, click "Verify DNS". Propagation can take up to 48h.',
+    domainCurrentUrl: 'Current URL (free):', domainOr: 'or',
+    publishTitle: 'Publish site', publishDesc: 'Once published, your site will be publicly accessible.',
+    publishBtn: 'Publish Site', unpublishBtn: 'Unpublish',
+    publishing: 'Publishing...', published: 'Site published successfully!', unpublished: 'Site unpublished.',
+    requirements: 'Requirements to publish:', preview: 'Preview', visitSite: 'Visit Site',
+    saveBeforePreview: 'Save changes first',
+    saveBeforePublish: 'Save changes before previewing or publishing.',
+    toastSaveError: 'Error saving', toastSaveGenericError: 'Error saving settings',
+    toastDomainConnected: 'Domain connected! Configure DNS.', toastDomainConnectError: 'Error connecting domain',
+    toastDomainRemoved: 'Domain removed', toastDomainRemoveError: 'Error removing domain',
+    toastDnsOk: 'DNS verified! Domain active.', toastDnsPending: 'DNS not propagated yet. Try again later.',
+    toastPublishError: 'Error publishing', toastPublishGenericError: 'Error publishing site',
+    toastImageOk: 'Image uploaded!', toastImageError: 'Error uploading image',
+    toastCopied: 'Copied!',
+  },
+  es: {
+    title: 'Mi Sitio',
+    subtitle: 'Configura y publica tu sitio profesional de inmuebles.',
+    saving: 'Guardando...', save: 'Guardar Cambios', saved: '¡Cambios guardados!',
+    sections: { branding: 'Branding', about: 'Sobre el Agente', contact: 'Contacto', social: 'Redes Sociales', seo: 'SEO', url: 'URL del Sitio', publish: 'Publicación' },
+    siteName: 'Nombre del sitio', siteNamePlaceholder: 'Ej: Juan Agente Inmobiliario',
+    tagline: 'Tagline', taglinePlaceholder: 'Ej: Encuentra el inmueble de tus sueños',
+    logo: 'Logo', coverImage: 'Imagen de portada',
+    primaryColor: 'Color principal', accentColor: 'Color de acento',
+    heroTextColor: 'Color del texto de portada', heroPreview: 'Vista previa de portada',
+    themeLabel: 'Tema del sitio', themeDark: 'Oscuro', themeDarkDesc: 'Fondo oscuro, texto claro',
+    themeLight: 'Claro', themeLightDesc: 'Fondo claro, texto oscuro',
+    currencyLabel: 'Moneda de los precios', currencyHint: 'Esta moneda se mostrará en los precios de tu sitio público.',
+    previewSiteNameFallback: 'Nombre del Sitio',
+    avatar: 'Foto del agente', bio: 'Bio / Sobre', bioPlaceholder: 'Cuenta un poco sobre ti y tu experiencia...',
+    creci: 'Matrícula', creciPlaceholder: 'Ej: 12345-F',
+    email: 'Email', phone: 'Teléfono', whatsapp: 'WhatsApp', address: 'Dirección',
+    instagram: 'Instagram', facebook: 'Facebook', linkedin: 'LinkedIn', youtube: 'YouTube', tiktok: 'TikTok',
+    socialPlaceholder: 'https://',
+    metaTitle: 'Meta title', metaTitlePlaceholder: 'Título para buscadores (Google)',
+    metaDescription: 'Meta description', metaDescriptionPlaceholder: 'Descripción corta para buscadores (hasta 160 caracteres)',
+    ogImage: 'Imagen para compartir (OG)', ogHint: '1200×630 recomendado',
+    upload: 'Subir',
+    removeLogo: 'Quitar logo', removeCover: 'Quitar imagen de portada', removeAvatar: 'Quitar foto', removeOg: 'Quitar imagen OG',
+    slug: 'Slug (URL)', slugHint: 'Tu sitio estará en:', slugChecking: 'Verificando...', slugAvailable: '¡Disponible!', slugTaken: 'Ya está en uso',
+    domainTitle: 'Dominio Propio', domainDesc: 'Usa tu propio dominio para un sitio aún más profesional.',
+    domainLabel: 'Tu dominio', domainPlaceholder: 'Ej: www.misitio.com',
+    domainAdd: 'Conectar Dominio', domainAdding: 'Conectando...',
+    domainRemove: 'Quitar', domainRemoving: 'Quitando...',
+    domainVerify: 'Verificar DNS', domainVerifying: 'Verificando...',
+    domainStatusActive: 'Conectado', domainStatusPending: 'Esperando DNS', domainStatusMisconfigured: 'DNS incorrecto',
+    domainDnsTitle: 'Configura el DNS de tu dominio:',
+    domainDnsOption1: 'Opción 1 — CNAME (recomendado para subdominios como www):',
+    domainDnsOption2: 'Opción 2 — Registro A (para dominio raíz):',
+    domainDnsType: 'Tipo', domainDnsName: 'Nombre', domainDnsValue: 'Valor',
+    domainDnsHint: 'Tras configurar el DNS, haz clic en "Verificar DNS". La propagación puede tardar hasta 48h.',
+    domainCurrentUrl: 'URL actual (gratis):', domainOr: 'o',
+    publishTitle: 'Publicar sitio', publishDesc: 'Al publicar, tu sitio quedará accesible públicamente.',
+    publishBtn: 'Publicar Sitio', unpublishBtn: 'Despublicar',
+    publishing: 'Publicando...', published: '¡Sitio publicado con éxito!', unpublished: 'Sitio despublicado.',
+    requirements: 'Requisitos para publicar:', preview: 'Previsualizar', visitSite: 'Visitar Sitio',
+    saveBeforePreview: 'Guarda los cambios primero',
+    saveBeforePublish: 'Guarda los cambios antes de previsualizar o publicar.',
+    toastSaveError: 'Error al guardar', toastSaveGenericError: 'Error al guardar la configuración',
+    toastDomainConnected: '¡Dominio conectado! Configura el DNS.', toastDomainConnectError: 'Error al conectar el dominio',
+    toastDomainRemoved: 'Dominio quitado', toastDomainRemoveError: 'Error al quitar el dominio',
+    toastDnsOk: '¡DNS verificado! Dominio activo.', toastDnsPending: 'El DNS aún no propagó. Inténtalo más tarde.',
+    toastPublishError: 'Error al publicar', toastPublishGenericError: 'Error al publicar el sitio',
+    toastImageOk: '¡Imagen enviada!', toastImageError: 'Error al enviar la imagen',
+    toastCopied: '¡Copiado!',
+  },
+} as const
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
@@ -131,6 +198,9 @@ const T = {
 
 export default function SiteSettingsPage() {
   const orgId = useActiveOrgId()
+  const { user } = useAuth()
+  const lang = (user?.language as Lang) || 'pt'
+  const t = TRANSLATIONS[lang]
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -278,14 +348,14 @@ export default function SiteSettingsPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        toast.error(data.error || 'Erro ao salvar')
+        toast.error(data.error || t.toastSaveError)
         return
       }
 
       setHasSaved(true)
-      toast.success(T.saved)
+      toast.success(t.saved)
     } catch (err) {
-      toast.error('Erro ao salvar configurações')
+      toast.error(t.toastSaveGenericError)
     } finally {
       setSaving(false)
     }
@@ -316,14 +386,14 @@ export default function SiteSettingsPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        toast.error(data.error || 'Erro ao conectar domínio')
+        toast.error(data.error || t.toastDomainConnectError)
         return
       }
-      toast.success('Domínio conectado! Configure o DNS.')
+      toast.success(t.toastDomainConnected)
       setDomainInput('')
       await fetchDomainStatus()
     } catch {
-      toast.error('Erro ao conectar domínio')
+      toast.error(t.toastDomainConnectError)
     } finally {
       setDomainAction('idle')
     }
@@ -338,10 +408,10 @@ export default function SiteSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ org_id: orgId }),
       })
-      toast.success('Domínio removido')
+      toast.success(t.toastDomainRemoved)
       setDomainData(null)
     } catch {
-      toast.error('Erro ao remover domínio')
+      toast.error(t.toastDomainRemoveError)
     } finally {
       setDomainAction('idle')
     }
@@ -352,9 +422,9 @@ export default function SiteSettingsPage() {
     await fetchDomainStatus()
     setDomainAction('idle')
     if (domainData?.status === 'active') {
-      toast.success('DNS verificado! Domínio ativo.')
+      toast.success(t.toastDnsOk)
     } else {
-      toast.error('DNS ainda não propagou. Tente novamente mais tarde.')
+      toast.error(t.toastDnsPending)
     }
   }
 
@@ -375,15 +445,15 @@ export default function SiteSettingsPage() {
         if (data.details) {
           data.details.forEach((d: string) => toast.error(d))
         } else {
-          toast.error(data.error || 'Erro ao publicar')
+          toast.error(data.error || t.toastPublishError)
         }
         return
       }
 
       setForm(prev => ({ ...prev, is_published: publish }))
-      toast.success(publish ? T.published : T.unpublished)
+      toast.success(publish ? t.published : t.unpublished)
     } catch (err) {
-      toast.error('Erro ao publicar site')
+      toast.error(t.toastPublishGenericError)
     } finally {
       setPublishing(false)
     }
@@ -408,10 +478,10 @@ export default function SiteSettingsPage() {
         const data = await res.json()
         if (data.url) {
           updateField(field, data.url)
-          toast.success('Imagem enviada!')
+          toast.success(t.toastImageOk)
         }
       } catch {
-        toast.error('Erro ao enviar imagem')
+        toast.error(t.toastImageError)
       }
     }
     input.click()
@@ -442,10 +512,10 @@ export default function SiteSettingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            {T.title}
+            {t.title}
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
-            {T.subtitle}
+            {t.subtitle}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -457,7 +527,7 @@ export default function SiteSettingsPage() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all hover:bg-[var(--color-bg-hover)]"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
             >
-              <ExternalLink size={15} /> {T.visitSite}
+              <ExternalLink size={15} /> {t.visitSite}
             </a>
           )}
           <button
@@ -467,7 +537,7 @@ export default function SiteSettingsPage() {
             style={{ background: 'var(--color-primary)', color: '#fff' }}
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            {saving ? T.saving : T.save}
+            {saving ? t.saving : t.save}
           </button>
         </div>
       </div>
@@ -476,11 +546,11 @@ export default function SiteSettingsPage() {
       <div className={sectionClass} style={sectionStyle}>
         <div className="flex items-center gap-2 mb-2">
           <Globe size={18} style={{ color: 'var(--color-primary)' }} />
-          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.url}</h2>
+          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.sections.url}</h2>
         </div>
 
         <div>
-          <label className={labelClass} style={labelStyle}>{T.slug}</label>
+          <label className={labelClass} style={labelStyle}>{t.slug}</label>
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -498,11 +568,11 @@ export default function SiteSettingsPage() {
           </div>
           {form.slug && (
             <p className="text-xs mt-1.5" style={{ color: 'var(--color-text-tertiary)' }}>
-              {T.slugHint} <span className="font-mono" style={{ color: 'var(--color-primary)' }}>{siteUrl}</span>
+              {t.slugHint} <span className="font-mono" style={{ color: 'var(--color-primary)' }}>{siteUrl}</span>
             </p>
           )}
           {slugStatus === 'taken' && (
-            <p className="text-xs mt-1" style={{ color: 'var(--color-error)' }}>{T.slugTaken}</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-error)' }}>{t.slugTaken}</p>
           )}
         </div>
       </div>
@@ -512,15 +582,15 @@ export default function SiteSettingsPage() {
         <div className={sectionClass} style={sectionStyle}>
           <div className="flex items-center gap-2 mb-1">
             <Link2 size={18} style={{ color: 'var(--color-success)' }} />
-            <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.domainTitle}</h2>
+            <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.domainTitle}</h2>
           </div>
-          <p className="text-xs mb-4" style={{ color: 'var(--color-text-muted)' }}>{T.domainDesc}</p>
+          <p className="text-xs mb-4" style={{ color: 'var(--color-text-muted)' }}>{t.domainDesc}</p>
 
           {/* URL gratuita atual */}
           {form.slug && (
             <div className="flex items-center gap-2 p-3 rounded-xl mb-4" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
               <Globe size={14} style={{ color: 'var(--color-text-muted)' }} />
-              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{T.domainCurrentUrl}</span>
+              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.domainCurrentUrl}</span>
               <span className="text-xs font-mono font-medium" style={{ color: 'var(--color-primary)' }}>{siteUrl}</span>
             </div>
           )}
@@ -543,7 +613,7 @@ export default function SiteSettingsPage() {
                     <p className="text-[11px] font-medium" style={{
                       color: domainData.status === 'active' ? 'var(--color-success)' : domainData.status === 'misconfigured' ? 'var(--color-error)' : 'var(--color-warning)'
                     }}>
-                      {domainData.status === 'active' ? T.domainStatusActive : domainData.status === 'misconfigured' ? T.domainStatusMisconfigured : T.domainStatusPending}
+                      {domainData.status === 'active' ? t.domainStatusActive : domainData.status === 'misconfigured' ? t.domainStatusMisconfigured : t.domainStatusPending}
                     </p>
                   </div>
                 </div>
@@ -553,14 +623,14 @@ export default function SiteSettingsPage() {
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
                       style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)' }}>
                       {domainAction === 'verifying' ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-                      {domainAction === 'verifying' ? T.domainVerifying : T.domainVerify}
+                      {domainAction === 'verifying' ? t.domainVerifying : t.domainVerify}
                     </button>
                   )}
                   <button onClick={handleRemoveDomain} disabled={domainAction === 'removing'}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
                     style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid var(--color-error-subtle)' }}>
                     {domainAction === 'removing' ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                    {domainAction === 'removing' ? T.domainRemoving : T.domainRemove}
+                    {domainAction === 'removing' ? t.domainRemoving : t.domainRemove}
                   </button>
                 </div>
               </div>
@@ -568,20 +638,20 @@ export default function SiteSettingsPage() {
               {/* Instruções DNS (só se não está ativo) */}
               {domainData.status !== 'active' && (
                 <div className="p-4 rounded-xl space-y-3" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
-                  <p className="text-xs font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.domainDnsTitle}</p>
+                  <p className="text-xs font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.domainDnsTitle}</p>
 
                   {/* CNAME */}
                   <div>
-                    <p className="text-[11px] font-medium mb-1.5" style={{ color: 'var(--color-text-muted)' }}>{T.domainDnsOption1}</p>
+                    <p className="text-[11px] font-medium mb-1.5" style={{ color: 'var(--color-text-muted)' }}>{t.domainDnsOption1}</p>
                     <div className="grid grid-cols-3 gap-2 text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--color-text-muted)' }}>
-                      <span>{T.domainDnsType}</span>
-                      <span>{T.domainDnsName}</span>
-                      <span>{T.domainDnsValue}</span>
+                      <span>{t.domainDnsType}</span>
+                      <span>{t.domainDnsName}</span>
+                      <span>{t.domainDnsValue}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-xs font-mono p-2 rounded-lg" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-secondary)' }}>
                       <span>CNAME</span>
                       <span>www</span>
-                      <button onClick={() => { navigator.clipboard.writeText('cname.vercel-dns.com'); toast.success('Copiado!') }} className="flex items-center gap-1 hover:opacity-80 text-left">
+                      <button onClick={() => { navigator.clipboard.writeText('cname.vercel-dns.com'); toast.success(t.toastCopied) }} className="flex items-center gap-1 hover:opacity-80 text-left">
                         cname.vercel-dns.com <Copy size={10} className="shrink-0 opacity-50" />
                       </button>
                     </div>
@@ -589,17 +659,17 @@ export default function SiteSettingsPage() {
 
                   {/* A Record */}
                   <div>
-                    <p className="text-[11px] font-medium mb-1.5" style={{ color: 'var(--color-text-muted)' }}>{T.domainDnsOption2}</p>
+                    <p className="text-[11px] font-medium mb-1.5" style={{ color: 'var(--color-text-muted)' }}>{t.domainDnsOption2}</p>
                     <div className="grid grid-cols-3 gap-2 text-xs font-mono p-2 rounded-lg" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-secondary)' }}>
                       <span>A</span>
                       <span>@</span>
-                      <button onClick={() => { navigator.clipboard.writeText('76.76.21.21'); toast.success('Copiado!') }} className="flex items-center gap-1 hover:opacity-80 text-left">
+                      <button onClick={() => { navigator.clipboard.writeText('76.76.21.21'); toast.success(t.toastCopied) }} className="flex items-center gap-1 hover:opacity-80 text-left">
                         76.76.21.21 <Copy size={10} className="shrink-0 opacity-50" />
                       </button>
                     </div>
                   </div>
 
-                  <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>{T.domainDnsHint}</p>
+                  <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>{t.domainDnsHint}</p>
                 </div>
               )}
             </div>
@@ -610,7 +680,7 @@ export default function SiteSettingsPage() {
                 type="text"
                 value={domainInput}
                 onChange={e => setDomainInput(e.target.value.toLowerCase().replace(/\s/g, ''))}
-                placeholder={T.domainPlaceholder}
+                placeholder={t.domainPlaceholder}
                 onKeyDown={e => e.key === 'Enter' && handleAddDomain()}
                 className="flex-1 min-w-0 rounded-xl p-3 text-sm outline-none transition-all"
                 style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
@@ -622,7 +692,7 @@ export default function SiteSettingsPage() {
                 style={{ background: 'var(--color-primary)', color: '#fff' }}
               >
                 {domainAction === 'adding' ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
-                {domainAction === 'adding' ? T.domainAdding : T.domainAdd}
+                {domainAction === 'adding' ? t.domainAdding : t.domainAdd}
               </button>
             </div>
           )}
@@ -633,24 +703,24 @@ export default function SiteSettingsPage() {
       <div className={sectionClass} style={sectionStyle}>
         <div className="flex items-center gap-2 mb-2">
           <Palette size={18} style={{ color: 'var(--color-indigo)' }} />
-          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.branding}</h2>
+          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.sections.branding}</h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass} style={labelStyle}>{T.siteName}</label>
-            <input type="text" value={form.site_name} onChange={(e) => updateField('site_name', e.target.value)} placeholder={T.siteNamePlaceholder} className={inputClass} style={inputStyle} />
+            <label className={labelClass} style={labelStyle}>{t.siteName}</label>
+            <input type="text" value={form.site_name} onChange={(e) => updateField('site_name', e.target.value)} placeholder={t.siteNamePlaceholder} className={inputClass} style={inputStyle} />
           </div>
           <div>
-            <label className={labelClass} style={labelStyle}>{T.tagline}</label>
-            <input type="text" value={form.tagline} onChange={(e) => updateField('tagline', e.target.value)} placeholder={T.taglinePlaceholder} className={inputClass} style={inputStyle} />
+            <label className={labelClass} style={labelStyle}>{t.tagline}</label>
+            <input type="text" value={form.tagline} onChange={(e) => updateField('tagline', e.target.value)} placeholder={t.taglinePlaceholder} className={inputClass} style={inputStyle} />
           </div>
         </div>
 
         {/* Logo e Cover */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass} style={labelStyle}>{T.logo}</label>
+            <label className={labelClass} style={labelStyle}>{t.logo}</label>
             <div className="relative group">
               <div
                 onClick={() => handleImageUpload('logo_url')}
@@ -662,7 +732,7 @@ export default function SiteSettingsPage() {
                 ) : (
                   <div className="text-center">
                     <Upload size={20} className="mx-auto mb-1" style={{ color: 'var(--color-text-muted)' }} />
-                    <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Upload</span>
+                    <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.upload}</span>
                   </div>
                 )}
               </div>
@@ -671,7 +741,7 @@ export default function SiteSettingsPage() {
                   onClick={(e) => { e.stopPropagation(); updateField('logo_url', '') }}
                   className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                   style={{ background: 'var(--color-error)', color: '#fff' }}
-                  title="Remover logo"
+                  title={t.removeLogo}
                 >
                   <Trash2 size={12} />
                 </button>
@@ -679,7 +749,7 @@ export default function SiteSettingsPage() {
             </div>
           </div>
           <div>
-            <label className={labelClass} style={labelStyle}>{T.coverImage}</label>
+            <label className={labelClass} style={labelStyle}>{t.coverImage}</label>
             <div className="relative group">
               <div
                 onClick={() => handleImageUpload('cover_image_url')}
@@ -691,7 +761,7 @@ export default function SiteSettingsPage() {
                 ) : (
                   <div className="text-center">
                     <ImageIcon size={20} className="mx-auto mb-1" style={{ color: 'var(--color-text-muted)' }} />
-                    <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Upload</span>
+                    <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.upload}</span>
                   </div>
                 )}
               </div>
@@ -700,7 +770,7 @@ export default function SiteSettingsPage() {
                   onClick={(e) => { e.stopPropagation(); updateField('cover_image_url', '') }}
                   className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                   style={{ background: 'var(--color-error)', color: '#fff' }}
-                  title="Remover imagem de capa"
+                  title={t.removeCover}
                 >
                   <Trash2 size={12} />
                 </button>
@@ -711,11 +781,11 @@ export default function SiteSettingsPage() {
 
         {/* Tema do Site */}
         <div>
-          <label className={labelClass} style={labelStyle}>Tema do site</label>
+          <label className={labelClass} style={labelStyle}>{t.themeLabel}</label>
           <div className="flex gap-3">
             {([
-              { value: 'dark', label: 'Escuro', desc: 'Fundo escuro, texto claro', bg: '#0A0A0F', text: '#fff', border: '#2A2A3C' },
-              { value: 'light', label: 'Claro', desc: 'Fundo claro, texto escuro', bg: '#FFFFFF', text: '#1A1A2E', border: '#E2E2EC' },
+              { value: 'dark', label: t.themeDark, desc: t.themeDarkDesc, bg: '#0A0A0F', text: '#fff', border: '#2A2A3C' },
+              { value: 'light', label: t.themeLight, desc: t.themeLightDesc, bg: '#FFFFFF', text: '#1A1A2E', border: '#E2E2EC' },
             ] as const).map((opt) => (
               <button
                 key={opt.value}
@@ -737,7 +807,7 @@ export default function SiteSettingsPage() {
         {/* Cores */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass} style={labelStyle}>{T.primaryColor}</label>
+            <label className={labelClass} style={labelStyle}>{t.primaryColor}</label>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {['#4B6BFB', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#EF4444', '#F59E0B', '#10B981', '#14B8A6', '#06B6D4', '#0EA5E9', '#1E293B'].map((c) => (
                 <button
@@ -771,7 +841,7 @@ export default function SiteSettingsPage() {
             </div>
           </div>
           <div>
-            <label className={labelClass} style={labelStyle}>{T.accentColor}</label>
+            <label className={labelClass} style={labelStyle}>{t.accentColor}</label>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {['#F0A030', '#F59E0B', '#EAB308', '#F97316', '#EF4444', '#EC4899', '#A855F7', '#10B981', '#06B6D4', '#3B82F6', '#6366F1', '#64748B'].map((c) => (
                 <button
@@ -808,7 +878,7 @@ export default function SiteSettingsPage() {
 
         {/* Cor do texto da capa */}
         <div>
-          <label className={labelClass} style={labelStyle}>{T.heroTextColor}</label>
+          <label className={labelClass} style={labelStyle}>{t.heroTextColor}</label>
           <div className="flex flex-wrap gap-1.5 mb-2">
             {['#FFFFFF', '#F1F5F9', '#0F172A', '#1E293B', '#EDEDF5', '#FEF3C7', '#E0E7FF'].map((c) => (
               <button
@@ -844,7 +914,7 @@ export default function SiteSettingsPage() {
 
         {/* Pré-visualização da capa */}
         <div>
-          <label className={labelClass} style={labelStyle}>{T.heroPreview}</label>
+          <label className={labelClass} style={labelStyle}>{t.heroPreview}</label>
           <div
             className="relative rounded-xl overflow-hidden"
             style={{ height: 180 }}
@@ -865,7 +935,7 @@ export default function SiteSettingsPage() {
                 </p>
               )}
               <h3 className="text-lg sm:text-xl font-bold leading-tight" style={{ color: form.hero_text_color }}>
-                {form.site_name || 'Nome do Site'}
+                {form.site_name || t.previewSiteNameFallback}
               </h3>
               {form.bio && (
                 <p className="text-[10px] mt-1 opacity-70 line-clamp-1" style={{ color: form.hero_text_color }}>
@@ -878,7 +948,7 @@ export default function SiteSettingsPage() {
 
         {/* Moeda */}
         <div className="mt-4">
-          <label className={labelClass} style={labelStyle}>Moeda dos preços</label>
+          <label className={labelClass} style={labelStyle}>{t.currencyLabel}</label>
           <CustomSelect
             value={form.currency}
             onChange={(v) => updateField('currency', v)}
@@ -896,7 +966,7 @@ export default function SiteSettingsPage() {
             ]}
           />
           <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
-            Esta moeda será exibida nos preços do seu site público.
+            {t.currencyHint}
           </p>
         </div>
       </div>
@@ -905,7 +975,7 @@ export default function SiteSettingsPage() {
       <div className={sectionClass} style={sectionStyle}>
         <div className="flex items-center gap-2 mb-2">
           <User size={18} style={{ color: 'var(--color-success)' }} />
-          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.about}</h2>
+          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.sections.about}</h2>
         </div>
 
         <div className="flex items-start gap-4">
@@ -926,7 +996,7 @@ export default function SiteSettingsPage() {
                 onClick={(e) => { e.stopPropagation(); updateField('avatar_url', '') }}
                 className="absolute -top-1 -right-1 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all"
                 style={{ background: 'var(--color-error)', color: '#fff' }}
-                title="Remover foto"
+                title={t.removeAvatar}
               >
                 <Trash2 size={10} />
               </button>
@@ -934,15 +1004,15 @@ export default function SiteSettingsPage() {
           </div>
           <div className="flex-1 space-y-3">
             <div>
-              <label className={labelClass} style={labelStyle}>{T.creci}</label>
-              <input type="text" value={form.creci} onChange={(e) => updateField('creci', e.target.value)} placeholder={T.creciPlaceholder} className={inputClass} style={inputStyle} />
+              <label className={labelClass} style={labelStyle}>{t.creci}</label>
+              <input type="text" value={form.creci} onChange={(e) => updateField('creci', e.target.value)} placeholder={t.creciPlaceholder} className={inputClass} style={inputStyle} />
             </div>
           </div>
         </div>
 
         <div>
-          <label className={labelClass} style={labelStyle}>{T.bio}</label>
-          <textarea value={form.bio} onChange={(e) => updateField('bio', e.target.value)} placeholder={T.bioPlaceholder} rows={4} className={inputClass + ' resize-none'} style={inputStyle} />
+          <label className={labelClass} style={labelStyle}>{t.bio}</label>
+          <textarea value={form.bio} onChange={(e) => updateField('bio', e.target.value)} placeholder={t.bioPlaceholder} rows={4} className={inputClass + ' resize-none'} style={inputStyle} />
         </div>
       </div>
 
@@ -950,24 +1020,24 @@ export default function SiteSettingsPage() {
       <div className={sectionClass} style={sectionStyle}>
         <div className="flex items-center gap-2 mb-2">
           <Phone size={18} style={{ color: 'var(--color-primary)' }} />
-          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.contact}</h2>
+          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.sections.contact}</h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass} style={labelStyle}>{T.email}</label>
+            <label className={labelClass} style={labelStyle}>{t.email}</label>
             <input type="email" value={form.email} onChange={(e) => updateField('email', e.target.value)} className={inputClass} style={inputStyle} />
           </div>
           <div>
-            <label className={labelClass} style={labelStyle}>{T.phone}</label>
+            <label className={labelClass} style={labelStyle}>{t.phone}</label>
             <input type="tel" value={form.phone} onChange={(e) => updateField('phone', e.target.value)} className={inputClass} style={inputStyle} />
           </div>
           <div>
-            <label className={labelClass} style={labelStyle}>{T.whatsapp}</label>
+            <label className={labelClass} style={labelStyle}>{t.whatsapp}</label>
             <input type="tel" value={form.whatsapp} onChange={(e) => updateField('whatsapp', e.target.value)} className={inputClass} style={inputStyle} placeholder="5511999999999" />
           </div>
           <div>
-            <label className={labelClass} style={labelStyle}>{T.address}</label>
+            <label className={labelClass} style={labelStyle}>{t.address}</label>
             <input type="text" value={form.address} onChange={(e) => updateField('address', e.target.value)} className={inputClass} style={inputStyle} />
           </div>
         </div>
@@ -977,18 +1047,18 @@ export default function SiteSettingsPage() {
       <div className={sectionClass} style={sectionStyle}>
         <div className="flex items-center gap-2 mb-2">
           <Share2 size={18} style={{ color: 'var(--color-accent)' }} />
-          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.social}</h2>
+          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.sections.social}</h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {(['instagram', 'facebook', 'linkedin', 'youtube', 'tiktok'] as const).map((network) => (
             <div key={network}>
-              <label className={labelClass} style={labelStyle}>{T[network]}</label>
+              <label className={labelClass} style={labelStyle}>{t[network]}</label>
               <input
                 type="url"
                 value={form.social_links[network]}
                 onChange={(e) => updateSocial(network, e.target.value)}
-                placeholder={T.socialPlaceholder}
+                placeholder={t.socialPlaceholder}
                 className={inputClass}
                 style={inputStyle}
               />
@@ -1001,22 +1071,22 @@ export default function SiteSettingsPage() {
       <div className={sectionClass} style={sectionStyle}>
         <div className="flex items-center gap-2 mb-2">
           <SearchIcon size={18} style={{ color: 'var(--color-accent)' }} />
-          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.seo}</h2>
+          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.sections.seo}</h2>
         </div>
 
         <div>
-          <label className={labelClass} style={labelStyle}>{T.metaTitle}</label>
-          <input type="text" value={form.meta_title} onChange={(e) => updateField('meta_title', e.target.value)} placeholder={T.metaTitlePlaceholder} className={inputClass} style={inputStyle} />
+          <label className={labelClass} style={labelStyle}>{t.metaTitle}</label>
+          <input type="text" value={form.meta_title} onChange={(e) => updateField('meta_title', e.target.value)} placeholder={t.metaTitlePlaceholder} className={inputClass} style={inputStyle} />
         </div>
         <div>
-          <label className={labelClass} style={labelStyle}>{T.metaDescription}</label>
-          <textarea value={form.meta_description} onChange={(e) => updateField('meta_description', e.target.value)} placeholder={T.metaDescriptionPlaceholder} rows={3} className={inputClass + ' resize-none'} style={inputStyle} maxLength={160} />
+          <label className={labelClass} style={labelStyle}>{t.metaDescription}</label>
+          <textarea value={form.meta_description} onChange={(e) => updateField('meta_description', e.target.value)} placeholder={t.metaDescriptionPlaceholder} rows={3} className={inputClass + ' resize-none'} style={inputStyle} maxLength={160} />
           <p className="text-[11px] mt-1 text-right" style={{ color: 'var(--color-text-tertiary)' }}>
             {form.meta_description.length}/160
           </p>
         </div>
         <div>
-          <label className={labelClass} style={labelStyle}>{T.ogImage}</label>
+          <label className={labelClass} style={labelStyle}>{t.ogImage}</label>
           <div className="relative group">
             <div
               onClick={() => handleImageUpload('og_image_url')}
@@ -1028,7 +1098,7 @@ export default function SiteSettingsPage() {
               ) : (
                 <div className="text-center">
                   <ImageIcon size={24} className="mx-auto mb-1" style={{ color: 'var(--color-text-muted)' }} />
-                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>1200×630 recomendado</span>
+                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{t.ogHint}</span>
                 </div>
               )}
             </div>
@@ -1037,7 +1107,7 @@ export default function SiteSettingsPage() {
                 onClick={(e) => { e.stopPropagation(); updateField('og_image_url', '') }}
                 className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                 style={{ background: 'var(--color-error)', color: '#fff' }}
-                title="Remover imagem OG"
+                title={t.removeOg}
               >
                 <Trash2 size={12} />
               </button>
@@ -1050,7 +1120,7 @@ export default function SiteSettingsPage() {
       <div className={sectionClass} style={{ ...sectionStyle, borderColor: form.is_published ? 'rgba(16,185,129,0.3)' : sectionStyle.borderColor }}>
         <div className="flex items-center gap-2 mb-2">
           <Eye size={18} style={{ color: form.is_published ? 'var(--color-success)' : 'var(--color-text-tertiary)' }} />
-          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{T.sections.publish}</h2>
+          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.sections.publish}</h2>
           {form.is_published && (
             <span className="ml-auto px-2.5 py-1 rounded-lg text-[11px] font-bold border" style={{ background: 'var(--color-success-subtle)', color: 'var(--color-success)', borderColor: 'var(--color-success)' }}>
               ONLINE
@@ -1058,7 +1128,7 @@ export default function SiteSettingsPage() {
           )}
         </div>
 
-        <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{T.publishDesc}</p>
+        <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{t.publishDesc}</p>
 
         <div className="flex items-center gap-3">
           {form.is_published ? (
@@ -1070,7 +1140,7 @@ export default function SiteSettingsPage() {
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
                 style={{ background: 'var(--color-success)', color: '#fff' }}
               >
-                <ExternalLink size={15} /> {T.visitSite}
+                <ExternalLink size={15} /> {t.visitSite}
               </a>
               <button
                 onClick={() => handlePublish(false)}
@@ -1079,7 +1149,7 @@ export default function SiteSettingsPage() {
                 style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
               >
                 {publishing ? <Loader2 size={15} className="animate-spin" /> : <X size={15} />}
-                {T.unpublishBtn}
+                {t.unpublishBtn}
               </button>
             </>
           ) : (
@@ -1092,15 +1162,15 @@ export default function SiteSettingsPage() {
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all hover:bg-[var(--color-bg-hover)]"
                   style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
                 >
-                  <Eye size={15} /> {T.preview}
+                  <Eye size={15} /> {t.preview}
                 </a>
               ) : (
                 <span
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border opacity-40 cursor-not-allowed"
                   style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-                  title="Salve as alterações primeiro"
+                  title={t.saveBeforePreview}
                 >
-                  <Eye size={15} /> {T.preview}
+                  <Eye size={15} /> {t.preview}
                 </span>
               )}
               <button
@@ -1110,12 +1180,12 @@ export default function SiteSettingsPage() {
                 style={{ background: 'var(--color-primary)', color: '#fff' }}
               >
                 {publishing ? <Loader2 size={15} className="animate-spin" /> : <Globe size={15} />}
-                {publishing ? T.publishing : T.publishBtn}
+                {publishing ? t.publishing : t.publishBtn}
               </button>
               {!hasSaved && (
                 <p className="text-xs w-full mt-1" style={{ color: 'var(--color-accent)' }}>
                   <AlertCircle size={12} className="inline mr-1" />
-                  Salve as alterações antes de pré-visualizar ou publicar.
+                  {t.saveBeforePublish}
                 </p>
               )}
             </>
