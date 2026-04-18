@@ -31,7 +31,9 @@ import {
   Pause,
   Play,
   Smartphone,
-  Upload
+  Upload,
+  Trophy,
+  Ban
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
 
@@ -1154,12 +1156,30 @@ export default function CrmPage() {
                   >
                     {/* Header da Coluna */}
                     <div className="p-3 shrink-0 rounded-t-xl" style={{ borderBottom: `2px solid ${getStageHex(stage.color)}`, background: 'var(--color-bg-elevated)' }}>
-                      <div className="flex justify-between items-center">
-                        <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-                          <span className={`w-2 h-2 rounded-full ${stageColor.dot}`} />
-                          {stage.label}
+                      <div className="flex justify-between items-center gap-2">
+                        <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2 min-w-0" style={{ color: 'var(--color-text-primary)' }}>
+                          <span className={`w-2 h-2 rounded-full ${stageColor.dot} flex-shrink-0`} />
+                          <span className="truncate">{stage.label}</span>
+                          {stage.is_won && (
+                            <span
+                              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold flex-shrink-0"
+                              style={{ background: 'var(--color-success-subtle, rgba(52, 179, 104, 0.15))', color: 'var(--color-success)' }}
+                              title={userLang === 'en' ? 'Won stage — does not count toward leads quota' : userLang === 'es' ? 'Etapa ganada — no cuenta para la cuota de leads' : 'Etapa ganha — não conta na quota de leads'}
+                            >
+                              <Trophy size={9} />
+                            </span>
+                          )}
+                          {stage.is_lost && (
+                            <span
+                              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold flex-shrink-0"
+                              style={{ background: 'var(--color-error-subtle, rgba(217, 84, 84, 0.15))', color: 'var(--color-error)' }}
+                              title={userLang === 'en' ? 'Lost stage — does not count toward leads quota' : userLang === 'es' ? 'Etapa perdida — no cuenta para la cuota de leads' : 'Etapa perdida — não conta na quota de leads'}
+                            >
+                              <Ban size={9} />
+                            </span>
+                          )}
                         </h3>
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${stageColor.bg} ${stageColor.text}`}>
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${stageColor.bg} ${stageColor.text} flex-shrink-0`}>
                           {count}
                         </span>
                       </div>

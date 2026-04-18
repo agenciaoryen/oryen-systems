@@ -7,7 +7,8 @@ import {
   User, Users, Shield, Building, Globe, Bell, Save, UserPlus, Trash2,
   X, Loader2, AlertCircle, Lock, Mail, Smartphone, MapPin, Copy, Check,
   Tag, Plus, GripVertical, Pencil, LayoutGrid, ChevronUp, ChevronDown,
-  Sun, Moon, CreditCard, Eye, RotateCcw, Clock, Play, Calendar
+  Sun, Moon, CreditCard, Eye, RotateCcw, Clock, Play, Calendar,
+  Info, Trophy, Ban, Circle
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
@@ -126,7 +127,13 @@ const TRANSLATIONS = {
       isLost: 'Etapa de Perda',
       confirmDelete: 'Tem certeza que deseja excluir esta etapa?',
       cannotDelete: 'Não é possível excluir etapas com contatos associados.',
-      stageUpdated: 'Pipeline atualizado com sucesso!'
+      stageUpdated: 'Pipeline atualizado com sucesso!',
+      stageType: 'Tipo de etapa',
+      stageTypeOpen: 'Em aberto',
+      stageTypeWon: 'Ganho',
+      stageTypeLost: 'Perdido',
+      stageTypeInfoTitle: 'Como funciona o tipo da etapa',
+      stageTypeInfo: 'Etapas marcadas como Ganho ou Perdido não contam na quota de leads ativos do plano. Isso evita que negócios já fechados (há meses ou anos) ocupem vaga para novos leads em andamento.',
     },
     tags: {
       title: 'Gerenciar Tags',
@@ -286,7 +293,13 @@ const TRANSLATIONS = {
       isLost: 'Lost Stage',
       confirmDelete: 'Are you sure you want to delete this stage?',
       cannotDelete: 'Cannot delete stages with associated contacts.',
-      stageUpdated: 'Pipeline updated successfully!'
+      stageUpdated: 'Pipeline updated successfully!',
+      stageType: 'Stage type',
+      stageTypeOpen: 'Open',
+      stageTypeWon: 'Won',
+      stageTypeLost: 'Lost',
+      stageTypeInfoTitle: 'How stage type works',
+      stageTypeInfo: "Stages marked as Won or Lost don't count toward your plan's active leads quota. This prevents closed deals (from months or years ago) from taking up space for new leads in progress.",
     },
     tags: {
       title: 'Manage Tags',
@@ -444,6 +457,12 @@ const TRANSLATIONS = {
       save: 'Guardar Cambios',
       isWon: 'Etapa de Cierre',
       isLost: 'Etapa Perdida',
+      stageType: 'Tipo de etapa',
+      stageTypeOpen: 'En curso',
+      stageTypeWon: 'Ganado',
+      stageTypeLost: 'Perdido',
+      stageTypeInfoTitle: 'Cómo funciona el tipo de etapa',
+      stageTypeInfo: 'Las etapas marcadas como Ganado o Perdido no cuentan para la cuota de leads activos del plan. Esto evita que los negocios ya cerrados (de hace meses o años) ocupen espacio para nuevos leads en curso.',
       confirmDelete: '¿Está seguro de que desea eliminar esta etapa?',
       cannotDelete: 'No se pueden eliminar etapas con contactos asociados.',
       stageUpdated: '¡Pipeline actualizado con éxito!'
@@ -1723,6 +1742,27 @@ export default function SettingsPage() {
                 <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.pipeline.subtitle}</p>
               </div>
 
+              {/* Info banner sobre tipo de etapa */}
+              <div
+                className="flex items-start gap-3 p-4 rounded-xl"
+                style={{ background: 'var(--color-info-subtle, rgba(90, 122, 230, 0.08))', border: '1px solid var(--color-border-subtle)' }}
+              >
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'var(--color-indigo)', color: '#fff' }}
+                >
+                  <Info size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                    {t.pipeline.stageTypeInfoTitle}
+                  </p>
+                  <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                    {t.pipeline.stageTypeInfo}
+                  </p>
+                </div>
+              </div>
+
               {/* Lista de Estágios */}
               <div className="space-y-2">
                 {pipelineLoading ? (
@@ -1782,27 +1822,57 @@ export default function SettingsPage() {
                         />
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-1 text-[10px] cursor-pointer" style={{ color: 'var(--color-text-tertiary)' }}>
-                          <input
-                            type="checkbox"
-                            checked={stage.is_won}
-                            onChange={(e) => handleUpdateStage(stage.id, { is_won: e.target.checked, is_lost: false })}
-                            className="rounded"
-                            style={{ borderColor: 'var(--color-border)' }}
-                          />
-                          ✅
-                        </label>
-                        <label className="flex items-center gap-1 text-[10px] cursor-pointer" style={{ color: 'var(--color-text-tertiary)' }}>
-                          <input
-                            type="checkbox"
-                            checked={stage.is_lost}
-                            onChange={(e) => handleUpdateStage(stage.id, { is_lost: e.target.checked, is_won: false })}
-                            className="rounded"
-                            style={{ borderColor: 'var(--color-border)' }}
-                          />
-                          ❌
-                        </label>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                          {t.pipeline.stageType}
+                        </span>
+                        <div
+                          className="inline-flex p-0.5 rounded-lg"
+                          style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)' }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateStage(stage.id, { is_won: false, is_lost: false })}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all"
+                            title={t.pipeline.stageTypeOpen}
+                            style={
+                              !stage.is_won && !stage.is_lost
+                                ? { background: 'var(--color-bg-hover)', color: 'var(--color-text-primary)' }
+                                : { background: 'transparent', color: 'var(--color-text-muted)' }
+                            }
+                          >
+                            <Circle size={12} />
+                            <span className="hidden md:inline">{t.pipeline.stageTypeOpen}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateStage(stage.id, { is_won: true, is_lost: false })}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all"
+                            title={t.pipeline.stageTypeWon}
+                            style={
+                              stage.is_won
+                                ? { background: 'var(--color-success-subtle, rgba(52, 179, 104, 0.15))', color: 'var(--color-success)' }
+                                : { background: 'transparent', color: 'var(--color-text-muted)' }
+                            }
+                          >
+                            <Trophy size={12} />
+                            <span className="hidden md:inline">{t.pipeline.stageTypeWon}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateStage(stage.id, { is_won: false, is_lost: true })}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all"
+                            title={t.pipeline.stageTypeLost}
+                            style={
+                              stage.is_lost
+                                ? { background: 'var(--color-error-subtle, rgba(217, 84, 84, 0.15))', color: 'var(--color-error)' }
+                                : { background: 'transparent', color: 'var(--color-text-muted)' }
+                            }
+                          >
+                            <Ban size={12} />
+                            <span className="hidden md:inline">{t.pipeline.stageTypeLost}</span>
+                          </button>
+                        </div>
                       </div>
 
                       <button
