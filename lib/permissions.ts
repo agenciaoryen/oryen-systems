@@ -40,27 +40,40 @@ export type PermissionModule = (typeof PERMISSION_MODULES)[number]
 
 // ─── METADADOS PARA UI ───
 
-export const MODULE_LABELS: Record<PermissionModule, { pt: string; group: string }> = {
-  crm: { pt: 'CRM / Leads', group: 'Comercial' },
-  messages: { pt: 'Conversas', group: 'Comercial' },
-  calendar: { pt: 'Calendário', group: 'Comercial' },
-  distribution: { pt: 'Distribuição', group: 'Comercial' },
-  goals: { pt: 'Metas', group: 'Comercial' },
-  agents: { pt: 'Agentes SDR', group: 'IA & Automação' },
-  follow_up: { pt: 'Follow-up', group: 'IA & Automação' },
-  analytics: { pt: 'Analytics IA', group: 'IA & Automação' },
-  portfolio: { pt: 'Portfólio', group: 'Imóveis' },
-  property_stats: { pt: 'Estatísticas de Imóveis', group: 'Imóveis' },
-  site: { pt: 'Meu Site', group: 'Imóveis' },
-  financial: { pt: 'Financeiro', group: 'Financeiro' },
-  subscription: { pt: 'Assinatura', group: 'Financeiro' },
-  whatsapp: { pt: 'WhatsApp', group: 'Ferramentas' },
-  documents: { pt: 'Documentos', group: 'Ferramentas' },
-  reports: { pt: 'Relatórios', group: 'Ferramentas' },
-  financing: { pt: 'Financiamento', group: 'Ferramentas' },
+export type Lang = 'pt' | 'en' | 'es'
+
+export const MODULE_GROUP_KEYS = ['commercial', 'ai', 'properties', 'financial', 'tools'] as const
+export type ModuleGroupKey = (typeof MODULE_GROUP_KEYS)[number]
+
+export const GROUP_LABELS: Record<ModuleGroupKey, { pt: string; en: string; es: string }> = {
+  commercial: { pt: 'Comercial',       en: 'Commercial',       es: 'Comercial' },
+  ai:         { pt: 'IA & Automação',  en: 'AI & Automation',  es: 'IA y Automatización' },
+  properties: { pt: 'Imóveis',         en: 'Properties',       es: 'Inmuebles' },
+  financial:  { pt: 'Financeiro',      en: 'Financial',        es: 'Financiero' },
+  tools:      { pt: 'Ferramentas',     en: 'Tools',            es: 'Herramientas' },
 }
 
-export const MODULE_GROUPS = ['Comercial', 'IA & Automação', 'Imóveis', 'Financeiro', 'Ferramentas'] as const
+export const MODULE_LABELS: Record<PermissionModule, { pt: string; en: string; es: string; group: ModuleGroupKey }> = {
+  crm:            { pt: 'CRM / Leads',              en: 'CRM / Leads',             es: 'CRM / Leads',             group: 'commercial' },
+  messages:       { pt: 'Conversas',                en: 'Conversations',           es: 'Conversaciones',          group: 'commercial' },
+  calendar:       { pt: 'Calendário',               en: 'Calendar',                es: 'Calendario',              group: 'commercial' },
+  distribution:   { pt: 'Distribuição',             en: 'Distribution',            es: 'Distribución',            group: 'commercial' },
+  goals:          { pt: 'Metas',                    en: 'Goals',                   es: 'Metas',                   group: 'commercial' },
+  agents:         { pt: 'Agentes SDR',              en: 'SDR Agents',              es: 'Agentes SDR',             group: 'ai' },
+  follow_up:      { pt: 'Follow-up',                en: 'Follow-up',               es: 'Seguimiento',             group: 'ai' },
+  analytics:      { pt: 'Analytics IA',             en: 'AI Analytics',            es: 'Analítica IA',            group: 'ai' },
+  portfolio:      { pt: 'Portfólio',                en: 'Portfolio',               es: 'Portafolio',              group: 'properties' },
+  property_stats: { pt: 'Estatísticas de Imóveis',  en: 'Property Stats',          es: 'Estadísticas de Inmuebles', group: 'properties' },
+  site:           { pt: 'Meu Site',                 en: 'My Site',                 es: 'Mi Sitio',                group: 'properties' },
+  financial:      { pt: 'Financeiro',               en: 'Financial',               es: 'Financiero',              group: 'financial' },
+  subscription:   { pt: 'Assinatura',               en: 'Subscription',            es: 'Suscripción',             group: 'financial' },
+  whatsapp:       { pt: 'WhatsApp',                 en: 'WhatsApp',                es: 'WhatsApp',                group: 'tools' },
+  documents:      { pt: 'Documentos',               en: 'Documents',               es: 'Documentos',              group: 'tools' },
+  reports:        { pt: 'Relatórios',               en: 'Reports',                 es: 'Informes',                group: 'tools' },
+  financing:      { pt: 'Financiamento',            en: 'Financing',               es: 'Financiamiento',          group: 'tools' },
+}
+
+export const MODULE_GROUPS = MODULE_GROUP_KEYS
 
 // ─── DEFAULTS DO VENDEDOR (usado quando role não tem permissions salvas) ───
 
