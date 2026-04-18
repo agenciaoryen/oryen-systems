@@ -14,7 +14,14 @@
 // );
 // CREATE INDEX idx_org_addons_org ON org_addons(org_id);
 
-export type AddonType = 'extra_users' | 'extra_messages' | 'extra_whatsapp' | 'extra_sites'
+export type AddonType =
+  | 'extra_users'
+  | 'extra_messages'
+  | 'extra_whatsapp'
+  | 'extra_sites'
+  | 'extra_documents'
+  | 'extra_properties'
+  | 'extra_leads'
 
 export interface AddonConfig {
   type: AddonType
@@ -85,6 +92,42 @@ export const ADDON_CONFIGS: Record<AddonType, AddonConfig> = {
     stripePriceId: 'price_1TLnvb3PghkCuiR44OL98HHj',
     limitKey: 'maxSites',
     icon: 'Globe',
+  },
+  extra_documents: {
+    type: 'extra_documents',
+    displayName: 'Documentos Extras',
+    description: 'Mais documentos gerados por mês',
+    unitLabel: '50 documentos',
+    unitAmount: 50,
+    priceUsd: 15,
+    priceBrl: 75,
+    stripePriceId: 'price_1TNfKd3PghkCuiR4XHyIooMp',
+    limitKey: 'maxDocumentsPerMonth',
+    icon: 'FileText',
+  },
+  extra_properties: {
+    type: 'extra_properties',
+    displayName: 'Imóveis Extras',
+    description: 'Mais espaço no portfólio de imóveis',
+    unitLabel: '100 imóveis',
+    unitAmount: 100,
+    priceUsd: 15,
+    priceBrl: 75,
+    stripePriceId: 'price_1TNfLa3PghkCuiR4y6wTgWR0',
+    limitKey: 'maxProperties',
+    icon: 'Building2',
+  },
+  extra_leads: {
+    type: 'extra_leads',
+    displayName: 'Leads Extras',
+    description: 'Mais espaço para leads ativos no CRM',
+    unitLabel: '1.000 leads',
+    unitAmount: 1000,
+    priceUsd: 20,
+    priceBrl: 100,
+    stripePriceId: 'price_1TNfML3PghkCuiR4rs9iaENu',
+    limitKey: 'maxActiveLeads',
+    icon: 'UserPlus',
   },
 }
 
