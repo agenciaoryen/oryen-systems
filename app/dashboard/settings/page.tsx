@@ -68,7 +68,8 @@ const TRANSLATIONS = {
       tags: 'Tags',
       integrations: 'Integrações',
       leadCard: 'Card do Lead',
-      distribution: 'Distribuição'
+      distribution: 'Distribuição',
+      permissions: 'Permissões'
     },
     profile: {
       personalData: 'Dados Pessoais',
@@ -227,7 +228,8 @@ const TRANSLATIONS = {
       tags: 'Tags',
       integrations: 'Integrations',
       leadCard: 'Lead Card',
-      distribution: 'Distribution'
+      distribution: 'Distribution',
+      permissions: 'Permissions'
     },
     profile: {
       personalData: 'Personal Data',
@@ -386,7 +388,8 @@ const TRANSLATIONS = {
       tags: 'Tags',
       integrations: 'Integraciones',
       leadCard: 'Card del Lead',
-      distribution: 'Distribución'
+      distribution: 'Distribución',
+      permissions: 'Permisos'
     },
     profile: {
       personalData: 'Datos Personales',
@@ -1194,7 +1197,7 @@ export default function SettingsPage() {
     { id: 'leadCard', label: t.tabs.leadCard, icon: Eye, adminOnly: true },
     { id: 'integrations', label: t.tabs.integrations, icon: Globe, adminOnly: true },
     { id: 'distribution', label: t.tabs.distribution, icon: Users, adminOnly: true },
-    { id: 'permissions', label: 'Permissões', icon: Shield, adminOnly: true },
+    { id: 'permissions', label: t.tabs.permissions, icon: Shield, adminOnly: true },
   ]
 
   return (
