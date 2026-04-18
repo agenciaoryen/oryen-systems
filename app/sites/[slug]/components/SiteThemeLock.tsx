@@ -1,11 +1,7 @@
-'use client'
-
 /**
- * Força o tema escolhido pelo dono do site (dark ou light) no site público,
- * ignorando a preferência do usuário visitante no dashboard.
- *
- * Usa script inline para agir antes da primeira pintura,
- * e MutationObserver para impedir que o ThemeProvider sobrescreva.
+ * Aplica o tema escolhido pelo dono do site (dark ou light) no site público.
+ * Script inline puro — roda antes da primeira pintura, sem depender de React.
+ * Não usa MutationObserver: o ThemeProvider já ignora rotas /sites/*, então não há disputa.
  */
 export default function SiteThemeLock({ theme }: { theme: 'dark' | 'light' }) {
   return (
@@ -15,17 +11,11 @@ export default function SiteThemeLock({ theme }: { theme: 'dark' | 'light' }) {
           (function() {
             var h = document.documentElement;
             var target = ${JSON.stringify(theme)};
-            function apply() {
-              if (target === 'light') {
-                h.setAttribute('data-theme', 'light');
-              } else {
-                h.removeAttribute('data-theme');
-              }
+            if (target === 'light') {
+              if (h.getAttribute('data-theme') !== 'light') h.setAttribute('data-theme', 'light');
+            } else {
+              if (h.hasAttribute('data-theme')) h.removeAttribute('data-theme');
             }
-            apply();
-            var obs = new MutationObserver(function() { apply(); });
-            obs.observe(h, { attributes: true, attributeFilter: ['data-theme'] });
-            window.__siteThemeObs = obs;
           })();
         `,
       }}

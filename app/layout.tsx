@@ -74,13 +74,16 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
-        {/* Anti-flash: lê preferência de tema antes da hidratação */}
+        {/* Anti-flash: lê preferência de tema antes da hidratação.
+            Em sites públicos (/sites/*), o tema é controlado pelo dono do site e não deve herdar o do dashboard. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                var t = localStorage.getItem('oryen-theme');
-                if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+                if (!location.pathname.startsWith('/sites/')) {
+                  var t = localStorage.getItem('oryen-theme');
+                  if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+                }
               } catch(e) {}
             `,
           }}

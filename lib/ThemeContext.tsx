@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 type Theme = 'dark' | 'light'
 
@@ -18,15 +19,18 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('dark')
+  const pathname = usePathname()
+  // Sites públicos têm tema próprio controlado pelo dono — não aplicar o tema do dashboard
+  const isPublicSite = pathname?.startsWith('/sites/')
 
   useEffect(() => {
-    // Lê preferência salva
+    if (isPublicSite) return
     const saved = localStorage.getItem('oryen-theme') as Theme | null
     if (saved === 'light' || saved === 'dark') {
       applyTheme(saved)
       setThemeState(saved)
     }
-  }, [])
+  }, [isPublicSite])
 
   function applyTheme(t: Theme) {
     const html = document.documentElement
@@ -42,6 +46,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }
 
   function setTheme(t: Theme) {
+    if (isPublicSite) return
     applyTheme(t)
     setThemeState(t)
     localStorage.setItem('oryen-theme', t)
