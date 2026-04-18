@@ -28,7 +28,9 @@ import {
   Pencil,
   Timer,
   Trash2,
-  Save
+  Save,
+  Ban,
+  RotateCcw
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
 import { toast } from 'sonner'
@@ -151,6 +153,17 @@ const TRANSLATIONS = {
     editEventSuccess: 'Registro editado com sucesso',
     confirm: 'Confirmar',
     cancel: 'Cancelar',
+    markAsLost: 'Marcar como perdido',
+    reopenLead: 'Reabrir lead',
+    lostModalTitle: 'Marcar lead como perdido',
+    lostModalDesc: 'Leads perdidos não contam na quota do plano e podem ser reabertos a qualquer momento.',
+    lostReasonLabel: 'Motivo (opcional)',
+    lostReasonPlaceholder: 'Ex: sem orçamento, comprou outro imóvel, sem retorno...',
+    confirmLost: 'Confirmar perda',
+    leadMarkedLost: 'Lead marcado como perdido',
+    leadReopened: 'Lead reaberto',
+    noLostStage: 'Configure um estágio "Perdido" em Configurações primeiro',
+    lostReasonPrefix: 'Motivo da perda:',
   },
   en: {
     back: 'Back',
@@ -213,6 +226,17 @@ const TRANSLATIONS = {
     editEventSuccess: 'Record edited successfully',
     confirm: 'Confirm',
     cancel: 'Cancel',
+    markAsLost: 'Mark as lost',
+    reopenLead: 'Reopen lead',
+    lostModalTitle: 'Mark lead as lost',
+    lostModalDesc: "Lost leads don't count against your plan quota and can be reopened anytime.",
+    lostReasonLabel: 'Reason (optional)',
+    lostReasonPlaceholder: 'E.g. no budget, bought another property, no response...',
+    confirmLost: 'Confirm loss',
+    leadMarkedLost: 'Lead marked as lost',
+    leadReopened: 'Lead reopened',
+    noLostStage: 'Configure a "Lost" stage in Settings first',
+    lostReasonPrefix: 'Loss reason:',
   },
   es: {
     back: 'Volver',
@@ -275,6 +299,17 @@ const TRANSLATIONS = {
     editEventSuccess: 'Registro editado con éxito',
     confirm: 'Confirmar',
     cancel: 'Cancelar',
+    markAsLost: 'Marcar como perdido',
+    reopenLead: 'Reabrir lead',
+    lostModalTitle: 'Marcar lead como perdido',
+    lostModalDesc: 'Los leads perdidos no cuentan para la cuota del plan y pueden reabrirse en cualquier momento.',
+    lostReasonLabel: 'Motivo (opcional)',
+    lostReasonPlaceholder: 'Ej: sin presupuesto, compró otro inmueble, sin respuesta...',
+    confirmLost: 'Confirmar pérdida',
+    leadMarkedLost: 'Lead marcado como perdido',
+    leadReopened: 'Lead reabierto',
+    noLostStage: 'Configura una etapa "Perdido" en Configuración primero',
+    lostReasonPrefix: 'Motivo de la pérdida:',
   }
 }
 
@@ -386,6 +421,11 @@ export default function LeadProfilePage() {
   const [editingEventContent, setEditingEventContent] = useState('')
   const [confirmDeleteEventId, setConfirmDeleteEventId] = useState<string | null>(null)
   const [editCompany, setEditCompany] = useState('')
+
+  // Estados do modal "Marcar como perdido"
+  const [showLostModal, setShowLostModal] = useState(false)
+  const [lostReason, setLostReason] = useState('')
+  const [savingLost, setSavingLost] = useState(false)
 
   // ─── CARREGAR DADOS ───
   const fetchData = useCallback(async () => {
@@ -604,6 +644,60 @@ export default function LeadProfilePage() {
     }
   }
 
+  // ─── MARCAR COMO PERDIDO ───
+  const handleConfirmMarkAsLost = async () => {
+    if (!lead || !leadId) return
+    const lostStage = pipelineStages.find(s => s.is_lost)
+    if (!lostStage) {
+      toast.error(t.noLostStage)
+      return
+    }
+
+    setSavingLost(true)
+    try {
+      await handleChangeStage(lostStage.name)
+
+      // Se o usuário escreveu um motivo, adiciona como nota separada na timeline
+      const reason = lostReason.trim()
+      if (reason) {
+        const { data: noteEvent } = await supabase
+          .from('lead_events')
+          .insert({
+            lead_id: leadId,
+            type: 'note',
+            content: `${t.lostReasonPrefix} ${reason}`,
+          })
+          .select()
+          .single()
+        if (noteEvent) setEvents(prev => [noteEvent, ...prev])
+      }
+
+      toast.success(t.leadMarkedLost)
+      setShowLostModal(false)
+      setLostReason('')
+    } catch (err) {
+      console.error('Erro ao marcar como perdido:', err)
+      toast.error(t.errorUpdate)
+    } finally {
+      setSavingLost(false)
+    }
+  }
+
+  const handleReopenLead = async () => {
+    if (!lead || !leadId) return
+    // Primeiro stage não terminal (ordem de posição)
+    const firstOpenStage = pipelineStages.find(s => !s.is_lost && !s.is_won && s.is_active)
+    if (!firstOpenStage) return
+
+    setSavingLost(true)
+    try {
+      await handleChangeStage(firstOpenStage.name)
+      toast.success(t.leadReopened)
+    } finally {
+      setSavingLost(false)
+    }
+  }
+
   // ─── ADICIONAR TAG ───
   const handleAddTag = async (tag: LeadTag) => {
     if (!leadId || leadTags.some(lt => lt.id === tag.id)) {
@@ -781,6 +875,8 @@ export default function LeadProfilePage() {
   const currentStage = pipelineStages.find(s => s.name === lead.stage)
   const stageColor = currentStage ? getStageColor(currentStage.color) : getStageColor('gray')
   const availableTags = allTags.filter(tag => !leadTags.some(lt => lt.id === tag.id))
+  const isLeadLost = !!currentStage?.is_lost
+  const hasLostStageConfigured = pipelineStages.some(s => s.is_lost)
 
   return (
     <div className="min-h-[calc(100vh-100px)] p-4 md:p-6 lg:p-10 font-sans pb-24" style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-secondary)' }}>
@@ -802,20 +898,56 @@ export default function LeadProfilePage() {
           {t.back}
         </button>
 
-        <button
-          onClick={handleToggleIA}
-          className="flex items-center gap-3 px-4 py-2.5 rounded-full border transition-all shadow-lg w-full sm:w-auto justify-center"
-          style={lead.conversa_finalizada
-            ? { background: 'var(--color-error-subtle)', borderColor: 'var(--color-error)', color: 'var(--color-error)' }
-            : { background: 'var(--color-success-subtle)', borderColor: 'var(--color-success)', color: 'var(--color-success)' }
-          }
-        >
-          <Bot size={16} />
-          <div className={`w-2 h-2 rounded-full ${lead.conversa_finalizada ? '' : 'animate-pulse'}`} style={{ background: lead.conversa_finalizada ? 'var(--color-error)' : 'var(--color-success)' }} />
-          <span className="text-xs font-bold uppercase tracking-wider">
-            {lead.conversa_finalizada ? t.agentPaused : t.agentActive}
-          </span>
-        </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          {hasLostStageConfigured && (
+            isLeadLost ? (
+              <button
+                onClick={handleReopenLead}
+                disabled={savingLost || savingStage}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all text-xs font-bold uppercase tracking-wider disabled:opacity-50 justify-center"
+                style={{ background: 'var(--color-success-subtle)', borderColor: 'var(--color-success)', color: 'var(--color-success)' }}
+              >
+                {savingLost ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
+                {t.reopenLead}
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowLostModal(true)}
+                disabled={savingLost || savingStage}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all text-xs font-bold uppercase tracking-wider disabled:opacity-50 justify-center"
+                style={{ background: 'transparent', borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.borderColor = 'var(--color-error)'
+                  el.style.color = 'var(--color-error)'
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.borderColor = 'var(--color-border)'
+                  el.style.color = 'var(--color-text-muted)'
+                }}
+              >
+                <Ban size={14} />
+                {t.markAsLost}
+              </button>
+            )
+          )}
+
+          <button
+            onClick={handleToggleIA}
+            className="flex items-center gap-3 px-4 py-2.5 rounded-full border transition-all shadow-lg w-full sm:w-auto justify-center"
+            style={lead.conversa_finalizada
+              ? { background: 'var(--color-error-subtle)', borderColor: 'var(--color-error)', color: 'var(--color-error)' }
+              : { background: 'var(--color-success-subtle)', borderColor: 'var(--color-success)', color: 'var(--color-success)' }
+            }
+          >
+            <Bot size={16} />
+            <div className={`w-2 h-2 rounded-full ${lead.conversa_finalizada ? '' : 'animate-pulse'}`} style={{ background: lead.conversa_finalizada ? 'var(--color-error)' : 'var(--color-success)' }} />
+            <span className="text-xs font-bold uppercase tracking-wider">
+              {lead.conversa_finalizada ? t.agentPaused : t.agentActive}
+            </span>
+          </button>
+        </div>
 
         {/* Cronômetro de pausa temporária do atendente */}
         {stopRemaining > 0 && !lead.conversa_finalizada && (
@@ -1379,6 +1511,70 @@ export default function LeadProfilePage() {
             setIsTagDropdownOpen(false)
           }}
         />
+      )}
+
+      {/* Modal: Marcar como perdido */}
+      {showLostModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}
+          onClick={() => !savingLost && setShowLostModal(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
+            style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)' }}
+              >
+                <Ban size={18} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-base mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                  {t.lostModalTitle}
+                </h3>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
+                  {t.lostModalDesc}
+                </p>
+              </div>
+            </div>
+
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+              {t.lostReasonLabel}
+            </label>
+            <textarea
+              value={lostReason}
+              onChange={e => setLostReason(e.target.value)}
+              placeholder={t.lostReasonPlaceholder}
+              disabled={savingLost}
+              className="w-full h-24 rounded-xl p-3 text-sm outline-none resize-none transition-all mb-4"
+              style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
+            />
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowLostModal(false); setLostReason('') }}
+                disabled={savingLost}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+                style={{ background: 'transparent', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+              >
+                {t.cancel}
+              </button>
+              <button
+                onClick={handleConfirmMarkAsLost}
+                disabled={savingLost}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                style={{ background: 'var(--color-error)', color: '#fff' }}
+              >
+                {savingLost ? <Loader2 size={14} className="animate-spin" /> : <Ban size={14} />}
+                {t.confirmLost}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

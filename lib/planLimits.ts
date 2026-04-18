@@ -96,6 +96,52 @@ export async function checkPlanLimit(
 }
 
 /**
+ * Verifica limite de leads ATIVOS (excluindo stages com is_won=true ou is_lost=true).
+ * Leads fechados/perdidos não consomem quota do plano.
+ */
+export async function checkActiveLeadsLimit(orgId: string): Promise<LimitCheckResult> {
+  const [config, addons] = await Promise.all([
+    getOrgPlanConfig(orgId),
+    getOrgAddons(orgId),
+  ])
+
+  const baseLimit = config.limits.maxActiveLeads
+  const addonBonus = calculateAddonBonus(addons, 'maxActiveLeads')
+  const limit = getEffectiveLimit(baseLimit, addonBonus)
+
+  if (limit === -1) {
+    return { allowed: true, current: 0, limit: -1, baseLimit, addonBonus }
+  }
+
+  // Busca stages terminais (won/lost) para excluir da contagem
+  const { data: terminalStages } = await supabase
+    .from('pipeline_stages')
+    .select('name')
+    .eq('org_id', orgId)
+    .or('is_won.eq.true,is_lost.eq.true')
+
+  const terminalNames = (terminalStages || []).map(s => s.name)
+
+  let query = supabase
+    .from('leads')
+    .select('id', { count: 'exact', head: true })
+    .eq('org_id', orgId)
+
+  if (terminalNames.length > 0) {
+    query = query.not('stage', 'in', `(${terminalNames.map(n => `"${n}"`).join(',')})`)
+  }
+
+  const { count } = await query
+  const current = count || 0
+
+  if (current >= limit) {
+    return { allowed: false, current, limit, baseLimit, addonBonus, plan: config.name }
+  }
+
+  return { allowed: true, current, limit, baseLimit, addonBonus }
+}
+
+/**
  * Verifica limite mensal (documentos, mensagens IA) + add-ons.
  * Conta apenas registros do mês atual.
  */

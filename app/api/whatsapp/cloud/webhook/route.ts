@@ -159,10 +159,7 @@ async function processCloudMessage(
     return
   }
 
-  if (!instance.agent_id) {
-    console.warn(`[CloudAPI:Webhook] Instance ${instance.instance_name} has no agent linked`)
-    return
-  }
+  // Sem agente vinculado → modo WhatsApp Web: mensagem salva, IA não processa
 
   // ─── Registrar timestamp para janela 24h ───
   await recordInboundTimestamp(instance.org_id, phone)
@@ -187,7 +184,7 @@ async function processCloudMessage(
     whatsappMessageId: msg.id,
     timestamp,
     orgId: instance.org_id,
-    agentId: instance.agent_id,
+    agentId: instance.agent_id || null,
     campaignId: instance.campaign_id,
     instanceName: instance.instance_name,
     isAttendant: false,

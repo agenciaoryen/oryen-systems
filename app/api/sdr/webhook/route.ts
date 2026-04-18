@@ -68,12 +68,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ skipped: true, reason: 'unknown_instance' }, { status: 200 })
     }
 
-    console.log(`[SDR] Instância resolvida: ${instance.instance_name} | org: ${instance.org_id} | agent: ${instance.agent_id || 'NENHUM'}`)
+    console.log(`[SDR] Instância resolvida: ${instance.instance_name} | org: ${instance.org_id} | agent: ${instance.agent_id || 'NENHUM (modo WhatsApp Web)'}`)
 
-    if (!instance.agent_id) {
-      console.warn(`[SDR] Instância ${instance.instance_name} sem agente vinculado — mensagem ignorada`)
-      return NextResponse.json({ skipped: true, reason: 'no_agent_linked' }, { status: 200 })
-    }
+    // Sem agente vinculado → modo WhatsApp Web: mensagem é salva, mas IA não processa
 
     // ─── 3. Normalizar número ───
     const { phone, phoneFallback, isLid } = extractPhone(payload)
@@ -137,7 +134,7 @@ export async function POST(request: NextRequest) {
       whatsappMessageId,
       timestamp: payload.timestamp || Date.now(),
       orgId: instance.org_id,
-      agentId: instance.agent_id,
+      agentId: instance.agent_id || null,
       campaignId: instance.campaign_id,
       instanceName,
       isAttendant,

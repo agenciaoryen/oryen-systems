@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, resolveOrgId } from '@/lib/api-auth'
-import { checkPlanLimit, checkMonthlyPlanLimit } from '@/lib/planLimits'
+import { checkPlanLimit, checkMonthlyPlanLimit, checkActiveLeadsLimit } from '@/lib/planLimits'
 
 // Mapeamento recurso → { limitKey, table, monthly?, filters? }
 const RESOURCE_MAP: Record<string, {
@@ -38,9 +38,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: `Unknown resource: ${resource}` }, { status: 400 })
     }
 
-    const result = config.monthly
-      ? await checkMonthlyPlanLimit(orgId, config.limitKey as any, config.table, 'created_at', config.filters)
-      : await checkPlanLimit(orgId, config.limitKey as any, config.table, config.filters)
+    const result = resource === 'leads'
+      ? await checkActiveLeadsLimit(orgId)
+      : config.monthly
+        ? await checkMonthlyPlanLimit(orgId, config.limitKey as any, config.table, 'created_at', config.filters)
+        : await checkPlanLimit(orgId, config.limitKey as any, config.table, config.filters)
 
     return NextResponse.json(result)
   } catch (error: any) {

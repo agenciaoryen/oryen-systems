@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { checkPlanLimit } from '@/lib/planLimits'
+import { checkPlanLimit, checkActiveLeadsLimit } from '@/lib/planLimits'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
         .single()
 
       // Verificar limite de leads do plano antes de criar novo
-      const leadsLimit = await checkPlanLimit(site.org_id, 'maxActiveLeads', 'leads')
+      const leadsLimit = await checkActiveLeadsLimit(site.org_id)
 
       if (existingLead) {
         crmLeadId = existingLead.id

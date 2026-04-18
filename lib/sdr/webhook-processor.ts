@@ -39,7 +39,7 @@ export interface NormalizedInbound {
 
   // Instância já resolvida
   orgId: string
-  agentId: string
+  agentId: string | null  // null quando instância não tem agente vinculado (modo WhatsApp Web)
   campaignId?: string | null
   instanceName: string
 
@@ -195,6 +195,12 @@ export async function processInboundMessage(msg: NormalizedInbound): Promise<Pro
   // ─── 8. Mensagem vazia → não processar ───
   if (!msg.messageText.trim()) {
     return { success: true, saved: true, skipped: true, reason: 'empty_after_save', leadId: lead.id }
+  }
+
+  // ─── 8b. Sem agente vinculado → modo WhatsApp Web (apenas salvar, sem IA) ───
+  if (!msg.agentId) {
+    console.log(`[Webhook:Processor] Sem agente vinculado — mensagem salva, IA não processa (modo WhatsApp Web) | lead: ${lead.id}`)
+    return { success: true, saved: true, skipped: true, reason: 'no_agent_linked', leadId: lead.id, leadName: lead.name, isNewLead: lead._isNew || false }
   }
 
   // ─── 9. Buffer anti-fragmentação + agendar /process ───
