@@ -14,10 +14,10 @@ export async function GET(request: NextRequest) {
 
     const orgId = resolveOrgId(auth, request.nextUrl.searchParams.get('org_id'))
 
-    // Buscar customer_id da org
+    // Buscar customer_id + subscription_id da org
     const { data: org } = await supabase
       .from('orgs')
-      .select('billing_customer_id')
+      .select('billing_customer_id, billing_subscription_id')
       .eq('id', orgId)
       .single()
 
@@ -30,19 +30,40 @@ export async function GET(request: NextRequest) {
     }
 
     const customerId = org.billing_customer_id
+    const subscriptionId = org.billing_subscription_id
 
     // Buscar tudo em paralelo
     // Nota: `retrieveUpcoming` foi removido do SDK Stripe v20 — substituído por `createPreview`.
-    const [invoicesResult, customerResult, upcomingResult] = await Promise.allSettled([
-      stripe.invoices.list({
-        customer: customerId,
-        limit: 12,
-      }),
-      stripe.customers.retrieve(customerId, {
-        expand: ['invoice_settings.default_payment_method'],
-      }),
-      stripe.invoices.createPreview({ customer: customerId }),
-    ])
+    const [invoicesResult, customerResult, subscriptionResult, paymentMethodsResult, upcomingResult] =
+      await Promise.allSettled([
+        stripe.invoices.list({
+          customer: customerId,
+          limit: 12,
+        }),
+        stripe.customers.retrieve(customerId, {
+          expand: ['invoice_settings.default_payment_method'],
+        }),
+        subscriptionId
+          ? stripe.subscriptions.retrieve(subscriptionId, {
+              expand: ['default_payment_method'],
+            })
+          : Promise.resolve(null),
+        stripe.paymentMethods.list({
+          customer: customerId,
+          type: 'card',
+          limit: 1,
+        }),
+        subscriptionId
+          ? stripe.invoices.createPreview({ subscription: subscriptionId })
+          : stripe.invoices.createPreview({ customer: customerId }),
+      ])
+
+    // Log falhas individuais (Promise.allSettled silencia por padrão)
+    if (invoicesResult.status === 'rejected') console.error('[billing-info] invoices.list failed:', invoicesResult.reason?.message)
+    if (customerResult.status === 'rejected') console.error('[billing-info] customers.retrieve failed:', customerResult.reason?.message)
+    if (subscriptionResult.status === 'rejected') console.error('[billing-info] subscriptions.retrieve failed:', subscriptionResult.reason?.message)
+    if (paymentMethodsResult.status === 'rejected') console.error('[billing-info] paymentMethods.list failed:', paymentMethodsResult.reason?.message)
+    if (upcomingResult.status === 'rejected') console.error('[billing-info] invoices.createPreview failed:', upcomingResult.reason?.message)
 
     // --- Invoices ---
     const invoices = invoicesResult.status === 'fulfilled'
@@ -58,19 +79,31 @@ export async function GET(request: NextRequest) {
         }))
       : []
 
-    // --- Payment Method ---
+    // --- Payment Method (cadeia de fallback) ---
+    // 1º customer.invoice_settings.default_payment_method
+    // 2º subscription.default_payment_method
+    // 3º primeira entrada em paymentMethods.list(type=card)
+    const extractCard = (pm: Stripe.PaymentMethod | null | undefined) => {
+      if (!pm || !pm.card) return null
+      return {
+        brand: pm.card.brand,
+        last4: pm.card.last4,
+        expMonth: pm.card.exp_month,
+        expYear: pm.card.exp_year,
+      }
+    }
+
     let paymentMethod = null
     if (customerResult.status === 'fulfilled') {
       const customer = customerResult.value as Stripe.Customer
-      const pm = customer.invoice_settings?.default_payment_method as Stripe.PaymentMethod | null
-      if (pm && pm.card) {
-        paymentMethod = {
-          brand: pm.card.brand,
-          last4: pm.card.last4,
-          expMonth: pm.card.exp_month,
-          expYear: pm.card.exp_year,
-        }
-      }
+      paymentMethod = extractCard(customer.invoice_settings?.default_payment_method as Stripe.PaymentMethod | null)
+    }
+    if (!paymentMethod && subscriptionResult.status === 'fulfilled' && subscriptionResult.value) {
+      const sub = subscriptionResult.value as Stripe.Subscription
+      paymentMethod = extractCard(sub.default_payment_method as Stripe.PaymentMethod | null)
+    }
+    if (!paymentMethod && paymentMethodsResult.status === 'fulfilled') {
+      paymentMethod = extractCard(paymentMethodsResult.value.data[0])
     }
 
     // --- Upcoming Invoice ---
