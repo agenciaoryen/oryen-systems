@@ -12,8 +12,8 @@ import { createServerClient } from '@supabase/ssr'
 // Domínios da plataforma (não são custom domains)
 const PLATFORM_HOSTS = [
   'localhost',
-  'oryen.ai',
-  'www.oryen.ai',
+  'oryen.agency',
+  'www.oryen.agency',
   'oryen-systems.vercel.app',
 ]
 
@@ -80,7 +80,7 @@ export async function middleware(request: NextRequest) {
         .single()
 
       if (!site || !site.is_published) {
-        return NextResponse.redirect(new URL('https://oryen.ai'))
+        return NextResponse.redirect(new URL('https://oryen.agency'))
       }
 
       const url = request.nextUrl.clone()

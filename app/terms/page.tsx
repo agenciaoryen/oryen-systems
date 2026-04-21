@@ -191,8 +191,8 @@ export default function TermsPage() {
             <p>Para duvidas ou solicitacoes relacionadas a estes Termos:</p>
             <ul>
               <li><strong>Responsavel:</strong> Letierre Rodrigues</li>
-              <li><strong>Email:</strong> contato@oryen.ai</li>
-              <li><strong>Plataforma:</strong> oryen.ai</li>
+              <li><strong>Email:</strong> contato@oryen.agency</li>
+              <li><strong>Plataforma:</strong> oryen.agency</li>
             </ul>
           </Section>
         </div>
