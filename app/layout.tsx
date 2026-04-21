@@ -85,11 +85,27 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
-        {/* Anti-flash: lê preferência de tema antes da hidratação.
-            Em sites públicos (/sites/*), o tema é controlado pelo dono do site e não deve herdar o do dashboard. */}
+        {/* Interceptador de auth: magic link, recovery e confirm chegam com
+            #access_token=... ou ?code=... Se o user cair em qualquer rota que
+            NÃO é /auth/callback ou /reset-password/update, redireciona pra
+            página que sabe processar os tokens. Roda ANTES da hidratação. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              try {
+                var p = location.pathname;
+                var h = location.hash || '';
+                var s = location.search || '';
+                var isAuthPath = p === '/auth/callback' || p === '/reset-password/update';
+                var hasHashTokens = h.indexOf('access_token=') !== -1 || h.indexOf('error_code=') !== -1 || h.indexOf('type=recovery') !== -1 || h.indexOf('type=magiclink') !== -1 || h.indexOf('type=signup') !== -1;
+                var hasCode = /[?&]code=/.test(s);
+                if (!isAuthPath && (hasHashTokens || hasCode)) {
+                  var isRecovery = h.indexOf('type=recovery') !== -1;
+                  var target = isRecovery ? '/reset-password/update' : '/auth/callback';
+                  location.replace(target + s + h);
+                }
+              } catch(e) {}
+
               try {
                 if (!location.pathname.startsWith('/sites/')) {
                   var t = localStorage.getItem('oryen-theme');
