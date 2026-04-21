@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/AuthContext'
 import { useEffect, useState, useMemo } from 'react'
-import { toast } from 'sonner' 
+import { toast } from 'sonner'
 import {
   LayoutDashboard,
   Users,
@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   Building2,
   ChevronDown,
+  ChevronLeft,
   BarChart3,
   FileText,
   Smartphone,
@@ -42,6 +43,7 @@ import {
 import { useTheme } from '@/lib/ThemeContext'
 import { usePermissions } from '@/lib/usePermissions'
 import type { PermissionModule } from '@/lib/permissions'
+import { useSidebar } from './SidebarContext'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -241,6 +243,7 @@ export default function Sidebar() {
 
   // Estados
   const { theme, toggleTheme } = useTheme()
+  const { collapsed: isDesktopCollapsed, toggle: toggleDesktopSidebar } = useSidebar()
 
   const [hasUnreadAlerts, setHasUnreadAlerts] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -488,13 +491,34 @@ export default function Sidebar() {
         />
       )}
 
+      {/* BOTÃO FLUTUANTE — REABRIR SIDEBAR NO DESKTOP QUANDO COLAPSADA */}
+      {isDesktopCollapsed && (
+        <button
+          onClick={toggleDesktopSidebar}
+          className="hidden md:flex fixed top-4 left-4 z-50 items-center justify-center w-10 h-10 rounded-lg transition-all hover:scale-105"
+          style={{
+            background: 'var(--color-bg-surface)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text-secondary)',
+            boxShadow: 'var(--shadow-md)',
+          }}
+          title="Abrir menu"
+          aria-label="Abrir menu"
+        >
+          <Menu size={20} />
+        </button>
+      )}
+
       {/* ═══════════════════════════════════════════════════════════════════════
           SIDEBAR PRINCIPAL
           ═══════════════════════════════════════════════════════════════════════ */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-full w-64 flex-col border-r z-50 transition-transform duration-300 ease-in-out md:translate-x-0 flex",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed left-0 top-0 h-full w-64 flex-col border-r z-50 transition-transform duration-300 ease-in-out flex",
+          // Mobile: abre com translate-x-0, fecha com -translate-x-full
+          isMobileOpen ? "translate-x-0" : "-translate-x-full",
+          // Desktop: respeita o estado colapsado
+          isDesktopCollapsed ? "md:-translate-x-full" : "md:translate-x-0"
         )}
         style={{ background: 'var(--color-bg-base)', borderColor: 'var(--color-border)' }}
       >
@@ -519,6 +543,19 @@ export default function Sidebar() {
             style={{ color: 'var(--color-text-muted)' }}
           >
             <X size={20} />
+          </button>
+
+          {/* Botão de colapsar no desktop */}
+          <button
+            onClick={toggleDesktopSidebar}
+            className="hidden md:flex items-center justify-center w-7 h-7 rounded-md transition-colors"
+            style={{ color: 'var(--color-text-muted)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)' }}
+            title="Recolher menu"
+            aria-label="Recolher menu"
+          >
+            <ChevronLeft size={18} />
           </button>
         </div>
 

@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Sidebar from './Sidebar'
+import { SidebarProvider, useSidebar } from './SidebarContext'
 import { Toaster } from 'sonner'
 import { useTheme } from '@/lib/ThemeContext'
 import { useAuth } from '@/lib/AuthContext'
@@ -20,11 +21,20 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  return (
+    <SidebarProvider>
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+    </SidebarProvider>
+  )
+}
+
+function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme()
   const router = useRouter()
   const pathname = usePathname()
   const isMessagesPage = pathname?.startsWith('/dashboard/messages')
   const { user, loading, org, activePlanStatus, isStaff } = useAuth()
+  const { collapsed } = useSidebar()
 
   // Trial sem subscription = usuário ainda não fez checkout no Stripe
   // Trial COM subscription = Stripe trial_period_days válido → libera dashboard
@@ -77,8 +87,12 @@ export default function DashboardLayout({
       {/* Sidebar - Fixa no desktop, gaveta no mobile */}
       <Sidebar />
 
-      {/* Conteúdo Principal */}
-      <main className="flex-1 md:ml-64 pt-16 md:pt-0 h-full flex flex-col overflow-y-auto overflow-x-hidden">
+      {/* Conteúdo Principal — margem ajusta conforme sidebar colapsada */}
+      <main
+        className={`flex-1 pt-16 md:pt-0 h-full flex flex-col overflow-y-auto overflow-x-hidden transition-[margin] duration-300 ease-in-out ${
+          collapsed ? 'md:ml-0' : 'md:ml-64'
+        }`}
+      >
         {/* Container interno com padding */}
         <div className="p-4 md:p-8 w-full min-h-full">
           {children}
