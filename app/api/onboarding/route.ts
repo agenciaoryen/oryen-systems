@@ -43,14 +43,43 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar que o user existe e ainda não tem org
-    const { data: existingUser } = await supabase
+    let { data: existingUser, error: selectError } = await supabase
       .from('users')
-      .select('id, org_id, email, name')
+      .select('id, org_id, email, full_name')
       .eq('id', user_id)
-      .single()
+      .maybeSingle()
 
+    if (selectError) {
+      console.error('[Onboarding] Erro ao buscar user:', selectError)
+      return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 })
+    }
+
+    // Safety net: row pode não existir em public.users se o trigger não rodou.
+    // Cria a partir dos dados do auth.users.
     if (!existingUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      const { data: authData, error: authError } = await supabase.auth.admin.getUserById(user_id)
+      if (authError || !authData?.user) {
+        console.error('[Onboarding] Auth user not found:', authError)
+        return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      }
+
+      const meta = authData.user.user_metadata || {}
+      const { data: created, error: insertError } = await supabase
+        .from('users')
+        .insert({
+          id: user_id,
+          email: authData.user.email,
+          full_name: meta.full_name || '',
+          language: meta.language || 'pt',
+        })
+        .select('id, org_id, email, full_name')
+        .single()
+
+      if (insertError || !created) {
+        console.error('[Onboarding] Falha ao criar user row:', insertError)
+        return NextResponse.json({ error: 'Failed to initialize user profile' }, { status: 500 })
+      }
+      existingUser = created
     }
 
     if (existingUser.org_id) {
@@ -163,7 +192,7 @@ export async function POST(request: NextRequest) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: existingUser.email,
-          name: existingUser.name || '',
+          name: existingUser.full_name || '',
           orgName: company_name,
         }),
       }).catch((err) => console.warn('[Onboarding] Welcome email failed:', err))

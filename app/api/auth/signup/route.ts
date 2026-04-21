@@ -41,6 +41,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: msg }, { status })
     }
 
+    // 1.5. Garantir row em public.users (caso o trigger on_auth_user_created
+    // não exista ou não tenha rodado). Upsert para não conflitar se existir.
+    const { error: profileError } = await supabaseAdmin
+      .from('users')
+      .upsert({
+        id: created.user.id,
+        email,
+        full_name: name || '',
+        language: lang,
+      }, { onConflict: 'id' })
+
+    if (profileError) {
+      console.warn('[signup] Falha ao criar/atualizar profile em public.users:', profileError)
+      // Não aborta — a rota de onboarding tem safety net que recria se faltar
+    }
+
     // 2. Gerar link de confirmação de signup
     const redirectTo = `${process.env.NEXT_PUBLIC_APP_URL || 'https://oryen-systems.vercel.app'}/onboarding`
 

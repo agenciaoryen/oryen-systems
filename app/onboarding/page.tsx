@@ -360,7 +360,7 @@ function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center relative overflow-hidden"
+    <div className="flex min-h-screen w-full items-center justify-center relative overflow-x-hidden py-12"
       style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-primary)' }}>
 
       {/* Background effects */}
