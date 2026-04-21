@@ -35,9 +35,11 @@ export async function POST(request: NextRequest) {
 
     // Gerar link de recovery — se o e-mail não existir, Supabase retorna erro;
     // mas respondemos success=true mesmo assim (anti-enumeração).
-    // Redireciona pra /auth/callback que processa o token antes de mandar pro update.
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://oryen-systems.vercel.app'
-    const redirectTo = `${appUrl}/auth/callback?next=${encodeURIComponent('/reset-password/update')}`
+    // Redireciona DIRETO pra /reset-password/update — o callback PKCE não funciona
+    // pra recovery porque o code_verifier não existe no browser (link gerado server-side).
+    // A página destino lida com a sessão nativamente via onAuthStateChange(PASSWORD_RECOVERY).
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://oryen.agency'
+    const redirectTo = `${appUrl}/reset-password/update`
 
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',

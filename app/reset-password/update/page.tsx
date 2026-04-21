@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { Globe, Check, ArrowRight, Loader2, CheckCircle } from 'lucide-react'
+import { Globe, Check, ArrowRight, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 
 const TRANSLATIONS = {
   pt: {
@@ -20,6 +20,9 @@ const TRANSLATIONS = {
     errorGeneric: 'Erro ao atualizar senha',
     errorMismatch: 'As senhas não coincidem',
     errorMinLength: 'A senha deve ter no mínimo 6 caracteres',
+    verifying: 'Validando link...',
+    invalidTitle: 'Link inválido ou expirado',
+    invalidDesc: 'Este link de redefinição de senha não é válido ou já foi usado. Solicite um novo em "Esqueceu a senha?".',
   },
   en: {
     title: 'New Password',
@@ -34,6 +37,9 @@ const TRANSLATIONS = {
     errorGeneric: 'Error updating password',
     errorMismatch: 'Passwords do not match',
     errorMinLength: 'Password must be at least 6 characters',
+    verifying: 'Validating link...',
+    invalidTitle: 'Invalid or expired link',
+    invalidDesc: 'This password reset link is invalid or has already been used. Request a new one via "Forgot password?".',
   },
   es: {
     title: 'Nueva Contraseña',
@@ -48,6 +54,9 @@ const TRANSLATIONS = {
     errorGeneric: 'Error al actualizar contraseña',
     errorMismatch: 'Las contraseñas no coinciden',
     errorMinLength: 'La contraseña debe tener al menos 6 caracteres',
+    verifying: 'Validando enlace...',
+    invalidTitle: 'Enlace inválido o expirado',
+    invalidDesc: 'Este enlace de restablecimiento de contraseña no es válido o ya se usó. Solicita uno nuevo en "¿Olvidaste la contraseña?".',
   },
 }
 
@@ -64,7 +73,44 @@ export default function UpdatePasswordPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [isSuccess, setIsSuccess] = useState(false)
 
+  // Estados de validação da sessão de recovery
+  // 'pending' = aguardando Supabase processar o hash/code da URL
+  // 'ready'   = sessão de recovery ativa, usuário pode redefinir senha
+  // 'invalid' = sem sessão válida após timeout → link expirado/inválido
+  const [sessionState, setSessionState] = useState<'pending' | 'ready' | 'invalid'>('pending')
+
   const t = TRANSLATIONS[lang]
+
+  // Detecta se chegou pelo fluxo de recovery (hash tokens ou PASSWORD_RECOVERY event)
+  useEffect(() => {
+    let settled = false
+
+    // Listener para PASSWORD_RECOVERY (disparado quando supabase-js parseia o hash do link)
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        settled = true
+        setSessionState('ready')
+      }
+    })
+
+    // Verificação inicial — se já tem sessão (ex: hash já foi parseado) aceita
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        settled = true
+        setSessionState('ready')
+      }
+    })
+
+    // Timeout de 3s — se não pegou sessão, considera link inválido/expirado
+    const timeout = setTimeout(() => {
+      if (!settled) setSessionState('invalid')
+    }, 3000)
+
+    return () => {
+      sub.subscription.unsubscribe()
+      clearTimeout(timeout)
+    }
+  }, [])
 
   const languages = [
     { code: 'pt' as Lang, label: 'Português' },
@@ -167,7 +213,29 @@ export default function UpdatePasswordPage() {
         <div className="rounded-2xl p-8"
           style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-xl)' }}>
 
-          {isSuccess ? (
+          {sessionState === 'pending' ? (
+            <div className="flex flex-col items-center text-center space-y-4 py-6">
+              <Loader2 size={28} className="animate-spin" style={{ color: 'var(--color-primary)' }} />
+              <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{t.verifying}</p>
+            </div>
+          ) : sessionState === 'invalid' ? (
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                style={{ background: 'var(--color-error-subtle)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                <AlertCircle size={28} style={{ color: 'var(--color-error-subtle-fg)' }} />
+              </div>
+              <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+                {t.invalidTitle}
+              </h1>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                {t.invalidDesc}
+              </p>
+              <Link href="/login" className="text-sm font-semibold transition-colors duration-150 pt-2"
+                style={{ color: 'var(--color-primary)' }}>
+                {t.backToLogin}
+              </Link>
+            </div>
+          ) : isSuccess ? (
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
                 style={{ background: 'var(--color-primary-subtle)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
