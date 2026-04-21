@@ -26,8 +26,6 @@ const FROM = `Oryen <noreply@${DOMAIN}>`
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function baseHtml(opts: { title: string; bodyHtml: string; ctaUrl: string; ctaLabel: string; fallbackLabel: string; footerNote: string }): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://oryen-systems.vercel.app'
-  const logoUrl = `${appUrl}/email-logo.png`
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -38,7 +36,7 @@ function baseHtml(opts: { title: string; bodyHtml: string; ctaUrl: string; ctaLa
     body { margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #C5CDD5; background-color: #0B0E13; }
     .wrapper { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
     .header { background: linear-gradient(135deg, #0F1218 0%, #161B24 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px 16px 0 0; padding: 32px 32px 28px; text-align: center; }
-    .header img { display: block; margin: 0 auto; max-width: 150px; height: auto; }
+    .header .brand { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 32px; font-weight: 900; letter-spacing: 10px; color: #BFCAD3; margin: 0; padding: 0; }
     .content { background: #12161D; border-left: 1px solid rgba(255,255,255,0.06); border-right: 1px solid rgba(255,255,255,0.06); padding: 40px 32px; }
     .content h2 { color: #E8ECF0; font-size: 22px; margin: 0 0 16px 0; font-weight: 700; }
     .content p { color: #8A95A3; font-size: 15px; margin: 0 0 16px 0; line-height: 1.7; }
@@ -53,7 +51,7 @@ function baseHtml(opts: { title: string; bodyHtml: string; ctaUrl: string; ctaLa
 <body>
   <div class="wrapper">
     <div class="header">
-      <img src="${logoUrl}" alt="Oryen" width="150" />
+      <h1 class="brand">ORYEN</h1>
       <p style="color: #6B7685; font-size: 13px; margin: 10px 0 0 0; letter-spacing: 1px;">AI-Powered Real Estate CRM</p>
     </div>
     <div class="content">

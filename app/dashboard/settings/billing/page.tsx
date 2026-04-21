@@ -742,7 +742,7 @@ function BillingPageContent() {
       }
 
       if (data.url) {
-        window.location.href = data.url
+        window.open(data.url, '_blank', 'noopener,noreferrer')
       }
     } catch (err: any) {
       console.error('Erro ao abrir portal:', err)

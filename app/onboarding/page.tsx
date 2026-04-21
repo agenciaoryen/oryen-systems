@@ -339,7 +339,13 @@ function OnboardingPage() {
   }, [authLoading, user, org, needsCheckout, isSuccess, router])
 
   useEffect(() => {
-    if (!authLoading && !user) router.replace('/login')
+    if (authLoading || user) return
+    // Delay de 800ms pra dar tempo do AuthContext detectar sessão recém-criada
+    // (ex: vindo do /auth/callback após confirm de e-mail).
+    const t = setTimeout(() => {
+      if (!user) router.replace('/login')
+    }, 800)
+    return () => clearTimeout(t)
   }, [authLoading, user, router])
 
   if (authLoading || !user) {

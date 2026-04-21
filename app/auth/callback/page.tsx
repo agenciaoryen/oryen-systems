@@ -42,16 +42,18 @@ function AuthCallbackInner() {
             setTimeout(() => router.replace('/login'), 1500)
             return
           }
-          router.replace(next)
+          // Hard reload para garantir que cookies de sessão sejam lidos
+          // pelo AuthProvider antes do guard da página destino rodar.
+          window.location.replace(next)
           return
         }
 
         // Caminho B: implicit flow — tokens no hash. Dar um tempo pro client parsear.
-        await new Promise(r => setTimeout(r, 150))
+        await new Promise(r => setTimeout(r, 300))
         const { data: { session } } = await supabase.auth.getSession()
 
         if (session) {
-          router.replace(next)
+          window.location.replace(next)
         } else {
           // Sem sessão e sem código → provavelmente o link foi aberto manualmente.
           router.replace('/login')

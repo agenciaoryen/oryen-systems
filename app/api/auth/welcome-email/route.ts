@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
             body { margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #C5CDD5; background-color: #0B0E13; }
             .wrapper { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
             .header { background: linear-gradient(135deg, #0F1218 0%, #161B24 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px 16px 0 0; padding: 40px 32px; text-align: center; }
-            .logo { font-family: 'Orbitron', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: 6px; background: linear-gradient(180deg, #BFCAD3 0%, #7C8A96 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+            .logo { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 32px; font-weight: 900; letter-spacing: 10px; color: #BFCAD3; margin: 0; padding: 0; }
             .content { background: #12161D; border-left: 1px solid rgba(255,255,255,0.06); border-right: 1px solid rgba(255,255,255,0.06); padding: 40px 32px; }
             .content h2 { color: #E8ECF0; font-size: 22px; margin: 0 0 16px 0; font-weight: 700; }
             .content p { color: #8A95A3; font-size: 15px; margin: 0 0 16px 0; line-height: 1.7; }
