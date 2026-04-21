@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #C5CDD5; background-color: #0B0E13; }
+    .wrapper { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .header { background: linear-gradient(135deg, #0F1218 0%, #161B24 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px 16px 0 0; padding: 40px 32px; text-align: center; }
+    .logo { font-family: 'Orbitron', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: 6px; background: linear-gradient(180deg, #BFCAD3 0%, #7C8A96 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: #BFCAD3; }
+    .content { background: #12161D; border-left: 1px solid rgba(255,255,255,0.06); border-right: 1px solid rgba(255,255,255,0.06); padding: 40px 32px; }
+    .content h2 { color: #E8ECF0; font-size: 22px; margin: 0 0 16px 0; font-weight: 700; }
+    .content p { color: #8A95A3; font-size: 15px; margin: 0 0 16px 0; line-height: 1.7; }
+    .lang-block { margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .lang-block:last-of-type { border-bottom: none; }
+    .lang-label { color: #5A7AE6; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    .cta-wrapper { text-align: center; margin: 32px 0 12px 0; }
+    .cta-btn { display: inline-block; background: linear-gradient(135deg, #5A7AE6, #7C5AE6); color: #FFFFFF !important; padding: 14px 40px; text-decoration: none; border-radius: 12px; font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
+    .footer { background: #0D1017; border: 1px solid rgba(255,255,255,0.06); border-top: none; border-radius: 0 0 16px 16px; padding: 24px 32px; text-align: center; }
+    .footer p { color: #555E6A; font-size: 12px; margin: 0; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="logo">ORYEN</div>
+      <p style="color: #6B7685; font-size: 13px; margin: 8px 0 0 0; letter-spacing: 1px;">AI-Powered Real Estate CRM</p>
+    </div>
+    <div class="content">
+      <div class="lang-block">
+        <div class="lang-label">Português</div>
+        <h2 style="margin-top: 4px;">Confirme seu e-mail</h2>
+        <p>Bem-vindo à Oryen! Para ativar sua conta e começar a usar a plataforma, clique no botão abaixo.</p>
+      </div>
+
+      <div class="lang-block">
+        <div class="lang-label">English</div>
+        <h2 style="margin-top: 4px;">Confirm your email</h2>
+        <p>Welcome to Oryen! To activate your account and start using the platform, click the button below.</p>
+      </div>
+
+      <div class="lang-block">
+        <div class="lang-label">Español</div>
+        <h2 style="margin-top: 4px;">Confirma tu correo</h2>
+        <p>¡Bienvenido a Oryen! Para activar tu cuenta y comenzar a usar la plataforma, haz clic en el botón de abajo.</p>
+      </div>
+
+      <div class="cta-wrapper">
+        <a href="{{ .ConfirmationURL }}" class="cta-btn">Confirmar / Confirm / Confirmar</a>
+      </div>
+
+      <p style="text-align: center; color: #6B7685; font-size: 12px; margin-top: 24px;">
+        Se você não criou uma conta, pode ignorar este e-mail.<br>
+        If you didn't create an account, you can ignore this email.<br>
+        Si no creaste una cuenta, puedes ignorar este correo.
+      </p>
+    </div>
+    <div class="footer">
+      <p>Oryen — Intelligent Real Estate Platform</p>
+    </div>
+  </div>
+</body>
+</html>

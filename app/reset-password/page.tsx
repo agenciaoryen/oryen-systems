@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
 import { Globe, Check, ArrowLeft, Loader2, MailCheck } from 'lucide-react'
 
 const TRANSLATIONS = {
@@ -65,10 +64,16 @@ export default function ResetPasswordPage() {
     setErrorMsg('')
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://oryen-systems.vercel.app/reset-password/update',
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, language: lang }),
       })
-      if (error) throw error
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || t.errorGeneric)
+      }
+      // Sucesso genérico sempre — anti-enumeração
       setIsSubmitted(true)
     } catch (error: any) {
       setErrorMsg(error.message || t.errorGeneric)

@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
 import { Globe, Check, ArrowRight, Loader2, MailCheck, Eye, EyeOff } from 'lucide-react'
 
 const TRANSLATIONS = {
@@ -108,33 +107,24 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: typeof window !== 'undefined' ? window.location.origin + '/onboarding' : undefined,
-          data: { full_name: formData.name, language: lang },
-        },
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+          language: lang,
+        }),
       })
 
-      if (error) throw error
+      const data = await res.json()
 
-      if (data.user && !data.session) {
-        // Fire-and-forget welcome email
-        fetch('/api/auth/welcome-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: formData.email, name: formData.name }),
-        }).catch(() => {})
-        setIsSubmitted(true)
-      } else if (data.user) {
-        fetch('/api/auth/welcome-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: formData.email, name: formData.name }),
-        }).catch(() => {})
-        router.push('/dashboard')
+      if (!res.ok) {
+        throw new Error(data.error || t.errorGeneric)
       }
+
+      setIsSubmitted(true)
     } catch (error: any) {
       setErrorMsg(error.message || t.errorGeneric)
     } finally {

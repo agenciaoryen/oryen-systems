@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     // Verificar que o user existe e ainda não tem org
     const { data: existingUser } = await supabase
       .from('users')
-      .select('id, org_id')
+      .select('id, org_id, email, name')
       .eq('id', user_id)
       .single()
 
@@ -153,6 +153,20 @@ export async function POST(request: NextRequest) {
     if (rolesError) {
       console.error('[Onboarding] Erro ao criar org_roles:', rolesError)
       // Não faz rollback — roles do sistema podem ser recriados depois via seeder
+    }
+
+    // 5. Enviar welcome email (fire-and-forget, não bloqueia a resposta)
+    if (existingUser.email) {
+      const origin = request.nextUrl.origin
+      fetch(`${origin}/api/auth/welcome-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: existingUser.email,
+          name: existingUser.name || '',
+          orgName: company_name,
+        }),
+      }).catch((err) => console.warn('[Onboarding] Welcome email failed:', err))
     }
 
     return NextResponse.json({
