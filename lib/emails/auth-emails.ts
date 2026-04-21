@@ -8,7 +8,15 @@ import { Resend } from 'resend'
 
 export type EmailLang = 'pt' | 'en' | 'es'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let _resend: Resend | null = null
+function getResend(): Resend {
+  if (!_resend) {
+    const key = process.env.RESEND_API_KEY
+    if (!key) throw new Error('RESEND_API_KEY is not configured')
+    _resend = new Resend(key)
+  }
+  return _resend
+}
 
 const DOMAIN = process.env.RESEND_DOMAIN || 'mail.oryen.agency'
 const FROM = `Oryen <noreply@${DOMAIN}>`
@@ -127,7 +135,7 @@ export async function sendConfirmationEmail(params: {
     footerNote: t.footer,
   })
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to: [params.to],
     subject: t.subject,
@@ -189,7 +197,7 @@ export async function sendPasswordResetEmail(params: {
     footerNote: t.footer,
   })
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to: [params.to],
     subject: t.subject,
