@@ -11,7 +11,6 @@ import {
   LayoutDashboard,
   Users,
   Bot,
-  LogOut,
   MessageSquare,
   Settings,
   Bell,
@@ -257,12 +256,6 @@ export default function Sidebar() {
     }
     return org?.niche || null
   }, [isStaff, selectedOrgId, availableOrgs, org])
-
-  // Função de Logout
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.replace('/login')
-  }
 
   // Handler para trocar de organização
   const handleOrgChange = (orgId: string) => {
@@ -720,30 +713,18 @@ export default function Sidebar() {
           </div>
         )}
 
-        {/* RODAPÉ - THEME TOGGLE + LOGOUT */}
+        {/* RODAPÉ - THEME TOGGLE */}
         <div className="border-t p-4 shrink-0" style={{ borderColor: 'var(--color-border-subtle)', background: 'var(--color-bg-surface)' }}>
           {/* Toggle de tema */}
           <button
             onClick={toggleTheme}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all mb-1 border border-transparent"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all border border-transparent"
             style={{ color: 'var(--color-text-secondary)' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-secondary)' }}
           >
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             {theme === 'dark' ? t.themeLight : t.themeDark}
-          </button>
-
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all"
-            style={{ color: 'var(--color-text-muted)', border: '1px solid transparent' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-error-subtle)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-error)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(217, 84, 84, 0.2)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'transparent' }}
-          >
-            <LogOut size={18} />
-            {t.logout}
           </button>
         </div>
       </aside>

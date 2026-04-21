@@ -83,7 +83,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" translate="no" suppressHydrationWarning>
       <head>
         {/* Interceptador de auth: magic link, recovery e confirm chegam com
             #access_token=... ou ?code=... Se o user cair em qualquer rota que

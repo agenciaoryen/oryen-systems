@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth, useActiveOrgId, useIsStaff } from '@/lib/AuthContext'
 import { supabase } from '@/lib/supabase'
 import {
@@ -8,7 +9,7 @@ import {
   X, Loader2, AlertCircle, Lock, Mail, Smartphone, MapPin, Copy, Check,
   Tag, Plus, GripVertical, Pencil, LayoutGrid, ChevronUp, ChevronDown,
   Sun, Moon, CreditCard, Eye, RotateCcw, Clock, Play, Calendar,
-  Info, Trophy, Ban, Circle
+  Info, Trophy, Ban, Circle, LogOut
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
@@ -216,11 +217,21 @@ const TRANSLATIONS = {
       passMismatch: 'As senhas não coincidem.',
       passShort: 'A senha deve ter pelo menos 6 caracteres.',
       passSuccess: 'Senha alterada com sucesso!',
+      passError: 'Erro ao alterar senha',
+      passSameAsOld: 'A nova senha deve ser diferente da atual.',
+      passWeak: 'A senha não atende aos requisitos mínimos.',
+      passSessionExpired: 'Sua sessão expirou. Faça login novamente.',
       confirmDeactivate: 'Tem certeza que deseja desativar o acesso deste usuário?',
       userDeactivated: 'Usuário desativado.',
       inviteSent: 'Convite enviado!',
       orgUpdated: 'Empresa atualizada!',
-      saved: 'Salvo com sucesso!'
+      saved: 'Salvo com sucesso!',
+      confirmLogout: 'Tem certeza que deseja sair da conta?'
+    },
+    logout: {
+      title: 'Encerrar sessão',
+      description: 'Você será desconectado e redirecionado para a tela de login.',
+      button: 'Sair da Conta'
     }
   },
   en: {
@@ -382,11 +393,21 @@ const TRANSLATIONS = {
       passMismatch: 'Passwords do not match.',
       passShort: 'Password must be at least 6 characters.',
       passSuccess: 'Password changed successfully!',
+      passError: 'Failed to change password',
+      passSameAsOld: 'New password must be different from the current one.',
+      passWeak: 'Password does not meet minimum requirements.',
+      passSessionExpired: 'Your session has expired. Please log in again.',
       confirmDeactivate: 'Are you sure you want to deactivate this user?',
       userDeactivated: 'User deactivated.',
       inviteSent: 'Invite sent!',
       orgUpdated: 'Company updated!',
-      saved: 'Saved successfully!'
+      saved: 'Saved successfully!',
+      confirmLogout: 'Are you sure you want to log out?'
+    },
+    logout: {
+      title: 'End session',
+      description: 'You will be logged out and redirected to the login screen.',
+      button: 'Log Out'
     }
   },
   es: {
@@ -548,11 +569,21 @@ const TRANSLATIONS = {
       passMismatch: 'Las contraseñas no coinciden.',
       passShort: 'La contraseña debe tener al menos 6 caracteres.',
       passSuccess: '¡Contraseña cambiada con éxito!',
+      passError: 'Error al cambiar la contraseña',
+      passSameAsOld: 'La nueva contraseña debe ser distinta de la actual.',
+      passWeak: 'La contraseña no cumple los requisitos mínimos.',
+      passSessionExpired: 'Su sesión ha expirado. Inicie sesión nuevamente.',
       confirmDeactivate: '¿Está seguro de que desea desactivar este usuario?',
       userDeactivated: 'Usuario desactivado.',
       inviteSent: '¡Invitación enviada!',
       orgUpdated: '¡Empresa actualizada!',
-      saved: '¡Guardado con éxito!'
+      saved: '¡Guardado con éxito!',
+      confirmLogout: '¿Está seguro de que desea cerrar sesión?'
+    },
+    logout: {
+      title: 'Cerrar sesión',
+      description: 'Será desconectado y redirigido a la pantalla de inicio de sesión.',
+      button: 'Cerrar Sesión'
     }
   }
 }
@@ -618,6 +649,7 @@ function getStageDisplayLabel(stage: { name: string; label: string }, lang: 'pt'
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function SettingsPage() {
+  const router = useRouter()
   const { user, org } = useAuth()
   const orgId = useActiveOrgId()
   const isStaff = useIsStaff()
@@ -852,15 +884,44 @@ export default function SettingsPage() {
     }
 
     setPasswordLoading(true)
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
 
-    if (error) showAlert(`Erro: ${error.message}`)
-    else {
-      showAlert(t.alerts.passSuccess)
-      setNewPassword('')
-      setConfirmPassword('')
+      if (error) {
+        console.error('[Password Change]', error)
+        const msg = error.message || ''
+        if (msg.includes('New password should be different') || msg.includes('same_password')) {
+          showAlert(t.alerts.passSameAsOld || 'A nova senha deve ser diferente da atual.')
+        } else if (msg.includes('Password should be') || msg.includes('weak_password')) {
+          showAlert(t.alerts.passWeak || 'A senha não atende aos requisitos mínimos.')
+        } else if (msg.includes('session') || msg.includes('JWT')) {
+          showAlert(t.alerts.passSessionExpired || 'Sua sessão expirou. Faça login novamente.')
+        } else {
+          showAlert(`${t.alerts.passError || 'Erro ao alterar senha'}: ${msg}`)
+        }
+      } else {
+        showAlert(t.alerts.passSuccess)
+        setNewPassword('')
+        setConfirmPassword('')
+      }
+    } catch (err) {
+      console.error('[Password Change Exception]', err)
+      showAlert(t.alerts.passError || 'Erro ao alterar senha. Tente novamente.')
+    } finally {
+      setPasswordLoading(false)
     }
-    setPasswordLoading(false)
+  }
+
+  // ─── LOGOUT ───
+  function handleLogout() {
+    showConfirm(t.alerts.confirmLogout, async () => {
+      try {
+        await supabase.auth.signOut()
+      } catch (err) {
+        console.error('[Logout]', err)
+      }
+      router.replace('/login')
+    })
   }
 
   // ─── FUNÇÕES DE EQUIPE ───
@@ -1348,6 +1409,32 @@ export default function SettingsPage() {
               </button>
             )
           })}
+
+          {/* ─── SEPARADOR + LOGOUT ─── */}
+          <div className="mt-6 pt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+            <div className="rounded-xl p-4" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+              <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--color-text-muted)' }}>
+                {t.logout.title}
+              </p>
+              <p className="text-xs leading-relaxed mb-3" style={{ color: 'var(--color-text-tertiary)' }}>
+                {t.logout.description}
+              </p>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                style={{
+                  background: 'var(--color-error-subtle)',
+                  color: 'var(--color-error)',
+                  border: '1px solid rgba(217, 84, 84, 0.2)',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-error)'; (e.currentTarget as HTMLElement).style.color = '#fff' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-error-subtle)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-error)' }}
+              >
+                <LogOut size={16} />
+                {t.logout.button}
+              </button>
+            </div>
+          </div>
         </aside>
 
         {/* CONTEÚDO */}
