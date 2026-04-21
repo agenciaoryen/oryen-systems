@@ -42,6 +42,7 @@ const orbitron = Orbitron({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://oryen.agency'),
   title: {
     default: "Oryen - IA para Corretores de Imóveis",
     template: "%s | Oryen"
@@ -50,8 +51,18 @@ export const metadata: Metadata = {
   keywords: ["CRM imobiliário", "corretor de imóveis", "automação WhatsApp", "inteligência artificial", "imobiliária", "agentes de IA"],
   authors: [{ name: "Oryen" }],
   creator: "Oryen",
-  icons: {
-    icon: "/favicon.ico",
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    url: 'https://oryen.agency',
+    siteName: 'Oryen',
+    title: 'Oryen — IA para Corretores de Imóveis',
+    description: 'Automatize o atendimento, qualifique contatos e feche mais negócios com agentes de IA para imobiliárias.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Oryen — IA para Corretores de Imóveis',
+    description: 'Automatize o atendimento, qualifique contatos e feche mais negócios com agentes de IA para imobiliárias.',
   },
 }
 
