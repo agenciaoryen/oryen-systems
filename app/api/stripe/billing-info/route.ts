@@ -32,16 +32,16 @@ export async function GET(request: NextRequest) {
     const customerId = org.billing_customer_id
 
     // Buscar tudo em paralelo
+    // Nota: `retrieveUpcoming` foi removido do SDK Stripe v20 — substituído por `createPreview`.
     const [invoicesResult, customerResult, upcomingResult] = await Promise.allSettled([
       stripe.invoices.list({
         customer: customerId,
         limit: 12,
-        expand: ['data.charge'],
       }),
       stripe.customers.retrieve(customerId, {
         expand: ['invoice_settings.default_payment_method'],
       }),
-      stripe.invoices.retrieveUpcoming({ customer: customerId }),
+      stripe.invoices.createPreview({ customer: customerId }),
     ])
 
     // --- Invoices ---
