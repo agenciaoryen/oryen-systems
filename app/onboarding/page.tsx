@@ -33,9 +33,8 @@ const T = {
     nicheOptions: {
       real_estate: 'Imobiliária / Corretor',
     },
-    step2Title: 'Suas Preferências',
-    step2Subtitle: 'Configure idioma, moeda e fuso horário.',
-    language: 'Idioma',
+    step2Title: 'Moeda e Fuso Horário',
+    step2Subtitle: 'Configure a moeda e o fuso da sua operação.',
     currency: 'Moeda',
     timezone: 'Fuso horário',
     step3Title: 'Escolha seu Plano',
@@ -73,9 +72,8 @@ const T = {
     nicheOptions: {
       real_estate: 'Real Estate',
     },
-    step2Title: 'Your Preferences',
-    step2Subtitle: 'Set your language, currency and timezone.',
-    language: 'Language',
+    step2Title: 'Currency and Timezone',
+    step2Subtitle: 'Set your business currency and timezone.',
     currency: 'Currency',
     timezone: 'Timezone',
     step3Title: 'Choose your Plan',
@@ -113,9 +111,8 @@ const T = {
     nicheOptions: {
       real_estate: 'Inmobiliaria / Corredor',
     },
-    step2Title: 'Tus Preferencias',
-    step2Subtitle: 'Configura idioma, moneda y zona horaria.',
-    language: 'Idioma',
+    step2Title: 'Moneda y Zona Horaria',
+    step2Subtitle: 'Configura la moneda y la zona horaria de tu negocio.',
     currency: 'Moneda',
     timezone: 'Zona horaria',
     step3Title: 'Elige tu Plan',
@@ -454,19 +451,6 @@ function OnboardingPage() {
                 </div>
                 <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>{t.step2Title}</h1>
                 <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.step2Subtitle}</p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>{t.language}</label>
-                <CustomSelect
-                  value={lang}
-                  onChange={(v) => setLang(v as Lang)}
-                  options={[
-                    { value: 'pt', label: 'Português' },
-                    { value: 'en', label: 'English' },
-                    { value: 'es', label: 'Español' },
-                  ]}
-                />
               </div>
 
               <div>

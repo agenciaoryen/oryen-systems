@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Globe, Check, ArrowRight, Loader2, MailCheck, Eye, EyeOff } from 'lucide-react'
+import { ArrowRight, Loader2, MailCheck, Eye, EyeOff } from 'lucide-react'
 
 const TRANSLATIONS = {
   pt: {
@@ -11,6 +11,8 @@ const TRANSLATIONS = {
     subtitle: 'Comece a usar a Oryen em 2 minutos',
     confirmEmailTitle: 'Verifique seu e-mail',
     confirmEmailDesc: 'Enviamos um link de confirmação para o seu e-mail. Clique nele para ativar sua conta.',
+    languageLabel: 'Idioma da conta',
+    languageHelper: 'Será o idioma dos seus e-mails, da sua conta e da sua organização.',
     nameLabel: 'Nome Completo',
     namePlaceholder: 'Ex: João Silva',
     emailLabel: 'Email',
@@ -31,6 +33,8 @@ const TRANSLATIONS = {
     subtitle: 'Start using Oryen in 2 minutes',
     confirmEmailTitle: 'Check your email',
     confirmEmailDesc: 'We sent a confirmation link to your email. Click it to activate your account.',
+    languageLabel: 'Account language',
+    languageHelper: 'This will be the language of your emails, your account and your organization.',
     nameLabel: 'Full Name',
     namePlaceholder: 'Ex: John Doe',
     emailLabel: 'Email',
@@ -51,6 +55,8 @@ const TRANSLATIONS = {
     subtitle: 'Empieza a usar Oryen en 2 minutos',
     confirmEmailTitle: 'Revisa tu correo',
     confirmEmailDesc: 'Enviamos un enlace de confirmación a tu correo. Haz clic para activar tu cuenta.',
+    languageLabel: 'Idioma de la cuenta',
+    languageHelper: 'Este será el idioma de tus correos, tu cuenta y tu organización.',
     nameLabel: 'Nombre Completo',
     namePlaceholder: 'Ej: Juan Pérez',
     emailLabel: 'Correo Electrónico',
@@ -74,7 +80,6 @@ export default function RegisterPage() {
   const router = useRouter()
 
   const [lang, setLang] = useState<Lang>('pt')
-  const [showLangMenu, setShowLangMenu] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' })
   const [loading, setLoading] = useState(false)
@@ -84,10 +89,10 @@ export default function RegisterPage() {
 
   const t = TRANSLATIONS[lang]
 
-  const languages = [
-    { code: 'pt' as Lang, label: 'Português' },
-    { code: 'en' as Lang, label: 'English' },
-    { code: 'es' as Lang, label: 'Español' },
+  const languages: { code: Lang; label: string }[] = [
+    { code: 'pt', label: 'Português' },
+    { code: 'en', label: 'English' },
+    { code: 'es', label: 'Español' },
   ]
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -148,38 +153,6 @@ export default function RegisterPage() {
         backgroundSize: '64px 64px',
       }} />
 
-      {/* Language switcher */}
-      <div className="absolute top-6 right-6 z-50">
-        <div className="relative">
-          <button
-            onClick={() => setShowLangMenu(!showLangMenu)}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-150"
-            style={{ color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border)' }}
-          >
-            <Globe size={13} />
-            <span className="uppercase">{lang}</span>
-          </button>
-          {showLangMenu && (
-            <div className="absolute right-0 mt-2 w-40 rounded-xl overflow-hidden"
-              style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-xl)' }}>
-              {languages.map(item => (
-                <button
-                  key={item.code}
-                  onClick={() => { setLang(item.code); setShowLangMenu(false) }}
-                  className="w-full text-left px-4 py-2.5 text-sm flex items-center justify-between transition-colors duration-150"
-                  style={{ color: 'var(--color-text-secondary)' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-bg-hover)'; e.currentTarget.style.color = 'var(--color-text-primary)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}
-                >
-                  {item.label}
-                  {lang === item.code && <Check size={14} style={{ color: 'var(--color-primary)' }} />}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Card */}
       <div className="relative z-10 w-full max-w-[400px] mx-4">
         {/* Logo */}
@@ -233,6 +206,39 @@ export default function RegisterPage() {
               )}
 
               <form onSubmit={handleRegister} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium mb-1.5"
+                    style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
+                    {t.languageLabel}
+                  </label>
+                  <div className="grid grid-cols-3 gap-2 p-1 rounded-xl"
+                    style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
+                    {languages.map(item => {
+                      const active = lang === item.code
+                      return (
+                        <button
+                          key={item.code}
+                          type="button"
+                          onClick={() => setLang(item.code)}
+                          className="py-2 rounded-lg text-sm font-medium transition-all duration-150"
+                          style={{
+                            background: active ? 'var(--color-primary-subtle)' : 'transparent',
+                            color: active ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+                            border: active ? '1px solid rgba(90, 122, 230, 0.3)' : '1px solid transparent',
+                          }}
+                          onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--color-text-primary)' }}
+                          onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'var(--color-text-tertiary)' }}
+                        >
+                          {item.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="text-[11px] mt-1.5 leading-snug" style={{ color: 'var(--color-text-disabled)' }}>
+                    {t.languageHelper}
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-xs font-medium mb-1.5"
                     style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
