@@ -863,9 +863,13 @@ export default function ReportsPage() {
                     {Object.keys(DEFAULT_BASE_METRICS).map((key) => {
                       const isActive = formData.metrics[key as keyof typeof DEFAULT_BASE_METRICS]
                       return (
-                        <label
+                        <button
+                          type="button"
                           key={key}
-                          className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none"
+                          onClick={() => handleToggleBaseMetric(key)}
+                          role="switch"
+                          aria-checked={isActive}
+                          className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none w-full text-left"
                           style={
                             isActive
                               ? { background: 'var(--color-primary-subtle)', border: '1px solid var(--color-primary)' }
@@ -878,13 +882,7 @@ export default function ReportsPage() {
                           <div className="shrink-0 w-9 h-5 rounded-full relative transition-colors" style={{ background: isActive ? 'var(--color-primary)' : 'var(--color-bg-elevated)' }}>
                             <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
                           </div>
-                          <input
-                            type="checkbox"
-                            className="sr-only"
-                            checked={isActive}
-                            onChange={() => handleToggleBaseMetric(key)}
-                          />
-                        </label>
+                        </button>
                       )
                     })}
                   </div>
@@ -902,9 +900,13 @@ export default function ReportsPage() {
                       {pipelineStages.map((stage) => {
                         const isActive = formData.pipeline_stages.includes(stage.id)
                         return (
-                          <label
+                          <button
+                            type="button"
                             key={stage.id}
-                            className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none"
+                            onClick={() => handleTogglePipelineStage(stage.id)}
+                            role="switch"
+                            aria-checked={isActive}
+                            className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none w-full text-left"
                             style={
                               isActive
                                 ? { background: 'var(--color-indigo-subtle)', border: '1px solid var(--color-indigo)' }
@@ -917,13 +919,7 @@ export default function ReportsPage() {
                             <div className="shrink-0 w-9 h-5 rounded-full relative transition-colors" style={{ background: isActive ? 'var(--color-indigo)' : 'var(--color-bg-elevated)' }}>
                               <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
                             </div>
-                            <input
-                              type="checkbox"
-                              className="sr-only"
-                              checked={isActive}
-                              onChange={() => handleTogglePipelineStage(stage.id)}
-                            />
-                          </label>
+                          </button>
                         )
                       })}
                     </div>
@@ -942,7 +938,13 @@ export default function ReportsPage() {
                     {Object.keys(formData.financial).map((key) => {
                       const isActive = formData.financial[key]
                       return (
-                        <label key={key} className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none"
+                        <button
+                          type="button"
+                          key={key}
+                          onClick={() => handleToggleCategory('financial', key)}
+                          role="switch"
+                          aria-checked={isActive}
+                          className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none w-full text-left"
                           style={isActive
                             ? { background: 'var(--color-success-subtle)', border: '1px solid var(--color-success)' }
                             : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }
@@ -953,8 +955,7 @@ export default function ReportsPage() {
                           <div className="shrink-0 w-9 h-5 rounded-full relative transition-colors" style={{ background: isActive ? 'var(--color-success)' : 'var(--color-bg-elevated)' }}>
                             <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
                           </div>
-                          <input type="checkbox" className="sr-only" checked={isActive} onChange={() => handleToggleCategory('financial', key)} />
-                        </label>
+                        </button>
                       )
                     })}
                   </div>
@@ -972,7 +973,13 @@ export default function ReportsPage() {
                     {Object.keys(formData.site).map((key) => {
                       const isActive = formData.site[key]
                       return (
-                        <label key={key} className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none"
+                        <button
+                          type="button"
+                          key={key}
+                          onClick={() => handleToggleCategory('site', key)}
+                          role="switch"
+                          aria-checked={isActive}
+                          className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none w-full text-left"
                           style={isActive
                             ? { background: 'var(--color-info-subtle)', border: '1px solid var(--color-info)' }
                             : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }
@@ -983,8 +990,7 @@ export default function ReportsPage() {
                           <div className="shrink-0 w-9 h-5 rounded-full relative transition-colors" style={{ background: isActive ? 'var(--color-info)' : 'var(--color-bg-elevated)' }}>
                             <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
                           </div>
-                          <input type="checkbox" className="sr-only" checked={isActive} onChange={() => handleToggleCategory('site', key)} />
-                        </label>
+                        </button>
                       )
                     })}
                   </div>
@@ -1003,7 +1009,13 @@ export default function ReportsPage() {
                     {Object.keys(formData.goals).map((key) => {
                       const isActive = formData.goals[key]
                       return (
-                        <label key={key} className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none"
+                        <button
+                          type="button"
+                          key={key}
+                          onClick={() => handleToggleCategory('goals', key)}
+                          role="switch"
+                          aria-checked={isActive}
+                          className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none w-full text-left"
                           style={isActive
                             ? { background: 'var(--color-warning-subtle)', border: '1px solid var(--color-warning)' }
                             : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }
@@ -1014,8 +1026,7 @@ export default function ReportsPage() {
                           <div className="shrink-0 w-9 h-5 rounded-full relative transition-colors" style={{ background: isActive ? 'var(--color-warning)' : 'var(--color-bg-elevated)' }}>
                             <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
                           </div>
-                          <input type="checkbox" className="sr-only" checked={isActive} onChange={() => handleToggleCategory('goals', key)} />
-                        </label>
+                        </button>
                       )
                     })}
                   </div>
@@ -1031,7 +1042,13 @@ export default function ReportsPage() {
                     {Object.keys(formData.followup).map((key) => {
                       const isActive = formData.followup[key]
                       return (
-                        <label key={key} className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none"
+                        <button
+                          type="button"
+                          key={key}
+                          onClick={() => handleToggleCategory('followup', key)}
+                          role="switch"
+                          aria-checked={isActive}
+                          className="flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none w-full text-left"
                           style={isActive
                             ? { background: 'var(--color-primary-subtle)', border: '1px solid var(--color-primary)' }
                             : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }
@@ -1042,8 +1059,7 @@ export default function ReportsPage() {
                           <div className="shrink-0 w-9 h-5 rounded-full relative transition-colors" style={{ background: isActive ? 'var(--color-primary)' : 'var(--color-bg-elevated)' }}>
                             <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all duration-200 ${isActive ? 'left-[20px]' : 'left-[3px]'}`} />
                           </div>
-                          <input type="checkbox" className="sr-only" checked={isActive} onChange={() => handleToggleCategory('followup', key)} />
-                        </label>
+                        </button>
                       )
                     })}
                   </div>
