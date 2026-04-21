@@ -33,6 +33,9 @@ const T = {
     nicheOptions: {
       real_estate: 'Imobiliária / Corretor',
     },
+    city: 'Cidade',
+    cityPlaceholder: 'Ex: São Paulo',
+    country: 'País',
     step2Title: 'Moeda e Fuso Horário',
     step2Subtitle: 'Configure a moeda e o fuso da sua operação.',
     currency: 'Moeda',
@@ -72,6 +75,9 @@ const T = {
     nicheOptions: {
       real_estate: 'Real Estate',
     },
+    city: 'City',
+    cityPlaceholder: 'Ex: New York',
+    country: 'Country',
     step2Title: 'Currency and Timezone',
     step2Subtitle: 'Set your business currency and timezone.',
     currency: 'Currency',
@@ -111,6 +117,9 @@ const T = {
     nicheOptions: {
       real_estate: 'Inmobiliaria / Corredor',
     },
+    city: 'Ciudad',
+    cityPlaceholder: 'Ej: Santiago',
+    country: 'País',
     step2Title: 'Moneda y Zona Horaria',
     step2Subtitle: 'Configura la moneda y la zona horaria de tu negocio.',
     currency: 'Moneda',
@@ -177,6 +186,30 @@ const TIMEZONES = [
   { value: 'Europe/Madrid', label: 'Madrid (GMT+1)' },
   { value: 'UTC', label: 'UTC (GMT+0)' },
 ]
+
+const COUNTRIES = [
+  { value: 'BR', label: 'Brasil' },
+  { value: 'AR', label: 'Argentina' },
+  { value: 'CL', label: 'Chile' },
+  { value: 'CO', label: 'Colombia' },
+  { value: 'MX', label: 'México' },
+  { value: 'PE', label: 'Perú' },
+  { value: 'UY', label: 'Uruguay' },
+  { value: 'PY', label: 'Paraguay' },
+  { value: 'EC', label: 'Ecuador' },
+  { value: 'BO', label: 'Bolivia' },
+  { value: 'VE', label: 'Venezuela' },
+  { value: 'US', label: 'United States' },
+  { value: 'PT', label: 'Portugal' },
+  { value: 'ES', label: 'España' },
+  { value: 'OTHER', label: '—' },
+]
+
+const DEFAULT_COUNTRY_BY_LANG: Record<string, string> = {
+  pt: 'BR',
+  en: 'US',
+  es: 'CL',
+}
 
 const PLANS = [
   {
@@ -251,6 +284,8 @@ function OnboardingPage() {
   const [lang, setLang] = useState<Lang>('pt')
   const [currency, setCurrency] = useState('BRL')
   const [timezone, setTimezone] = useState('America/Sao_Paulo')
+  const [city, setCity] = useState('')
+  const [country, setCountry] = useState('BR')
 
   const t = T[lang]
   const orgId = createdOrgId || activeOrgId
@@ -265,7 +300,11 @@ function OnboardingPage() {
   useEffect(() => {
     if (user?.user_metadata?.language) {
       const userLang = user.user_metadata.language as Lang
-      if (T[userLang]) setLang(userLang)
+      if (T[userLang]) {
+        setLang(userLang)
+        const defaultCountry = DEFAULT_COUNTRY_BY_LANG[userLang]
+        if (defaultCountry) setCountry(defaultCountry)
+      }
     }
   }, [user])
 
@@ -321,7 +360,16 @@ function OnboardingPage() {
       const res = await fetch('/api/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id, company_name: companyName.trim(), niche, language: lang, currency, timezone }),
+        body: JSON.stringify({
+          user_id: user.id,
+          company_name: companyName.trim(),
+          niche,
+          language: lang,
+          currency,
+          timezone,
+          city: city.trim() || null,
+          country,
+        }),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error || t.errorGeneric); return }
@@ -431,6 +479,25 @@ function OnboardingPage() {
                   onChange={(v) => setNiche(v)}
                   options={Object.entries(t.nicheOptions).map(([key, label]) => ({ value: key, label: label as string }))}
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>{t.city}</label>
+                  <input type="text" value={city} onChange={e => setCity(e.target.value)}
+                    placeholder={t.cityPlaceholder}
+                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150" style={inputStyle}
+                    onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
+                    onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>{t.country}</label>
+                  <CustomSelect
+                    value={country}
+                    onChange={(v) => setCountry(v)}
+                    options={COUNTRIES.map(c => ({ value: c.value, label: c.label }))}
+                  />
+                </div>
               </div>
 
               <button onClick={() => setStep(2)} disabled={!companyName.trim()}

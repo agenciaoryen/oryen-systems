@@ -120,7 +120,7 @@ const TRANSLATIONS = {
     faq1q: 'Posso trocar de plano a qualquer momento?',
     faq1a: 'Sim! Upgrades são aplicados imediatamente. Downgrades entram em vigor no próximo ciclo de faturamento.',
     faq2q: 'Como funciona o período de teste?',
-    faq2a: 'Novos usuários têm 14 dias para experimentar o plano Pro gratuitamente. Sem necessidade de cartão.',
+    faq2a: 'Novos usuários ganham um período de teste gratuito para experimentar a plataforma. A duração exata é exibida no topo desta página.',
     faq3q: 'Posso cancelar quando quiser?',
     faq3a: 'Sim, sem multas ou taxas. Você mantém acesso até o final do período pago.',
 
@@ -237,7 +237,7 @@ const TRANSLATIONS = {
     faq1q: 'Can I change plans anytime?',
     faq1a: 'Yes! Upgrades are applied immediately. Downgrades take effect on the next billing cycle.',
     faq2q: 'How does the trial work?',
-    faq2a: 'New users get 14 days to try the Pro plan for free. No credit card required.',
+    faq2a: 'New users get a free trial period to explore the platform. The exact duration is shown at the top of this page.',
     faq3q: 'Can I cancel anytime?',
     faq3a: 'Yes, no penalties or fees. You keep access until the end of the paid period.',
 
@@ -348,7 +348,7 @@ const TRANSLATIONS = {
     faq1q: '¿Puedo cambiar de plan en cualquier momento?',
     faq1a: '¡Sí! Las mejoras se aplican inmediatamente. Las reducciones entran en vigor en el próximo ciclo.',
     faq2q: '¿Cómo funciona el período de prueba?',
-    faq2a: 'Los nuevos usuarios tienen 14 días para probar el plan Pro gratis. No se requiere tarjeta.',
+    faq2a: 'Los nuevos usuarios tienen un período de prueba gratuito para explorar la plataforma. La duración exacta aparece en la parte superior de esta página.',
     faq3q: '¿Puedo cancelar cuando quiera?',
     faq3a: 'Sí, sin penalidades. Mantienes acceso hasta el final del período pagado.',
 
@@ -667,9 +667,12 @@ function BillingPageContent() {
     }
   }, [searchParams, t.planUpdated])
 
-  // Calcular dias restantes do trial
-  const trialDaysLeft = org?.plan_started_at 
-    ? Math.max(0, 14 - Math.floor((Date.now() - new Date(org.plan_started_at).getTime()) / (1000 * 60 * 60 * 24)))
+  // Calcular dias restantes do trial a partir de trial_ends_at (populado pelo webhook do Stripe)
+  // Fallback para 3 dias a partir de plan_started_at se trial_ends_at não estiver definido
+  const trialDaysLeft = org?.trial_ends_at
+    ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : org?.plan_started_at
+    ? Math.max(0, 3 - Math.floor((Date.now() - new Date(org.plan_started_at).getTime()) / (1000 * 60 * 60 * 24)))
     : 0
 
   // Verificar se já tem assinatura ativa (para mostrar botão de gerenciar)

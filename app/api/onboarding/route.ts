@@ -33,7 +33,7 @@ function buildDefaultStages(lang: 'pt' | 'en' | 'es') {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { user_id, company_name, niche, language, currency, timezone } = body
+    const { user_id, company_name, niche, language, currency, timezone, city, country } = body
 
     if (!user_id || !company_name) {
       return NextResponse.json(
@@ -86,12 +86,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User already has an organization' }, { status: 409 })
     }
 
-    // 1. Criar org
+    // 1. Criar org (com dados completos: idioma, moeda, fuso, cidade, país)
     const { data: org, error: orgError } = await supabase
       .from('orgs')
       .insert({
         name: company_name,
         niche: niche || null,
+        cidade: city || null,
+        country: country || 'BR',
+        language: language || 'pt',
+        timezone: timezone || 'America/Sao_Paulo',
         plan: 'starter',
         plan_status: 'trial',
       })

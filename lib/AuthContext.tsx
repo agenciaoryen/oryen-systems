@@ -29,6 +29,7 @@ type Org = {
   plan: PlanName
   plan_status: PlanStatus
   plan_started_at: string | null
+  trial_ends_at: string | null
   niche: string | null
   billing_subscription_id: string | null
 }
@@ -171,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Staff: carregar TODAS as organizações (com campos de plano)
           const { data: orgsData } = await supabase
             .from('orgs')
-            .select('id, name, plan, plan_status, plan_started_at, niche, billing_subscription_id')
+            .select('id, name, plan, plan_status, plan_started_at, trial_ends_at, niche, billing_subscription_id')
             .order('name')
           
           // Garantir valores default para plan
@@ -180,6 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             plan: o.plan || 'starter',
             plan_status: o.plan_status || 'active',
             plan_started_at: o.plan_started_at || null,
+            trial_ends_at: o.trial_ends_at || null,
             niche: o.niche || null,
             billing_subscription_id: o.billing_subscription_id || null,
           }))
@@ -206,7 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (appUser.org_id) {
             const { data: orgData } = await supabase
               .from('orgs')
-              .select('id, name, plan, plan_status, plan_started_at, niche, billing_subscription_id')
+              .select('id, name, plan, plan_status, plan_started_at, trial_ends_at, niche, billing_subscription_id')
               .eq('id', appUser.org_id)
               .maybeSingle()
 
@@ -216,6 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 plan: orgData.plan || 'starter',
                 plan_status: orgData.plan_status || 'active',
                 plan_started_at: orgData.plan_started_at || null,
+                trial_ends_at: orgData.trial_ends_at || null,
                 niche: orgData.niche || null,
                 billing_subscription_id: orgData.billing_subscription_id || null,
               })
