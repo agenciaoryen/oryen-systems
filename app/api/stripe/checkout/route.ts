@@ -48,6 +48,19 @@ export async function POST(req: NextRequest) {
       .eq('id', orgId)
       .single()
 
+    // Buscar language do usuário criador para definir locale do Stripe Checkout
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('language')
+      .eq('id', userId)
+      .single()
+
+    const userLang = (userRow?.language || 'pt').toLowerCase()
+    const stripeLocale: Stripe.Checkout.SessionCreateParams.Locale =
+      userLang === 'en' ? 'en' :
+      userLang === 'es' ? 'es' :
+      'pt-BR'
+
     let customerId = org?.billing_customer_id
 
     // Se não tem customer, cria um novo
@@ -92,6 +105,7 @@ export async function POST(req: NextRequest) {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
+      locale: stripeLocale,
       payment_method_types: ['card'],
       payment_method_collection: 'always',
       line_items: [

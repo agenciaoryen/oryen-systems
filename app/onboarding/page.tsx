@@ -239,6 +239,8 @@ function OnboardingPage() {
   const { user, loading: authLoading, org, activeOrgId, activePlanStatus } = useAuth()
 
   const isSuccess = searchParams.get('success') === 'true'
+  // Trial sem subscription_id = ainda não fez checkout; com subscription_id = já pagou (trial do Stripe)
+  const needsCheckout = activePlanStatus === 'trial' && !org?.billing_subscription_id
 
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
@@ -282,8 +284,10 @@ function OnboardingPage() {
           .from('users').select('org_id').eq('id', user.id).single()
         if (data?.org_id) {
           const { data: orgData } = await (await import('@/lib/supabase')).supabase
-            .from('orgs').select('plan_status').eq('id', data.org_id).single()
-          if (orgData?.plan_status === 'active') { setPlanActivated(true); clearInterval(interval) }
+            .from('orgs').select('plan_status, billing_subscription_id').eq('id', data.org_id).single()
+          // Ativado = webhook processou (tem subscription_id) OU status já é active
+          const isActivated = !!orgData?.billing_subscription_id || orgData?.plan_status === 'active'
+          if (isActivated) { setPlanActivated(true); clearInterval(interval) }
         }
       } catch {}
       if (attempts >= 20) { setPlanActivated(true); clearInterval(interval) }
@@ -293,10 +297,10 @@ function OnboardingPage() {
 
   useEffect(() => {
     if (!authLoading && user && org && !isSuccess) {
-      if (activePlanStatus === 'trial') setStep(3)
+      if (needsCheckout) setStep(3)
       else router.replace('/dashboard')
     }
-  }, [authLoading, user, org, activePlanStatus, isSuccess, router])
+  }, [authLoading, user, org, needsCheckout, isSuccess, router])
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login')
@@ -310,7 +314,7 @@ function OnboardingPage() {
     )
   }
 
-  if (org && activePlanStatus !== 'trial' && !isSuccess) return null
+  if (org && !needsCheckout && !isSuccess) return null
 
   const handleSubmit = async () => {
     if (!companyName.trim()) return

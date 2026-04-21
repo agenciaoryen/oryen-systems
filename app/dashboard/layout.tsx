@@ -26,6 +26,10 @@ export default function DashboardLayout({
   const isMessagesPage = pathname?.startsWith('/dashboard/messages')
   const { user, loading, org, activePlanStatus, isStaff } = useAuth()
 
+  // Trial sem subscription = usuário ainda não fez checkout no Stripe
+  // Trial COM subscription = Stripe trial_period_days válido → libera dashboard
+  const needsCheckout = activePlanStatus === 'trial' && !org?.billing_subscription_id
+
   // Guard: não logado → login
   useEffect(() => {
     if (!loading && !user) {
@@ -35,10 +39,10 @@ export default function DashboardLayout({
 
   // Guard: usuário com org mas sem pagamento → onboarding
   useEffect(() => {
-    if (!loading && user && org && activePlanStatus === 'trial' && !isStaff) {
+    if (!loading && user && org && needsCheckout && !isStaff) {
       router.replace('/onboarding')
     }
-  }, [loading, user, org, activePlanStatus, isStaff, router])
+  }, [loading, user, org, needsCheckout, isStaff, router])
 
   // Mostrar loading enquanto verifica
   if (loading) {
@@ -58,8 +62,8 @@ export default function DashboardLayout({
     )
   }
 
-  // Se plan_status é trial e não é staff, não renderiza o dashboard
-  if (user && org && activePlanStatus === 'trial' && !isStaff) {
+  // Se precisa fazer checkout (trial sem subscription), não renderiza o dashboard
+  if (user && org && needsCheckout && !isStaff) {
     return (
       <div className="flex h-screen w-full items-center justify-center" style={{ background: 'var(--color-bg-base)' }}>
         <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-text-secondary)' }} />

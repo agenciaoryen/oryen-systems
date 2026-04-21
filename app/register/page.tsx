@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { Globe, Check, ArrowRight, Loader2, MailCheck } from 'lucide-react'
+import { Globe, Check, ArrowRight, Loader2, MailCheck, Eye, EyeOff } from 'lucide-react'
 
 const TRANSLATIONS = {
   pt: {
@@ -16,11 +16,16 @@ const TRANSLATIONS = {
     namePlaceholder: 'Ex: João Silva',
     emailLabel: 'Email',
     passwordLabel: 'Senha',
+    confirmPasswordLabel: 'Confirmar Senha',
     submitBtn: 'Criar conta',
     loadingBtn: 'Criando conta...',
     hasAccount: 'Já tem uma conta?',
     loginLink: 'Entrar',
     errorGeneric: 'Erro ao criar conta',
+    errorPasswordMismatch: 'As senhas não coincidem',
+    errorPasswordShort: 'A senha deve ter pelo menos 6 caracteres',
+    showPassword: 'Mostrar senha',
+    hidePassword: 'Ocultar senha',
   },
   en: {
     title: 'Create New Account',
@@ -31,11 +36,16 @@ const TRANSLATIONS = {
     namePlaceholder: 'Ex: John Doe',
     emailLabel: 'Email',
     passwordLabel: 'Password',
+    confirmPasswordLabel: 'Confirm Password',
     submitBtn: 'Create account',
     loadingBtn: 'Creating account...',
     hasAccount: 'Already have an account?',
     loginLink: 'Sign in',
     errorGeneric: 'Error creating account',
+    errorPasswordMismatch: 'Passwords do not match',
+    errorPasswordShort: 'Password must be at least 6 characters',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
   },
   es: {
     title: 'Crear Nueva Cuenta',
@@ -46,11 +56,16 @@ const TRANSLATIONS = {
     namePlaceholder: 'Ej: Juan Pérez',
     emailLabel: 'Correo Electrónico',
     passwordLabel: 'Contraseña',
+    confirmPasswordLabel: 'Confirmar Contraseña',
     submitBtn: 'Crear cuenta',
     loadingBtn: 'Creando cuenta...',
     hasAccount: '¿Ya tienes cuenta?',
     loginLink: 'Entrar',
     errorGeneric: 'Error al crear cuenta',
+    errorPasswordMismatch: 'Las contraseñas no coinciden',
+    errorPasswordShort: 'La contraseña debe tener al menos 6 caracteres',
+    showPassword: 'Mostrar contraseña',
+    hidePassword: 'Ocultar contraseña',
   },
 }
 
@@ -62,9 +77,11 @@ export default function RegisterPage() {
   const [lang, setLang] = useState<Lang>('pt')
   const [showLangMenu, setShowLangMenu] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' })
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' })
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const t = TRANSLATIONS[lang]
 
@@ -76,8 +93,19 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setErrorMsg('')
+
+    if (formData.password.length < 6) {
+      setErrorMsg(t.errorPasswordShort)
+      return
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMsg(t.errorPasswordMismatch)
+      return
+    }
+
+    setLoading(true)
 
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -256,18 +284,63 @@ export default function RegisterPage() {
                     style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
                     {t.passwordLabel}
                   </label>
-                  <input
-                    type="password"
-                    placeholder="••••••"
-                    value={formData.password}
-                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                    required
-                    minLength={6}
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150"
-                    style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-                    onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
-                    onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••"
+                      value={formData.password}
+                      onChange={e => setFormData({ ...formData, password: e.target.value })}
+                      required
+                      minLength={6}
+                      className="w-full px-4 py-3 pr-11 rounded-xl text-sm outline-none transition-all duration-150"
+                      style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                      onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
+                      onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(v => !v)}
+                      aria-label={showPassword ? t.hidePassword : t.showPassword}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md transition-colors duration-150"
+                      style={{ color: 'var(--color-text-tertiary)' }}
+                      onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-primary)' }}
+                      onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)' }}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium mb-1.5"
+                    style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
+                    {t.confirmPasswordLabel}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="••••••"
+                      value={formData.confirmPassword}
+                      onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                      required
+                      minLength={6}
+                      className="w-full px-4 py-3 pr-11 rounded-xl text-sm outline-none transition-all duration-150"
+                      style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                      onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
+                      onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(v => !v)}
+                      aria-label={showConfirmPassword ? t.hidePassword : t.showPassword}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md transition-colors duration-150"
+                      style={{ color: 'var(--color-text-tertiary)' }}
+                      onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-primary)' }}
+                      onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)' }}
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
 
                 <button
