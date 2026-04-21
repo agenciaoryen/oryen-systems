@@ -34,8 +34,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Gerar link de recovery — se o e-mail não existir, Supabase retorna erro;
-    // mas respondemos success=true mesmo assim (anti-enumeração)
-    const redirectTo = `${process.env.NEXT_PUBLIC_APP_URL || 'https://oryen-systems.vercel.app'}/reset-password/update`
+    // mas respondemos success=true mesmo assim (anti-enumeração).
+    // Redireciona pra /auth/callback que processa o token antes de mandar pro update.
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://oryen-systems.vercel.app'
+    const redirectTo = `${appUrl}/auth/callback?next=${encodeURIComponent('/reset-password/update')}`
 
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',

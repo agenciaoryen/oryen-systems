@@ -58,7 +58,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Gerar link de confirmação de signup
-    const redirectTo = `${process.env.NEXT_PUBLIC_APP_URL || 'https://oryen-systems.vercel.app'}/onboarding`
+    // Redireciona pra /auth/callback que processa o token antes de mandar pro /onboarding,
+    // evitando race-condition em que a página destino vê !user e manda pro /login.
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://oryen-systems.vercel.app'
+    const redirectTo = `${appUrl}/auth/callback?next=${encodeURIComponent('/onboarding')}`
 
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'signup',
