@@ -81,32 +81,119 @@ export default function UpdatePasswordPage() {
 
   const t = TRANSLATIONS[lang]
 
-  // Detecta se chegou pelo fluxo de recovery (hash tokens ou PASSWORD_RECOVERY event)
+  // Detecta se chegou pelo fluxo de recovery.
+  // Supabase pode mandar o link de 3 formas diferentes:
+  //  - Hash (implicit): `#access_token=...&refresh_token=...&type=recovery` → setSession manual
+  //  - PKCE: `?code=xxx` → exchangeCodeForSession (precisa verifier; server-generated geralmente não tem)
+  //  - Evento PASSWORD_RECOVERY disparado pelo supabase-js quando parseia o hash automaticamente
   useEffect(() => {
     let settled = false
+    let cancelled = false
 
-    // Listener para PASSWORD_RECOVERY (disparado quando supabase-js parseia o hash do link)
+    const markReady = () => {
+      if (cancelled || settled) return
+      settled = true
+      setSessionState('ready')
+    }
+
+    const markInvalid = () => {
+      if (cancelled || settled) return
+      setSessionState('invalid')
+    }
+
+    // Listener de fallback — supabase-js pode parsear o hash sozinho e disparar PASSWORD_RECOVERY
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
-        settled = true
-        setSessionState('ready')
+        markReady()
       }
     })
 
-    // Verificação inicial — se já tem sessão (ex: hash já foi parseado) aceita
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        settled = true
-        setSessionState('ready')
+    const run = async () => {
+      // 1) Sessão já existe? aceita
+      const { data: { session: existing } } = await supabase.auth.getSession()
+      if (existing) {
+        markReady()
+        return
       }
-    })
 
-    // Timeout de 3s — se não pegou sessão, considera link inválido/expirado
+      // 2) Hash flow: `#access_token=...&refresh_token=...&type=recovery`
+      const hash = window.location.hash?.startsWith('#')
+        ? window.location.hash.slice(1)
+        : ''
+      if (hash) {
+        const hashParams = new URLSearchParams(hash)
+        const accessToken = hashParams.get('access_token')
+        const refreshToken = hashParams.get('refresh_token')
+        const type = hashParams.get('type')
+        const hashError = hashParams.get('error') || hashParams.get('error_description')
+
+        if (hashError) {
+          console.warn('[reset-password] hash error:', hashError)
+          markInvalid()
+          return
+        }
+
+        if (accessToken && refreshToken && (type === 'recovery' || !type)) {
+          try {
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            })
+            if (!error) {
+              // Limpa o hash da URL por segurança
+              window.history.replaceState({}, '', window.location.pathname + window.location.search)
+              markReady()
+              return
+            }
+            // Pode falhar se supabase-js já consumiu o hash antes — deixa o listener resolver
+            console.warn('[reset-password] setSession falhou (listener pode resolver):', error.message)
+          } catch (err) {
+            console.warn('[reset-password] setSession threw:', err)
+          }
+          // NÃO chama markInvalid — espera listener + timeout
+          return
+        }
+      }
+
+      // 3) PKCE flow: `?code=xxx`
+      const url = new URL(window.location.href)
+      const code = url.searchParams.get('code')
+      const searchError = url.searchParams.get('error') || url.searchParams.get('error_description')
+
+      if (searchError) {
+        console.warn('[reset-password] search error:', searchError)
+        markInvalid()
+        return
+      }
+
+      if (code) {
+        try {
+          const { error } = await supabase.auth.exchangeCodeForSession(code)
+          if (!error) {
+            url.searchParams.delete('code')
+            window.history.replaceState({}, '', url.pathname + url.search + url.hash)
+            markReady()
+            return
+          }
+          console.warn('[reset-password] exchangeCodeForSession falhou:', error.message)
+        } catch (err) {
+          console.warn('[reset-password] exchangeCodeForSession threw:', err)
+        }
+        markInvalid()
+        return
+      }
+
+      // 4) Nenhum token/code encontrado — espera o listener por 3s e aborta.
+    }
+
+    run()
+
     const timeout = setTimeout(() => {
-      if (!settled) setSessionState('invalid')
+      if (!settled) markInvalid()
     }, 3000)
 
     return () => {
+      cancelled = true
       sub.subscription.unsubscribe()
       clearTimeout(timeout)
     }
