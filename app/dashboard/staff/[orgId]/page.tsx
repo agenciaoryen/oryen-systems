@@ -74,11 +74,8 @@ const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }
 }
 
 const NICHE_LABELS: Record<string, string> = {
-  real_estate: 'Imobiliaria',
-  insurance: 'Seguros',
-  solar: 'Energia Solar',
-  consulting: 'Consultoria',
-  other: 'Outro',
+  real_estate: 'Imobiliária',
+  ai_agency: 'Agência de IA',
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

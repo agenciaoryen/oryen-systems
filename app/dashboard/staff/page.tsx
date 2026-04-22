@@ -47,10 +47,7 @@ const STATUS_BADGE: Record<string, { label: string; color: string; bg: string }>
 
 const NICHE_LABELS: Record<string, string> = {
   real_estate: 'Imobiliária',
-  insurance: 'Seguros',
-  solar: 'Energia Solar',
-  consulting: 'Consultoria',
-  other: 'Outro',
+  ai_agency: 'Agência de IA',
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

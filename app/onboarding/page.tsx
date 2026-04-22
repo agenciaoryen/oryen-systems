@@ -32,6 +32,7 @@ const T = {
     niche: 'Segmento',
     nicheOptions: {
       real_estate: 'Imobiliária / Corretor',
+      ai_agency: 'Agência de IA',
     },
     city: 'Cidade',
     cityPlaceholder: 'Ex: São Paulo',
@@ -74,6 +75,7 @@ const T = {
     niche: 'Industry',
     nicheOptions: {
       real_estate: 'Real Estate',
+      ai_agency: 'AI Automation Agency',
     },
     city: 'City',
     cityPlaceholder: 'Ex: New York',
@@ -116,6 +118,7 @@ const T = {
     niche: 'Segmento',
     nicheOptions: {
       real_estate: 'Inmobiliaria / Corredor',
+      ai_agency: 'Agencia de IA',
     },
     city: 'Ciudad',
     cityPlaceholder: 'Ej: Santiago',

@@ -180,10 +180,14 @@ const TRANSLATIONS = {
 type Language = keyof typeof TRANSLATIONS
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// NICHOS COM ACESSO A DOCUMENTOS
+// GATING DE MÓDULOS POR NICHO
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const NICHES_WITH_DOCUMENTS = ['real_estate']
+// Módulos específicos de imóveis — portfólio, estatísticas, site público, financiamento
+const NICHES_WITH_PROPERTIES = ['real_estate']
+
+// Módulos de comunicação com cliente — documentos e WhatsApp servem pra qualquer negócio
+const NICHES_WITH_CLIENT_COMMS = ['real_estate', 'ai_agency']
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
@@ -387,9 +391,9 @@ export default function Sidebar() {
       title: t.sections.properties,
       collapsible: true,
       items: [
-        { href: '/dashboard/portfolio', label: t.menu.portfolio, icon: Home, requiredNiche: NICHES_WITH_DOCUMENTS, permission: 'portfolio' },
-        { href: '/dashboard/portfolio/estatisticas', label: t.menu.propertyStats, icon: BarChart3, requiredNiche: NICHES_WITH_DOCUMENTS, permission: 'property_stats' },
-        { href: '/dashboard/site', label: t.menu.mySite, icon: Globe, requiredNiche: NICHES_WITH_DOCUMENTS, permission: 'site' },
+        { href: '/dashboard/portfolio', label: t.menu.portfolio, icon: Home, requiredNiche: NICHES_WITH_PROPERTIES, permission: 'portfolio' },
+        { href: '/dashboard/portfolio/estatisticas', label: t.menu.propertyStats, icon: BarChart3, requiredNiche: NICHES_WITH_PROPERTIES, permission: 'property_stats' },
+        { href: '/dashboard/site', label: t.menu.mySite, icon: Globe, requiredNiche: NICHES_WITH_PROPERTIES, permission: 'site' },
       ],
     },
     {
@@ -406,10 +410,10 @@ export default function Sidebar() {
       title: t.sections.tools,
       collapsible: true,
       items: [
-        { href: '/dashboard/whatsapp', label: t.menu.whatsapp, icon: Smartphone, requiredNiche: NICHES_WITH_DOCUMENTS, permission: 'whatsapp' },
-        { href: '/dashboard/documents', label: t.menu.documents, icon: FileText, requiredNiche: NICHES_WITH_DOCUMENTS, permission: 'documents' },
+        { href: '/dashboard/whatsapp', label: t.menu.whatsapp, icon: Smartphone, requiredNiche: NICHES_WITH_CLIENT_COMMS, permission: 'whatsapp' },
+        { href: '/dashboard/documents', label: t.menu.documents, icon: FileText, requiredNiche: NICHES_WITH_CLIENT_COMMS, permission: 'documents' },
         { href: '/dashboard/relatorios', label: t.menu.reports, icon: BarChart3, permission: 'reports' },
-        { href: '/dashboard/financiamento', label: t.menu.financing, icon: Calculator, requiredNiche: NICHES_WITH_DOCUMENTS, permission: 'financing' },
+        { href: '/dashboard/financiamento', label: t.menu.financing, icon: Calculator, requiredNiche: NICHES_WITH_PROPERTIES, permission: 'financing' },
       ],
     },
     // Staff section — only rendered when isStaff is true
