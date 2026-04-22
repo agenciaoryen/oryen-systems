@@ -30,7 +30,10 @@ import {
   Trash2,
   Save,
   Ban,
-  RotateCcw
+  RotateCcw,
+  PhoneCall,
+  CalendarCheck,
+  FileSignature
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
 import { toast } from 'sonner'
@@ -63,7 +66,7 @@ interface LeadDetails {
 interface LeadEvent {
   id: string
   lead_id: string
-  type: 'stage_change' | 'note' | 'contact' | 'tag_added' | 'tag_removed'
+  type: 'stage_change' | 'note' | 'contact' | 'tag_added' | 'tag_removed' | 'call_made' | 'meeting_attended' | 'proposal_sent'
   content: string
   created_at: string
 }
@@ -126,6 +129,13 @@ const TRANSLATIONS = {
     updatedAt: 'Atualizado em',
     leadInfo: 'Informações do Contato',
     quickActions: 'Ações Rápidas',
+    salesActions: 'Ações de Venda',
+    actionCall: 'Ligação Feita',
+    actionMeeting: 'Reunião Realizada',
+    actionProposal: 'Proposta Enviada',
+    logCall: 'Registrou uma ligação.',
+    logMeeting: 'Compareceu à reunião agendada.',
+    logProposal: 'Enviou uma proposta comercial.',
     stageChanged: 'Etapa alterada para',
     tagAdded: 'Tag adicionada:',
     tagRemoved: 'Tag removida:',
@@ -199,6 +209,13 @@ const TRANSLATIONS = {
     updatedAt: 'Updated at',
     leadInfo: 'Contact Information',
     quickActions: 'Quick Actions',
+    salesActions: 'Sales Actions',
+    actionCall: 'Call Made',
+    actionMeeting: 'Meeting Attended',
+    actionProposal: 'Proposal Sent',
+    logCall: 'Logged a call.',
+    logMeeting: 'Attended the scheduled meeting.',
+    logProposal: 'Sent a commercial proposal.',
     stageChanged: 'Stage changed to',
     tagAdded: 'Tag added:',
     tagRemoved: 'Tag removed:',
@@ -272,6 +289,13 @@ const TRANSLATIONS = {
     updatedAt: 'Actualizado el',
     leadInfo: 'Información del Contacto',
     quickActions: 'Acciones Rápidas',
+    salesActions: 'Acciones de Venta',
+    actionCall: 'Llamada Realizada',
+    actionMeeting: 'Reunión Realizada',
+    actionProposal: 'Propuesta Enviada',
+    logCall: 'Registró una llamada.',
+    logMeeting: 'Asistió a la reunión agendada.',
+    logProposal: 'Envió una propuesta comercial.',
     stageChanged: 'Etapa cambiada a',
     tagAdded: 'Tag añadida:',
     tagRemoved: 'Tag eliminada:',
@@ -408,6 +432,7 @@ export default function LeadProfilePage() {
   const [isStageDropdownOpen, setIsStageDropdownOpen] = useState(false)
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false)
   const [savingStage, setSavingStage] = useState(false)
+  const [savingAction, setSavingAction] = useState<string | null>(null)
 
   // Estado da pausa temporária (STOP do atendente)
   const [stopRemaining, setStopRemaining] = useState(0)
@@ -641,6 +666,39 @@ export default function LeadProfilePage() {
       alert(t.errorUpdate)
     } finally {
       setSavingStage(false)
+    }
+  }
+
+  // ─── REGISTRAR AÇÃO DE VENDA (ligação / reunião / proposta) ───
+  const handleQuickAction = async (
+    type: 'call_made' | 'meeting_attended' | 'proposal_sent',
+    logText: string
+  ) => {
+    if (!leadId) return
+    setSavingAction(type)
+
+    try {
+      const { data, error } = await supabase
+        .from('lead_events')
+        .insert({
+          lead_id: leadId,
+          type,
+          content: logText,
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      if (data) {
+        setEvents(prev => [data, ...prev])
+      }
+      toast.success(logText)
+    } catch (err) {
+      console.error(`Erro ao registrar ação ${type}:`, err)
+      toast.error(t.errorUpdate)
+    } finally {
+      setSavingAction(null)
     }
   }
 
@@ -1337,6 +1395,9 @@ export default function LeadProfilePage() {
                       background: event.type === 'stage_change' ? 'var(--color-indigo)' :
                         event.type === 'tag_added' ? 'var(--color-success)' :
                         event.type === 'tag_removed' ? 'var(--color-error)' :
+                        event.type === 'call_made' ? '#f59e0b' :
+                        event.type === 'meeting_attended' ? '#3b82f6' :
+                        event.type === 'proposal_sent' ? '#10b981' :
                         'var(--color-primary)',
                       boxShadow: '0 0 0 4px var(--color-bg-base)'
                     }} />
@@ -1440,6 +1501,60 @@ export default function LeadProfilePage() {
             <p className="text-3xl font-black" style={{ color: 'var(--color-success)' }}>
               {formatPrice(lead.total_em_vendas, userCurrency, userLang)}
             </p>
+          </div>
+
+          {/* Ações de Venda */}
+          <div className="rounded-2xl p-5 md:p-6 shadow-xl" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)' }}>
+            <h3 className="text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-muted)' }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--color-primary)' }} />
+              {t.salesActions}
+            </h3>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => handleQuickAction('call_made', t.logCall)}
+                disabled={savingAction !== null}
+                className="flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all group disabled:opacity-50"
+                style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+                    <PhoneCall size={12} />
+                  </div>
+                  <span>{t.actionCall}</span>
+                </div>
+                {savingAction === 'call_made' && <Loader2 size={14} className="animate-spin" />}
+              </button>
+
+              <button
+                onClick={() => handleQuickAction('meeting_attended', t.logMeeting)}
+                disabled={savingAction !== null}
+                className="flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all group disabled:opacity-50"
+                style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                    <CalendarCheck size={12} />
+                  </div>
+                  <span>{t.actionMeeting}</span>
+                </div>
+                {savingAction === 'meeting_attended' && <Loader2 size={14} className="animate-spin" />}
+              </button>
+
+              <button
+                onClick={() => handleQuickAction('proposal_sent', t.logProposal)}
+                disabled={savingAction !== null}
+                className="flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all group disabled:opacity-50"
+                style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                    <FileSignature size={12} />
+                  </div>
+                  <span>{t.actionProposal}</span>
+                </div>
+                {savingAction === 'proposal_sent' && <Loader2 size={14} className="animate-spin" />}
+              </button>
+            </div>
           </div>
 
           {/* Simulação de Financiamento - Apenas para imobiliárias */}
