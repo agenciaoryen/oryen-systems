@@ -73,7 +73,7 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
           </svg>
         </div>
         <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>Mensagem enviada!</h3>
-        <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Entraremos em contato em breve.</p>
+        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Entraremos em contato em breve.</p>
       </div>
     )
   }

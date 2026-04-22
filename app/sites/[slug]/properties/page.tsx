@@ -100,7 +100,7 @@ export default async function PropertiesListPage({
       <div style={{ background: 'var(--color-bg-elevated)', borderBottom: '1px solid var(--color-border-subtle)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Imóveis</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>{total} {total === 1 ? 'imóvel encontrado' : 'imóveis encontrados'}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{total} {total === 1 ? 'imóvel encontrado' : 'imóveis encontrados'}</p>
         </div>
       </div>
 
@@ -121,7 +121,7 @@ export default async function PropertiesListPage({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
             </svg>
             <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>Nenhum imóvel encontrado</h3>
-            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Tente mudar os filtros para ver mais resultados.</p>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Tente mudar os filtros para ver mais resultados.</p>
           </div>
         )}
 
@@ -137,7 +137,7 @@ export default async function PropertiesListPage({
                 ← Anterior
               </a>
             )}
-            <span className="px-4 py-2 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+            <span className="px-4 py-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
               Página {page} de {totalPages}
             </span>
             {page < totalPages && (

@@ -145,7 +145,7 @@ export default async function PropertyDetailPage({
                   >
                     {TRANSACTION_TYPES[property.transaction_type]?.pt}
                   </span>
-                  <span className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
+                  <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>
                     {PROPERTY_TYPES[property.property_type]?.pt}
                   </span>
                 </div>
@@ -153,7 +153,7 @@ export default async function PropertyDetailPage({
                   {property.title}
                 </h1>
                 {addressFull && (
-                  <p className="text-sm flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
+                  <p className="text-sm flex items-center gap-1" style={{ color: 'var(--color-text-secondary)' }}>
                     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -168,7 +168,7 @@ export default async function PropertyDetailPage({
                 {property.price && (
                   <p className="text-3xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
                     {formatPrice(property.price, site.currency)}
-                    {property.transaction_type === 'rent' && <span className="text-sm font-normal" style={{ color: 'var(--color-text-muted)' }}>/mês</span>}
+                    {property.transaction_type === 'rent' && <span className="text-sm font-normal" style={{ color: 'var(--color-text-secondary)' }}>/mês</span>}
                   </p>
                 )}
 
@@ -176,25 +176,25 @@ export default async function PropertyDetailPage({
                   {property.bedrooms > 0 && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{property.bedrooms}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{property.bedrooms === 1 ? 'Quarto' : 'Quartos'}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{property.bedrooms === 1 ? 'Quarto' : 'Quartos'}</p>
                     </div>
                   )}
                   {property.suites > 0 && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{property.suites}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{property.suites === 1 ? 'Suíte' : 'Suítes'}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{property.suites === 1 ? 'Suíte' : 'Suítes'}</p>
                     </div>
                   )}
                   {property.bathrooms > 0 && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{property.bathrooms}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{property.bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{property.bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</p>
                     </div>
                   )}
                   {property.parking_spots > 0 && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{property.parking_spots}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{property.parking_spots === 1 ? 'Vaga' : 'Vagas'}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{property.parking_spots === 1 ? 'Vaga' : 'Vagas'}</p>
                     </div>
                   )}
                 </div>
@@ -204,25 +204,25 @@ export default async function PropertyDetailPage({
                   {property.total_area && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatArea(property.total_area)}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Área total</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Área total</p>
                     </div>
                   )}
                   {property.private_area && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatArea(property.private_area)}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Área privativa</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Área privativa</p>
                     </div>
                   )}
                   {property.condo_fee && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatPrice(property.condo_fee, site.currency)}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Condomínio</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Condomínio</p>
                     </div>
                   )}
                   {property.iptu && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatPrice(property.iptu, site.currency)}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>IPTU</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>IPTU</p>
                     </div>
                   )}
                 </div>
@@ -286,7 +286,7 @@ export default async function PropertyDetailPage({
             <div className="lg:col-span-1">
               <div className="sticky top-20 rounded-2xl p-6 shadow-sm" style={{ background: 'var(--color-bg-elevated)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}>
                 <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>Tenho interesse</h3>
-                <p className="text-xs mb-5" style={{ color: 'var(--color-text-muted)' }}>Preencha e entraremos em contato.</p>
+                <p className="text-xs mb-5" style={{ color: 'var(--color-text-secondary)' }}>Preencha e entraremos em contato.</p>
                 <ContactForm
                   siteSlug={site.slug}
                   propertyId={property.id}

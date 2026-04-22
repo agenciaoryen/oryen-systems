@@ -42,7 +42,7 @@ export default function PropertyFilters({ slug, neighborhoods = [] }: PropertyFi
   return (
     <div className="flex flex-wrap gap-3 items-end">
       <div className="w-40">
-        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Tipo</label>
+        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Tipo</label>
         <CustomSelect
           value={type}
           onChange={(v) => setType(v)}
@@ -54,7 +54,7 @@ export default function PropertyFilters({ slug, neighborhoods = [] }: PropertyFi
       </div>
 
       <div className="w-40">
-        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Transação</label>
+        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Transação</label>
         <CustomSelect
           value={transaction}
           onChange={(v) => setTransaction(v)}
@@ -67,7 +67,7 @@ export default function PropertyFilters({ slug, neighborhoods = [] }: PropertyFi
 
       {neighborhoods.length > 0 && (
         <div className="w-44">
-          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Bairro</label>
+          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Bairro</label>
           <CustomSelect
             value={neighborhood}
             onChange={(v) => setNeighborhood(v)}
@@ -80,7 +80,7 @@ export default function PropertyFilters({ slug, neighborhoods = [] }: PropertyFi
       )}
 
       <div className="w-36">
-        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Quartos (mín.)</label>
+        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Quartos (mín.)</label>
         <CustomSelect
           value={minBedrooms}
           onChange={(v) => setMinBedrooms(v)}
@@ -103,7 +103,7 @@ export default function PropertyFilters({ slug, neighborhoods = [] }: PropertyFi
         <button
           onClick={clearFilters}
           className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
-          style={{ color: 'var(--color-text-muted)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}
+          style={{ color: 'var(--color-text-secondary)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}
         >
           Limpar
         </button>

@@ -65,13 +65,11 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
       >
         <p
           className="text-xs font-semibold uppercase tracking-wider mb-2"
-          style={{ color: 'var(--site-primary, var(--color-primary))' }}
+          style={{ color: 'var(--color-text-secondary)' }}
         >
           {PROPERTY_TYPES[property.property_type]?.pt || property.property_type}
           {property.address_neighborhood && (
-            <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
-              {' • '}{property.address_neighborhood}
-            </span>
+            <span> • {property.address_neighborhood}</span>
           )}
         </p>
         <h3

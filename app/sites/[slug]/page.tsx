@@ -131,12 +131,12 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Últimos Imóveis</h2>
-                <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>Adicionados recentemente</p>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>Adicionados recentemente</p>
               </div>
               <Link
                 href={`/sites/${slug}/properties`}
                 className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold transition-colors hover:opacity-80"
-                style={{ color: 'var(--site-primary)' }}
+                style={{ color: 'var(--color-text-primary)' }}
               >
                 Ver todos
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,12 +161,12 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Imóveis em Destaque</h2>
-                <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>As melhores oportunidades selecionadas</p>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>As melhores oportunidades selecionadas</p>
               </div>
               <Link
                 href={`/sites/${slug}/properties`}
                 className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold transition-colors hover:opacity-80"
-                style={{ color: 'var(--site-primary)' }}
+                style={{ color: 'var(--color-text-primary)' }}
               >
                 Ver todos
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,7 +189,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Conforme sua Necessidade</h2>
-            <p className="text-sm mt-2" style={{ color: 'var(--color-text-muted)' }}>Encontre o imóvel ideal para você</p>
+            <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>Encontre o imóvel ideal para você</p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -247,7 +247,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Nossa Localização</h2>
-              <p className="text-sm mt-2" style={{ color: 'var(--color-text-muted)' }}>{site.address}</p>
+              <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>{site.address}</p>
             </div>
             <div className="rounded-2xl overflow-hidden shadow-lg" style={{ border: '1px solid var(--color-border-subtle)' }}>
               <iframe
@@ -271,7 +271,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
           <div className="max-w-lg mx-auto">
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Entre em Contato</h2>
-              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Preencha o formulário e retornaremos em breve.</p>
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Preencha o formulário e retornaremos em breve.</p>
             </div>
 
             <div className="rounded-2xl p-6 sm:p-8 shadow-sm" style={{ background: 'var(--color-bg-elevated)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}>
