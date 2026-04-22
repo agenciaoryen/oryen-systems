@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
@@ -393,6 +393,28 @@ function AiStatusBadge({ isActive, size = 'sm' }: { isActive: boolean; size?: 's
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENTE: Scroll Sentinel (infinite scroll por coluna do Kanban)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function ScrollSentinel({ onVisible, disabled }: { onVisible: () => void; disabled?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (disabled) return
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) onVisible()
+      },
+      { rootMargin: '200px' } // dispara 200px antes de chegar no fim
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [onVisible, disabled])
+  return <div ref={ref} aria-hidden className="h-px" />
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -409,10 +431,20 @@ export default function CrmPage() {
   const userTimezone = user?.timezone || 'America/Sao_Paulo'
 
   // Estados principais
-  const [leads, setLeads] = useState<Lead[]>([])
+  const [leads, setLeads] = useState<Lead[]>([]) // ainda usada pela view Lista; no Kanban vem de stageLeads
   const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([])
   const [tags, setTags] = useState<Tag[]>([])
   const [leadTags, setLeadTags] = useState<LeadTag[]>([])
+
+  // ═══ Paginação por coluna do Kanban (Entregas A + B) ═══
+  // Total de leads por stage vem direto do banco via COUNT (não do que foi carregado).
+  // Cards são carregados em páginas de LEADS_PER_PAGE por stage, infinite scroll.
+  const LEADS_PER_PAGE = 20
+  const [stageLeads, setStageLeads] = useState<Record<string, Lead[]>>({})
+  const [stageCounts, setStageCounts] = useState<Record<string, number>>({})
+  const [stageHasMore, setStageHasMore] = useState<Record<string, boolean>>({})
+  const [stageLoadingMore, setStageLoadingMore] = useState<Record<string, boolean>>({})
+  const [totalPipelineCount, setTotalPipelineCount] = useState(0)
 
   // Config do card do lead (campos visíveis)
   const DEFAULT_CARD_FIELDS = ['total_em_vendas', 'phone', 'email', 'tags', 'source', 'created_at']
@@ -466,107 +498,208 @@ export default function CrmPage() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
 
-  // ─── CARREGAR DADOS ───
-  const loadData = useCallback(async () => {
+  // ─── FILTRO DE DATA ───
+  const filterDate = useMemo(() => {
+    if (daysFilter === 'all') return null
+    const date = new Date()
+    date.setDate(date.getDate() - parseInt(daysFilter))
+    return date.toISOString()
+  }, [daysFilter])
+
+  // ─── BUILDER DE QUERY COM FILTROS SERVER-SIDE ───
+  // Aplica filtros comuns em qualquer query (count ou data).
+  // tagScopedIds: null = sem filtro de tag; [] = filtro de tag ativo mas 0 matches (query deve retornar vazio)
+  const applyServerFilters = useCallback((query: any, tagScopedIds: string[] | null) => {
+    let q = query.eq('org_id', orgId)
+    if (filterDate) q = q.or(`created_at.gte.${filterDate},updated_at.gte.${filterDate}`)
+    const s = searchQuery.trim()
+    if (s) {
+      const esc = s.replace(/[%,]/g, '') // escapa chars que quebram o .or()
+      q = q.or(`name.ilike.%${esc}%,nome_empresa.ilike.%${esc}%,email.ilike.%${esc}%,phone.ilike.%${esc}%`)
+    }
+    if (aiFilter === 'active') q = q.eq('conversa_finalizada', false)
+    else if (aiFilter === 'paused') q = q.eq('conversa_finalizada', true)
+    if (filterAssigned === 'unassigned') q = q.is('assigned_to', null)
+    else if (filterAssigned !== 'all') q = q.eq('assigned_to', filterAssigned)
+    if (tagScopedIds !== null) {
+      if (tagScopedIds.length === 0) q = q.eq('id', '00000000-0000-0000-0000-000000000000') // força 0 resultados
+      else q = q.in('id', tagScopedIds)
+    }
+    return q
+  }, [orgId, filterDate, searchQuery, aiFilter, filterAssigned])
+
+  // ─── PRÉ-FILTRO DE TAGS: resolve lead_ids que têm as tags selecionadas ───
+  const resolveTagScopedIds = useCallback(async (): Promise<string[] | null> => {
+    if (selectedTags.length === 0) return null
+    const { data } = await supabase
+      .from('lead_tags')
+      .select('lead_id')
+      .in('tag_id', selectedTags)
+    return [...new Set((data || []).map((r: any) => r.lead_id))]
+  }, [selectedTags])
+
+  // ─── CARGA DE METADADOS (uma vez por orgId) ───
+  const loadMetadata = useCallback(async () => {
     if (!orgId) return
 
+    const [stagesRes, tagsRes, leadTagsRes, orgConfigRes, membersRes] = await Promise.all([
+      supabase.from('pipeline_stages').select('*').eq('org_id', orgId).eq('is_active', true).order('position'),
+      supabase.from('tags').select('*').eq('org_id', orgId).order('name'),
+      supabase.from('lead_tags').select('lead_id, tag_id'),
+      supabase.from('orgs').select('lead_card_config').eq('id', orgId).single(),
+      supabase.from('users').select('id, full_name').eq('org_id', orgId).order('full_name'),
+    ])
+
+    setPipelineStages(stagesRes.data || [])
+    setTags(tagsRes.data || [])
+    setLeadTags(leadTagsRes.data || [])
+    setTeamMembers(membersRes.data || [])
+
+    const config = orgConfigRes.data?.lead_card_config as any
+    if (config) {
+      if (config.fields) setCardFields(config.fields)
+      if (config.show_stale_indicator !== undefined) setCardShowStale(config.show_stale_indicator)
+      if (config.show_ai_status !== undefined) setCardShowAiStatus(config.show_ai_status)
+    }
+  }, [orgId])
+
+  // ─── ENRIQUECER LEADS COM NOME DO RESPONSÁVEL ───
+  const enrichWithAssignees = useCallback(async (rows: Lead[]): Promise<Lead[]> => {
+    const assignedIds = [...new Set(rows.filter(l => l.assigned_to).map(l => l.assigned_to!))]
+    if (assignedIds.length === 0) return rows
+    const { data: users } = await supabase.from('users').select('id, full_name').in('id', assignedIds)
+    const userMap = new Map((users || []).map((u: any) => [u.id, u.full_name]))
+    return rows.map(l => l.assigned_to ? { ...l, assigned_to_name: userMap.get(l.assigned_to) || undefined } : l)
+  }, [])
+
+  // ─── CARGA PAGINADA POR STAGE (inicial) ───
+  const loadAllStagesData = useCallback(async (stages: PipelineStage[]) => {
+    if (!orgId || stages.length === 0) return
+
     setLoading(true)
-
     try {
-      // Calcular data de filtro
-      let filterDate: string | null = null
-      if (daysFilter !== 'all') {
-        const date = new Date()
-        date.setDate(date.getDate() - parseInt(daysFilter))
-        filterDate = date.toISOString()
-      }
+      const tagScopedIds = await resolveTagScopedIds()
 
-      // Buscar tudo em paralelo
-      const [stagesRes, tagsRes, leadTagsRes, orgConfigRes] = await Promise.all([
-        supabase
-          .from('pipeline_stages')
-          .select('*')
-          .eq('org_id', orgId)
-          .eq('is_active', true)
-          .order('position'),
-        supabase
-          .from('tags')
-          .select('*')
-          .eq('org_id', orgId)
-          .order('name'),
-        supabase
-          .from('lead_tags')
-          .select('lead_id, tag_id'),
-        supabase
-          .from('orgs')
-          .select('lead_card_config')
-          .eq('id', orgId)
-          .single()
+      // Pra cada stage, duas queries em paralelo: COUNT exato + primeira página (20 cards).
+      // Total da pipeline também em paralelo (um único COUNT global respeitando os mesmos filtros).
+      const globalCountPromise = applyServerFilters(
+        supabase.from('leads').select('id', { count: 'exact', head: true }),
+        tagScopedIds
+      )
+
+      const perStagePromises = stages.map(async (stage) => {
+        const countPromise = applyServerFilters(
+          supabase.from('leads').select('id', { count: 'exact', head: true }),
+          tagScopedIds
+        ).eq('stage', stage.name)
+
+        const dataPromise = applyServerFilters(
+          supabase
+            .from('leads')
+            .select('*, conversa_finalizada, score, score_label')
+            .order('updated_at', { ascending: false }),
+          tagScopedIds
+        ).eq('stage', stage.name).range(0, LEADS_PER_PAGE - 1)
+
+        const [countRes, dataRes] = await Promise.all([countPromise, dataPromise])
+        return {
+          name: stage.name,
+          count: countRes.count || 0,
+          rows: (dataRes.data || []) as Lead[],
+        }
+      })
+
+      const [globalCountRes, perStage] = await Promise.all([
+        globalCountPromise,
+        Promise.all(perStagePromises),
       ])
 
-      // Buscar leads — sem paginação infinita, query direta com filtro de data.
-      // Limite alto pra cobrir o teto do plano Business (8.000 leads ativos).
-      let query = supabase
-        .from('leads')
-        .select('*, conversa_finalizada, score, score_label')
-        .eq('org_id', orgId)
-        .order('updated_at', { ascending: false })
-        .limit(10000)
+      // Enriquece todos os leads carregados com nome do responsável numa query só
+      const allRows = perStage.flatMap(s => s.rows)
+      const enriched = await enrichWithAssignees(allRows)
+      const byId = new Map(enriched.map(l => [l.id, l]))
 
-      if (filterDate) {
-        query = query.or(`created_at.gte.${filterDate},updated_at.gte.${filterDate}`)
-      }
+      const nextLeads: Record<string, Lead[]> = {}
+      const nextCounts: Record<string, number> = {}
+      const nextHasMore: Record<string, boolean> = {}
+      perStage.forEach(s => {
+        nextLeads[s.name] = s.rows.map(r => byId.get(r.id) || r)
+        nextCounts[s.name] = s.count
+        nextHasMore[s.name] = s.rows.length === LEADS_PER_PAGE && s.rows.length < s.count
+      })
 
-      const { data: allLeads, error: leadsErr } = await query
-      if (leadsErr) throw leadsErr
-
-      // Fetch assigned user names
-      const leadsWithNames = allLeads || []
-      const assignedIds = [...new Set(leadsWithNames.filter(l => l.assigned_to).map(l => l.assigned_to))]
-      if (assignedIds.length > 0) {
-        const { data: users } = await supabase.from('users').select('id, full_name').in('id', assignedIds)
-        const userMap = new Map(users?.map(u => [u.id, u.full_name]) || [])
-        leadsWithNames.forEach(l => { if (l.assigned_to) l.assigned_to_name = userMap.get(l.assigned_to) || undefined })
-      }
-
-      // Fetch team members for the org (for Responsavel filter)
-      const { data: members } = await supabase
-        .from('users')
-        .select('id, full_name')
-        .eq('org_id', orgId)
-        .order('full_name')
-      setTeamMembers(members || [])
-
-      setPipelineStages(stagesRes.data || [])
-      setTags(tagsRes.data || [])
-      setLeadTags(leadTagsRes.data || [])
-      setLeads(leadsWithNames)
-
-      // Carregar config do card do lead
-      const config = orgConfigRes.data?.lead_card_config as any
-      if (config) {
-        if (config.fields) setCardFields(config.fields)
-        if (config.show_stale_indicator !== undefined) setCardShowStale(config.show_stale_indicator)
-        if (config.show_ai_status !== undefined) setCardShowAiStatus(config.show_ai_status)
-      }
-
+      setStageLeads(nextLeads)
+      setStageCounts(nextCounts)
+      setStageHasMore(nextHasMore)
+      setStageLoadingMore({})
+      setTotalPipelineCount(globalCountRes.count || 0)
+      // Mantém estado 'leads' sincronizado (usado pela view Lista e alguns helpers)
+      setLeads(enriched)
     } catch (err) {
-      console.error('Erro ao carregar dados:', err)
+      console.error('Erro ao carregar stages:', err)
     } finally {
       setLoading(false)
     }
-  }, [orgId, daysFilter])
+  }, [orgId, applyServerFilters, resolveTagScopedIds, enrichWithAssignees])
 
-  // Carregar quando orgId mudar
-  useEffect(() => {
-    if (orgId) {
-      loadData()
+  // ─── CARGA INCREMENTAL DE UMA COLUNA (infinite scroll) ───
+  const loadMoreStage = useCallback(async (stageName: string) => {
+    if (!orgId) return
+    if (stageLoadingMore[stageName]) return
+    if (!stageHasMore[stageName]) return
+
+    setStageLoadingMore(prev => ({ ...prev, [stageName]: true }))
+    try {
+      const tagScopedIds = await resolveTagScopedIds()
+      const currentCount = (stageLeads[stageName] || []).length
+
+      const { data } = await applyServerFilters(
+        supabase
+          .from('leads')
+          .select('*, conversa_finalizada, score, score_label')
+          .order('updated_at', { ascending: false }),
+        tagScopedIds
+      )
+        .eq('stage', stageName)
+        .range(currentCount, currentCount + LEADS_PER_PAGE - 1)
+
+      const newRows = (data || []) as Lead[]
+      const enriched = await enrichWithAssignees(newRows)
+
+      setStageLeads(prev => ({
+        ...prev,
+        [stageName]: [...(prev[stageName] || []), ...enriched],
+      }))
+      setStageHasMore(prev => ({
+        ...prev,
+        [stageName]: newRows.length === LEADS_PER_PAGE
+          && (currentCount + newRows.length) < (stageCounts[stageName] || 0),
+      }))
+      setLeads(prev => [...prev, ...enriched])
+    } catch (err) {
+      console.error(`Erro ao carregar mais de ${stageName}:`, err)
+    } finally {
+      setStageLoadingMore(prev => ({ ...prev, [stageName]: false }))
     }
-  }, [orgId, loadData])
+  }, [orgId, stageLoadingMore, stageHasMore, stageLeads, stageCounts, applyServerFilters, resolveTagScopedIds, enrichWithAssignees])
 
-  // ─── FILTRAR LEADS ───
+  // ─── EFFECTS: metadados uma vez por org; dados sempre que filtros mudam ───
+  useEffect(() => {
+    if (orgId) loadMetadata()
+  }, [orgId, loadMetadata])
+
+  // Re-fetch quando filtros mudam (depois de ter stages)
+  useEffect(() => {
+    if (pipelineStages.length > 0) {
+      loadAllStagesData(pipelineStages)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pipelineStages, daysFilter, searchQuery, selectedTags, aiFilter, filterAssigned])
+
+  // ─── FILTROS PARA VIEW LISTA (client-side sobre o que foi carregado) ───
+  // Atenção: a view Lista mostra só os leads que vieram nas primeiras páginas por stage.
+  // Isso é aceitável porque a Lista não é a visualização principal.
   const filteredLeads = leads.filter(lead => {
-    // Filtro de busca
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       const matchesSearch = (
@@ -577,69 +710,44 @@ export default function CrmPage() {
       )
       if (!matchesSearch) return false
     }
-
-    // Filtro de tags
     if (selectedTags.length > 0) {
-      const leadTagIds = leadTags
-        .filter(lt => lt.lead_id === lead.id)
-        .map(lt => lt.tag_id)
-      const hasSelectedTag = selectedTags.some(tagId => leadTagIds.includes(tagId))
-      if (!hasSelectedTag) return false
+      const leadTagIds = leadTags.filter(lt => lt.lead_id === lead.id).map(lt => lt.tag_id)
+      if (!selectedTags.some(tagId => leadTagIds.includes(tagId))) return false
     }
-
-    // Filtro de IA
     if (aiFilter !== 'all') {
       const isAiActive = lead.conversa_finalizada === false
       if (aiFilter === 'active' && !isAiActive) return false
       if (aiFilter === 'paused' && isAiActive) return false
     }
-
-    // Filtro de Responsável
     if (filterAssigned !== 'all') {
       if (filterAssigned === 'unassigned') {
         if (lead.assigned_to) return false
-      } else {
-        if (lead.assigned_to !== filterAssigned) return false
+      } else if (lead.assigned_to !== filterAssigned) {
+        return false
       }
     }
-
     return true
   })
 
   // ─── ESTATÍSTICAS ───
+  // totalLeads: COUNT real do banco (respeita todos os filtros aplicados server-side)
+  // totalValue: soma apenas dos leads carregados — limitação conhecida (sem SUM server-side)
+  // aiActive/aiPaused: sobre leads carregados
   const stats = {
-    totalLeads: filteredLeads.length,
-    totalValue: filteredLeads.reduce((sum, lead) => sum + (lead.total_em_vendas || 0), 0),
+    totalLeads: totalPipelineCount,
+    totalValue: Object.values(stageLeads).flat().reduce((sum, l: any) => sum + (l.total_em_vendas || 0), 0),
     aiActive: leads.filter(l => l.conversa_finalizada === false).length,
-    aiPaused: leads.filter(l => l.conversa_finalizada === true).length
+    aiPaused: leads.filter(l => l.conversa_finalizada === true).length,
   }
 
-  // ─── AGRUPAR LEADS POR ESTÁGIO ───
-  const getGroupedLeads = () => {
-    const groups: Record<string, Lead[]> = {}
+  // ─── SOMA POR STAGE (apenas dos cards carregados — limitação conhecida) ───
+  const pipelineSums = useMemo(() => {
     const sums: Record<string, number> = {}
-
     pipelineStages.forEach(stage => {
-      groups[stage.name] = []
-      sums[stage.name] = 0
+      sums[stage.name] = (stageLeads[stage.name] || []).reduce((sum, l: any) => sum + (l.total_em_vendas || 0), 0)
     })
-
-    filteredLeads.forEach(lead => {
-      const stageName = lead.stage || pipelineStages[0]?.name || 'captado'
-      if (groups[stageName]) {
-        groups[stageName].push(lead)
-        sums[stageName] += (lead.total_em_vendas || 0)
-      } else if (pipelineStages.length > 0) {
-        // Se o estágio do lead não existe, coloca no primeiro
-        groups[pipelineStages[0].name].push(lead)
-        sums[pipelineStages[0].name] += (lead.total_em_vendas || 0)
-      }
-    })
-
-    return { groups, sums }
-  }
-
-  const { groups: pipelineData, sums: pipelineSums } = getGroupedLeads()
+    return sums
+  }, [pipelineStages, stageLeads])
 
   // ─── DRAG & DROP ───
   const handleDragStart = (e: React.DragEvent, leadId: string) => {
@@ -660,20 +768,43 @@ export default function CrmPage() {
     e.preventDefault()
     if (!draggedLeadId) return
 
-    const leadToMove = leads.find(l => l.id === draggedLeadId)
-    if (!leadToMove || leadToMove.stage === targetStage) {
+    // Localiza o lead e seu stage atual percorrendo stageLeads
+    let originalStage: string | null = null
+    let leadToMove: Lead | null = null
+    for (const [sName, rows] of Object.entries(stageLeads)) {
+      const found = rows.find(l => l.id === draggedLeadId)
+      if (found) {
+        originalStage = sName
+        leadToMove = found
+        break
+      }
+    }
+
+    if (!leadToMove || !originalStage || originalStage === targetStage) {
       setDraggedLeadId(null)
       return
     }
 
-    const originalStage = leadToMove.stage || 'captado'
-    const originalLeads = [...leads]
+    // Snapshot pra rollback
+    const snapshotStageLeads = stageLeads
+    const snapshotStageCounts = stageCounts
+    const snapshotLeads = leads
 
-    // Atualização otimista
+    const movedLead: Lead = { ...leadToMove, stage: targetStage, updated_at: new Date().toISOString() }
+
+    // Atualização otimista: remove da origem, insere no topo do destino, ajusta contadores
+    setStageLeads(prev => ({
+      ...prev,
+      [originalStage!]: (prev[originalStage!] || []).filter(l => l.id !== draggedLeadId),
+      [targetStage]: [movedLead, ...(prev[targetStage] || [])],
+    }))
+    setStageCounts(prev => ({
+      ...prev,
+      [originalStage!]: Math.max(0, (prev[originalStage!] || 0) - 1),
+      [targetStage]: (prev[targetStage] || 0) + 1,
+    }))
     setLeads(prev => prev.map(lead =>
-      lead.id === draggedLeadId
-        ? { ...lead, stage: targetStage, updated_at: new Date().toISOString() }
-        : lead
+      lead.id === draggedLeadId ? movedLead : lead
     ))
 
     try {
@@ -693,7 +824,9 @@ export default function CrmPage() {
 
     } catch (err) {
       console.error('Erro ao mover lead:', err)
-      setLeads(originalLeads)
+      setStageLeads(snapshotStageLeads)
+      setStageCounts(snapshotStageCounts)
+      setLeads(snapshotLeads)
     } finally {
       setDraggedLeadId(null)
     }
@@ -743,7 +876,18 @@ export default function CrmPage() {
       }
 
       if (data) {
+        const firstStage = pipelineStages[0]?.name || 'captado'
         setLeads(prev => [data, ...prev])
+        // Insere no topo da coluna correspondente e ajusta os contadores
+        setStageLeads(prev => ({
+          ...prev,
+          [firstStage]: [data, ...(prev[firstStage] || [])],
+        }))
+        setStageCounts(prev => ({
+          ...prev,
+          [firstStage]: (prev[firstStage] || 0) + 1,
+        }))
+        setTotalPipelineCount(prev => prev + 1)
         setNewLeadData({ name: '', nome_empresa: '', email: '', phone: '', selectedTags: [] })
         setIsModalOpen(false)
       }
@@ -770,15 +914,26 @@ export default function CrmPage() {
   const handleToggleAi = async (e: React.MouseEvent, leadId: string, currentValue: boolean) => {
     e.stopPropagation() // não abre o lead
     const newValue = !currentValue
-    // Atualizar otimisticamente
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, conversa_finalizada: newValue } : l))
+    // Atualizar otimisticamente (tanto leads quanto stageLeads)
+    const updater = (l: Lead) => l.id === leadId ? { ...l, conversa_finalizada: newValue } : l
+    setLeads(prev => prev.map(updater))
+    setStageLeads(prev => {
+      const next: Record<string, Lead[]> = {}
+      for (const [k, v] of Object.entries(prev)) next[k] = v.map(updater)
+      return next
+    })
     const { error } = await supabase
       .from('leads')
       .update({ conversa_finalizada: newValue })
       .eq('id', leadId)
     if (error) {
-      // Rollback
-      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, conversa_finalizada: currentValue } : l))
+      const rollback = (l: Lead) => l.id === leadId ? { ...l, conversa_finalizada: currentValue } : l
+      setLeads(prev => prev.map(rollback))
+      setStageLeads(prev => {
+        const next: Record<string, Lead[]> = {}
+        for (const [k, v] of Object.entries(prev)) next[k] = v.map(rollback)
+        return next
+      })
     }
   }
 
@@ -798,7 +953,7 @@ export default function CrmPage() {
           <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>
             {t.title}
             <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ color: 'var(--color-primary)', background: 'var(--color-primary-subtle)' }}>
-              {filteredLeads.length}
+              {totalPipelineCount}
             </span>
           </h1>
           <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: 'var(--color-text-muted)' }}>
@@ -1144,8 +1299,11 @@ export default function CrmPage() {
             <div className="flex gap-3 md:gap-4 min-w-max h-full">
               {pipelineStages.map((stage) => {
                 const stageColor = getStageColor(stage.color)
-                const count = pipelineData[stage.name]?.length || 0
+                const count = stageCounts[stage.name] || 0
+                const loadedCount = (stageLeads[stage.name] || []).length
                 const stageTotal = pipelineSums[stage.name] || 0
+                const hasMore = !!stageHasMore[stage.name]
+                const loadingMore = !!stageLoadingMore[stage.name]
 
                 return (
                   <div
@@ -1204,7 +1362,7 @@ export default function CrmPage() {
 
                     {/* Cards */}
                     <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                      {pipelineData[stage.name]?.map((lead, index) => {
+                      {stageLeads[stage.name]?.map((lead, index) => {
                         const leadDisplayName = lead.name || 'Sem Nome'
                         const daysSinceUpdate = getDaysSinceUpdate(lead.updated_at)
                         const isStale = daysSinceUpdate > 5
@@ -1368,6 +1526,26 @@ export default function CrmPage() {
                           </div>
                         )
                       })}
+
+                      {/* Sentinela de infinite scroll — dispara loadMoreStage quando aparece na viewport */}
+                      {hasMore && (
+                        <ScrollSentinel
+                          onVisible={() => loadMoreStage(stage.name)}
+                          disabled={loadingMore}
+                        />
+                      )}
+
+                      {loadingMore && (
+                        <div className="flex justify-center py-3">
+                          <Loader2 size={16} className="animate-spin" style={{ color: 'var(--color-text-muted)' }} />
+                        </div>
+                      )}
+
+                      {!hasMore && loadedCount > 0 && loadedCount < count && (
+                        <p className="text-[10px] text-center py-2" style={{ color: 'var(--color-text-muted)' }}>
+                          {loadedCount} / {count}
+                        </p>
+                      )}
 
                       {count === 0 && (
                         <div className="h-full flex flex-col items-center justify-center opacity-40 min-h-[120px] border-2 border-dashed rounded-lg" style={{ borderColor: 'var(--color-border)' }}>
