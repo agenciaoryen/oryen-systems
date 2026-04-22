@@ -11,6 +11,7 @@ import PropertyCard from '../../components/PropertyCard'
 import PropertyGallery from './PropertyGallery'
 import PropertyViewTracker from './PropertyViewTracker'
 import PropertyMap from '../../components/PropertyMap'
+import BackButton from './BackButton'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -121,6 +122,11 @@ export default async function PropertyDetailPage({
       <PropertyViewTracker siteSlug={slug} propertyId={property.id} />
 
       <div style={{ background: 'var(--color-bg-elevated)' }}>
+        {/* ═══ BOTÃO VOLTAR ═══ */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+          <BackButton fallbackHref={`/sites/${slug}/properties`} label="Voltar" />
+        </div>
+
         {/* ═══ GALERIA ═══ */}
         {property.images && property.images.length > 0 && (
           <PropertyGallery images={property.images} title={property.title} siteSlug={slug} propertyId={property.id} />
