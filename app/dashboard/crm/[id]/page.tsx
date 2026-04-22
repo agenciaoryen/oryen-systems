@@ -132,9 +132,11 @@ const TRANSLATIONS = {
     salesActions: 'Ações de Venda',
     actionCall: 'Ligação Feita',
     actionMeeting: 'Reunião Realizada',
+    actionVisit: 'Visita Realizada',
     actionProposal: 'Proposta Enviada',
     logCall: 'Registrou uma ligação.',
     logMeeting: 'Compareceu à reunião agendada.',
+    logVisit: 'Compareceu à visita agendada.',
     logProposal: 'Enviou uma proposta comercial.',
     stageChanged: 'Etapa alterada para',
     tagAdded: 'Tag adicionada:',
@@ -212,9 +214,11 @@ const TRANSLATIONS = {
     salesActions: 'Sales Actions',
     actionCall: 'Call Made',
     actionMeeting: 'Meeting Attended',
+    actionVisit: 'Showing Attended',
     actionProposal: 'Proposal Sent',
     logCall: 'Logged a call.',
     logMeeting: 'Attended the scheduled meeting.',
+    logVisit: 'Attended the scheduled showing.',
     logProposal: 'Sent a commercial proposal.',
     stageChanged: 'Stage changed to',
     tagAdded: 'Tag added:',
@@ -292,9 +296,11 @@ const TRANSLATIONS = {
     salesActions: 'Acciones de Venta',
     actionCall: 'Llamada Realizada',
     actionMeeting: 'Reunión Realizada',
+    actionVisit: 'Visita Realizada',
     actionProposal: 'Propuesta Enviada',
     logCall: 'Registró una llamada.',
     logMeeting: 'Asistió a la reunión agendada.',
+    logVisit: 'Asistió a la visita agendada.',
     logProposal: 'Envió una propuesta comercial.',
     stageChanged: 'Etapa cambiada a',
     tagAdded: 'Tag añadida:',
@@ -1525,20 +1531,28 @@ export default function LeadProfilePage() {
                 {savingAction === 'call_made' && <Loader2 size={14} className="animate-spin" />}
               </button>
 
-              <button
-                onClick={() => handleQuickAction('meeting_attended', t.logMeeting)}
-                disabled={savingAction !== null}
-                className="flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all group disabled:opacity-50"
-                style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
-                    <CalendarCheck size={12} />
-                  </div>
-                  <span>{t.actionMeeting}</span>
-                </div>
-                {savingAction === 'meeting_attended' && <Loader2 size={14} className="animate-spin" />}
-              </button>
+              {(() => {
+                const isRealEstate = activeOrg?.niche === 'real_estate'
+                const MeetingIcon = isRealEstate ? MapPin : CalendarCheck
+                const meetingLabel = isRealEstate ? t.actionVisit : t.actionMeeting
+                const meetingLog = isRealEstate ? t.logVisit : t.logMeeting
+                return (
+                  <button
+                    onClick={() => handleQuickAction('meeting_attended', meetingLog)}
+                    disabled={savingAction !== null}
+                    className="flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all group disabled:opacity-50"
+                    style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                        <MeetingIcon size={12} />
+                      </div>
+                      <span>{meetingLabel}</span>
+                    </div>
+                    {savingAction === 'meeting_attended' && <Loader2 size={14} className="animate-spin" />}
+                  </button>
+                )
+              })()}
 
               <button
                 onClick={() => handleQuickAction('proposal_sent', t.logProposal)}
