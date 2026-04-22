@@ -21,8 +21,8 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
   return (
     <Link
       href={`/sites/${slug}/properties/${property.slug || property.id}`}
-      className="group rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
-      style={{ background: 'var(--color-bg-elevated)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}
+      className="group rounded-2xl overflow-hidden shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+      style={{ background: 'var(--color-bg-base)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)' }}
       onClick={handleClick}
     >
       {/* Imagem */}
@@ -59,19 +59,35 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
       </div>
 
       {/* Info */}
-      <div className="p-4">
-        <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>
+      <div
+        className="p-5 border-t"
+        style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-subtle)' }}
+      >
+        <p
+          className="text-xs font-semibold uppercase tracking-wider mb-2"
+          style={{ color: 'var(--site-primary, var(--color-primary))' }}
+        >
           {PROPERTY_TYPES[property.property_type]?.pt || property.property_type}
-          {property.address_neighborhood && ` • ${property.address_neighborhood}`}
+          {property.address_neighborhood && (
+            <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
+              {' • '}{property.address_neighborhood}
+            </span>
+          )}
         </p>
-        <h3 className="font-semibold text-sm line-clamp-2 mb-3 transition-colors" style={{ color: 'var(--color-text-primary)' }}>
+        <h3
+          className="font-bold text-base line-clamp-2 mb-3 transition-colors"
+          style={{ color: 'var(--color-text-primary)' }}
+        >
           {property.title}
         </h3>
 
         {/* Features */}
-        <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+        <div
+          className="flex items-center gap-4 text-xs font-medium pt-3 border-t"
+          style={{ color: 'var(--color-text-secondary)', borderColor: 'var(--color-border-subtle)' }}
+        >
           {property.bedrooms > 0 && (
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1.5">
               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
               {property.bedrooms} {property.bedrooms === 1 ? 'quarto' : 'quartos'}
             </span>
