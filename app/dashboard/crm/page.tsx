@@ -442,9 +442,11 @@ export default function CrmPage() {
   const LEADS_PER_PAGE = 20
   const [stageLeads, setStageLeads] = useState<Record<string, Lead[]>>({})
   const [stageCounts, setStageCounts] = useState<Record<string, number>>({})
+  const [stageSums, setStageSums] = useState<Record<string, number>>({}) // valor em R$ por stage (via RPC)
   const [stageHasMore, setStageHasMore] = useState<Record<string, boolean>>({})
   const [stageLoadingMore, setStageLoadingMore] = useState<Record<string, boolean>>({})
   const [totalPipelineCount, setTotalPipelineCount] = useState(0)
+  const [totalPipelineValue, setTotalPipelineValue] = useState(0)
 
   // Config do card do lead (campos visíveis)
   const DEFAULT_CARD_FIELDS = ['total_em_vendas', 'phone', 'email', 'tags', 'source', 'created_at']
@@ -580,59 +582,74 @@ export default function CrmPage() {
     try {
       const tagScopedIds = await resolveTagScopedIds()
 
-      // Pra cada stage, duas queries em paralelo: COUNT exato + primeira página (20 cards).
-      // Total da pipeline também em paralelo (um único COUNT global respeitando os mesmos filtros).
-      const globalCountPromise = applyServerFilters(
-        supabase.from('leads').select('id', { count: 'exact', head: true }),
-        tagScopedIds
-      )
+      // Stats server-side: 1 RPC retorna {stage, count, sum} pra todas as etapas de uma vez.
+      // Respeita os mesmos filtros (data/busca/IA/responsável/tags) que as queries de dados.
+      const statsPromise = supabase.rpc('pipeline_stage_stats', {
+        p_org_id: orgId,
+        p_filter_date: filterDate,
+        p_search: searchQuery.trim() || null,
+        p_ai_filter: aiFilter === 'all' ? null : aiFilter,
+        p_assigned: filterAssigned === 'all' ? null : filterAssigned,
+        p_tag_ids: selectedTags.length > 0 ? selectedTags : null,
+      })
 
-      const perStagePromises = stages.map(async (stage) => {
-        const countPromise = applyServerFilters(
-          supabase.from('leads').select('id', { count: 'exact', head: true }),
-          tagScopedIds
-        ).eq('stage', stage.name)
-
-        const dataPromise = applyServerFilters(
+      // Pra cada stage, primeira página de 20 cards em paralelo à RPC.
+      const perStageDataPromises = stages.map(async (stage) => {
+        const { data } = await applyServerFilters(
           supabase
             .from('leads')
             .select('*, conversa_finalizada, score, score_label')
             .order('updated_at', { ascending: false }),
           tagScopedIds
         ).eq('stage', stage.name).range(0, LEADS_PER_PAGE - 1)
-
-        const [countRes, dataRes] = await Promise.all([countPromise, dataPromise])
-        return {
-          name: stage.name,
-          count: countRes.count || 0,
-          rows: (dataRes.data || []) as Lead[],
-        }
+        return { name: stage.name, rows: (data || []) as Lead[] }
       })
 
-      const [globalCountRes, perStage] = await Promise.all([
-        globalCountPromise,
-        Promise.all(perStagePromises),
+      const [statsRes, perStageData] = await Promise.all([
+        statsPromise,
+        Promise.all(perStageDataPromises),
       ])
 
+      if (statsRes.error) throw statsRes.error
+
       // Enriquece todos os leads carregados com nome do responsável numa query só
-      const allRows = perStage.flatMap(s => s.rows)
+      const allRows = perStageData.flatMap(s => s.rows)
       const enriched = await enrichWithAssignees(allRows)
       const byId = new Map(enriched.map(l => [l.id, l]))
 
+      // Monta mapas de count e sum a partir da RPC (stages sem leads ficam em 0).
+      const statsMap = new Map<string, { count: number; sum: number }>()
+      for (const row of (statsRes.data || []) as any[]) {
+        statsMap.set(row.stage_name, {
+          count: Number(row.lead_count) || 0,
+          sum: Number(row.value_sum) || 0,
+        })
+      }
+
       const nextLeads: Record<string, Lead[]> = {}
       const nextCounts: Record<string, number> = {}
+      const nextSums: Record<string, number> = {}
       const nextHasMore: Record<string, boolean> = {}
-      perStage.forEach(s => {
+      let grandCount = 0
+      let grandValue = 0
+
+      perStageData.forEach(s => {
+        const stats = statsMap.get(s.name) || { count: 0, sum: 0 }
         nextLeads[s.name] = s.rows.map(r => byId.get(r.id) || r)
-        nextCounts[s.name] = s.count
-        nextHasMore[s.name] = s.rows.length === LEADS_PER_PAGE && s.rows.length < s.count
+        nextCounts[s.name] = stats.count
+        nextSums[s.name] = stats.sum
+        nextHasMore[s.name] = s.rows.length === LEADS_PER_PAGE && s.rows.length < stats.count
+        grandCount += stats.count
+        grandValue += stats.sum
       })
 
       setStageLeads(nextLeads)
       setStageCounts(nextCounts)
+      setStageSums(nextSums)
       setStageHasMore(nextHasMore)
       setStageLoadingMore({})
-      setTotalPipelineCount(globalCountRes.count || 0)
+      setTotalPipelineCount(grandCount)
+      setTotalPipelineValue(grandValue)
       // Mantém estado 'leads' sincronizado (usado pela view Lista e alguns helpers)
       setLeads(enriched)
     } catch (err) {
@@ -640,7 +657,7 @@ export default function CrmPage() {
     } finally {
       setLoading(false)
     }
-  }, [orgId, applyServerFilters, resolveTagScopedIds, enrichWithAssignees])
+  }, [orgId, filterDate, searchQuery, aiFilter, filterAssigned, selectedTags, applyServerFilters, resolveTagScopedIds, enrichWithAssignees])
 
   // ─── CARGA INCREMENTAL DE UMA COLUNA (infinite scroll) ───
   const loadMoreStage = useCallback(async (stageName: string) => {
@@ -730,24 +747,17 @@ export default function CrmPage() {
   })
 
   // ─── ESTATÍSTICAS ───
-  // totalLeads: COUNT real do banco (respeita todos os filtros aplicados server-side)
-  // totalValue: soma apenas dos leads carregados — limitação conhecida (sem SUM server-side)
-  // aiActive/aiPaused: sobre leads carregados
+  // totalLeads / totalValue: vêm da RPC pipeline_stage_stats (real, banco).
+  // aiActive/aiPaused: contados sobre cards carregados (sem RPC separada — aceitável).
   const stats = {
     totalLeads: totalPipelineCount,
-    totalValue: Object.values(stageLeads).flat().reduce((sum, l: any) => sum + (l.total_em_vendas || 0), 0),
+    totalValue: totalPipelineValue,
     aiActive: leads.filter(l => l.conversa_finalizada === false).length,
     aiPaused: leads.filter(l => l.conversa_finalizada === true).length,
   }
 
-  // ─── SOMA POR STAGE (apenas dos cards carregados — limitação conhecida) ───
-  const pipelineSums = useMemo(() => {
-    const sums: Record<string, number> = {}
-    pipelineStages.forEach(stage => {
-      sums[stage.name] = (stageLeads[stage.name] || []).reduce((sum, l: any) => sum + (l.total_em_vendas || 0), 0)
-    })
-    return sums
-  }, [pipelineStages, stageLeads])
+  // Soma por stage também vem do banco (via RPC). Alias pra manter o render simples.
+  const pipelineSums = stageSums
 
   // ─── DRAG & DROP ───
   const handleDragStart = (e: React.DragEvent, leadId: string) => {
@@ -788,11 +798,13 @@ export default function CrmPage() {
     // Snapshot pra rollback
     const snapshotStageLeads = stageLeads
     const snapshotStageCounts = stageCounts
+    const snapshotStageSums = stageSums
     const snapshotLeads = leads
 
     const movedLead: Lead = { ...leadToMove, stage: targetStage, updated_at: new Date().toISOString() }
+    const leadValue = Number(leadToMove.total_em_vendas) || 0
 
-    // Atualização otimista: remove da origem, insere no topo do destino, ajusta contadores
+    // Atualização otimista: remove da origem, insere no topo do destino, ajusta contadores e somas
     setStageLeads(prev => ({
       ...prev,
       [originalStage!]: (prev[originalStage!] || []).filter(l => l.id !== draggedLeadId),
@@ -802,6 +814,11 @@ export default function CrmPage() {
       ...prev,
       [originalStage!]: Math.max(0, (prev[originalStage!] || 0) - 1),
       [targetStage]: (prev[targetStage] || 0) + 1,
+    }))
+    setStageSums(prev => ({
+      ...prev,
+      [originalStage!]: Math.max(0, (prev[originalStage!] || 0) - leadValue),
+      [targetStage]: (prev[targetStage] || 0) + leadValue,
     }))
     setLeads(prev => prev.map(lead =>
       lead.id === draggedLeadId ? movedLead : lead
@@ -826,6 +843,7 @@ export default function CrmPage() {
       console.error('Erro ao mover lead:', err)
       setStageLeads(snapshotStageLeads)
       setStageCounts(snapshotStageCounts)
+      setStageSums(snapshotStageSums)
       setLeads(snapshotLeads)
     } finally {
       setDraggedLeadId(null)
