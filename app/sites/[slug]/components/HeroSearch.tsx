@@ -3,13 +3,16 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PROPERTY_TYPES, TRANSACTION_TYPES } from '@/lib/properties/constants'
+import { SITE_T, type SiteLang } from '../i18n'
 
 interface HeroSearchProps {
   slug: string
   neighborhoods: string[]
+  lang?: SiteLang
 }
 
-export default function HeroSearch({ slug, neighborhoods }: HeroSearchProps) {
+export default function HeroSearch({ slug, neighborhoods, lang = 'pt' }: HeroSearchProps) {
+  const t = SITE_T[lang]
   const router = useRouter()
   const [transaction, setTransaction] = useState('')
   const [type, setType] = useState('')
@@ -42,9 +45,9 @@ export default function HeroSearch({ slug, neighborhoods }: HeroSearchProps) {
           className="flex-1 rounded-xl px-4 py-3 text-sm font-medium outline-none cursor-pointer appearance-none"
           style={selectStyle}
         >
-          <option value="">Comprar ou Alugar</option>
+          <option value="">{t.searchTransaction}</option>
           {Object.entries(TRANSACTION_TYPES).map(([key, labels]) => (
-            <option key={key} value={key}>{labels.pt}</option>
+            <option key={key} value={key}>{labels[lang]}</option>
           ))}
         </select>
 
@@ -55,9 +58,9 @@ export default function HeroSearch({ slug, neighborhoods }: HeroSearchProps) {
           className="flex-1 rounded-xl px-4 py-3 text-sm font-medium outline-none cursor-pointer appearance-none"
           style={selectStyle}
         >
-          <option value="">Tipo de imóvel</option>
+          <option value="">{t.searchType}</option>
           {Object.entries(PROPERTY_TYPES).map(([key, labels]) => (
-            <option key={key} value={key}>{labels.pt}</option>
+            <option key={key} value={key}>{labels[lang]}</option>
           ))}
         </select>
 
@@ -69,7 +72,7 @@ export default function HeroSearch({ slug, neighborhoods }: HeroSearchProps) {
             className="flex-1 rounded-xl px-4 py-3 text-sm font-medium outline-none cursor-pointer appearance-none"
             style={selectStyle}
           >
-            <option value="">Todos os bairros</option>
+            <option value="">{t.searchNeighborhood}</option>
             {neighborhoods.map(n => (
               <option key={n} value={n}>{n}</option>
             ))}
@@ -85,7 +88,7 @@ export default function HeroSearch({ slug, neighborhoods }: HeroSearchProps) {
           <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          Buscar
+          {t.searchBtn}
         </button>
       </div>
     </div>

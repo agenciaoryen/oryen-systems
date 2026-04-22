@@ -7,6 +7,7 @@ import Link from 'next/link'
 import PropertyCard from './components/PropertyCard'
 import ContactForm from './components/ContactForm'
 import HeroSearch from './components/HeroSearch'
+import { SITE_T, getSiteLang } from './i18n'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -71,15 +72,17 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
   if (!data) notFound()
 
   const { site, featured, latest, neighborhoods } = data
+  const lang = getSiteLang(site)
+  const t = SITE_T[lang]
 
   // Categorias para "Conforme sua necessidade"
   const categories = [
-    { label: 'Apartamentos', icon: '🏢', href: `/sites/${slug}/properties?type=apartment` },
-    { label: 'Casas', icon: '🏠', href: `/sites/${slug}/properties?type=house` },
-    { label: 'Terrenos', icon: '🌳', href: `/sites/${slug}/properties?type=land` },
-    { label: 'Comercial', icon: '🏪', href: `/sites/${slug}/properties?type=commercial` },
-    { label: 'Para Alugar', icon: '🔑', href: `/sites/${slug}/properties?transaction=rent` },
-    { label: 'Para Comprar', icon: '🏡', href: `/sites/${slug}/properties?transaction=sale` },
+    { label: t.catApartments, icon: '🏢', href: `/sites/${slug}/properties?type=apartment` },
+    { label: t.catHouses, icon: '🏠', href: `/sites/${slug}/properties?type=house` },
+    { label: t.catLand, icon: '🌳', href: `/sites/${slug}/properties?type=land` },
+    { label: t.catCommercial, icon: '🏪', href: `/sites/${slug}/properties?type=commercial` },
+    { label: t.catRent, icon: '🔑', href: `/sites/${slug}/properties?transaction=rent` },
+    { label: t.catSale, icon: '🏡', href: `/sites/${slug}/properties?transaction=sale` },
   ]
 
   return (
@@ -110,7 +113,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
               </p>
             )}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4" style={{ color: site.hero_text_color || '#FFFFFF' }}>
-              {site.site_name || 'Imóveis'}
+              {site.site_name || t.defaultSiteName}
             </h1>
             {site.bio && (
               <p className="text-lg mb-8 line-clamp-2" style={{ color: site.hero_text_color || '#FFFFFF', opacity: 0.75 }}>
@@ -119,7 +122,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
             )}
 
             {/* Barra de busca */}
-            <HeroSearch slug={slug} neighborhoods={neighborhoods} />
+            <HeroSearch slug={slug} neighborhoods={neighborhoods} lang={lang} />
           </div>
         </div>
       </section>
@@ -130,15 +133,15 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Últimos Imóveis</h2>
-                <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>Adicionados recentemente</p>
+                <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.latestTitle}</h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{t.latestSubtitle}</p>
               </div>
               <Link
                 href={`/sites/${slug}/properties`}
                 className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold transition-colors hover:opacity-80"
                 style={{ color: 'var(--color-text-primary)' }}
               >
-                Ver todos
+                {t.seeAll}
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -147,7 +150,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {latest.map((prop: any) => (
-                <PropertyCard key={prop.id} property={prop} slug={slug} currency={site.currency} />
+                <PropertyCard key={prop.id} property={prop} slug={slug} currency={site.currency} lang={lang} />
               ))}
             </div>
           </div>
@@ -160,15 +163,15 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Imóveis em Destaque</h2>
-                <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>As melhores oportunidades selecionadas</p>
+                <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.featuredTitle}</h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{t.featuredSubtitle}</p>
               </div>
               <Link
                 href={`/sites/${slug}/properties`}
                 className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold transition-colors hover:opacity-80"
                 style={{ color: 'var(--color-text-primary)' }}
               >
-                Ver todos
+                {t.seeAll}
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -177,7 +180,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {featured.map((prop: any) => (
-                <PropertyCard key={prop.id} property={prop} slug={slug} currency={site.currency} />
+                <PropertyCard key={prop.id} property={prop} slug={slug} currency={site.currency} lang={lang} />
               ))}
             </div>
           </div>
@@ -188,8 +191,8 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
       <section className="py-16 sm:py-20" style={{ background: 'var(--color-bg-elevated)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Conforme sua Necessidade</h2>
-            <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>Encontre o imóvel ideal para você</p>
+            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.needsTitle}</h2>
+            <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>{t.needsSubtitle}</p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -228,7 +231,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
                 </div>
               )}
               <div className={site.avatar_url ? '' : 'text-center'}>
-                <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Sobre</h2>
+                <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>{t.aboutTitle}</h2>
                 {site.creci && (
                   <p className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: 'var(--color-text-tertiary)' }}>
                     CRECI {site.creci}
@@ -246,7 +249,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
         <section className="py-16 sm:py-20" style={{ background: 'var(--color-bg-elevated)' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Nossa Localização</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.ourLocation}</h2>
               <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>{site.address}</p>
             </div>
             <div className="rounded-2xl overflow-hidden shadow-lg" style={{ border: '1px solid var(--color-border)' }}>
@@ -270,12 +273,12 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-lg mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Entre em Contato</h2>
-              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Preencha o formulário e retornaremos em breve.</p>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>{t.contactTitle}</h2>
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{t.contactSubtitle}</p>
             </div>
 
             <div className="rounded-2xl p-6 sm:p-8 shadow-sm" style={{ background: 'var(--color-bg-elevated)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)' }}>
-              <ContactForm siteSlug={site.slug} />
+              <ContactForm siteSlug={site.slug} lang={lang} />
             </div>
           </div>
         </div>

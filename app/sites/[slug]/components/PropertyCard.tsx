@@ -4,14 +4,17 @@
 import Link from 'next/link'
 import { formatPrice, formatArea, PROPERTY_TYPES, TRANSACTION_TYPES } from '@/lib/properties/constants'
 import { trackPropertyEvent } from '@/lib/properties/tracker'
+import { SITE_T, type SiteLang } from '../i18n'
 
 interface PropertyCardProps {
   property: any
   slug: string
   currency?: string
+  lang?: SiteLang
 }
 
-export default function PropertyCard({ property, slug, currency }: PropertyCardProps) {
+export default function PropertyCard({ property, slug, currency, lang = 'pt' }: PropertyCardProps) {
+  const t = SITE_T[lang]
   const cover = property.images?.find((img: any) => img.is_cover)?.url || property.images?.[0]?.url || null
 
   const handleClick = () => {
@@ -47,7 +50,7 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
           className="absolute top-3 left-3 px-3 py-1 rounded-lg text-xs font-bold"
           style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
         >
-          {TRANSACTION_TYPES[property.transaction_type]?.pt || property.transaction_type}
+          {TRANSACTION_TYPES[property.transaction_type]?.[lang] || property.transaction_type}
         </div>
 
         {/* Price */}
@@ -67,7 +70,7 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
           className="text-xs font-semibold uppercase tracking-wider mb-2"
           style={{ color: 'var(--color-text-secondary)' }}
         >
-          {PROPERTY_TYPES[property.property_type]?.pt || property.property_type}
+          {PROPERTY_TYPES[property.property_type]?.[lang] || property.property_type}
           {property.address_neighborhood && (
             <span> • {property.address_neighborhood}</span>
           )}
@@ -87,14 +90,14 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
           {property.bedrooms > 0 && (
             <span className="flex items-center gap-1.5 whitespace-nowrap">
               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-              {property.bedrooms} {property.bedrooms === 1 ? 'quarto' : 'quartos'}
+              {property.bedrooms} {property.bedrooms === 1 ? t.bedroom : t.bedrooms}
             </span>
           )}
           {property.bathrooms > 0 && (
-            <span className="whitespace-nowrap">{property.bathrooms} {property.bathrooms === 1 ? 'banheiro' : 'banheiros'}</span>
+            <span className="whitespace-nowrap">{property.bathrooms} {property.bathrooms === 1 ? t.bathroom : t.bathrooms}</span>
           )}
           {property.parking_spots > 0 && (
-            <span className="whitespace-nowrap">{property.parking_spots} {property.parking_spots === 1 ? 'vaga' : 'vagas'}</span>
+            <span className="whitespace-nowrap">{property.parking_spots} {property.parking_spots === 1 ? t.parking : t.parkingPlural}</span>
           )}
           {property.total_area && (
             <span className="whitespace-nowrap">{formatArea(property.total_area)}</span>

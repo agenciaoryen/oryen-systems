@@ -3,15 +3,18 @@
 
 import { useEffect, useState } from 'react'
 import { trackPropertyEvent } from '@/lib/properties/tracker'
+import { SITE_T, type SiteLang } from '../../i18n'
 
 interface PropertyGalleryProps {
   images: { url: string; order: number; caption?: string; is_cover?: boolean }[]
   title: string
   siteSlug?: string
   propertyId?: string
+  lang?: SiteLang
 }
 
-export default function PropertyGallery({ images, title, siteSlug, propertyId }: PropertyGalleryProps) {
+export default function PropertyGallery({ images, title, siteSlug, propertyId, lang = 'pt' }: PropertyGalleryProps) {
+  const t = SITE_T[lang]
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
 
@@ -90,7 +93,7 @@ export default function PropertyGallery({ images, title, siteSlug, propertyId }:
               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
               </svg>
-              Ampliar
+              {t.detailZoom}
             </div>
           </div>
         ) : (
@@ -114,7 +117,7 @@ export default function PropertyGallery({ images, title, siteSlug, propertyId }:
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                Ver {sorted.length} fotos
+                {t.detailSeePhotos.replace('{{count}}', String(sorted.length))}
               </div>
             </div>
             {/* Secundárias */}
@@ -136,7 +139,7 @@ export default function PropertyGallery({ images, title, siteSlug, propertyId }:
                     style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)' }}
                   >
                     <span className="font-bold text-2xl" style={{ color: '#fff' }}>+{sorted.length - 5}</span>
-                    <span className="text-xs font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.85)' }}>fotos</span>
+                    <span className="text-xs font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.85)' }}>{t.photosWord}</span>
                   </div>
                 )}
               </div>
@@ -172,7 +175,7 @@ export default function PropertyGallery({ images, title, siteSlug, propertyId }:
               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              Ver todas as {sorted.length} fotos
+              {t.detailSeeAllPhotos.replace('{{count}}', String(sorted.length))}
             </button>
           </div>
         )}

@@ -1,6 +1,7 @@
 // Site público — Header
 
 import Link from 'next/link'
+import { SITE_T, getSiteLang } from '../i18n'
 
 interface SiteHeaderProps {
   site: any
@@ -8,6 +9,8 @@ interface SiteHeaderProps {
 
 export default function SiteHeader({ site }: SiteHeaderProps) {
   const slug = site.slug
+  const lang = getSiteLang(site)
+  const t = SITE_T[lang]
 
   return (
     <header className="sticky top-0 z-40 backdrop-blur-md shadow-sm" style={{ background: 'color-mix(in srgb, var(--color-bg-elevated) 90%, transparent)', borderBottom: '1px solid var(--color-border)' }}>
@@ -26,7 +29,7 @@ export default function SiteHeader({ site }: SiteHeaderProps) {
               </div>
             )}
             <span className="font-bold text-lg" style={{ color: 'var(--color-text-primary)' }}>
-              {site.site_name || 'Imóveis'}
+              {site.site_name || t.defaultSiteName}
             </span>
           </Link>
 
@@ -37,21 +40,21 @@ export default function SiteHeader({ site }: SiteHeaderProps) {
               className="text-sm font-medium transition-colors"
               style={{ color: 'var(--color-text-secondary)' }}
             >
-              Início
+              {t.navHome}
             </Link>
             <Link
               href={`/sites/${slug}/properties`}
               className="text-sm font-medium transition-colors"
               style={{ color: 'var(--color-text-secondary)' }}
             >
-              Imóveis
+              {t.navProperties}
             </Link>
             <Link
               href={`/sites/${slug}#contato`}
               className="px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:opacity-90 shadow-sm"
               style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
             >
-              Contato
+              {t.navContact}
             </Link>
           </nav>
 
@@ -61,7 +64,7 @@ export default function SiteHeader({ site }: SiteHeaderProps) {
             className="sm:hidden px-3 py-2 rounded-lg text-xs font-semibold"
             style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
           >
-            Ver Imóveis
+            {t.seeProperties}
           </Link>
         </div>
       </div>

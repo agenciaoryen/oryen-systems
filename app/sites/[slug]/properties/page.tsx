@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import PropertyCard from '../components/PropertyCard'
 import PropertyFilters from './PropertyFilters'
+import { SITE_T, getSiteLang } from '../i18n'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,7 +26,7 @@ async function getData(slug: string, searchParams: SearchParams) {
   // Site settings
   const { data: site } = await supabase
     .from('site_settings')
-    .select('org_id, slug, site_name, currency')
+    .select('org_id, slug, site_name, currency, language')
     .eq('slug', slug)
     .single()
 
@@ -93,26 +94,28 @@ export default async function PropertiesListPage({
   if (!data) notFound()
 
   const { site, properties, total, page, totalPages, neighborhoods } = data
+  const lang = getSiteLang(site)
+  const t = SITE_T[lang]
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-bg-surface)' }}>
       {/* Header */}
       <div style={{ background: 'var(--color-bg-elevated)', borderBottom: '1px solid var(--color-border)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Imóveis</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{total} {total === 1 ? 'imóvel encontrado' : 'imóveis encontrados'}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.propertiesTitle}</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{total} {total === 1 ? t.propertyFound : t.propertiesFound}</p>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filtros */}
-        <PropertyFilters slug={site.slug} neighborhoods={neighborhoods} />
+        <PropertyFilters slug={site.slug} neighborhoods={neighborhoods} lang={lang} />
 
         {/* Grid */}
         {properties.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mt-6">
             {properties.map((prop: any) => (
-              <PropertyCard key={prop.id} property={prop} slug={site.slug} currency={site.currency} />
+              <PropertyCard key={prop.id} property={prop} slug={site.slug} currency={site.currency} lang={lang} />
             ))}
           </div>
         ) : (
@@ -120,8 +123,8 @@ export default async function PropertiesListPage({
             <svg width="48" height="48" className="mx-auto mb-4" style={{ color: 'var(--color-text-tertiary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
             </svg>
-            <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>Nenhum imóvel encontrado</h3>
-            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Tente mudar os filtros para ver mais resultados.</p>
+            <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>{t.noResults}</h3>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{t.noResultsHint}</p>
           </div>
         )}
 
@@ -134,11 +137,11 @@ export default async function PropertiesListPage({
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-80"
                 style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
               >
-                ← Anterior
+                {t.prevPage}
               </a>
             )}
             <span className="px-4 py-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              Página {page} de {totalPages}
+              {t.pageOf.replace('{{page}}', String(page)).replace('{{total}}', String(totalPages))}
             </span>
             {page < totalPages && (
               <a
@@ -146,7 +149,7 @@ export default async function PropertiesListPage({
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-80"
                 style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
               >
-                Próxima →
+                {t.nextPage}
               </a>
             )}
           </div>

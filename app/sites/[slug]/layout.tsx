@@ -76,7 +76,7 @@ export default async function SiteLayout({
       </main>
       <SiteFooter site={site} />
       {site.whatsapp && <WhatsAppButton phone={site.whatsapp} />}
-      <CookieConsent />
+      <CookieConsent lang={(site.language === 'en' || site.language === 'es' || site.language === 'pt') ? site.language : 'pt'} />
     </div>
   )
 }

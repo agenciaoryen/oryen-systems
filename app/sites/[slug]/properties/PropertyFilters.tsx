@@ -5,13 +5,16 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { PROPERTY_TYPES, TRANSACTION_TYPES } from '@/lib/properties/constants'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
+import { SITE_T, type SiteLang } from '../i18n'
 
 interface PropertyFiltersProps {
   slug: string
   neighborhoods?: string[]
+  lang?: SiteLang
 }
 
-export default function PropertyFilters({ slug, neighborhoods = [] }: PropertyFiltersProps) {
+export default function PropertyFilters({ slug, neighborhoods = [], lang = 'pt' }: PropertyFiltersProps) {
+  const t = SITE_T[lang]
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -42,37 +45,37 @@ export default function PropertyFilters({ slug, neighborhoods = [] }: PropertyFi
   return (
     <div className="flex flex-wrap gap-3 items-end">
       <div className="w-40">
-        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Tipo</label>
+        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{t.filterTypeLabel}</label>
         <CustomSelect
           value={type}
           onChange={(v) => setType(v)}
           options={[
-            { value: '', label: 'Todos' },
-            ...Object.entries(PROPERTY_TYPES).map(([key, labels]) => ({ value: key, label: labels.pt })),
+            { value: '', label: t.filterAll },
+            ...Object.entries(PROPERTY_TYPES).map(([key, labels]) => ({ value: key, label: labels[lang] })),
           ]}
         />
       </div>
 
       <div className="w-40">
-        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Transação</label>
+        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{t.filterTransactionLabel}</label>
         <CustomSelect
           value={transaction}
           onChange={(v) => setTransaction(v)}
           options={[
-            { value: '', label: 'Todas' },
-            ...Object.entries(TRANSACTION_TYPES).map(([key, labels]) => ({ value: key, label: labels.pt })),
+            { value: '', label: t.filterAllFem },
+            ...Object.entries(TRANSACTION_TYPES).map(([key, labels]) => ({ value: key, label: labels[lang] })),
           ]}
         />
       </div>
 
       {neighborhoods.length > 0 && (
         <div className="w-44">
-          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Bairro</label>
+          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{t.filterNeighborhoodLabel}</label>
           <CustomSelect
             value={neighborhood}
             onChange={(v) => setNeighborhood(v)}
             options={[
-              { value: '', label: 'Todos' },
+              { value: '', label: t.filterAll },
               ...neighborhoods.map((n) => ({ value: n, label: n })),
             ]}
           />
@@ -80,12 +83,12 @@ export default function PropertyFilters({ slug, neighborhoods = [] }: PropertyFi
       )}
 
       <div className="w-36">
-        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Quartos (mín.)</label>
+        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{t.filterMinBedroomsLabel}</label>
         <CustomSelect
           value={minBedrooms}
           onChange={(v) => setMinBedrooms(v)}
           options={[
-            { value: '', label: 'Qualquer' },
+            { value: '', label: t.filterAny },
             ...[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: `${n}+` })),
           ]}
         />
@@ -96,7 +99,7 @@ export default function PropertyFilters({ slug, neighborhoods = [] }: PropertyFi
         className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
         style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
       >
-        Filtrar
+        {t.filterApply}
       </button>
 
       {hasFilters && (
@@ -105,7 +108,7 @@ export default function PropertyFilters({ slug, neighborhoods = [] }: PropertyFi
           className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
           style={{ color: 'var(--color-text-secondary)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)' }}
         >
-          Limpar
+          {t.filterClear}
         </button>
       )}
     </div>

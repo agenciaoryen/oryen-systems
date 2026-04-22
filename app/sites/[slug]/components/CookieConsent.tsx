@@ -1,8 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { SITE_T, type SiteLang } from '../i18n'
 
-export default function CookieConsent() {
+interface CookieConsentProps {
+  lang?: SiteLang
+}
+
+export default function CookieConsent({ lang = 'pt' }: CookieConsentProps) {
+  const t = SITE_T[lang]
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -28,14 +34,14 @@ export default function CookieConsent() {
     >
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <p className="text-sm text-center sm:text-left" style={{ color: 'var(--color-text-secondary)' }}>
-          Este site usa cookies para melhorar sua experiência de navegação. Ao continuar, você concorda com nossa política de privacidade.
+          {t.cookieText}
         </p>
         <button
           onClick={accept}
           className="shrink-0 px-6 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90"
           style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
         >
-          Aceitar
+          {t.cookieAccept}
         </button>
       </div>
     </div>

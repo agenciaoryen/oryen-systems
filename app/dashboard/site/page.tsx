@@ -50,6 +50,7 @@ const TRANSLATIONS = {
     themeLabel: 'Tema do site', themeDark: 'Escuro', themeDarkDesc: 'Fundo escuro, texto claro',
     themeLight: 'Claro', themeLightDesc: 'Fundo claro, texto escuro',
     currencyLabel: 'Moeda dos preços', currencyHint: 'Esta moeda será exibida nos preços do seu site público.',
+    languageLabel: 'Idioma do site', languageHint: 'Idioma em que os textos do site público serão exibidos aos visitantes.',
     previewSiteNameFallback: 'Nome do Site',
     avatar: 'Foto do corretor', bio: 'Bio / Sobre', bioPlaceholder: 'Conte um pouco sobre você e sua experiência...',
     creci: 'CRECI', creciPlaceholder: 'Ex: 12345-F',
@@ -101,6 +102,7 @@ const TRANSLATIONS = {
     themeLabel: 'Site theme', themeDark: 'Dark', themeDarkDesc: 'Dark background, light text',
     themeLight: 'Light', themeLightDesc: 'Light background, dark text',
     currencyLabel: 'Price currency', currencyHint: 'This currency will be shown in prices on your public site.',
+    languageLabel: 'Site language', languageHint: 'Language in which the public site text will be displayed to visitors.',
     previewSiteNameFallback: 'Site Name',
     avatar: 'Agent photo', bio: 'Bio / About', bioPlaceholder: 'Tell a bit about yourself and your experience...',
     creci: 'License', creciPlaceholder: 'Ex: 12345-F',
@@ -152,6 +154,7 @@ const TRANSLATIONS = {
     themeLabel: 'Tema del sitio', themeDark: 'Oscuro', themeDarkDesc: 'Fondo oscuro, texto claro',
     themeLight: 'Claro', themeLightDesc: 'Fondo claro, texto oscuro',
     currencyLabel: 'Moneda de los precios', currencyHint: 'Esta moneda se mostrará en los precios de tu sitio público.',
+    languageLabel: 'Idioma del sitio', languageHint: 'Idioma en que se mostrarán los textos del sitio público a los visitantes.',
     previewSiteNameFallback: 'Nombre del Sitio',
     avatar: 'Foto del agente', bio: 'Bio / Sobre', bioPlaceholder: 'Cuenta un poco sobre ti y tu experiencia...',
     creci: 'Matrícula', creciPlaceholder: 'Ej: 12345-F',
@@ -225,6 +228,7 @@ export default function SiteSettingsPage() {
     hero_text_color: '#FFFFFF',
     site_theme: 'dark' as 'dark' | 'light',
     currency: 'BRL',
+    language: 'pt' as 'pt' | 'en' | 'es',
     bio: '',
     avatar_url: '',
     creci: '',
@@ -265,6 +269,7 @@ export default function SiteSettingsPage() {
           hero_text_color: data.site.hero_text_color || '#FFFFFF',
           site_theme: data.site.site_theme || 'dark',
           currency: data.site.currency || 'BRL',
+          language: data.site.language || 'pt',
           bio: data.site.bio || '',
           avatar_url: data.site.avatar_url || '',
           creci: data.site.creci || '',
@@ -967,6 +972,23 @@ export default function SiteSettingsPage() {
           />
           <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
             {t.currencyHint}
+          </p>
+        </div>
+
+        {/* Idioma do site */}
+        <div className="mt-4">
+          <label className={labelClass} style={labelStyle}>{t.languageLabel}</label>
+          <CustomSelect
+            value={form.language}
+            onChange={(v) => updateField('language', v)}
+            options={[
+              { value: 'pt', label: '🇧🇷 Português' },
+              { value: 'en', label: '🇺🇸 English' },
+              { value: 'es', label: '🇪🇸 Español' },
+            ]}
+          />
+          <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+            {t.languageHint}
           </p>
         </div>
       </div>

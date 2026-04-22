@@ -3,19 +3,22 @@
 
 import { useState, useRef } from 'react'
 import { trackPropertyEvent } from '@/lib/properties/tracker'
+import { SITE_T, type SiteLang } from '../i18n'
 
 interface ContactFormProps {
   siteSlug: string
   propertyId?: string
   propertyTitle?: string
+  lang?: SiteLang
 }
 
-export default function ContactForm({ siteSlug, propertyId, propertyTitle }: ContactFormProps) {
+export default function ContactForm({ siteSlug, propertyId, propertyTitle, lang = 'pt' }: ContactFormProps) {
+  const t = SITE_T[lang]
   const [form, setForm] = useState({
     name: '',
     phone: '',
     email: '',
-    message: propertyTitle ? `Olá! Tenho interesse no imóvel: ${propertyTitle}` : '',
+    message: propertyTitle ? `${t.formInterestPrefix} ${propertyTitle}` : '',
     website: '', // honeypot
   })
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
@@ -72,8 +75,8 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>Mensagem enviada!</h3>
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Entraremos em contato em breve.</p>
+        <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>{t.formSuccessTitle}</h3>
+        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{t.formSuccessDesc}</p>
       </div>
     )
   }
@@ -92,7 +95,7 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
       />
 
       <div>
-        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Nome *</label>
+        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{t.formName} *</label>
         <input
           type="text"
           value={form.name}
@@ -100,13 +103,13 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
           required
           className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all"
           style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-          placeholder="Seu nome"
+          placeholder={t.formNamePlaceholder}
         />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Telefone *</label>
+          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{t.formPhone} *</label>
           <input
             type="tel"
             value={form.phone}
@@ -114,31 +117,31 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
             required
             className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all"
             style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-            placeholder="(00) 00000-0000"
+            placeholder={t.formPhonePlaceholder}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>E-mail</label>
+          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{t.formEmail}</label>
           <input
             type="email"
             value={form.email}
             onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
             className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all"
             style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-            placeholder="seu@email.com"
+            placeholder={t.formEmailPlaceholder}
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Mensagem</label>
+        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{t.formMessage}</label>
         <textarea
           value={form.message}
           onChange={(e) => setForm(prev => ({ ...prev, message: e.target.value }))}
           rows={3}
           className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all resize-none"
           style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-          placeholder="Como posso ajudar?"
+          placeholder={t.formMessagePlaceholder}
         />
       </div>
 
@@ -148,11 +151,11 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
         className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 disabled:opacity-60 shadow-sm"
         style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
       >
-        {status === 'sending' ? 'Enviando...' : 'Enviar Mensagem'}
+        {status === 'sending' ? t.formSending : t.formSubmit}
       </button>
 
       {status === 'error' && (
-        <p className="text-sm text-center" style={{ color: 'var(--color-error)' }}>Erro ao enviar. Tente novamente.</p>
+        <p className="text-sm text-center" style={{ color: 'var(--color-error)' }}>{t.formError}</p>
       )}
     </form>
   )

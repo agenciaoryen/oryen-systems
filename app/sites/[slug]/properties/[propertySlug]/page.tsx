@@ -12,6 +12,7 @@ import PropertyGallery from './PropertyGallery'
 import PropertyViewTracker from './PropertyViewTracker'
 import PropertyMap from '../../components/PropertyMap'
 import BackButton from './BackButton'
+import { SITE_T, getSiteLang } from '../../i18n'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -62,10 +63,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const { property, site } = data
   const cover = property.images?.find((img: any) => img.is_cover)?.url || property.images?.[0]?.url
+  const mLang = getSiteLang(site)
+  const mT = SITE_T[mLang]
 
   return {
-    title: `${property.title} | ${site.site_name || 'Imóveis'}`,
-    description: property.description?.slice(0, 160) || `${PROPERTY_TYPES[property.property_type]?.pt} - ${formatPrice(property.price, site.currency)}`,
+    title: `${property.title} | ${site.site_name || mT.defaultSiteName}`,
+    description: property.description?.slice(0, 160) || `${PROPERTY_TYPES[property.property_type]?.[mLang]} - ${formatPrice(property.price, site.currency)}`,
     openGraph: {
       title: property.title,
       description: property.description?.slice(0, 160) || '',
@@ -84,11 +87,13 @@ export default async function PropertyDetailPage({
   if (!data) notFound()
 
   const { site, property, related } = data
+  const lang = getSiteLang(site)
+  const t = SITE_T[lang]
   const cover = property.images?.find((img: any) => img.is_cover)?.url || property.images?.[0]?.url
 
   // Amenidades com labels
   const amenityLabels = (property.amenities || [])
-    .map((key: string) => AMENITIES.find(a => a.key === key)?.label?.pt)
+    .map((key: string) => AMENITIES.find(a => a.key === key)?.label?.[lang])
     .filter(Boolean)
 
   // Endereço formatado
@@ -124,12 +129,12 @@ export default async function PropertyDetailPage({
       <div style={{ background: 'var(--color-bg-elevated)' }}>
         {/* ═══ BOTÃO VOLTAR ═══ */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-          <BackButton fallbackHref={`/sites/${slug}/properties`} label="Voltar" />
+          <BackButton fallbackHref={`/sites/${slug}/properties`} label={t.backLabel} />
         </div>
 
         {/* ═══ GALERIA ═══ */}
         {property.images && property.images.length > 0 && (
-          <PropertyGallery images={property.images} title={property.title} siteSlug={slug} propertyId={property.id} />
+          <PropertyGallery images={property.images} title={property.title} siteSlug={slug} propertyId={property.id} lang={lang} />
         )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -143,10 +148,10 @@ export default async function PropertyDetailPage({
                     className="px-3 py-1 rounded-lg text-xs font-bold"
                     style={{ background: 'var(--site-primary)', color: 'var(--color-text-on-primary)' }}
                   >
-                    {TRANSACTION_TYPES[property.transaction_type]?.pt}
+                    {TRANSACTION_TYPES[property.transaction_type]?.[lang]}
                   </span>
                   <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-                    {PROPERTY_TYPES[property.property_type]?.pt}
+                    {PROPERTY_TYPES[property.property_type]?.[lang]}
                   </span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
@@ -168,7 +173,7 @@ export default async function PropertyDetailPage({
                 {property.price && (
                   <p className="text-3xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
                     {formatPrice(property.price, site.currency)}
-                    {property.transaction_type === 'rent' && <span className="text-sm font-normal" style={{ color: 'var(--color-text-secondary)' }}>/mês</span>}
+                    {property.transaction_type === 'rent' && <span className="text-sm font-normal" style={{ color: 'var(--color-text-secondary)' }}>{t.detailPerMonth}</span>}
                   </p>
                 )}
 
@@ -176,25 +181,25 @@ export default async function PropertyDetailPage({
                   {property.bedrooms > 0 && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{property.bedrooms}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{property.bedrooms === 1 ? 'Quarto' : 'Quartos'}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{property.bedrooms === 1 ? t.detailBedroom : t.detailBedrooms}</p>
                     </div>
                   )}
                   {property.suites > 0 && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{property.suites}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{property.suites === 1 ? 'Suíte' : 'Suítes'}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{property.suites === 1 ? t.detailSuite : t.detailSuites}</p>
                     </div>
                   )}
                   {property.bathrooms > 0 && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{property.bathrooms}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{property.bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{property.bathrooms === 1 ? t.detailBathroom : t.detailBathrooms}</p>
                     </div>
                   )}
                   {property.parking_spots > 0 && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{property.parking_spots}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{property.parking_spots === 1 ? 'Vaga' : 'Vagas'}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{property.parking_spots === 1 ? t.detailParking : t.detailParkingPlural}</p>
                     </div>
                   )}
                 </div>
@@ -204,25 +209,25 @@ export default async function PropertyDetailPage({
                   {property.total_area && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatArea(property.total_area)}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Área total</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{t.detailTotalArea}</p>
                     </div>
                   )}
                   {property.private_area && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatArea(property.private_area)}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Área privativa</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{t.detailPrivateArea}</p>
                     </div>
                   )}
                   {property.condo_fee && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatPrice(property.condo_fee, site.currency)}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Condomínio</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{t.detailCondoFee}</p>
                     </div>
                   )}
                   {property.iptu && (
                     <div className="text-center p-3 rounded-xl" style={{ background: 'var(--color-bg-elevated)' }}>
                       <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatPrice(property.iptu, site.currency)}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>IPTU</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{t.detailIptu}</p>
                     </div>
                   )}
                 </div>
@@ -231,7 +236,7 @@ export default async function PropertyDetailPage({
               {/* Descrição */}
               {property.description && (
                 <div>
-                  <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>Descrição</h2>
+                  <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>{t.detailDescription}</h2>
                   <p className="leading-relaxed whitespace-pre-line" style={{ color: 'var(--color-text-secondary)' }}>{property.description}</p>
                 </div>
               )}
@@ -239,7 +244,7 @@ export default async function PropertyDetailPage({
               {/* Amenidades */}
               {amenityLabels.length > 0 && (
                 <div>
-                  <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>Características</h2>
+                  <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>{t.detailFeatures}</h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {amenityLabels.map((label: string, i: number) => (
                       <div key={i} className="flex items-center gap-2 text-sm py-2" style={{ color: 'var(--color-text-secondary)' }}>
@@ -259,12 +264,13 @@ export default async function PropertyDetailPage({
                 longitude={property.longitude}
                 address={[property.address_street, property.address_neighborhood, property.address_city, property.address_state].filter(Boolean).join(', ') || null}
                 title={property.title}
+                lang={lang}
               />
 
               {/* Vídeo */}
               {property.video_url && (
                 <div>
-                  <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>Vídeo</h2>
+                  <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>{t.detailVideo}</h2>
                   <a
                     href={property.video_url}
                     target="_blank"
@@ -276,7 +282,7 @@ export default async function PropertyDetailPage({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Assistir vídeo
+                    {t.detailWatchVideo}
                   </a>
                 </div>
               )}
@@ -285,12 +291,13 @@ export default async function PropertyDetailPage({
             {/* ═══ SIDEBAR — CONTATO ═══ */}
             <div className="lg:col-span-1">
               <div className="sticky top-20 rounded-2xl p-6 shadow-sm" style={{ background: 'var(--color-bg-elevated)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)' }}>
-                <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>Tenho interesse</h3>
-                <p className="text-xs mb-5" style={{ color: 'var(--color-text-secondary)' }}>Preencha e entraremos em contato.</p>
+                <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>{t.detailSidebarTitle}</h3>
+                <p className="text-xs mb-5" style={{ color: 'var(--color-text-secondary)' }}>{t.detailSidebarHint}</p>
                 <ContactForm
                   siteSlug={site.slug}
                   propertyId={property.id}
                   propertyTitle={property.title}
+                  lang={lang}
                 />
               </div>
             </div>
@@ -299,10 +306,10 @@ export default async function PropertyDetailPage({
           {/* ═══ IMÓVEIS RELACIONADOS ═══ */}
           {related.length > 0 && (
             <div className="mt-16 pt-10" style={{ borderTop: '1px solid var(--color-border)' }}>
-              <h2 className="text-xl font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>Imóveis Semelhantes</h2>
+              <h2 className="text-xl font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>{t.detailRelated}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {related.map((prop: any) => (
-                  <PropertyCard key={prop.id} property={prop} slug={site.slug} currency={site.currency} />
+                  <PropertyCard key={prop.id} property={prop} slug={site.slug} currency={site.currency} lang={lang} />
                 ))}
               </div>
             </div>
