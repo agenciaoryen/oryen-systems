@@ -1111,7 +1111,7 @@ export default function CrmPage() {
 
           {/* Refresh */}
           <button
-            onClick={loadData}
+            onClick={() => loadAllStagesData(pipelineStages)}
             disabled={loading}
             className="p-2 rounded-lg transition-colors disabled:opacity-50"
             style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
@@ -1667,7 +1667,7 @@ export default function CrmPage() {
 
             {/* Refresh */}
             <button
-              onClick={loadData}
+              onClick={() => loadAllStagesData(pipelineStages)}
               disabled={loading}
               className="p-2 rounded-lg transition-colors disabled:opacity-50"
               style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
