@@ -12,6 +12,7 @@ import {
 } from '@/lib/documents/types'
 import CreateDocumentModal from '@/app/dashboard/components/CreateDocumentModal'
 import SendDocumentModal from '@/app/dashboard/components/SendDocumentModal'
+import UploadDocumentModal from '@/app/dashboard/components/UploadDocumentModal'
 import {
   FileText,
   Plus,
@@ -514,13 +515,16 @@ export default function DocumentsPage() {
   const [statusFilter, setStatusFilter] = useState<DocumentStatus | 'all'>('all')
   const [showLeadSelector, setShowLeadSelector] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showUploadModal, setShowUploadModal] = useState(false)
+  const [pendingAction, setPendingAction] = useState<'create' | 'upload'>('create')
   const [selectedLead, setSelectedLead] = useState<{ id: string; name: string; phone?: string; email?: string } | null>(null)
   const [leadSearch, setLeadSearch] = useState('')
   const [leads, setLeads] = useState<{ id: string; name: string; phone?: string; email?: string }[]>([])
   const [leadsLoading, setLeadsLoading] = useState(false)
 
   // Buscar leads quando abrir o seletor
-  const openLeadSelector = async () => {
+  const openLeadSelector = async (action: 'create' | 'upload' = 'create') => {
+    setPendingAction(action)
     setShowLeadSelector(true)
     setLeadSearch('')
     setLeadsLoading(true)
@@ -548,7 +552,11 @@ export default function DocumentsPage() {
   const handleSelectLead = (lead: typeof leads[0]) => {
     setSelectedLead(lead)
     setShowLeadSelector(false)
-    setShowCreateModal(true)
+    if (pendingAction === 'upload') {
+      setShowUploadModal(true)
+    } else {
+      setShowCreateModal(true)
+    }
   }
 
   // Filtrar documentos
@@ -579,9 +587,9 @@ export default function DocumentsPage() {
     }, {} as Record<string, number>)
   }, [documents])
 
-  // Handler para upload (TODO: implementar)
+  // Handler para upload — abre o seletor de lead em modo upload
   const handleUpload = () => {
-    toast.info('Upload de arquivos em breve!')
+    openLeadSelector('upload')
   }
 
   return (
@@ -608,7 +616,7 @@ export default function DocumentsPage() {
               <span className="hidden sm:inline">{t.upload}</span>
             </button>
             <button
-              onClick={openLeadSelector}
+              onClick={() => openLeadSelector('create')}
               className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors shadow-lg"
               style={{ background: 'var(--color-primary)', color: '#fff' }}
             >
@@ -684,7 +692,7 @@ export default function DocumentsPage() {
             <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
           </div>
         ) : filteredDocuments.length === 0 ? (
-          <EmptyState t={t} onNewDocument={() => setShowCreateModal(true)} onUpload={handleUpload} />
+          <EmptyState t={t} onNewDocument={() => openLeadSelector('create')} onUpload={handleUpload} />
         ) : (
           <div className="grid gap-3">
             {filteredDocuments.map((doc) => (
@@ -766,6 +774,17 @@ export default function DocumentsPage() {
         <CreateDocumentModal
           isOpen={showCreateModal}
           onClose={() => { setShowCreateModal(false); setSelectedLead(null) }}
+          leadId={selectedLead.id}
+          leadData={{ name: selectedLead.name, phone: selectedLead.phone, email: selectedLead.email }}
+          onSuccess={() => { refetch(); setSelectedLead(null) }}
+        />
+      )}
+
+      {/* Upload Document Modal */}
+      {showUploadModal && selectedLead && (
+        <UploadDocumentModal
+          isOpen={showUploadModal}
+          onClose={() => { setShowUploadModal(false); setSelectedLead(null) }}
           leadId={selectedLead.id}
           leadData={{ name: selectedLead.name, phone: selectedLead.phone, email: selectedLead.email }}
           onSuccess={() => { refetch(); setSelectedLead(null) }}
