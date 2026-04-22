@@ -24,7 +24,7 @@ export default function CookieConsent() {
   return (
     <div
       className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-in slide-in-from-bottom"
-      style={{ background: 'color-mix(in srgb, var(--color-bg-elevated) 95%, transparent)', backdropFilter: 'blur(12px)', borderTop: '1px solid var(--color-border-subtle)' }}
+      style={{ background: 'color-mix(in srgb, var(--color-bg-elevated) 95%, transparent)', backdropFilter: 'blur(12px)', borderTop: '1px solid var(--color-border)' }}
     >
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <p className="text-sm text-center sm:text-left" style={{ color: 'var(--color-text-secondary)' }}>

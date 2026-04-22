@@ -21,7 +21,7 @@ export default function PropertyMap({ latitude, longitude, address, title }: Pro
   return (
     <div>
       <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>Localização</h2>
-      <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid var(--color-border-subtle)' }}>
+      <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid var(--color-border)' }}>
         <iframe
           src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
           width="100%"

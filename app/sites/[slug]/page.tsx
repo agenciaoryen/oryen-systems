@@ -200,7 +200,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
                 className="group flex flex-col items-center gap-3 p-6 rounded-2xl transition-all hover:scale-105"
                 style={{
                   background: 'var(--color-bg-surface)',
-                  border: '1px solid var(--color-border-subtle)',
+                  border: '1px solid var(--color-border)',
                 }}
               >
                 <span className="text-3xl">{cat.icon}</span>
@@ -249,7 +249,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
               <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Nossa Localização</h2>
               <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>{site.address}</p>
             </div>
-            <div className="rounded-2xl overflow-hidden shadow-lg" style={{ border: '1px solid var(--color-border-subtle)' }}>
+            <div className="rounded-2xl overflow-hidden shadow-lg" style={{ border: '1px solid var(--color-border)' }}>
               <iframe
                 src={`https://maps.google.com/maps?q=${encodeURIComponent(site.address)}&output=embed`}
                 width="100%"
@@ -274,7 +274,7 @@ export default async function SiteHomePage({ params }: { params: Promise<{ slug:
               <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Preencha o formulário e retornaremos em breve.</p>
             </div>
 
-            <div className="rounded-2xl p-6 sm:p-8 shadow-sm" style={{ background: 'var(--color-bg-elevated)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}>
+            <div className="rounded-2xl p-6 sm:p-8 shadow-sm" style={{ background: 'var(--color-bg-elevated)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)' }}>
               <ContactForm siteSlug={site.slug} />
             </div>
           </div>

@@ -97,7 +97,7 @@ export default async function PropertiesListPage({
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-bg-surface)' }}>
       {/* Header */}
-      <div style={{ background: 'var(--color-bg-elevated)', borderBottom: '1px solid var(--color-border-subtle)' }}>
+      <div style={{ background: 'var(--color-bg-elevated)', borderBottom: '1px solid var(--color-border)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Imóveis</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{total} {total === 1 ? 'imóvel encontrado' : 'imóveis encontrados'}</p>
@@ -132,7 +132,7 @@ export default async function PropertiesListPage({
               <a
                 href={`/sites/${site.slug}/properties?page=${page - 1}`}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-80"
-                style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
+                style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
               >
                 ← Anterior
               </a>
@@ -144,7 +144,7 @@ export default async function PropertiesListPage({
               <a
                 href={`/sites/${site.slug}/properties?page=${page + 1}`}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-80"
-                style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
+                style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
               >
                 Próxima →
               </a>

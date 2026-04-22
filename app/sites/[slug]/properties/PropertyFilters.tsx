@@ -103,7 +103,7 @@ export default function PropertyFilters({ slug, neighborhoods = [] }: PropertyFi
         <button
           onClick={clearFilters}
           className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
-          style={{ color: 'var(--color-text-secondary)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}
+          style={{ color: 'var(--color-text-secondary)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)' }}
         >
           Limpar
         </button>

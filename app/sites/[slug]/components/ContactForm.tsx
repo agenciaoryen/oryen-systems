@@ -99,7 +99,7 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
           onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
           required
           className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all"
-          style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
+          style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
           placeholder="Seu nome"
         />
       </div>
@@ -113,7 +113,7 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
             onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))}
             required
             className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all"
-            style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
+            style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             placeholder="(00) 00000-0000"
           />
         </div>
@@ -124,7 +124,7 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
             value={form.email}
             onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
             className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all"
-            style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
+            style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             placeholder="seu@email.com"
           />
         </div>
@@ -137,7 +137,7 @@ export default function ContactForm({ siteSlug, propertyId, propertyTitle }: Con
           onChange={(e) => setForm(prev => ({ ...prev, message: e.target.value }))}
           rows={3}
           className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all resize-none"
-          style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)' }}
+          style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
           placeholder="Como posso ajudar?"
         />
       </div>

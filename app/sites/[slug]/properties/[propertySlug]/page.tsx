@@ -164,7 +164,7 @@ export default async function PropertyDetailPage({
               </div>
 
               {/* Preço + Features */}
-              <div className="rounded-2xl p-6" style={{ background: 'var(--color-bg-surface)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}>
+              <div className="rounded-2xl p-6" style={{ background: 'var(--color-bg-surface)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)' }}>
                 {property.price && (
                   <p className="text-3xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
                     {formatPrice(property.price, site.currency)}
@@ -270,7 +270,7 @@ export default async function PropertyDetailPage({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors hover:opacity-80"
-                    style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
+                    style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
                   >
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -284,7 +284,7 @@ export default async function PropertyDetailPage({
 
             {/* ═══ SIDEBAR — CONTATO ═══ */}
             <div className="lg:col-span-1">
-              <div className="sticky top-20 rounded-2xl p-6 shadow-sm" style={{ background: 'var(--color-bg-elevated)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-subtle)' }}>
+              <div className="sticky top-20 rounded-2xl p-6 shadow-sm" style={{ background: 'var(--color-bg-elevated)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)' }}>
                 <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>Tenho interesse</h3>
                 <p className="text-xs mb-5" style={{ color: 'var(--color-text-secondary)' }}>Preencha e entraremos em contato.</p>
                 <ContactForm
@@ -298,7 +298,7 @@ export default async function PropertyDetailPage({
 
           {/* ═══ IMÓVEIS RELACIONADOS ═══ */}
           {related.length > 0 && (
-            <div className="mt-16 pt-10" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+            <div className="mt-16 pt-10" style={{ borderTop: '1px solid var(--color-border)' }}>
               <h2 className="text-xl font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>Imóveis Semelhantes</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {related.map((prop: any) => (

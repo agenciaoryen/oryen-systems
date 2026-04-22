@@ -26,13 +26,13 @@ export default function HeroSearch({ slug, neighborhoods }: HeroSearchProps) {
   const selectStyle: React.CSSProperties = {
     background: 'var(--color-bg-elevated)',
     color: 'var(--color-text-primary)',
-    border: '1px solid var(--color-border-subtle)',
+    border: '1px solid var(--color-border)',
   }
 
   return (
     <div
       className="rounded-2xl p-2 sm:p-3 backdrop-blur-md shadow-2xl"
-      style={{ background: 'color-mix(in srgb, var(--color-bg-elevated) 85%, transparent)', border: '1px solid var(--color-border-subtle)' }}
+      style={{ background: 'color-mix(in srgb, var(--color-bg-elevated) 85%, transparent)', border: '1px solid var(--color-border)' }}
     >
       <div className="flex flex-col sm:flex-row gap-2">
         {/* Transação */}

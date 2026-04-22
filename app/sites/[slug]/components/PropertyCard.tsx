@@ -21,12 +21,12 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
   return (
     <Link
       href={`/sites/${slug}/properties/${property.slug || property.id}`}
-      className="group rounded-2xl overflow-hidden shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+      className="group h-full flex flex-col rounded-2xl overflow-hidden shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
       style={{ background: 'var(--color-bg-base)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)' }}
       onClick={handleClick}
     >
       {/* Imagem */}
-      <div className="relative aspect-[4/3] overflow-hidden" style={{ background: 'var(--color-bg-surface)' }}>
+      <div className="relative aspect-[4/3] overflow-hidden shrink-0" style={{ background: 'var(--color-bg-surface)' }}>
         {cover ? (
           <img
             src={cover}
@@ -60,8 +60,8 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
 
       {/* Info */}
       <div
-        className="p-5 border-t"
-        style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-subtle)' }}
+        className="p-5 border-t flex-1 flex flex-col"
+        style={{ background: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}
       >
         <p
           className="text-xs font-semibold uppercase tracking-wider mb-2"
@@ -73,31 +73,31 @@ export default function PropertyCard({ property, slug, currency }: PropertyCardP
           )}
         </p>
         <h3
-          className="font-bold text-base line-clamp-2 mb-3 transition-colors"
+          className="font-bold text-base line-clamp-2 mb-3 transition-colors min-h-[2.75rem]"
           style={{ color: 'var(--color-text-primary)' }}
         >
           {property.title}
         </h3>
 
-        {/* Features */}
+        {/* Features — sempre no rodapé do card (mt-auto) */}
         <div
-          className="flex items-center gap-4 text-xs font-medium pt-3 border-t"
-          style={{ color: 'var(--color-text-secondary)', borderColor: 'var(--color-border-subtle)' }}
+          className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium pt-3 mt-auto border-t"
+          style={{ color: 'var(--color-text-secondary)', borderColor: 'var(--color-border)' }}
         >
           {property.bedrooms > 0 && (
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 whitespace-nowrap">
               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
               {property.bedrooms} {property.bedrooms === 1 ? 'quarto' : 'quartos'}
             </span>
           )}
           {property.bathrooms > 0 && (
-            <span>{property.bathrooms} {property.bathrooms === 1 ? 'banheiro' : 'banheiros'}</span>
+            <span className="whitespace-nowrap">{property.bathrooms} {property.bathrooms === 1 ? 'banheiro' : 'banheiros'}</span>
           )}
           {property.parking_spots > 0 && (
-            <span>{property.parking_spots} {property.parking_spots === 1 ? 'vaga' : 'vagas'}</span>
+            <span className="whitespace-nowrap">{property.parking_spots} {property.parking_spots === 1 ? 'vaga' : 'vagas'}</span>
           )}
           {property.total_area && (
-            <span>{formatArea(property.total_area)}</span>
+            <span className="whitespace-nowrap">{formatArea(property.total_area)}</span>
           )}
         </div>
       </div>

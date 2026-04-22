@@ -10,7 +10,7 @@ export default function SiteHeader({ site }: SiteHeaderProps) {
   const slug = site.slug
 
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-md shadow-sm" style={{ background: 'color-mix(in srgb, var(--color-bg-elevated) 90%, transparent)', borderBottom: '1px solid var(--color-border-subtle)' }}>
+    <header className="sticky top-0 z-40 backdrop-blur-md shadow-sm" style={{ background: 'color-mix(in srgb, var(--color-bg-elevated) 90%, transparent)', borderBottom: '1px solid var(--color-border)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo / Nome */}
