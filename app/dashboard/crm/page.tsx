@@ -504,13 +504,14 @@ export default function CrmPage() {
           .single()
       ])
 
-      // Buscar leads — sem paginação infinita, query direta com filtro de data
+      // Buscar leads — sem paginação infinita, query direta com filtro de data.
+      // Limite alto pra cobrir o teto do plano Business (8.000 leads ativos).
       let query = supabase
         .from('leads')
         .select('*, conversa_finalizada, score, score_label')
         .eq('org_id', orgId)
         .order('updated_at', { ascending: false })
-        .limit(500)
+        .limit(10000)
 
       if (filterDate) {
         query = query.or(`created_at.gte.${filterDate},updated_at.gte.${filterDate}`)
