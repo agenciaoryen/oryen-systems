@@ -43,8 +43,32 @@ const T = {
     m_pipeline_flow: 'Movimentações por etapa (fluxo do período)',
     m_user_activity: 'Atividade por responsável',
     m_pipeline_flow_by_user: 'Desempenho por responsável × etapa',
+    m_user_scorecard: 'Scorecard consolidado por responsável',
     thMember: 'Responsável',
     thTotal: 'Total',
+    // scorecard labels
+    sc_leads_created: 'Leads criados',
+    sc_leads_assigned: 'Leads recebidos',
+    sc_without_response: 'Sem 1ª resposta',
+    sc_avg_response: 'Tempo 1ª resp.',
+    sc_stage_changes: 'Mud. etapa',
+    sc_calls: 'Ligações',
+    sc_meetings: 'Reuniões',
+    sc_proposals: 'Propostas',
+    sc_notes: 'Notas',
+    sc_visits_done: 'Visitas feitas',
+    sc_no_show: 'No-show',
+    sc_hot: 'Quentes',
+    sc_stale: 'Estagnados',
+    sc_deals: 'Vendas',
+    sc_value: 'Valor vendido',
+    sc_min: 'min',
+    sc_na: '—',
+    sc_velocity_title: 'Velocidade & SLA',
+    sc_activity_title: 'Atividade',
+    sc_visits_title: 'Compromissos',
+    sc_pipeline_health_title: 'Saúde do pipeline',
+    sc_results_title: 'Resultados',
     financialCat: 'Financeiro',
     m_receita: 'Receita total',
     m_despesas: 'Despesas totais',
@@ -97,8 +121,31 @@ const T = {
     m_pipeline_flow: 'Transitions per stage (flow in period)',
     m_user_activity: 'Activity per team member',
     m_pipeline_flow_by_user: 'Performance per user × stage',
+    m_user_scorecard: 'Consolidated scorecard per team member',
     thMember: 'Member',
     thTotal: 'Total',
+    sc_leads_created: 'Leads created',
+    sc_leads_assigned: 'Leads assigned',
+    sc_without_response: 'No 1st response',
+    sc_avg_response: '1st response time',
+    sc_stage_changes: 'Stage changes',
+    sc_calls: 'Calls',
+    sc_meetings: 'Meetings',
+    sc_proposals: 'Proposals',
+    sc_notes: 'Notes',
+    sc_visits_done: 'Visits done',
+    sc_no_show: 'No-shows',
+    sc_hot: 'Hot leads',
+    sc_stale: 'Stale',
+    sc_deals: 'Deals closed',
+    sc_value: 'Sales value',
+    sc_min: 'min',
+    sc_na: '—',
+    sc_velocity_title: 'Speed & SLA',
+    sc_activity_title: 'Activity',
+    sc_visits_title: 'Appointments',
+    sc_pipeline_health_title: 'Pipeline health',
+    sc_results_title: 'Results',
     financialCat: 'Financial',
     m_receita: 'Total revenue',
     m_despesas: 'Total expenses',
@@ -149,8 +196,31 @@ const T = {
     m_pipeline_flow: 'Transiciones por etapa (flujo del período)',
     m_user_activity: 'Actividad por responsable',
     m_pipeline_flow_by_user: 'Desempeño por responsable × etapa',
+    m_user_scorecard: 'Scorecard consolidado por responsable',
     thMember: 'Responsable',
     thTotal: 'Total',
+    sc_leads_created: 'Leads creados',
+    sc_leads_assigned: 'Leads recibidos',
+    sc_without_response: 'Sin 1ª respuesta',
+    sc_avg_response: 'Tiempo 1ª resp.',
+    sc_stage_changes: 'Cambios etapa',
+    sc_calls: 'Llamadas',
+    sc_meetings: 'Reuniones',
+    sc_proposals: 'Propuestas',
+    sc_notes: 'Notas',
+    sc_visits_done: 'Visitas hechas',
+    sc_no_show: 'No-show',
+    sc_hot: 'Calientes',
+    sc_stale: 'Estancados',
+    sc_deals: 'Ventas',
+    sc_value: 'Valor vendido',
+    sc_min: 'min',
+    sc_na: '—',
+    sc_velocity_title: 'Velocidad & SLA',
+    sc_activity_title: 'Actividad',
+    sc_visits_title: 'Compromisos',
+    sc_pipeline_health_title: 'Salud del pipeline',
+    sc_results_title: 'Resultados',
     financialCat: 'Financiero',
     m_receita: 'Ingresos totales',
     m_despesas: 'Gastos totales',
@@ -274,6 +344,7 @@ export default function ManualReport({ lang }: ManualReportProps) {
     pipeline_flow: true,           // fluxo de transições dentro do período
     user_activity: true,           // atividade por responsável (resumo)
     pipeline_flow_by_user: true,   // matriz responsável × etapa (detalhe)
+    user_scorecard: true,          // scorecard consolidado de desempenho
     // financeiro
     receita: false,
     despesas: false,
@@ -349,6 +420,7 @@ export default function ManualReport({ lang }: ManualReportProps) {
         pipeline_flow: picked.pipeline_flow,
         user_activity: picked.user_activity,
         pipeline_flow_by_user: picked.pipeline_flow_by_user,
+        user_scorecard: picked.user_scorecard,
         financial: {
           receita: picked.receita,
           despesas: picked.despesas,
@@ -469,6 +541,7 @@ export default function ManualReport({ lang }: ManualReportProps) {
             <Chk label={t.m_pipeline_flow} checked={picked.pipeline_flow} onToggle={() => toggle('pipeline_flow')} />
             <Chk label={t.m_user_activity} checked={picked.user_activity} onToggle={() => toggle('user_activity')} />
             <Chk label={t.m_pipeline_flow_by_user} checked={picked.pipeline_flow_by_user} onToggle={() => toggle('pipeline_flow_by_user')} />
+            <Chk label={t.m_user_scorecard} checked={picked.user_scorecard} onToggle={() => toggle('user_scorecard')} />
           </CategoryBlock>
 
           <CategoryBlock title={t.financialCat}>
@@ -707,6 +780,17 @@ function ReportPreview({ data, t, lang }: { data: any; t: any; lang: Lang }) {
         </div>
       )}
 
+      {data.user_scorecard && data.user_scorecard.length > 0 && (
+        <div className="mt-4">
+          <p className="text-xs font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>{t.m_user_scorecard}</p>
+          <div className="space-y-3">
+            {data.user_scorecard.map((u: any, i: number) => (
+              <ScorecardCard key={i} u={u} t={t} lang={lang} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {data.meta_principal_nome && (
         <div className="mt-3 rounded-lg p-2.5" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
           <p className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>{t.m_meta_principal}</p>
@@ -715,6 +799,89 @@ function ReportPreview({ data, t, lang }: { data: any; t: any; lang: Lang }) {
           </p>
         </div>
       )}
+    </div>
+  )
+}
+
+function ScorecardCard({ u, t, lang }: { u: any; t: any; lang: Lang }) {
+  const formatResponseTime = (mins: number | null): string => {
+    if (mins === null || mins === undefined) return t.sc_na
+    if (mins < 60) return `${Math.round(mins)} ${t.sc_min}`
+    const hours = Math.round(mins / 60 * 10) / 10
+    return `${hours}h`
+  }
+  const hasWarning = u.leads_without_response > 0 || u.stale_count > 0
+  const Cell = ({ label, value, warn }: { label: string; value: string | number; warn?: boolean }) => (
+    <div className="flex-1 min-w-[110px]">
+      <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>{label}</p>
+      <p className="text-sm font-bold mt-0.5" style={{ color: warn ? 'var(--color-error)' : 'var(--color-text-primary)' }}>
+        {value}{warn ? ' ⚠️' : ''}
+      </p>
+    </div>
+  )
+  return (
+    <div className="rounded-xl p-4" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
+          {(u.user_name || '?').charAt(0).toUpperCase()}
+        </div>
+        <p className="font-bold text-sm" style={{ color: 'var(--color-text-primary)' }}>{u.user_name}</p>
+        {hasWarning && (
+          <span className="text-[10px] px-2 py-0.5 rounded" style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)' }}>
+            {u.leads_without_response + u.stale_count} itens de atenção
+          </span>
+        )}
+      </div>
+
+      {/* Grupo 1: Velocidade */}
+      <div className="mb-3">
+        <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-text-muted)' }}>{t.sc_velocity_title}</p>
+        <div className="flex flex-wrap gap-3">
+          <Cell label={t.sc_leads_created} value={formatInt(u.leads_created, lang)} />
+          <Cell label={t.sc_leads_assigned} value={formatInt(u.leads_assigned, lang)} />
+          <Cell label={t.sc_without_response} value={formatInt(u.leads_without_response, lang)} warn={u.leads_without_response > 0} />
+          <Cell label={t.sc_avg_response} value={formatResponseTime(u.avg_first_response_min)} />
+        </div>
+      </div>
+
+      {/* Grupo 2: Atividade */}
+      <div className="mb-3">
+        <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-text-muted)' }}>{t.sc_activity_title}</p>
+        <div className="flex flex-wrap gap-3">
+          <Cell label={t.sc_stage_changes} value={formatInt(u.stage_changes, lang)} />
+          <Cell label={t.sc_calls} value={formatInt(u.calls_made, lang)} />
+          <Cell label={t.sc_meetings} value={formatInt(u.meetings_attended, lang)} />
+          <Cell label={t.sc_proposals} value={formatInt(u.proposals_sent, lang)} />
+          <Cell label={t.sc_notes} value={formatInt(u.notes_added, lang)} />
+        </div>
+      </div>
+
+      {/* Grupo 3: Compromissos */}
+      <div className="mb-3">
+        <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-text-muted)' }}>{t.sc_visits_title}</p>
+        <div className="flex flex-wrap gap-3">
+          <Cell label={t.sc_visits_done} value={formatInt(u.visits_completed, lang)} />
+          <Cell label={t.sc_no_show} value={formatInt(u.visits_no_show, lang)} warn={u.visits_no_show > 0} />
+        </div>
+      </div>
+
+      {/* Grupo 4: Saúde do pipeline */}
+      <div className="mb-3">
+        <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-text-muted)' }}>{t.sc_pipeline_health_title}</p>
+        <div className="flex flex-wrap gap-3">
+          <Cell label={t.sc_hot} value={formatInt(u.hot_or_burning, lang)} />
+          <Cell label={t.sc_stale} value={formatInt(u.stale_count, lang)} warn={u.stale_count > 0} />
+        </div>
+      </div>
+
+      {/* Grupo 5: Resultados */}
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-text-muted)' }}>{t.sc_results_title}</p>
+        <div className="flex flex-wrap gap-3">
+          <Cell label={t.sc_deals} value={formatInt(u.deals_closed, lang)} />
+          <Cell label={t.sc_value} value={formatCurrency(u.sales_value || 0, 'BRL', lang)} />
+        </div>
+      </div>
     </div>
   )
 }
@@ -781,6 +948,74 @@ function buildPrintHtml(data: any, t: any, lang: Lang): string {
         <tbody>
           ${data.pipeline_flow.map((p: any) => `
             <tr><td>→ ${safe(p.label)}</td><td style="text-align:right"><strong>${p.count}</strong></td></tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </section>
+  ` : ''
+
+  // Scorecard completo por responsável — duas tabelas (Atividade/Resultados)
+  const formatRespTime = (mins: number | null | undefined): string => {
+    if (mins === null || mins === undefined) return t.sc_na
+    if (mins < 60) return `${Math.round(mins)} ${t.sc_min}`
+    return `${Math.round(mins / 60 * 10) / 10}h`
+  }
+  const scorecardHtml = (data.user_scorecard && data.user_scorecard.length > 0) ? `
+    <section>
+      <h3>${safe(t.m_user_scorecard)}</h3>
+      <table class="activity">
+        <thead>
+          <tr>
+            <th align="left">${safe(t.thMember)}</th>
+            <th align="right">${safe(t.sc_leads_created)}</th>
+            <th align="right">${safe(t.sc_leads_assigned)}</th>
+            <th align="right">${safe(t.sc_without_response)}</th>
+            <th align="right">${safe(t.sc_avg_response)}</th>
+            <th align="right">${safe(t.sc_stage_changes)}</th>
+            <th align="right">${safe(t.sc_calls)}</th>
+            <th align="right">${safe(t.sc_meetings)}</th>
+            <th align="right">${safe(t.sc_proposals)}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.user_scorecard.map((u: any) => `
+            <tr>
+              <td>${safe(u.user_name)}</td>
+              <td align="right">${u.leads_created}</td>
+              <td align="right">${u.leads_assigned}</td>
+              <td align="right" style="${u.leads_without_response > 0 ? 'color:#dc2626;font-weight:700' : ''}">${u.leads_without_response}</td>
+              <td align="right">${safe(formatRespTime(u.avg_first_response_min))}</td>
+              <td align="right">${u.stage_changes}</td>
+              <td align="right">${u.calls_made}</td>
+              <td align="right">${u.meetings_attended}</td>
+              <td align="right">${u.proposals_sent}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <table class="activity" style="margin-top:12px">
+        <thead>
+          <tr>
+            <th align="left">${safe(t.thMember)}</th>
+            <th align="right">${safe(t.sc_visits_done)}</th>
+            <th align="right">${safe(t.sc_no_show)}</th>
+            <th align="right">${safe(t.sc_hot)}</th>
+            <th align="right">${safe(t.sc_stale)}</th>
+            <th align="right">${safe(t.sc_deals)}</th>
+            <th align="right">${safe(t.sc_value)}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.user_scorecard.map((u: any) => `
+            <tr>
+              <td>${safe(u.user_name)}</td>
+              <td align="right">${u.visits_completed}</td>
+              <td align="right" style="${u.visits_no_show > 0 ? 'color:#dc2626' : ''}">${u.visits_no_show}</td>
+              <td align="right">${u.hot_or_burning}</td>
+              <td align="right" style="${u.stale_count > 0 ? 'color:#dc2626;font-weight:700' : ''}">${u.stale_count}</td>
+              <td align="right"><strong>${u.deals_closed}</strong></td>
+              <td align="right"><strong>${safe(formatCurrency(u.sales_value || 0, 'BRL', lang))}</strong></td>
+            </tr>
           `).join('')}
         </tbody>
       </table>
@@ -949,6 +1184,7 @@ function buildPrintHtml(data: any, t: any, lang: Lang): string {
   ${pipelineFlowHtml}
   ${userActivityHtml}
   ${flowByUserHtml}
+  ${scorecardHtml}
   ${goalHtml}
 
   <footer>

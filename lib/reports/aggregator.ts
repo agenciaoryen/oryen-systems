@@ -41,6 +41,32 @@ export interface ReportData {
       total: number
     }[]
   }
+  // Scorecard consolidado por responsável — responde "como tá o desempenho do Davi na semana?"
+  user_scorecard?: {
+    user_id: string | null
+    user_name: string
+    // Volume
+    leads_created: number          // leads criados no período (atribuídos a ele)
+    leads_assigned: number         // leads que foram distribuídos pra ele no período
+    // Velocidade / SLA
+    leads_without_response: number // snapshot: assigned mas first_response_at null
+    avg_first_response_min: number | null // média de minutos (leads c/ first_response no período)
+    // Ação
+    stage_changes: number          // mudanças de etapa que ele fez
+    calls_made: number
+    meetings_attended: number
+    proposals_sent: number
+    notes_added: number
+    // Compromissos (via calendar_events dos leads dele)
+    visits_completed: number       // status=completed no período
+    visits_no_show: number         // status=no_show no período
+    // Temperatura (snapshot)
+    hot_or_burning: number         // score_label hot/burning
+    stale_count: number            // stage ativo + updated_at > 5 dias
+    // Resultado
+    deals_closed: number           // deal_closed_at no período
+    sales_value: number            // soma de total_em_vendas dos deals closed
+  }[]
   // Financeiro
   receita_total?: number
   despesas_total?: number
@@ -494,6 +520,227 @@ export async function aggregateReportData(
     }).sort((a, b) => b.total - a.total)
 
     data.pipeline_flow_by_user = { stages, rows }
+  }
+
+  // ═══ SCORECARD POR RESPONSÁVEL — consolidação de desempenho ═══
+  // Cruza várias fontes (leads, lead_events, calendar_events) pra entregar
+  // uma linha por colaborador com todas as métricas de desempenho.
+  if (metrics.user_scorecard) {
+    // Janela (date-only) pra filtros de calendar_events.event_date e leads.deal_closed_at
+    const fromDate = start.toISOString().split('T')[0]
+    const toDate = end.toISOString().split('T')[0]
+
+    // 1. Membros da org — base do scorecard
+    const { data: members } = await supabase
+      .from('users')
+      .select('id, full_name')
+      .eq('org_id', orgId)
+
+    // Acumulador por user_id
+    const scoreAcc: Record<string, any> = {}
+    const bucket = (uid: string | null) => {
+      const key = uid || 'sdr_agent'
+      if (!scoreAcc[key]) {
+        const memberName = uid ? (members || []).find((m: any) => m.id === uid)?.full_name || 'Desconhecido' : 'Agente IA'
+        scoreAcc[key] = {
+          user_id: uid,
+          user_name: memberName,
+          leads_created: 0,
+          leads_assigned: 0,
+          leads_without_response: 0,
+          avg_first_response_min: null as number | null,
+          _fr_sum: 0,
+          _fr_n: 0,
+          stage_changes: 0,
+          calls_made: 0,
+          meetings_attended: 0,
+          proposals_sent: 0,
+          notes_added: 0,
+          visits_completed: 0,
+          visits_no_show: 0,
+          hot_or_burning: 0,
+          stale_count: 0,
+          deals_closed: 0,
+          sales_value: 0,
+        }
+      }
+      return scoreAcc[key]
+    }
+    // Garante bucket pra todos os membros mesmo que não tenham atividade
+    ;(members || []).forEach((m: any) => bucket(m.id))
+
+    // 2. Leads criados no período (atribuição: assigned_to)
+    const { data: newLeads2 } = await supabase
+      .from('leads')
+      .select('assigned_to, created_at, first_response_at, total_em_vendas, deal_closed_at')
+      .eq('org_id', orgId)
+      .gte('created_at', startISO)
+      .lte('created_at', endISO)
+    ;(newLeads2 || []).forEach((l: any) => {
+      const b = bucket(l.assigned_to)
+      b.leads_created++
+    })
+
+    // 3. Leads recebidos no período (assigned_at no range)
+    const { data: assignedInPeriod } = await supabase
+      .from('leads')
+      .select('assigned_to, assigned_at')
+      .eq('org_id', orgId)
+      .gte('assigned_at', startISO)
+      .lte('assigned_at', endISO)
+      .not('assigned_to', 'is', null)
+    ;(assignedInPeriod || []).forEach((l: any) => {
+      const b = bucket(l.assigned_to)
+      b.leads_assigned++
+    })
+
+    // 4. Snapshot: leads sem 1ª resposta (atribuído e first_response_at null)
+    const { data: pendingResponse } = await supabase
+      .from('leads')
+      .select('assigned_to')
+      .eq('org_id', orgId)
+      .not('assigned_to', 'is', null)
+      .is('first_response_at', null)
+    ;(pendingResponse || []).forEach((l: any) => {
+      const b = bucket(l.assigned_to)
+      b.leads_without_response++
+    })
+
+    // 5. Tempo de 1ª resposta: leads com first_response_at no período
+    const { data: responded } = await supabase
+      .from('leads')
+      .select('assigned_to, created_at, first_response_at')
+      .eq('org_id', orgId)
+      .not('assigned_to', 'is', null)
+      .not('first_response_at', 'is', null)
+      .gte('first_response_at', startISO)
+      .lte('first_response_at', endISO)
+    ;(responded || []).forEach((l: any) => {
+      const b = bucket(l.assigned_to)
+      if (l.created_at && l.first_response_at) {
+        const diffMs = new Date(l.first_response_at).getTime() - new Date(l.created_at).getTime()
+        const diffMin = diffMs / 60000
+        if (diffMin >= 0) {
+          b._fr_sum += diffMin
+          b._fr_n++
+        }
+      }
+    })
+    // Calcula médias
+    Object.values(scoreAcc).forEach((b: any) => {
+      if (b._fr_n > 0) b.avg_first_response_min = Math.round(b._fr_sum / b._fr_n)
+      delete b._fr_sum
+      delete b._fr_n
+    })
+
+    // 6. Eventos por usuário (stage_change, call_made, meeting_attended, proposal_sent, note)
+    const { data: scorecardEvents } = await supabase
+      .from('lead_events')
+      .select('type, user_id')
+      .eq('org_id', orgId)
+      .in('type', ['stage_change', 'call_made', 'meeting_attended', 'proposal_sent', 'note'])
+      .gte('created_at', startISO)
+      .lte('created_at', endISO)
+    ;(scorecardEvents || []).forEach((e: any) => {
+      const b = bucket(e.user_id)
+      if (e.type === 'stage_change') b.stage_changes++
+      else if (e.type === 'call_made') b.calls_made++
+      else if (e.type === 'meeting_attended') b.meetings_attended++
+      else if (e.type === 'proposal_sent') b.proposals_sent++
+      else if (e.type === 'note') b.notes_added++
+    })
+
+    // 7. Calendar events (completed / no_show) atribuídos ao assigned_to do lead
+    const { data: calEvents } = await supabase
+      .from('calendar_events')
+      .select('lead_id, status')
+      .eq('org_id', orgId)
+      .in('status', ['completed', 'no_show'])
+      .gte('event_date', fromDate)
+      .lte('event_date', toDate)
+    const calLeadIds = [...new Set((calEvents || []).map((e: any) => e.lead_id).filter(Boolean))]
+    let leadAssignees = new Map<string, string | null>()
+    if (calLeadIds.length > 0) {
+      const { data: leadsForCal } = await supabase
+        .from('leads')
+        .select('id, assigned_to')
+        .in('id', calLeadIds)
+      leadAssignees = new Map((leadsForCal || []).map((l: any) => [l.id, l.assigned_to]))
+    }
+    ;(calEvents || []).forEach((e: any) => {
+      const uid = leadAssignees.get(e.lead_id) ?? null
+      const b = bucket(uid)
+      if (e.status === 'completed') b.visits_completed++
+      else if (e.status === 'no_show') b.visits_no_show++
+    })
+
+    // 8. Snapshot: leads hot/burning por responsável
+    const { data: hotLeads } = await supabase
+      .from('leads')
+      .select('assigned_to')
+      .eq('org_id', orgId)
+      .in('score_label', ['hot', 'burning'])
+      .not('assigned_to', 'is', null)
+    ;(hotLeads || []).forEach((l: any) => {
+      const b = bucket(l.assigned_to)
+      b.hot_or_burning++
+    })
+
+    // 9. Snapshot: leads estagnados (sem update há > 5 dias, não won/lost)
+    const staleDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: staleLeads } = await supabase
+      .from('leads')
+      .select('assigned_to')
+      .eq('org_id', orgId)
+      .not('assigned_to', 'is', null)
+      .lt('updated_at', staleDate)
+      .not('stage', 'in', '(won,lost,perdido,ganho,venta_cerrada)')
+    ;(staleLeads || []).forEach((l: any) => {
+      const b = bucket(l.assigned_to)
+      b.stale_count++
+    })
+
+    // 10. Vendas fechadas no período
+    const { data: closedDeals } = await supabase
+      .from('leads')
+      .select('assigned_to, total_em_vendas')
+      .eq('org_id', orgId)
+      .not('assigned_to', 'is', null)
+      .gte('deal_closed_at', startISO)
+      .lte('deal_closed_at', endISO)
+    ;(closedDeals || []).forEach((l: any) => {
+      const b = bucket(l.assigned_to)
+      b.deals_closed++
+      b.sales_value += Number(l.total_em_vendas) || 0
+    })
+
+    // Monta saída ordenada por volume de atividade
+    data.user_scorecard = Object.values(scoreAcc)
+      .map((b: any) => ({
+        user_id: b.user_id,
+        user_name: b.user_name,
+        leads_created: b.leads_created,
+        leads_assigned: b.leads_assigned,
+        leads_without_response: b.leads_without_response,
+        avg_first_response_min: b.avg_first_response_min,
+        stage_changes: b.stage_changes,
+        calls_made: b.calls_made,
+        meetings_attended: b.meetings_attended,
+        proposals_sent: b.proposals_sent,
+        notes_added: b.notes_added,
+        visits_completed: b.visits_completed,
+        visits_no_show: b.visits_no_show,
+        hot_or_burning: b.hot_or_burning,
+        stale_count: b.stale_count,
+        deals_closed: b.deals_closed,
+        sales_value: b.sales_value,
+      }))
+      .sort((a, b) => {
+        // Ranking por atividade total + vendas (ordem de descarte de colaboradores inativos)
+        const scoreA = a.stage_changes + a.calls_made + a.meetings_attended + a.proposals_sent + a.deals_closed * 5
+        const scoreB = b.stage_changes + b.calls_made + b.meetings_attended + b.proposals_sent + b.deals_closed * 5
+        return scoreB - scoreA
+      })
   }
 
   return data
