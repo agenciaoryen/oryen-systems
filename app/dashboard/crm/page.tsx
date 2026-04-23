@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { formatPrice, formatSource } from '@/lib/format'
@@ -155,6 +155,8 @@ const TRANSLATIONS = {
     allBrokers: 'Todos',
     tableAssigned: 'Responsável',
     unassigned: 'Não atribuído',
+    allNichos: 'Todos os nichos',
+    nichoUnassigned: 'Sem nicho',
   },
   en: {
     title: 'Business Pipeline',
@@ -220,6 +222,8 @@ const TRANSLATIONS = {
     allBrokers: 'All',
     tableAssigned: 'Assigned To',
     unassigned: 'Unassigned',
+    allNichos: 'All niches',
+    nichoUnassigned: 'No niche',
   },
   es: {
     title: 'Pipeline de Negocios',
@@ -285,6 +289,8 @@ const TRANSLATIONS = {
     allBrokers: 'Todos',
     tableAssigned: 'Responsable',
     unassigned: 'Sin asignar',
+    allNichos: 'Todos los nichos',
+    nichoUnassigned: 'Sin nicho',
   }
 }
 
@@ -420,9 +426,13 @@ function ScrollSentinel({ onVisible, disabled }: { onVisible: () => void; disabl
 
 export default function CrmPage() {
   const router = useRouter()
-  const { user } = useAuth()
+  const searchParams = useSearchParams()
+  const { user, activeOrg } = useAuth()
   const orgId = useActiveOrgId()
   const { canUseAiAgents } = usePlan()
+
+  // Org é do tipo ai_agency? (mostra/esconde o filtro de nicho)
+  const isAiAgency = activeOrg?.niche === 'ai_agency'
 
   // Configurações do usuário
   const userLang = (user?.language as Language) || 'pt'
@@ -454,16 +464,25 @@ export default function CrmPage() {
   const [cardShowStale, setCardShowStale] = useState(true)
   const [cardShowAiStatus, setCardShowAiStatus] = useState(true)
 
-  // Estados de UI
+  // Estados de UI — defaults lidos da URL pra preservar filtros ao voltar do perfil do lead
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('pipeline')
-  const [daysFilter, setDaysFilter] = useState('30')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [viewMode, setViewMode] = useState<'list' | 'pipeline'>(() => (searchParams.get('view') === 'list' ? 'list' : 'pipeline'))
+  const [daysFilter, setDaysFilter] = useState(() => searchParams.get('days') || '30')
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '')
+  const [selectedTags, setSelectedTags] = useState<string[]>(() => {
+    const raw = searchParams.get('tags')
+    return raw ? raw.split(',').filter(Boolean) : []
+  })
   const [isTagFilterOpen, setIsTagFilterOpen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [aiFilter, setAiFilter] = useState<'all' | 'active' | 'paused'>('all')
-  const [filterAssigned, setFilterAssigned] = useState<string>('all')
+  const [aiFilter, setAiFilter] = useState<'all' | 'active' | 'paused'>(() => {
+    const raw = searchParams.get('ai')
+    return raw === 'active' || raw === 'paused' ? raw : 'all'
+  })
+  const [filterAssigned, setFilterAssigned] = useState<string>(() => searchParams.get('who') || 'all')
+  const [filterNicho, setFilterNicho] = useState<string>(() => searchParams.get('nicho') || 'all')
+  const [nichoOptions, setNichoOptions] = useState<string[]>([])  // populado só pra ai_agency
+  const [hasUnassignedNicho, setHasUnassignedNicho] = useState(false)
   const [teamMembers, setTeamMembers] = useState<{ id: string; full_name: string }[]>([])
 
   // Estados de Drag & Drop
@@ -480,6 +499,25 @@ export default function CrmPage() {
     phone: '',
     selectedTags: [] as string[]
   })
+
+  // ─── PERSISTIR FILTROS NA URL ───
+  // Sincroniza os filtros ativos com a URL usando replaceState (não adiciona entrada no histórico).
+  // Quando o usuário entra em /crm/[id] e clica em voltar, a URL da CRM já tem os filtros → estados reiniciam corretamente.
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (viewMode !== 'pipeline') params.set('view', viewMode)
+    if (daysFilter !== '30') params.set('days', daysFilter)
+    if (searchQuery.trim()) params.set('q', searchQuery.trim())
+    if (selectedTags.length > 0) params.set('tags', selectedTags.join(','))
+    if (aiFilter !== 'all') params.set('ai', aiFilter)
+    if (filterAssigned !== 'all') params.set('who', filterAssigned)
+    if (filterNicho !== 'all') params.set('nicho', filterNicho)
+
+    const qs = params.toString()
+    const newUrl = qs ? `/dashboard/crm?${qs}` : '/dashboard/crm'
+    // replaceState evita push no histórico em cada digitada da busca
+    window.history.replaceState(null, '', newUrl)
+  }, [viewMode, daysFilter, searchQuery, selectedTags, aiFilter, filterAssigned, filterNicho])
 
   // ─── FULLSCREEN ───
   const toggleFullscreen = () => {
@@ -523,12 +561,14 @@ export default function CrmPage() {
     else if (aiFilter === 'paused') q = q.eq('conversa_finalizada', true)
     if (filterAssigned === 'unassigned') q = q.is('assigned_to', null)
     else if (filterAssigned !== 'all') q = q.eq('assigned_to', filterAssigned)
+    if (filterNicho === '__unassigned__') q = q.is('nicho', null)
+    else if (filterNicho !== 'all') q = q.eq('nicho', filterNicho)
     if (tagScopedIds !== null) {
       if (tagScopedIds.length === 0) q = q.eq('id', '00000000-0000-0000-0000-000000000000') // força 0 resultados
       else q = q.in('id', tagScopedIds)
     }
     return q
-  }, [orgId, filterDate, searchQuery, aiFilter, filterAssigned])
+  }, [orgId, filterDate, searchQuery, aiFilter, filterAssigned, filterNicho])
 
   // ─── PRÉ-FILTRO DE TAGS: resolve lead_ids que têm as tags selecionadas ───
   const resolveTagScopedIds = useCallback(async (): Promise<string[] | null> => {
@@ -563,7 +603,20 @@ export default function CrmPage() {
       if (config.show_stale_indicator !== undefined) setCardShowStale(config.show_stale_indicator)
       if (config.show_ai_status !== undefined) setCardShowAiStatus(config.show_ai_status)
     }
-  }, [orgId])
+
+    // Carregar nichos distintos — só faz sentido pra org do tipo ai_agency
+    if (isAiAgency) {
+      const { data: nichoRows } = await supabase
+        .from('leads')
+        .select('nicho')
+        .eq('org_id', orgId)
+      const raw = (nichoRows || []).map((r: any) => r.nicho)
+      const distinct = [...new Set(raw.filter((v: any) => !!v && String(v).trim()))] as string[]
+      distinct.sort((a, b) => a.localeCompare(b))
+      setNichoOptions(distinct)
+      setHasUnassignedNicho(raw.some((v: any) => v === null || v === undefined || String(v).trim() === ''))
+    }
+  }, [orgId, isAiAgency])
 
   // ─── ENRIQUECER LEADS COM NOME DO RESPONSÁVEL ───
   const enrichWithAssignees = useCallback(async (rows: Lead[]): Promise<Lead[]> => {
@@ -591,6 +644,7 @@ export default function CrmPage() {
         p_ai_filter: aiFilter === 'all' ? null : aiFilter,
         p_assigned: filterAssigned === 'all' ? null : filterAssigned,
         p_tag_ids: selectedTags.length > 0 ? selectedTags : null,
+        p_nicho: filterNicho === 'all' ? null : filterNicho,
       })
 
       // Pra cada stage, primeira página de 20 cards em paralelo à RPC.
@@ -711,7 +765,7 @@ export default function CrmPage() {
       loadAllStagesData(pipelineStages)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pipelineStages, daysFilter, searchQuery, selectedTags, aiFilter, filterAssigned])
+  }, [pipelineStages, daysFilter, searchQuery, selectedTags, aiFilter, filterAssigned, filterNicho])
 
   // ─── FILTROS PARA VIEW LISTA (client-side sobre o que foi carregado) ───
   // Atenção: a view Lista mostra só os leads que vieram nas primeiras páginas por stage.
@@ -1122,6 +1176,21 @@ export default function CrmPage() {
                   { value: 'all', label: t.allBrokers },
                   { value: 'unassigned', label: t.unassigned },
                   ...teamMembers.map(m => ({ value: m.id, label: m.full_name }))
+                ]}
+              />
+            </div>
+          )}
+
+          {/* Filtro de Nicho — apenas pra org do tipo ai_agency */}
+          {isAiAgency && (nichoOptions.length > 0 || hasUnassignedNicho) && (
+            <div className="w-40">
+              <CustomSelect
+                value={filterNicho}
+                onChange={(v) => setFilterNicho(v)}
+                options={[
+                  { value: 'all', label: t.allNichos },
+                  ...(hasUnassignedNicho ? [{ value: '__unassigned__', label: t.nichoUnassigned }] : []),
+                  ...nichoOptions.map(n => ({ value: n, label: n })),
                 ]}
               />
             </div>
