@@ -30,6 +30,17 @@ export interface ReportData {
     notes_added: number
     total: number
   }[]
+  // Matriz cruzada: responsável × etapa de destino
+  // Responde "quantos leads o Davi moveu pra Contatado?"
+  pipeline_flow_by_user?: {
+    stages: { name: string; label: string }[]
+    rows: {
+      user_id: string | null
+      user_name: string
+      counts: Record<string, number>  // stage_name -> count
+      total: number
+    }[]
+  }
   // Financeiro
   receita_total?: number
   despesas_total?: number
@@ -439,6 +450,51 @@ export async function aggregateReportData(
     })
 
     data.user_activity = Object.values(acc).sort((a: any, b: any) => b.total - a.total)
+  }
+
+  // ═══ MATRIZ RESPONSÁVEL × ETAPA DE DESTINO ═══
+  // Pra cada responsável, quantos leads moveu pra cada etapa no período.
+  if (metrics.pipeline_flow_by_user) {
+    const [eventsRes, stagesRes, membersRes] = await Promise.all([
+      supabase
+        .from('lead_events')
+        .select('user_id, details, leads!inner(org_id)')
+        .eq('type', 'stage_change')
+        .eq('leads.org_id', orgId)
+        .gte('created_at', startISO)
+        .lte('created_at', endISO),
+      supabase
+        .from('pipeline_stages')
+        .select('name, label')
+        .eq('org_id', orgId)
+        .eq('is_active', true)
+        .order('position'),
+      supabase
+        .from('users')
+        .select('id, full_name')
+        .eq('org_id', orgId),
+    ])
+
+    const stages = (stagesRes.data || []).map((s: any) => ({ name: s.name, label: s.label || s.name }))
+    const nameById2 = new Map<string, string>((membersRes.data || []).map((m: any) => [m.id, m.full_name || 'Sem nome']))
+
+    const matrix: Record<string, Record<string, number>> = {}
+    ;(eventsRes.data || []).forEach((e: any) => {
+      const uid = e.user_id || 'sdr_agent'
+      const toStage = e.details?.to_stage
+      if (!toStage) return
+      if (!matrix[uid]) matrix[uid] = {}
+      matrix[uid][toStage] = (matrix[uid][toStage] || 0) + 1
+    })
+
+    const rows = Object.entries(matrix).map(([uid, counts]) => {
+      const userId = uid === 'sdr_agent' ? null : uid
+      const userName = userId ? (nameById2.get(userId) || 'Desconhecido') : 'Agente IA'
+      const total = Object.values(counts).reduce((s: number, v: number) => s + v, 0)
+      return { user_id: userId, user_name: userName, counts, total }
+    }).sort((a, b) => b.total - a.total)
+
+    data.pipeline_flow_by_user = { stages, rows }
   }
 
   return data

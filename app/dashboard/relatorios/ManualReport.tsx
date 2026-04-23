@@ -42,6 +42,9 @@ const T = {
     m_pipeline: 'Distribuição por etapa (foto atual)',
     m_pipeline_flow: 'Movimentações por etapa (fluxo do período)',
     m_user_activity: 'Atividade por responsável',
+    m_pipeline_flow_by_user: 'Desempenho por responsável × etapa',
+    thMember: 'Responsável',
+    thTotal: 'Total',
     financialCat: 'Financeiro',
     m_receita: 'Receita total',
     m_despesas: 'Despesas totais',
@@ -93,6 +96,9 @@ const T = {
     m_pipeline: 'Distribution per stage (current snapshot)',
     m_pipeline_flow: 'Transitions per stage (flow in period)',
     m_user_activity: 'Activity per team member',
+    m_pipeline_flow_by_user: 'Performance per user × stage',
+    thMember: 'Member',
+    thTotal: 'Total',
     financialCat: 'Financial',
     m_receita: 'Total revenue',
     m_despesas: 'Total expenses',
@@ -142,6 +148,9 @@ const T = {
     m_pipeline: 'Distribución por etapa (foto actual)',
     m_pipeline_flow: 'Transiciones por etapa (flujo del período)',
     m_user_activity: 'Actividad por responsable',
+    m_pipeline_flow_by_user: 'Desempeño por responsable × etapa',
+    thMember: 'Responsable',
+    thTotal: 'Total',
     financialCat: 'Financiero',
     m_receita: 'Ingresos totales',
     m_despesas: 'Gastos totales',
@@ -262,8 +271,9 @@ export default function ManualReport({ lang }: ManualReportProps) {
     leads_responderam: true,
     // pipeline (on/off; se on, usa TODAS as stages ativas)
     pipeline: true,
-    pipeline_flow: true,   // fluxo de transições dentro do período
-    user_activity: true,   // atividade por responsável
+    pipeline_flow: true,           // fluxo de transições dentro do período
+    user_activity: true,           // atividade por responsável (resumo)
+    pipeline_flow_by_user: true,   // matriz responsável × etapa (detalhe)
     // financeiro
     receita: false,
     despesas: false,
@@ -338,6 +348,7 @@ export default function ManualReport({ lang }: ManualReportProps) {
         pipeline: picked.pipeline ? pipelineStageIds : [],
         pipeline_flow: picked.pipeline_flow,
         user_activity: picked.user_activity,
+        pipeline_flow_by_user: picked.pipeline_flow_by_user,
         financial: {
           receita: picked.receita,
           despesas: picked.despesas,
@@ -457,6 +468,7 @@ export default function ManualReport({ lang }: ManualReportProps) {
             <Chk label={t.m_pipeline} checked={picked.pipeline} onToggle={() => toggle('pipeline')} />
             <Chk label={t.m_pipeline_flow} checked={picked.pipeline_flow} onToggle={() => toggle('pipeline_flow')} />
             <Chk label={t.m_user_activity} checked={picked.user_activity} onToggle={() => toggle('user_activity')} />
+            <Chk label={t.m_pipeline_flow_by_user} checked={picked.pipeline_flow_by_user} onToggle={() => toggle('pipeline_flow_by_user')} />
           </CategoryBlock>
 
           <CategoryBlock title={t.financialCat}>
@@ -663,6 +675,38 @@ function ReportPreview({ data, t, lang }: { data: any; t: any; lang: Lang }) {
         </div>
       )}
 
+      {data.pipeline_flow_by_user && data.pipeline_flow_by_user.rows.length > 0 && (
+        <div className="mt-3">
+          <p className="text-xs font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>{t.m_pipeline_flow_by_user}</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                  <th className="text-left py-1.5 pr-3 font-semibold">{t.thMember}</th>
+                  {data.pipeline_flow_by_user.stages.map((s: any) => (
+                    <th key={s.name} className="text-right py-1.5 px-1 font-semibold whitespace-nowrap">{s.label}</th>
+                  ))}
+                  <th className="text-right py-1.5 pl-1 font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.thTotal}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.pipeline_flow_by_user.rows.map((u: any, i: number) => (
+                  <tr key={i} style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+                    <td className="py-1.5 pr-3 whitespace-nowrap">{u.user_name}</td>
+                    {data.pipeline_flow_by_user.stages.map((s: any) => (
+                      <td key={s.name} className="text-right py-1.5 px-1">
+                        {u.counts[s.name] > 0 ? u.counts[s.name] : '—'}
+                      </td>
+                    ))}
+                    <td className="text-right py-1.5 pl-1 font-bold" style={{ color: 'var(--color-text-primary)' }}>{u.total}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {data.meta_principal_nome && (
         <div className="mt-3 rounded-lg p-2.5" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
           <p className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>{t.m_meta_principal}</p>
@@ -737,6 +781,30 @@ function buildPrintHtml(data: any, t: any, lang: Lang): string {
         <tbody>
           ${data.pipeline_flow.map((p: any) => `
             <tr><td>→ ${safe(p.label)}</td><td style="text-align:right"><strong>${p.count}</strong></td></tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </section>
+  ` : ''
+
+  const flowByUserHtml = (data.pipeline_flow_by_user && data.pipeline_flow_by_user.rows.length > 0) ? `
+    <section>
+      <h3>${safe(t.m_pipeline_flow_by_user)}</h3>
+      <table class="activity">
+        <thead>
+          <tr>
+            <th align="left">${safe(t.thMember)}</th>
+            ${data.pipeline_flow_by_user.stages.map((s: any) => `<th align="right">${safe(s.label)}</th>`).join('')}
+            <th align="right"><strong>${safe(t.thTotal)}</strong></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.pipeline_flow_by_user.rows.map((u: any) => `
+            <tr>
+              <td>${safe(u.user_name)}</td>
+              ${data.pipeline_flow_by_user.stages.map((s: any) => `<td align="right">${u.counts[s.name] || '—'}</td>`).join('')}
+              <td align="right"><strong>${u.total}</strong></td>
+            </tr>
           `).join('')}
         </tbody>
       </table>
@@ -880,6 +948,7 @@ function buildPrintHtml(data: any, t: any, lang: Lang): string {
   ${pipelineHtml}
   ${pipelineFlowHtml}
   ${userActivityHtml}
+  ${flowByUserHtml}
   ${goalHtml}
 
   <footer>
