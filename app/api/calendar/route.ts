@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
+import { pushEventToGoogle } from '@/lib/integrations/calendar-sync'
 
 /**
  * GET /api/calendar?org_id=X&from=YYYY-MM-DD&to=YYYY-MM-DD&status=scheduled
@@ -79,6 +80,11 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // Push pro Google Calendar (se usuário tiver integração ativa)
+    if (data && auth.userId) {
+      await pushEventToGoogle({ userId: auth.userId, event: data as any })
     }
 
     return NextResponse.json({ event: data })

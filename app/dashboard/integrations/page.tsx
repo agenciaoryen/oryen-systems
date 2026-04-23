@@ -49,6 +49,10 @@ const T = {
     toastDisconnected: 'Google Calendar desconectado',
     toastConnectError: 'Erro ao conectar',
     toastDisconnectError: 'Erro ao desconectar',
+    syncNow: 'Sincronizar agora',
+    syncing: 'Sincronizando...',
+    toastSyncSuccess: 'Sincronização concluída',
+    toastSyncError: 'Erro ao sincronizar',
     comingSoon: 'Em breve',
     outlookTitle: 'Outlook Calendar',
     outlookDesc: 'Sincronização com Microsoft Outlook — em breve.',
@@ -79,6 +83,10 @@ const T = {
     toastDisconnected: 'Google Calendar disconnected',
     toastConnectError: 'Error connecting',
     toastDisconnectError: 'Error disconnecting',
+    syncNow: 'Sync now',
+    syncing: 'Syncing...',
+    toastSyncSuccess: 'Sync completed',
+    toastSyncError: 'Sync error',
     comingSoon: 'Coming soon',
     outlookTitle: 'Outlook Calendar',
     outlookDesc: 'Microsoft Outlook sync — coming soon.',
@@ -109,6 +117,10 @@ const T = {
     toastDisconnected: 'Google Calendar desconectado',
     toastConnectError: 'Error al conectar',
     toastDisconnectError: 'Error al desconectar',
+    syncNow: 'Sincronizar ahora',
+    syncing: 'Sincronizando...',
+    toastSyncSuccess: 'Sincronización completada',
+    toastSyncError: 'Error al sincronizar',
     comingSoon: 'Próximamente',
     outlookTitle: 'Outlook Calendar',
     outlookDesc: 'Sincronización con Microsoft Outlook — próximamente.',
@@ -175,7 +187,12 @@ export default function IntegrationsPage() {
       toast.success(t.toastConnected)
       // Limpa os query params
       router.replace('/dashboard/integrations')
-      refresh()
+      // Refresh do status + dispara primeira sincronização automática em background
+      refresh().then(() => {
+        fetch('/api/integrations/google-calendar/sync', { method: 'POST' })
+          .then(() => refresh())
+          .catch(() => {/* silencioso — user pode clicar em sincronizar depois */})
+      })
     } else if (error) {
       const msg = error === 'access_denied'
         ? 'Você cancelou a autorização.'
@@ -201,6 +218,21 @@ export default function IntegrationsPage() {
       await refresh()
     } catch (err: any) {
       toast.error(t.toastDisconnectError)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleSync = async () => {
+    setBusy('google_calendar_sync')
+    try {
+      const res = await fetch('/api/integrations/google-calendar/sync', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'sync failed')
+      toast.success(`${t.toastSyncSuccess} (${data.synced ?? 0} eventos)`)
+      await refresh()
+    } catch (err: any) {
+      toast.error(`${t.toastSyncError}: ${err.message}`)
     } finally {
       setBusy(null)
     }
@@ -259,6 +291,13 @@ export default function IntegrationsPage() {
                 loadingLabel: googleIntegration ? t.disconnecting : t.connecting,
                 variant: googleIntegration ? 'danger' : 'primary',
               }}
+              secondaryAction={googleIntegration ? {
+                label: t.syncNow,
+                loadingLabel: t.syncing,
+                onClick: handleSync,
+                loading: busy === 'google_calendar_sync',
+                icon: <RefreshCw size={12} />,
+              } : undefined}
             />
 
             {/* ═══ Outlook (em breve) ═══ */}
@@ -381,13 +420,20 @@ interface CardProps {
     loadingLabel?: string
     variant: 'primary' | 'danger' | 'disabled'
   }
+  secondaryAction?: {
+    label: string
+    loadingLabel: string
+    onClick: () => void
+    loading: boolean
+    icon?: React.ReactNode
+  }
 }
 
 function IntegrationCard(props: CardProps) {
   const {
     icon, title, description, extraNote, connected, statusError, connectedEmail, lastSync,
     disabled, comingSoonLabel, connectedBadge, errorBadge, connectedAs, lastSyncLabel,
-    neverLabel, neverHint, formatLastSync, primaryAction,
+    neverLabel, neverHint, formatLastSync, primaryAction, secondaryAction,
   } = props
 
   const btnStyle = primaryAction.variant === 'primary'
@@ -463,24 +509,47 @@ function IntegrationCard(props: CardProps) {
           )}
         </div>
 
-        <button
-          onClick={primaryAction.onClick}
-          disabled={disabled || primaryAction.loading}
-          className="shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 disabled:opacity-60"
-          style={btnStyle}
-        >
-          {primaryAction.loading ? (
-            <>
-              <Loader2 size={14} className="animate-spin" />
-              {primaryAction.loadingLabel}
-            </>
-          ) : (
-            <>
-              {primaryAction.variant === 'primary' && <ExternalLink size={14} />}
-              {primaryAction.label}
-            </>
+        <div className="shrink-0 flex flex-col items-end gap-2">
+          <button
+            onClick={primaryAction.onClick}
+            disabled={disabled || primaryAction.loading}
+            className="px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 disabled:opacity-60"
+            style={btnStyle}
+          >
+            {primaryAction.loading ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                {primaryAction.loadingLabel}
+              </>
+            ) : (
+              <>
+                {primaryAction.variant === 'primary' && <ExternalLink size={14} />}
+                {primaryAction.label}
+              </>
+            )}
+          </button>
+
+          {secondaryAction && (
+            <button
+              onClick={secondaryAction.onClick}
+              disabled={secondaryAction.loading}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 disabled:opacity-60"
+              style={{ background: 'var(--color-bg-hover)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
+            >
+              {secondaryAction.loading ? (
+                <>
+                  <Loader2 size={12} className="animate-spin" />
+                  {secondaryAction.loadingLabel}
+                </>
+              ) : (
+                <>
+                  {secondaryAction.icon}
+                  {secondaryAction.label}
+                </>
+              )}
+            </button>
           )}
-        </button>
+        </div>
       </div>
     </div>
   )

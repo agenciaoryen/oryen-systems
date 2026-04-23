@@ -71,6 +71,8 @@ const TRANSLATIONS = {
     markCancelled: 'Cancelar Evento',
     viewLead: 'Ver Lead',
     createdByAgent: 'Agendado pelo Agente IA',
+    fromGoogle: 'Do Google Calendar',
+    googleReadOnly: 'Este evento está sincronizado do seu Google Calendar. Edite lá e a Oryen atualiza automaticamente.',
     // Days
     sun: 'Dom', mon: 'Seg', tue: 'Ter', wed: 'Qua', thu: 'Qui', fri: 'Sex', sat: 'Sáb',
     // Months
@@ -116,6 +118,8 @@ const TRANSLATIONS = {
     markCancelled: 'Cancel Event',
     viewLead: 'View Lead',
     createdByAgent: 'Scheduled by AI Agent',
+    fromGoogle: 'From Google Calendar',
+    googleReadOnly: 'This event is synced from your Google Calendar. Edit it there and Oryen updates automatically.',
     sun: 'Sun', mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat',
     months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
   },
@@ -159,6 +163,8 @@ const TRANSLATIONS = {
     markCancelled: 'Cancelar Evento',
     viewLead: 'Ver Lead',
     createdByAgent: 'Agendado por el Agente IA',
+    fromGoogle: 'De Google Calendar',
+    googleReadOnly: 'Este evento está sincronizado desde tu Google Calendar. Edítalo allí y Oryen se actualiza automáticamente.',
     sun: 'Dom', mon: 'Lun', tue: 'Mar', wed: 'Mié', thu: 'Jue', fri: 'Vie', sat: 'Sáb',
     months: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
   }
@@ -185,6 +191,11 @@ interface CalendarEvent {
   notes: string | null
   created_at: string
   updated_at: string
+  // Origem externa (Google Calendar, Outlook etc)
+  external_source?: string | null
+  external_id?: string | null
+  external_integration_id?: string | null
+  external_read_only?: boolean | null
   leads?: { id: string; name: string; phone: string } | null
 }
 
@@ -260,6 +271,17 @@ export default function CalendarPage() {
   }, [orgId, currentMonth, currentYear])
 
   useEffect(() => { fetchEvents() }, [fetchEvents])
+
+  // ─── Sync com Google Calendar ao abrir a Agenda (uma vez por sessão) ───
+  useEffect(() => {
+    if (!orgId) return
+    const key = 'gcal_synced_session'
+    if (sessionStorage.getItem(key)) return
+    sessionStorage.setItem(key, '1')
+    fetch('/api/integrations/google-calendar/sync', { method: 'POST' })
+      .then(r => r.ok ? fetchEvents() : null)
+      .catch(() => {/* silencioso — se não tiver integração, route retorna 404 */})
+  }, [orgId, fetchEvents])
 
   // ─── Realtime ───
   useEffect(() => {
@@ -733,6 +755,12 @@ function EventDetailModal({
                   {t.createdByAgent}
                 </span>
               )}
+              {event.external_source === 'google_calendar' && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded flex items-center gap-1" style={{ color: '#4285F4', background: 'rgba(66, 133, 244, 0.12)' }}>
+                  <svg width="10" height="10" viewBox="0 0 48 48" fill="none"><rect x="6" y="9" width="36" height="33" rx="3" fill="currentColor" opacity="0.2"/><rect x="6" y="9" width="36" height="7" fill="currentColor"/></svg>
+                  {t.fromGoogle}
+                </span>
+              )}
             </div>
           </div>
 
@@ -774,8 +802,16 @@ function EventDetailModal({
           )}
         </div>
 
-        {/* Actions */}
-        {event.status === 'scheduled' && (
+        {/* Aviso de evento read-only (sync do Google) */}
+        {event.external_read_only && (
+          <div className="mx-5 mb-3 p-3 rounded-xl text-xs flex items-start gap-2" style={{ background: 'rgba(66, 133, 244, 0.08)', border: '1px solid rgba(66, 133, 244, 0.25)', color: 'var(--color-text-secondary)' }}>
+            <AlertCircle size={14} className="mt-0.5 shrink-0" style={{ color: '#4285F4' }} />
+            <p>{t.googleReadOnly}</p>
+          </div>
+        )}
+
+        {/* Actions — só pra eventos nativos da Oryen */}
+        {event.status === 'scheduled' && !event.external_read_only && (
           <div className="p-5 space-y-2" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
             <button onClick={() => onUpdateStatus(event.id, 'completed')} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ background: 'var(--color-success-subtle)', border: '1px solid var(--color-success)', color: 'var(--color-success)' }}>
               <CheckCircle2 size={16} />
@@ -794,7 +830,8 @@ function EventDetailModal({
           </div>
         )}
 
-        {/* Delete */}
+        {/* Delete — só pra eventos nativos da Oryen */}
+        {!event.external_read_only && (
         <div className="px-5 pb-5">
           {!showDeleteConfirm ? (
             <button
@@ -837,6 +874,7 @@ function EventDetailModal({
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   )

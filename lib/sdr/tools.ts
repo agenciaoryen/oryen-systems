@@ -639,7 +639,7 @@ async function executeScheduleVisit(
   const endH = Math.min(h + 1, 23)
   const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 
-  await supabase.from('calendar_events').insert({
+  const { data: createdEvent } = await supabase.from('calendar_events').insert({
     org_id: ctx.org_id,
     lead_id: ctx.lead_id,
     title: `Visita: ${input.property_description}`,
@@ -652,7 +652,7 @@ async function executeScheduleVisit(
     status: 'scheduled',
     created_by: 'sdr_agent',
     notes: input.notes || null
-  })
+  }).select('*').single()
 
   // Buscar nome do lead para o alerta
   const { data: lead } = await supabase
@@ -669,6 +669,16 @@ async function executeScheduleVisit(
     .eq('role', 'owner')
     .limit(1)
     .single()
+
+  // Push pro Google Calendar do owner (se tiver integração ativa)
+  if (owner && createdEvent) {
+    try {
+      const { pushEventToGoogle } = await import('@/lib/integrations/calendar-sync')
+      await pushEventToGoogle({ userId: owner.id, event: createdEvent as any })
+    } catch (e) {
+      // Silencioso — best-effort
+    }
+  }
 
   if (owner) {
     await supabase.from('alerts').insert({
@@ -754,13 +764,15 @@ async function executeRescheduleVisit(
   input: { new_date: string; new_time: string; reason?: string },
   ctx: ToolContext
 ): Promise<ToolResult> {
-  // Buscar evento agendado mais recente do lead
+  // Buscar evento agendado mais recente do lead — ignora eventos vindos do Google
+  // (external_read_only=true são espelhos; a Oryen não remarca no Google via SDR)
   const { data: event, error: findErr } = await supabase
     .from('calendar_events')
-    .select('id, title, event_date, start_time')
+    .select('id, title, event_date, start_time, external_id, external_integration_id, external_read_only')
     .eq('org_id', ctx.org_id)
     .eq('lead_id', ctx.lead_id)
     .eq('status', 'scheduled')
+    .eq('external_read_only', false)
     .order('event_date', { ascending: false })
     .limit(1)
     .single()
@@ -775,7 +787,7 @@ async function executeRescheduleVisit(
   const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 
   // Atualizar evento
-  const { error: updateErr } = await supabase
+  const { data: updatedEvent, error: updateErr } = await supabase
     .from('calendar_events')
     .update({
       event_date: input.new_date,
@@ -785,6 +797,8 @@ async function executeRescheduleVisit(
       updated_at: new Date().toISOString()
     })
     .eq('id', event.id)
+    .select('*')
+    .single()
 
   if (updateErr) return { success: false, error: updateErr.message }
 
@@ -813,6 +827,16 @@ async function executeRescheduleVisit(
       action_label: 'Ver lead',
       is_read: false
     })
+
+    // Push da atualização pro Google Calendar do owner (se evento estava linkado)
+    if (updatedEvent?.external_id && !updatedEvent.external_read_only) {
+      try {
+        const { pushEventUpdate } = await import('@/lib/integrations/calendar-sync')
+        await pushEventUpdate({ userId: owner.id, event: updatedEvent as any })
+      } catch (e) {
+        // Silencioso — best-effort
+      }
+    }
   }
 
   await supabase.from('lead_events').insert({
