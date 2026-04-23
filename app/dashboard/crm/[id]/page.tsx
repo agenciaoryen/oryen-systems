@@ -652,12 +652,21 @@ export default function LeadProfilePage() {
 
       if (error) throw error
 
+      const fromStageLabel = pipelineStages.find(s => s.name === oldStage)?.label || oldStage
       const { data: eventData } = await supabase
         .from('lead_events')
         .insert({
           lead_id: leadId,
           type: 'stage_change',
-          content: `${t.stageChanged} ${stageLabel}`
+          content: `${t.stageChanged} ${stageLabel}`,
+          details: {
+            from_stage: oldStage,
+            to_stage: newStage,
+            from_stage_label: fromStageLabel,
+            to_stage_label: stageLabel,
+            source: 'lead_profile',
+          },
+          user_id: user?.id || null,
         })
         .select()
         .single()

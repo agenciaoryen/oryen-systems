@@ -544,11 +544,18 @@ async function executeQualifyLead(
 
   if (error) return { success: false, error: error.message }
 
-  // Registrar na linha do tempo
+  // Registrar na linha do tempo (com dados estruturados pros relatórios de fluxo)
   await supabase.from('lead_events').insert({
     lead_id: ctx.lead_id,
     type: 'stage_change',
-    content: `Agente IA alterou etapa de ${previousStage} para ${targetStage}. Motivo: ${input.reason}`
+    content: `Agente IA alterou etapa de ${previousStage} para ${targetStage}. Motivo: ${input.reason}`,
+    details: {
+      from_stage: previousStage,
+      to_stage: targetStage,
+      source: 'sdr_agent',
+      reason: input.reason,
+    },
+    user_id: null, // SDR não tem user_id — reporta como "Agente IA"
   }).then(() => {}).catch(() => {})
 
   console.log(`[SDR:Qualify] Lead ${ctx.lead_id} → ${targetStage} (solicitado: ${input.stage}) | ${input.reason}`)

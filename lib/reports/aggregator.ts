@@ -14,8 +14,22 @@ export interface ReportData {
   mensagens_enviadas?: number
   ligacoes_feitas?: number
   leads_responderam?: number
-  // Pipeline
+  // Pipeline — distribuição atual (snapshot)
   pipeline?: { label: string; count: number }[]
+  // Pipeline — fluxo dentro do período (quantos leads entraram em cada etapa)
+  pipeline_flow?: { stage: string; label: string; count: number }[]
+  // Atividade por responsável dentro do período
+  user_activity?: {
+    user_id: string | null
+    user_name: string
+    leads_created: number
+    stage_changes: number
+    calls_made: number
+    meetings_attended: number
+    proposals_sent: number
+    notes_added: number
+    total: number
+  }[]
   // Financeiro
   receita_total?: number
   despesas_total?: number
@@ -327,6 +341,104 @@ export async function aggregateReportData(
     data.followup_pendentes = pendRes.count || 0
     data.followup_responderam = respRes.count || 0
     data.followup_esgotados = exhRes.count || 0
+  }
+
+  // ═══ PIPELINE FLOW — quantos leads foram MOVIDOS pra cada etapa no período ═══
+  // Lê lead_events.type='stage_change' com details.to_stage preenchido (eventos após esta migração).
+  // Filtra por org via inner join em leads.
+  if (metrics.pipeline_flow) {
+    const { data: flowEvents } = await supabase
+      .from('lead_events')
+      .select('details, leads!inner(org_id)')
+      .eq('type', 'stage_change')
+      .eq('leads.org_id', orgId)
+      .gte('created_at', startISO)
+      .lte('created_at', endISO)
+
+    const flowCount: Record<string, number> = {}
+    ;(flowEvents || []).forEach((e: any) => {
+      const to = e.details?.to_stage
+      if (to) flowCount[to] = (flowCount[to] || 0) + 1
+    })
+
+    // Busca as stages ativas pra compor labels na ordem correta
+    const { data: stagesOrdered } = await supabase
+      .from('pipeline_stages')
+      .select('name, label')
+      .eq('org_id', orgId)
+      .order('position')
+
+    data.pipeline_flow = (stagesOrdered || []).map((s: any) => ({
+      stage: s.name,
+      label: s.label || s.name,
+      count: flowCount[s.name] || 0,
+    }))
+  }
+
+  // ═══ ATIVIDADE POR RESPONSÁVEL ═══
+  // Conta no período: leads criados por usuário (leads.assigned_to), stage changes,
+  // chamadas, reuniões/visitas, propostas e notas por usuário (lead_events.user_id).
+  if (metrics.user_activity) {
+    // Membros da org pra mapear nomes
+    const { data: members } = await supabase
+      .from('users')
+      .select('id, full_name')
+      .eq('org_id', orgId)
+
+    const nameById = new Map<string, string>((members || []).map((m: any) => [m.id, m.full_name || 'Sem nome']))
+
+    // Buckets por usuário
+    const acc: Record<string, any> = {}
+    const bucket = (userId: string | null) => {
+      const key = userId || 'sdr_agent'
+      if (!acc[key]) {
+        acc[key] = {
+          user_id: userId,
+          user_name: userId ? (nameById.get(userId) || 'Desconhecido') : 'Agente IA',
+          leads_created: 0,
+          stage_changes: 0,
+          calls_made: 0,
+          meetings_attended: 0,
+          proposals_sent: 0,
+          notes_added: 0,
+          total: 0,
+        }
+      }
+      return acc[key]
+    }
+
+    // Leads criados no período (assigned_to como proxy de "quem cadastrou/responsável")
+    const { data: newLeads } = await supabase
+      .from('leads')
+      .select('assigned_to, created_at')
+      .eq('org_id', orgId)
+      .gte('created_at', startISO)
+      .lte('created_at', endISO)
+    ;(newLeads || []).forEach((l: any) => {
+      const b = bucket(l.assigned_to)
+      b.leads_created++
+      b.total++
+    })
+
+    // Eventos por usuário no período (stage_change, call_made, meeting_attended, proposal_sent, note)
+    const { data: evtByUser } = await supabase
+      .from('lead_events')
+      .select('type, user_id, leads!inner(org_id)')
+      .in('type', ['stage_change', 'call_made', 'meeting_attended', 'proposal_sent', 'note'])
+      .eq('leads.org_id', orgId)
+      .gte('created_at', startISO)
+      .lte('created_at', endISO)
+    ;(evtByUser || []).forEach((e: any) => {
+      const b = bucket(e.user_id)
+      if (e.type === 'stage_change') b.stage_changes++
+      else if (e.type === 'call_made') b.calls_made++
+      else if (e.type === 'meeting_attended') b.meetings_attended++
+      else if (e.type === 'proposal_sent') b.proposals_sent++
+      else if (e.type === 'note') b.notes_added++
+      b.total++
+    })
+
+    data.user_activity = Object.values(acc).sort((a: any, b: any) => b.total - a.total)
   }
 
   return data

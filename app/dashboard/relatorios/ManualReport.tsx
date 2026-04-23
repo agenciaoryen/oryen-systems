@@ -39,7 +39,9 @@ const T = {
     m_mensagens_enviadas: 'Mensagens enviadas',
     m_leads_responderam: 'Contatos que responderam',
     pipelineCat: 'Pipeline',
-    m_pipeline: 'Distribuição por etapa',
+    m_pipeline: 'Distribuição por etapa (foto atual)',
+    m_pipeline_flow: 'Movimentações por etapa (fluxo do período)',
+    m_user_activity: 'Atividade por responsável',
     financialCat: 'Financeiro',
     m_receita: 'Receita total',
     m_despesas: 'Despesas totais',
@@ -88,7 +90,9 @@ const T = {
     m_mensagens_enviadas: 'Messages sent',
     m_leads_responderam: 'Leads that responded',
     pipelineCat: 'Pipeline',
-    m_pipeline: 'Distribution per stage',
+    m_pipeline: 'Distribution per stage (current snapshot)',
+    m_pipeline_flow: 'Transitions per stage (flow in period)',
+    m_user_activity: 'Activity per team member',
     financialCat: 'Financial',
     m_receita: 'Total revenue',
     m_despesas: 'Total expenses',
@@ -135,7 +139,9 @@ const T = {
     m_mensagens_enviadas: 'Mensajes enviados',
     m_leads_responderam: 'Contactos que respondieron',
     pipelineCat: 'Pipeline',
-    m_pipeline: 'Distribución por etapa',
+    m_pipeline: 'Distribución por etapa (foto actual)',
+    m_pipeline_flow: 'Transiciones por etapa (flujo del período)',
+    m_user_activity: 'Actividad por responsable',
     financialCat: 'Financiero',
     m_receita: 'Ingresos totales',
     m_despesas: 'Gastos totales',
@@ -256,6 +262,8 @@ export default function ManualReport({ lang }: ManualReportProps) {
     leads_responderam: true,
     // pipeline (on/off; se on, usa TODAS as stages ativas)
     pipeline: true,
+    pipeline_flow: true,   // fluxo de transições dentro do período
+    user_activity: true,   // atividade por responsável
     // financeiro
     receita: false,
     despesas: false,
@@ -328,6 +336,8 @@ export default function ManualReport({ lang }: ManualReportProps) {
           leads_responderam: picked.leads_responderam,
         },
         pipeline: picked.pipeline ? pipelineStageIds : [],
+        pipeline_flow: picked.pipeline_flow,
+        user_activity: picked.user_activity,
         financial: {
           receita: picked.receita,
           despesas: picked.despesas,
@@ -445,6 +455,8 @@ export default function ManualReport({ lang }: ManualReportProps) {
 
           <CategoryBlock title={t.pipelineCat}>
             <Chk label={t.m_pipeline} checked={picked.pipeline} onToggle={() => toggle('pipeline')} />
+            <Chk label={t.m_pipeline_flow} checked={picked.pipeline_flow} onToggle={() => toggle('pipeline_flow')} />
+            <Chk label={t.m_user_activity} checked={picked.user_activity} onToggle={() => toggle('user_activity')} />
           </CategoryBlock>
 
           <CategoryBlock title={t.financialCat}>
@@ -603,6 +615,54 @@ function ReportPreview({ data, t, lang }: { data: any; t: any; lang: Lang }) {
         </div>
       )}
 
+      {data.pipeline_flow && data.pipeline_flow.length > 0 && (
+        <div className="mt-3">
+          <p className="text-xs font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>{t.m_pipeline_flow}</p>
+          <div className="space-y-1 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            {data.pipeline_flow.map((p: any, i: number) => (
+              <div key={i} className="flex items-center justify-between">
+                <span>→ {p.label}</span>
+                <span className="font-bold">{p.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {data.user_activity && data.user_activity.length > 0 && (
+        <div className="mt-3">
+          <p className="text-xs font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>{t.m_user_activity}</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                  <th className="text-left py-1.5 pr-3 font-semibold">{lang === 'en' ? 'Member' : lang === 'es' ? 'Miembro' : 'Membro'}</th>
+                  <th className="text-right py-1.5 px-1 font-semibold">{t.m_leads_captados}</th>
+                  <th className="text-right py-1.5 px-1 font-semibold">{lang === 'en' ? 'Stage' : 'Etapa'}</th>
+                  <th className="text-right py-1.5 px-1 font-semibold">{lang === 'en' ? 'Calls' : lang === 'es' ? 'Llam.' : 'Ligaç.'}</th>
+                  <th className="text-right py-1.5 px-1 font-semibold">{lang === 'en' ? 'Meetings' : lang === 'es' ? 'Reun.' : 'Reun./Visitas'}</th>
+                  <th className="text-right py-1.5 px-1 font-semibold">{lang === 'en' ? 'Proposals' : lang === 'es' ? 'Propuestas' : 'Propostas'}</th>
+                  <th className="text-right py-1.5 pl-1 font-bold" style={{ color: 'var(--color-text-primary)' }}>{lang === 'en' ? 'Total' : 'Total'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.user_activity.map((u: any, i: number) => (
+                  <tr key={i} style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+                    <td className="py-1.5 pr-3">{u.user_name}</td>
+                    <td className="text-right py-1.5 px-1">{u.leads_created}</td>
+                    <td className="text-right py-1.5 px-1">{u.stage_changes}</td>
+                    <td className="text-right py-1.5 px-1">{u.calls_made}</td>
+                    <td className="text-right py-1.5 px-1">{u.meetings_attended}</td>
+                    <td className="text-right py-1.5 px-1">{u.proposals_sent}</td>
+                    <td className="text-right py-1.5 pl-1 font-bold" style={{ color: 'var(--color-text-primary)' }}>{u.total}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {data.meta_principal_nome && (
         <div className="mt-3 rounded-lg p-2.5" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
           <p className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>{t.m_meta_principal}</p>
@@ -664,6 +724,53 @@ function buildPrintHtml(data: any, t: any, lang: Lang): string {
         <tbody>
           ${data.pipeline.map((p: any) => `
             <tr><td>${safe(p.label)}</td><td style="text-align:right"><strong>${p.count}</strong></td></tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </section>
+  ` : ''
+
+  const pipelineFlowHtml = (data.pipeline_flow && data.pipeline_flow.length > 0) ? `
+    <section>
+      <h3>${safe(t.m_pipeline_flow)}</h3>
+      <table>
+        <tbody>
+          ${data.pipeline_flow.map((p: any) => `
+            <tr><td>→ ${safe(p.label)}</td><td style="text-align:right"><strong>${p.count}</strong></td></tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </section>
+  ` : ''
+
+  const userActivityHtml = (data.user_activity && data.user_activity.length > 0) ? `
+    <section>
+      <h3>${safe(t.m_user_activity)}</h3>
+      <table class="activity">
+        <thead>
+          <tr>
+            <th align="left">${lang === 'en' ? 'Member' : lang === 'es' ? 'Miembro' : 'Membro'}</th>
+            <th align="right">${safe(t.m_leads_captados)}</th>
+            <th align="right">${lang === 'en' ? 'Stage changes' : lang === 'es' ? 'Cambios etapa' : 'Mud. etapa'}</th>
+            <th align="right">${lang === 'en' ? 'Calls' : lang === 'es' ? 'Llamadas' : 'Ligações'}</th>
+            <th align="right">${lang === 'en' ? 'Meetings' : lang === 'es' ? 'Reuniones' : 'Reuniões/Visitas'}</th>
+            <th align="right">${lang === 'en' ? 'Proposals' : lang === 'es' ? 'Propuestas' : 'Propostas'}</th>
+            <th align="right">${lang === 'en' ? 'Notes' : lang === 'es' ? 'Notas' : 'Notas'}</th>
+            <th align="right"><strong>Total</strong></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.user_activity.map((u: any) => `
+            <tr>
+              <td>${safe(u.user_name)}</td>
+              <td align="right">${u.leads_created}</td>
+              <td align="right">${u.stage_changes}</td>
+              <td align="right">${u.calls_made}</td>
+              <td align="right">${u.meetings_attended}</td>
+              <td align="right">${u.proposals_sent}</td>
+              <td align="right">${u.notes_added}</td>
+              <td align="right"><strong>${u.total}</strong></td>
+            </tr>
           `).join('')}
         </tbody>
       </table>
@@ -733,10 +840,18 @@ function buildPrintHtml(data: any, t: any, lang: Lang): string {
     border-bottom: 1px solid #e5e7eb;
   }
   table { width: 100%; border-collapse: collapse; }
-  table td {
+  table td, table th {
     padding: 6px 8px;
     border-bottom: 1px solid #f1f5f9;
     font-size: 10pt;
+  }
+  table.activity th {
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid #e5e7eb;
   }
   footer {
     margin-top: 30px;
@@ -763,6 +878,8 @@ function buildPrintHtml(data: any, t: any, lang: Lang): string {
   ${rowsHtml ? `<div class="kpi-grid">${rowsHtml}</div>` : ''}
   ${channelsHtml}
   ${pipelineHtml}
+  ${pipelineFlowHtml}
+  ${userActivityHtml}
   ${goalHtml}
 
   <footer>

@@ -886,11 +886,21 @@ export default function CrmPage() {
 
       if (error) throw error
 
-      // Registrar evento
+      // Registrar evento com dados estruturados (pros relatórios de fluxo)
+      const fromStageLabel = pipelineStages.find(s => s.name === originalStage)?.label || originalStage
+      const toStageLabel = pipelineStages.find(s => s.name === targetStage)?.label || targetStage
       await supabase.from('lead_events').insert({
         lead_id: draggedLeadId,
         type: 'stage_change',
-        content: `Alterou etapa de ${originalStage} para ${targetStage}`
+        content: `Alterou etapa de ${originalStage} para ${targetStage}`,
+        details: {
+          from_stage: originalStage,
+          to_stage: targetStage,
+          from_stage_label: fromStageLabel,
+          to_stage_label: toStageLabel,
+          source: 'kanban_drag',
+        },
+        user_id: user?.id || null,
       })
 
     } catch (err) {
