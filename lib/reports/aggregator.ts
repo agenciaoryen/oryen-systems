@@ -62,6 +62,19 @@ function getPeriodRange(frequency: string): { start: Date; end: Date; label: str
   return { start, end, label: now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) }
 }
 
+/**
+ * Monta o range a partir de strings 'YYYY-MM-DD'.
+ * `from` e `to` são inclusivos — entrada é hora 00:00:00 do from e 23:59:59 do to.
+ */
+function getCustomRange(from: string, to: string): { start: Date; end: Date; label: string } {
+  const start = new Date(`${from}T00:00:00`)
+  const end = new Date(`${to}T23:59:59.999`)
+  const label = from === to
+    ? start.toLocaleDateString('pt-BR')
+    : `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString('pt-BR')}`
+  return { start, end, label }
+}
+
 export async function aggregateReportData(
   supabase: SupabaseClient,
   orgId: string,
@@ -75,14 +88,19 @@ export async function aggregateReportData(
   const goalMetrics = metrics.goals || {}
   const followupMetrics = metrics.followup || {}
 
-  const { start, end, label: period } = getPeriodRange(reportConfig.frequency)
+  // Suporta range custom (relatório manual) ou baseado em frequency (relatório agendado)
+  const { start, end, label: period } =
+    reportConfig.custom_from && reportConfig.custom_to
+      ? getCustomRange(reportConfig.custom_from, reportConfig.custom_to)
+      : getPeriodRange(reportConfig.frequency)
   const startISO = start.toISOString()
   const endISO = end.toISOString()
 
   // Org name
-  const { data: org } = await supabase.from('organizations').select('name, currency').eq('id', orgId).single()
+  const { data: org } = await supabase.from('orgs').select('name').eq('id', orgId).single()
+  const { data: siteCfg } = await supabase.from('site_settings').select('currency').eq('org_id', orgId).maybeSingle()
   const orgName = org?.name || 'Organização'
-  const currency = org?.currency || 'BRL'
+  const currency = siteCfg?.currency || 'BRL'
 
   const data: ReportData = {
     orgName,

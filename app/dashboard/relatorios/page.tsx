@@ -12,6 +12,7 @@ import {
   CheckCircle2, XCircle, Send, DollarSign, Globe, Target, RefreshCw, Zap
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
+import ManualReport from './ManualReport'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -592,6 +593,11 @@ export default function ReportsPage() {
         >
           <Plus size={18} /> {t.newReport}
         </button>
+      </div>
+
+      {/* RELATÓRIO MANUAL — sempre visível, independente de ter reports agendados ou WhatsApp conectado */}
+      <div className="max-w-full mb-8">
+        <ManualReport lang={userLang} />
       </div>
 
       {/* LOADING */}
