@@ -354,11 +354,12 @@ export async function aggregateReportData(
     data.followup_esgotados = exhRes.count || 0
   }
 
-  // Pre-busca lead_ids da org pra usar em queries de lead_events (mais resiliente que inner join)
+  // Pre-busca lead_ids da org pra usar em queries de lead_events (mais resiliente que inner join).
+  // Limite alto cobre plano Business (8000 leads ativos) com folga — default do PostgREST é 1000.
   const needsLeadIds = !!(metrics.pipeline_flow || metrics.user_activity || metrics.pipeline_flow_by_user)
   let orgLeadIds: string[] = []
   if (needsLeadIds) {
-    const { data: leadsRows } = await supabase.from('leads').select('id').eq('org_id', orgId)
+    const { data: leadsRows } = await supabase.from('leads').select('id').eq('org_id', orgId).limit(20000)
     orgLeadIds = (leadsRows || []).map((r: any) => r.id)
   }
 
