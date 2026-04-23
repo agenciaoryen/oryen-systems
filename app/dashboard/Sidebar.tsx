@@ -37,6 +37,7 @@ import {
   CreditCard,
   Zap,
   Shield,
+  Plug,
   type LucideIcon
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
@@ -71,6 +72,7 @@ const TRANSLATIONS = {
       propertyStats: 'Estatísticas',
       mySite: 'Meu Site',
       settings: 'Configurações',
+      integrations: 'Integrações',
       staffPanel: 'Painel Staff',
     },
     sections: {
@@ -113,6 +115,7 @@ const TRANSLATIONS = {
       propertyStats: 'Statistics',
       mySite: 'My Site',
       settings: 'Settings',
+      integrations: 'Integrations',
       staffPanel: 'Staff Panel',
     },
     sections: {
@@ -155,6 +158,7 @@ const TRANSLATIONS = {
       propertyStats: 'Estadísticas',
       mySite: 'Mi Sitio',
       settings: 'Configuración',
+      integrations: 'Integraciones',
       staffPanel: 'Panel Staff',
     },
     sections: {
@@ -428,6 +432,7 @@ export default function Sidebar() {
     {
       key: 'config',
       items: [
+        { href: '/dashboard/integrations', label: t.menu.integrations, icon: Plug },
         { href: '/dashboard/settings', label: t.menu.settings, icon: Settings },
       ],
     },
