@@ -38,12 +38,13 @@ export interface ActiveToken {
  * Retorna null se não existe ou está desconectada.
  */
 export async function getGoogleCalendarIntegration(userId: string): Promise<IntegrationRecord | null> {
+  // Inclui 'error' pra permitir retry. Só filtra 'disconnected' (registros antigos já revogados).
   const { data, error } = await supabaseAdmin
     .from('integrations')
     .select('*')
     .eq('user_id', userId)
     .eq('provider', 'google_calendar')
-    .eq('status', 'active')
+    .neq('status', 'disconnected')
     .maybeSingle()
 
   if (error) {

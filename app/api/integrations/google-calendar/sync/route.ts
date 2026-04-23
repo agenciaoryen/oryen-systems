@@ -88,7 +88,18 @@ export async function POST(request: NextRequest) {
     })
   } catch (err: any) {
     console.error('[gcal sync] falhou:', err.message)
-    await markIntegrationError(token.integrationId, err.message)
+    // Só marca 'error' se for problema de autenticação/token — demais erros são
+    // transitórios (falha de upsert, rate limit, etc) e não exigem reconexão.
+    const isAuthError = /token|unauthorized|401|403/i.test(err.message)
+    if (isAuthError) {
+      await markIntegrationError(token.integrationId, err.message)
+    } else {
+      // Mantém status='active' mas salva o erro pro debug
+      await supabaseAdmin
+        .from('integrations')
+        .update({ last_sync_error: err.message })
+        .eq('id', token.integrationId)
+    }
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
