@@ -354,23 +354,14 @@ export async function aggregateReportData(
     data.followup_esgotados = exhRes.count || 0
   }
 
-  // Pre-busca lead_ids da org pra usar em queries de lead_events (mais resiliente que inner join).
-  // Limite alto cobre plano Business (8000 leads ativos) com folga — default do PostgREST é 1000.
-  const needsLeadIds = !!(metrics.pipeline_flow || metrics.user_activity || metrics.pipeline_flow_by_user)
-  let orgLeadIds: string[] = []
-  if (needsLeadIds) {
-    const { data: leadsRows } = await supabase.from('leads').select('id').eq('org_id', orgId).limit(20000)
-    orgLeadIds = (leadsRows || []).map((r: any) => r.id)
-  }
-
   // ═══ PIPELINE FLOW — quantos leads foram MOVIDOS pra cada etapa no período ═══
   // Lê lead_events.type='stage_change' com details.to_stage preenchido (eventos após esta migração).
-  if (metrics.pipeline_flow && orgLeadIds.length > 0) {
+  if (metrics.pipeline_flow) {
     const { data: flowEvents } = await supabase
       .from('lead_events')
       .select('details')
       .eq('type', 'stage_change')
-      .in('lead_id', orgLeadIds)
+      .eq('org_id', orgId)
       .gte('created_at', startISO)
       .lte('created_at', endISO)
 
@@ -440,14 +431,14 @@ export async function aggregateReportData(
     })
 
     // Eventos por usuário no período (stage_change, call_made, meeting_attended, proposal_sent, note)
-    const evtByUser = orgLeadIds.length > 0 ? (await supabase
+    const { data: evtByUser } = await supabase
       .from('lead_events')
       .select('type, user_id')
       .in('type', ['stage_change', 'call_made', 'meeting_attended', 'proposal_sent', 'note'])
-      .in('lead_id', orgLeadIds)
+      .eq('org_id', orgId)
       .gte('created_at', startISO)
-      .lte('created_at', endISO)).data : []
-    ;(evtByUser as any[] || []).forEach((e: any) => {
+      .lte('created_at', endISO)
+    ;(evtByUser || []).forEach((e: any) => {
       const b = bucket(e.user_id)
       if (e.type === 'stage_change') b.stage_changes++
       else if (e.type === 'call_made') b.calls_made++
@@ -462,13 +453,13 @@ export async function aggregateReportData(
 
   // ═══ MATRIZ RESPONSÁVEL × ETAPA DE DESTINO ═══
   // Pra cada responsável, quantos leads moveu pra cada etapa no período.
-  if (metrics.pipeline_flow_by_user && orgLeadIds.length > 0) {
+  if (metrics.pipeline_flow_by_user) {
     const [eventsRes, stagesRes, membersRes] = await Promise.all([
       supabase
         .from('lead_events')
         .select('user_id, details')
         .eq('type', 'stage_change')
-        .in('lead_id', orgLeadIds)
+        .eq('org_id', orgId)
         .gte('created_at', startISO)
         .lte('created_at', endISO),
       supabase
