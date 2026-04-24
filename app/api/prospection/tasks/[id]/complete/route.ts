@@ -165,13 +165,21 @@ async function executeAction(
 async function advanceEnrollment(enrollment: any, orgId: string) {
   const nextPosition = enrollment.current_step_position + 1
 
-  // Verifica se há próximo step
-  const { data: nextStep } = await supabase
-    .from('prospection_steps')
-    .select('id, position, day_offset')
-    .eq('sequence_id', enrollment.sequence_id)
-    .eq('position', nextPosition)
-    .maybeSingle()
+  // Busca step atual (pra calcular delta de day_offset) e próximo em paralelo
+  const [{ data: currentStep }, { data: nextStep }] = await Promise.all([
+    supabase
+      .from('prospection_steps')
+      .select('day_offset')
+      .eq('sequence_id', enrollment.sequence_id)
+      .eq('position', enrollment.current_step_position)
+      .maybeSingle(),
+    supabase
+      .from('prospection_steps')
+      .select('*')
+      .eq('sequence_id', enrollment.sequence_id)
+      .eq('position', nextPosition)
+      .maybeSingle(),
+  ])
 
   if (!nextStep) {
     // Acabou a sequence
@@ -180,15 +188,23 @@ async function advanceEnrollment(enrollment: any, orgId: string) {
       .update({
         status: 'completed',
         completed_at: new Date().toISOString(),
+        next_action_at: null,
       })
       .eq('id', enrollment.id)
     return
   }
 
-  // Atualiza enrollment pro próximo step e define next_action_at
+  // Delta de dias entre o step atual e o próximo
+  // Ex: atual=dia 1, próximo=dia 1 → delta 0 (dispara agora)
+  // Ex: atual=dia 3, próximo=dia 5 → delta 2 (dispara em 2 dias)
+  const delta = Math.max(
+    (nextStep.day_offset || 0) - (currentStep?.day_offset || 0),
+    0
+  )
   const nextActionAt = new Date()
-  nextActionAt.setDate(nextActionAt.getDate() + (nextStep.day_offset || 0))
+  nextActionAt.setDate(nextActionAt.getDate() + delta)
 
+  // Avança enrollment
   await supabase
     .from('prospection_enrollments')
     .update({
@@ -196,6 +212,50 @@ async function advanceEnrollment(enrollment: any, orgId: string) {
       next_action_at: nextActionAt.toISOString(),
     })
     .eq('id', enrollment.id)
+
+  // Cria a task do próximo step IMEDIATAMENTE (pra não depender do cron)
+  // Se o step é automatizado (ex: email), deixa o motor disparar no próximo ciclo
+  if (nextStep.execution_mode === 'manual') {
+    const assigneeId = await resolveAssignee(orgId, nextStep)
+    await supabase.from('prospection_tasks').insert({
+      org_id: orgId,
+      enrollment_id: enrollment.id,
+      step_id: nextStep.id,
+      lead_id: enrollment.lead_id,
+      assignee_user_id: assigneeId,
+      due_at: nextActionAt.toISOString(),
+      status: 'pending',
+    })
+  }
+}
+
+// Resolve o assignee da próxima task (specific_user / role_based / team_round_robin)
+async function resolveAssignee(orgId: string, step: any): Promise<string | null> {
+  if (step.assignee_mode === 'specific_user') {
+    return step.assignee_user_id
+  }
+
+  let query = supabase.from('users').select('id').eq('org_id', orgId)
+  if (step.assignee_mode === 'role_based' && step.assignee_role) {
+    query = query.eq('role', step.assignee_role)
+  }
+
+  const { data: users } = await query
+  if (!users || users.length === 0) return null
+
+  // Round-robin por quem tem menos tasks abertas
+  const counts: { id: string; count: number }[] = []
+  for (const u of users) {
+    const { count } = await supabase
+      .from('prospection_tasks')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', orgId)
+      .eq('assignee_user_id', u.id)
+      .in('status', ['pending', 'in_progress', 'overdue', 'queued'])
+    counts.push({ id: u.id, count: count || 0 })
+  }
+  counts.sort((a, b) => a.count - b.count)
+  return counts[0]?.id || null
 }
 
 async function createRetryTask(originalTask: any, hoursDelay: number) {
