@@ -126,6 +126,15 @@ export async function processInboundMessage(msg: NormalizedInbound): Promise<Pro
         console.warn(`[Webhook:Processor] Score tracking error (non-fatal): ${err.message}`)
       }
     })
+
+    // ─── 2c. Prospection: pausar enrollment ativo se o lead respondeu ───
+    after(async () => {
+      try {
+        await supabase.rpc('prospection_handle_lead_reply', { p_lead_id: lead.id })
+      } catch (err: any) {
+        console.warn(`[Webhook:Processor] Prospection reply handler error (non-fatal): ${err.message}`)
+      }
+    })
   }
 
   // ─── 3. Se atendente → setar STOP e marcar first_response_at ───
