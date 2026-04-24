@@ -70,6 +70,51 @@ export async function GET(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const auth = await requireAuth(request)
+    if (auth instanceof NextResponse) return auth
+
+    if (auth.role !== 'admin' && !auth.isStaff) {
+      return NextResponse.json({ error: 'Somente admin pode deletar sequences' }, { status: 403 })
+    }
+
+    const orgId = resolveOrgId(auth, null)
+    const gate = await ensureProspectionAccess(orgId)
+    if (gate) return gate
+
+    const { id } = await context.params
+
+    // Verifica se há enrollments ativos
+    const { count: activeCount } = await supabase
+      .from('prospection_enrollments')
+      .select('id', { count: 'exact', head: true })
+      .eq('sequence_id', id)
+      .eq('status', 'active')
+
+    if ((activeCount || 0) > 0) {
+      return NextResponse.json(
+        { error: `${activeCount} lead(s) ainda ativos nesta sequence. Pause-os antes de deletar.` },
+        { status: 400 }
+      )
+    }
+
+    const { error } = await supabase
+      .from('prospection_sequences')
+      .delete()
+      .eq('id', id)
+      .eq('org_id', orgId)
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
