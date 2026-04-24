@@ -3,7 +3,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '@/lib/AuthContext'
 import {
   Rocket,
@@ -22,7 +22,7 @@ import {
   X,
 } from 'lucide-react'
 import Link from 'next/link'
-import { Settings2, ExternalLink } from 'lucide-react'
+import { Settings2, ExternalLink, Tag, ChevronDown } from 'lucide-react'
 import {
   CHANNEL_LABELS,
   CALL_OUTCOME_LABELS,
@@ -289,6 +289,8 @@ export default function MyDayPage() {
               tone="danger"
               tasks={data!.buckets.overdue}
               onComplete={setCompletingTask}
+              stages={data!.stages ?? []}
+              onRefresh={() => fetchData(true)}
               t={t}
             />
             <Bucket
@@ -298,6 +300,8 @@ export default function MyDayPage() {
               tone="primary"
               tasks={data!.buckets.now}
               onComplete={setCompletingTask}
+              stages={data!.stages ?? []}
+              onRefresh={() => fetchData(true)}
               t={t}
             />
             <Bucket
@@ -307,6 +311,8 @@ export default function MyDayPage() {
               tone="neutral"
               tasks={data!.buckets.today}
               onComplete={setCompletingTask}
+              stages={data!.stages ?? []}
+              onRefresh={() => fetchData(true)}
               t={t}
             />
           </div>
@@ -326,6 +332,8 @@ export default function MyDayPage() {
               tone="muted"
               tasks={data!.buckets.tomorrow}
               onComplete={setCompletingTask}
+              stages={data!.stages ?? []}
+              onRefresh={() => fetchData(true)}
               compact
               t={t}
             />
@@ -382,6 +390,8 @@ function Bucket({
   tone,
   tasks,
   onComplete,
+  stages,
+  onRefresh,
   compact,
   t,
 }: {
@@ -391,6 +401,8 @@ function Bucket({
   tone: 'danger' | 'primary' | 'neutral' | 'muted'
   tasks: any[]
   onComplete: (task: any) => void
+  stages: { value: string; label: string; color?: string }[]
+  onRefresh: () => void
   compact?: boolean
   t: (typeof TRANSLATIONS)['pt']
 }) {
@@ -433,6 +445,8 @@ function Bucket({
               key={task.id}
               task={task}
               onComplete={() => onComplete(task)}
+              stages={stages}
+              onRefresh={onRefresh}
               compact={compact}
               t={t}
             />
@@ -507,11 +521,15 @@ function RespondedBucket({
 function TaskCard({
   task,
   onComplete,
+  stages,
+  onRefresh,
   compact,
   t,
 }: {
   task: any
   onComplete: () => void
+  stages: { value: string; label: string; color?: string }[]
+  onRefresh: () => void
   compact?: boolean
   t: (typeof TRANSLATIONS)['pt']
 }) {
@@ -550,8 +568,16 @@ function TaskCard({
             </span>
           </div>
           <div className="font-semibold text-sm truncate">{lead?.name ?? '—'}</div>
-          <div className="text-xs text-muted-foreground truncate">
-            {lead?.phone ?? lead?.email ?? ''} {lead?.city ? `· ${lead.city}` : ''}
+          <div className="text-xs text-muted-foreground truncate flex items-center gap-2 flex-wrap">
+            <span>{lead?.phone ?? lead?.email ?? ''}{lead?.city ? ` · ${lead.city}` : ''}</span>
+            {lead?.id && !compact && (
+              <StagePill
+                leadId={lead.id}
+                currentStage={lead.stage}
+                stages={stages}
+                onChanged={onRefresh}
+              />
+            )}
           </div>
           {!compact && step?.instruction && (
             <div className="mt-2 text-xs bg-muted/40 border border-border rounded px-2 py-1.5 text-muted-foreground">
@@ -897,6 +923,110 @@ function CompleteModal({
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STAGE PILL — dropdown inline pra mudar o stage do lead sem sair do card
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function StagePill({
+  leadId,
+  currentStage,
+  stages,
+  onChanged,
+}: {
+  leadId: string
+  currentStage: string | null
+  stages: { value: string; label: string; color?: string }[]
+  onChanged: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [localStage, setLocalStage] = useState(currentStage)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setLocalStage(currentStage)
+  }, [currentStage])
+
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    if (open) document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [open])
+
+  async function changeStage(newStage: string) {
+    if (newStage === localStage) { setOpen(false); return }
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/prospection/leads/${leadId}/stage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage: newStage }),
+      })
+      if (res.ok) {
+        setLocalStage(newStage)
+        setOpen(false)
+        onChanged()
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (stages.length === 0) return null
+
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          setOpen(!open)
+        }}
+        disabled={saving}
+        className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border border-border bg-muted/40 hover:border-primary/50 hover:bg-muted transition disabled:opacity-50"
+      >
+        <Tag className="w-2.5 h-2.5" />
+        <span className="normal-case font-semibold">{localStage ?? '—'}</span>
+        <ChevronDown className="w-3 h-3" />
+      </button>
+
+      {open && (
+        <div className="absolute z-20 top-full left-0 mt-1 min-w-[180px] max-h-64 overflow-y-auto rounded-lg shadow-xl border border-border bg-popover py-1">
+          {stages.map((s) => {
+            const active = s.value === localStage
+            return (
+              <button
+                key={s.value}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  changeStage(s.value)
+                }}
+                className={`w-full text-left px-3 py-1.5 text-xs transition flex items-center gap-2 ${
+                  active
+                    ? 'bg-primary/10 text-primary font-semibold'
+                    : 'hover:bg-muted text-foreground'
+                }`}
+              >
+                {s.color && (
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: s.color }}
+                  />
+                )}
+                <span className="truncate">{s.label}</span>
+                {active && <Check className="w-3 h-3 ml-auto" />}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
