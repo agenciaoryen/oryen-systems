@@ -138,18 +138,47 @@ export async function GET(request: NextRequest) {
       .order('paused_at', { ascending: false })
       .limit(20)
 
-    let doneTodayQuery = supabase
+    // Tasks CONCLUÍDAS hoje (pra bloco "Feitas hoje" agrupado por etapa)
+    const startOfToday = new Date(now.toISOString().slice(0, 10)).toISOString()
+    let doneQuery = supabase
       .from('prospection_tasks')
-      .select('id', { count: 'exact', head: true })
+      .select(`
+        id, step_id, lead_id, assignee_user_id, outcome, completed_at, notes,
+        step:prospection_steps(id, position, channel, title, execution_mode),
+        lead:leads(id, name, phone, email, city, stage),
+        assignee:users!prospection_tasks_assignee_user_id_fkey(id, full_name)
+      `)
       .eq('org_id', orgId)
       .eq('status', 'done')
-      .gte('completed_at', new Date(now.toISOString().slice(0, 10)).toISOString())
+      .gte('completed_at', startOfToday)
+      .order('completed_at', { ascending: false })
 
     if (viewMode === 'self' || viewMode === 'user') {
-      doneTodayQuery = doneTodayQuery.eq('assignee_user_id', viewUserId!)
+      doneQuery = doneQuery.eq('assignee_user_id', viewUserId!)
     }
 
-    const doneTodayCount = await doneTodayQuery
+    const { data: doneToday } = await doneQuery
+
+    // Step executions AUTOMATIZADAS de hoje (emails disparados pelo motor)
+    // As automated não geram task, então buscamos via step_executions
+    let autoExecQuery = supabase
+      .from('prospection_step_executions')
+      .select(`
+        id, step_id, lead_id, result, outcome, executed_at, variant_used,
+        step:prospection_steps(id, position, channel, title, execution_mode),
+        lead:leads(id, name, phone, email, stage)
+      `)
+      .eq('org_id', orgId)
+      .gte('executed_at', startOfToday)
+      .order('executed_at', { ascending: false })
+      .limit(200)
+
+    const { data: autoExecs } = await autoExecQuery
+    // Filtramos só os automated (as manuais já estão em doneToday)
+    const automatedExecs = (autoExecs || []).filter((e: any) => {
+      const step = Array.isArray(e.step) ? e.step[0] : e.step
+      return step?.execution_mode === 'automated' && e.result === 'success'
+    })
 
     // Stages do pipeline ATIVO da org (pro modal de conclusão e pill inline)
     const { data: stageRows } = await supabase
@@ -162,13 +191,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       buckets,
       responded: respondedEnrollments || [],
+      done_today: doneToday || [],
+      automated_today: automatedExecs,
       counts: {
         overdue: buckets.overdue.length,
         now: buckets.now.length,
         today: buckets.today.length,
         tomorrow: buckets.tomorrow.length,
         responded: (respondedEnrollments || []).length,
-        done_today: doneTodayCount.count || 0,
+        done_today: (doneToday || []).length + automatedExecs.length,
       },
       daily_capacity: dailyCapacity,
       user_id: currentUserId,

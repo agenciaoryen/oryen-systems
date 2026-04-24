@@ -153,6 +153,8 @@ interface MyDayResponse {
     tomorrow: any[]
   }
   responded: any[]
+  done_today: any[]
+  automated_today: any[]
   counts: {
     overdue: number
     now: number
@@ -322,69 +324,63 @@ export default function MyDayPage() {
       {hasNothing ? (
         <EmptyState message={t.emptyAll} />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Coluna 1: Overdue + Now + Today */}
-          <div className="space-y-6">
-            <Bucket
-              title={t.overdue}
-              description={t.overdueDesc}
-              icon={<AlertTriangle className="w-4 h-4" />}
-              tone="danger"
-              tasks={data!.buckets.overdue}
+        <div className="space-y-5 max-w-4xl mx-auto">
+          <Section
+            title="A fazer hoje"
+            description="Agrupado por etapa — clica na etapa para expandir ou fechar"
+            icon={<Clock className="w-4 h-4" />}
+            tone="primary"
+            count={data!.counts.overdue + data!.counts.now + data!.counts.today}
+            defaultOpen
+          >
+            <GroupedByStep
+              tasks={[...data!.buckets.overdue, ...data!.buckets.now, ...data!.buckets.today]}
               onComplete={setCompletingTask}
               stages={data!.stages ?? []}
               onRefresh={() => fetchData(true)}
               showAssignee={data!.view_mode !== 'self'}
               t={t}
             />
-            <Bucket
-              title={t.todayNow}
-              description={t.todayNowDesc}
-              icon={<Clock className="w-4 h-4" />}
-              tone="primary"
-              tasks={data!.buckets.now}
-              onComplete={setCompletingTask}
-              stages={data!.stages ?? []}
-              onRefresh={() => fetchData(true)}
-              showAssignee={data!.view_mode !== 'self'}
-              t={t}
-            />
-            <Bucket
-              title={t.todayLater}
-              description={t.todayLaterDesc}
-              icon={<Clock className="w-4 h-4" />}
-              tone="neutral"
-              tasks={data!.buckets.today}
-              onComplete={setCompletingTask}
-              stages={data!.stages ?? []}
-              onRefresh={() => fetchData(true)}
-              showAssignee={data!.view_mode !== 'self'}
-              t={t}
-            />
-          </div>
+          </Section>
 
-          {/* Coluna 2: Respondidos + Amanhã */}
-          <div className="space-y-6">
-            <RespondedBucket
+          {data!.responded.length > 0 && (
+            <Section
               title={t.responded}
               description={t.respondedDesc}
-              items={data!.responded}
-              t={t}
-            />
-            <Bucket
-              title={t.tomorrow}
-              description={t.tomorrowDesc}
-              icon={<Clock className="w-4 h-4" />}
-              tone="muted"
-              tasks={data!.buckets.tomorrow}
-              onComplete={setCompletingTask}
-              stages={data!.stages ?? []}
-              onRefresh={() => fetchData(true)}
+              icon={<Inbox className="w-4 h-4" />}
+              tone="success"
+              count={data!.counts.responded}
+              defaultOpen
+            >
+              <RespondedList items={data!.responded} t={t} />
+            </Section>
+          )}
+
+          <Section
+            title="Feitas hoje"
+            description="Histórico do dia — gestor acompanha execução em tempo real"
+            icon={<CheckCircle2 className="w-4 h-4" />}
+            tone="neutral"
+            count={data!.counts.done_today}
+            defaultOpen={false}
+          >
+            <DoneTodayView
+              tasks={data!.done_today}
+              automated={data!.automated_today}
               showAssignee={data!.view_mode !== 'self'}
-              compact
-              t={t}
             />
-          </div>
+          </Section>
+
+          <Section
+            title="Amanhã"
+            description="Preview do que vem — planejamento do próximo dia"
+            icon={<Clock className="w-4 h-4" />}
+            tone="muted"
+            count={data!.buckets.tomorrow.length}
+            defaultOpen={false}
+          >
+            <TomorrowSummary tasks={data!.buckets.tomorrow} showAssignee={data!.view_mode !== 'self'} />
+          </Section>
         </div>
       )}
 
@@ -430,7 +426,537 @@ function StatPill({
   )
 }
 
-function Bucket({
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECTION — container colapsável usado pelas 4 seções principais do Meu Dia
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function Section({
+  title,
+  description,
+  icon,
+  tone,
+  count,
+  defaultOpen,
+  children,
+}: {
+  title: string
+  description?: string
+  icon: React.ReactNode
+  tone: 'primary' | 'success' | 'neutral' | 'muted' | 'danger'
+  count: number
+  defaultOpen?: boolean
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen ?? true)
+
+  const toneColor =
+    tone === 'primary' ? 'var(--color-primary)' :
+    tone === 'success' ? 'var(--color-success, #10b981)' :
+    tone === 'danger' ? 'var(--color-danger, #ef4444)' :
+    tone === 'muted' ? 'var(--color-text-tertiary)' :
+    'var(--color-text-primary)'
+
+  return (
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{
+        background: 'var(--color-bg-surface)',
+        border: '1px solid var(--color-border)',
+      }}
+    >
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-3 px-5 py-4 transition text-left"
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+      >
+        <div
+          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: 'var(--color-bg-elevated)', color: toneColor }}
+        >
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-bold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+              {title}
+            </h3>
+            <span
+              className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+              style={{
+                background: count > 0 ? toneColor : 'var(--color-bg-elevated)',
+                color: count > 0 ? 'var(--color-text-on-primary)' : 'var(--color-text-tertiary)',
+                border: '1px solid var(--color-border)',
+              }}
+            >
+              {count}
+            </span>
+          </div>
+          {description && (
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+              {description}
+            </p>
+          )}
+        </div>
+        <ChevronDown
+          className="w-4 h-4 flex-shrink-0 transition-transform"
+          style={{
+            color: 'var(--color-text-tertiary)',
+            transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+          }}
+        />
+      </button>
+      {open && (
+        <div className="px-5 pb-5 pt-1" style={{ borderTop: '1px solid var(--color-border)' }}>
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GROUPED BY STEP — agrupa tasks por etapa da cadência (A FAZER)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function GroupedByStep({
+  tasks,
+  onComplete,
+  stages,
+  onRefresh,
+  showAssignee,
+  t,
+}: {
+  tasks: any[]
+  onComplete: (task: any) => void
+  stages: { value: string; label: string; color?: string }[]
+  onRefresh: () => void
+  showAssignee?: boolean
+  t: (typeof TRANSLATIONS)['pt']
+}) {
+  if (tasks.length === 0) {
+    return (
+      <div className="text-center py-6 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+        Nenhuma task pendente hoje.
+      </div>
+    )
+  }
+
+  // Agrupa por step_id
+  const groups = new Map<string, { step: any; tasks: any[] }>()
+  for (const task of tasks) {
+    const step = Array.isArray(task.step) ? task.step[0] : task.step
+    const key = step?.id || 'unknown'
+    if (!groups.has(key)) groups.set(key, { step, tasks: [] })
+    groups.get(key)!.tasks.push(task)
+  }
+  const sorted = Array.from(groups.values()).sort(
+    (a, b) => (a.step?.position ?? 99) - (b.step?.position ?? 99)
+  )
+
+  return (
+    <div className="space-y-4 mt-3">
+      {sorted.map(({ step, tasks: stepTasks }) => (
+        <StepGroup
+          key={step?.id || Math.random()}
+          step={step}
+          tasks={stepTasks}
+          onComplete={onComplete}
+          stages={stages}
+          onRefresh={onRefresh}
+          showAssignee={showAssignee}
+          t={t}
+        />
+      ))}
+    </div>
+  )
+}
+
+function StepGroup({
+  step,
+  tasks,
+  onComplete,
+  stages,
+  onRefresh,
+  showAssignee,
+  t,
+}: {
+  step: any
+  tasks: any[]
+  onComplete: (task: any) => void
+  stages: { value: string; label: string; color?: string }[]
+  onRefresh: () => void
+  showAssignee?: boolean
+  t: (typeof TRANSLATIONS)['pt']
+}) {
+  const [open, setOpen] = useState(true)
+  const channel = step?.channel ?? 'whatsapp'
+  const Icon = channel === 'email' ? Mail : channel === 'call' ? Phone : MessageSquare
+
+  return (
+    <div
+      className="rounded-lg"
+      style={{
+        background: 'var(--color-bg-elevated)',
+        border: '1px solid var(--color-border)',
+      }}
+    >
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left transition"
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+      >
+        <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-primary)' }} />
+        <span className="text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+          Etapa {step?.position} · {step?.title || CHANNEL_LABELS[channel as keyof typeof CHANNEL_LABELS]}
+        </span>
+        <span
+          className="text-[11px] font-bold px-1.5 py-0.5 rounded ml-auto"
+          style={{
+            background: 'var(--color-primary-subtle)',
+            color: 'var(--color-primary)',
+          }}
+        >
+          {tasks.length}
+        </span>
+        <ChevronDown
+          className="w-3.5 h-3.5 transition-transform"
+          style={{
+            color: 'var(--color-text-tertiary)',
+            transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+          }}
+        />
+      </button>
+      {open && (
+        <div className="px-3 pb-3 pt-1 space-y-2">
+          {tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onComplete={() => onComplete(task)}
+              stages={stages}
+              onRefresh={onRefresh}
+              showAssignee={showAssignee}
+              t={t}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RESPONDED LIST — leads que responderam (link direto pro lead)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function RespondedList({
+  items,
+  t,
+}: {
+  items: any[]
+  t: (typeof TRANSLATIONS)['pt']
+}) {
+  return (
+    <div className="space-y-2 mt-3">
+      {items.map((item) => {
+        const lead = Array.isArray(item.lead) ? item.lead[0] : item.lead
+        return (
+          <Link
+            key={item.id}
+            href={`/dashboard/crm/${item.lead_id}`}
+            className="flex items-center justify-between gap-3 p-3 rounded-lg transition group"
+            style={{
+              background: 'var(--color-bg-elevated)',
+              border: '1px solid var(--color-border)',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--color-success, #10b981)')}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
+                {lead?.name ?? '—'}
+              </div>
+              <div className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>
+                {lead?.phone ?? lead?.email ?? ''}
+              </div>
+            </div>
+            <div
+              className="flex items-center gap-1 text-xs font-semibold group-hover:translate-x-0.5 transition"
+              style={{ color: 'var(--color-success, #10b981)' }}
+            >
+              {t.goToQualify}
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </Link>
+        )
+      })}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DONE TODAY — histórico do dia agrupado por etapa
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function DoneTodayView({
+  tasks,
+  automated,
+  showAssignee,
+}: {
+  tasks: any[]
+  automated: any[]
+  showAssignee?: boolean
+}) {
+  const allItems = [
+    ...tasks.map((t: any) => ({ kind: 'manual', item: t })),
+    ...automated.map((e: any) => ({ kind: 'auto', item: e })),
+  ]
+
+  if (allItems.length === 0) {
+    return (
+      <div className="text-center py-6 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+        Nada foi feito hoje ainda.
+      </div>
+    )
+  }
+
+  // Agrupa por step_id
+  const groups = new Map<string, { step: any; items: any[]; kind: 'manual' | 'auto' }>()
+  for (const { kind, item } of allItems) {
+    const step = Array.isArray(item.step) ? item.step[0] : item.step
+    const key = step?.id || 'unknown'
+    if (!groups.has(key)) groups.set(key, { step, items: [], kind })
+    groups.get(key)!.items.push({ kind, ...item })
+  }
+  const sorted = Array.from(groups.values()).sort(
+    (a, b) => (a.step?.position ?? 99) - (b.step?.position ?? 99)
+  )
+
+  return (
+    <div className="space-y-2 mt-3">
+      {sorted.map(({ step, items, kind }) => (
+        <DoneStepGroup key={step?.id || Math.random()} step={step} items={items} kind={kind} showAssignee={showAssignee} />
+      ))}
+    </div>
+  )
+}
+
+function DoneStepGroup({
+  step,
+  items,
+  kind,
+  showAssignee,
+}: {
+  step: any
+  items: any[]
+  kind: 'manual' | 'auto'
+  showAssignee?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const channel = step?.channel ?? 'whatsapp'
+  const Icon = channel === 'email' ? Mail : channel === 'call' ? Phone : MessageSquare
+
+  // Summary line por tipo
+  let summary = ''
+  if (kind === 'auto') {
+    summary = `${items.length} ${channel === 'email' ? 'emails' : 'ações'} automáticas`
+  } else if (channel === 'call') {
+    const atendeu = items.filter((i: any) => (i.outcome ?? '').startsWith('answered')).length
+    const naoAtendeu = items.length - atendeu
+    summary = `${items.length} ligações · atendeu: ${atendeu} · não atendeu: ${naoAtendeu}`
+  } else {
+    summary = `${items.length} concluídas`
+    if (showAssignee) {
+      const byUser = new Map<string, number>()
+      for (const i of items) {
+        const a = Array.isArray(i.assignee) ? i.assignee[0] : i.assignee
+        const name = a?.full_name || 'Sem responsável'
+        byUser.set(name, (byUser.get(name) || 0) + 1)
+      }
+      const parts = Array.from(byUser.entries()).map(([n, c]) => `${n}: ${c}`)
+      if (parts.length > 0) summary += ` · ${parts.join(' · ')}`
+    }
+  }
+
+  return (
+    <div
+      className="rounded-lg"
+      style={{
+        background: 'var(--color-bg-elevated)',
+        border: '1px solid var(--color-border)',
+      }}
+    >
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left transition"
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+      >
+        <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-success, #10b981)' }} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              Etapa {step?.position} · {step?.title || CHANNEL_LABELS[channel as keyof typeof CHANNEL_LABELS]}
+            </span>
+            {kind === 'auto' && (
+              <span
+                className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded"
+                style={{
+                  background: 'var(--color-primary-subtle)',
+                  color: 'var(--color-primary)',
+                }}
+              >
+                Automático
+              </span>
+            )}
+          </div>
+          <div className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+            {summary}
+          </div>
+        </div>
+        <ChevronDown
+          className="w-3.5 h-3.5 transition-transform"
+          style={{
+            color: 'var(--color-text-tertiary)',
+            transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+          }}
+        />
+      </button>
+      {open && (
+        <div className="px-3 pb-3 pt-1 space-y-1.5">
+          {items.map((i: any) => (
+            <DoneItem key={i.id} item={i} kind={i.kind} showAssignee={showAssignee} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DoneItem({ item, kind, showAssignee }: { item: any; kind: 'manual' | 'auto'; showAssignee?: boolean }) {
+  const lead = Array.isArray(item.lead) ? item.lead[0] : item.lead
+  const assignee = Array.isArray(item.assignee) ? item.assignee[0] : item.assignee
+  const when = item.completed_at || item.executed_at
+  const whenLabel = when ? new Date(when).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+
+  return (
+    <Link
+      href={`/dashboard/crm/${lead?.id}`}
+      className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded text-xs transition"
+      style={{
+        background: 'var(--color-bg-surface)',
+        border: '1px solid var(--color-border)',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--color-primary)')}
+      onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
+    >
+      <div className="flex-1 min-w-0 truncate" style={{ color: 'var(--color-text-primary)' }}>
+        <span className="font-semibold">{lead?.name ?? '—'}</span>
+        <span className="mx-1.5" style={{ color: 'var(--color-text-tertiary)' }}>·</span>
+        <span style={{ color: 'var(--color-text-tertiary)' }}>{lead?.phone ?? lead?.email ?? ''}</span>
+      </div>
+      {item.outcome && kind === 'manual' && (
+        <span
+          className="text-[10px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0"
+          style={{
+            background: 'var(--color-bg-elevated)',
+            color: 'var(--color-text-secondary)',
+          }}
+        >
+          {CALL_OUTCOME_LABELS[item.outcome as ProspectionCallOutcome] || item.outcome}
+        </span>
+      )}
+      {showAssignee && assignee && kind === 'manual' && (
+        <span
+          className="text-[10px] font-semibold flex-shrink-0"
+          style={{ color: 'var(--color-primary)' }}
+        >
+          {assignee.full_name || assignee.email}
+        </span>
+      )}
+      <span className="text-[10px] flex-shrink-0 font-mono" style={{ color: 'var(--color-text-tertiary)' }}>
+        {whenLabel}
+      </span>
+    </Link>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TOMORROW SUMMARY — preview agrupado do que vem amanhã
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function TomorrowSummary({ tasks, showAssignee }: { tasks: any[]; showAssignee?: boolean }) {
+  if (tasks.length === 0) {
+    return (
+      <div className="text-center py-6 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+        Nada programado para amanhã.
+      </div>
+    )
+  }
+
+  const groups = new Map<string, { step: any; count: number }>()
+  for (const t of tasks) {
+    const step = Array.isArray(t.step) ? t.step[0] : t.step
+    const key = step?.id || 'unknown'
+    if (!groups.has(key)) groups.set(key, { step, count: 0 })
+    groups.get(key)!.count++
+  }
+  const sorted = Array.from(groups.values()).sort(
+    (a, b) => (a.step?.position ?? 99) - (b.step?.position ?? 99)
+  )
+
+  return (
+    <div className="mt-3 space-y-2">
+      <div
+        className="rounded-lg px-3 py-2 text-xs"
+        style={{
+          background: 'var(--color-bg-elevated)',
+          border: '1px solid var(--color-border)',
+          color: 'var(--color-text-secondary)',
+        }}
+      >
+        📅 {tasks.length} lead{tasks.length > 1 ? 's' : ''} programado{tasks.length > 1 ? 's' : ''} para amanhã
+      </div>
+      {sorted.map(({ step, count }) => {
+        const channel = step?.channel ?? 'whatsapp'
+        const Icon = channel === 'email' ? Mail : channel === 'call' ? Phone : MessageSquare
+        return (
+          <div
+            key={step?.id || Math.random()}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg"
+            style={{
+              background: 'var(--color-bg-elevated)',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }} />
+            <span className="text-xs" style={{ color: 'var(--color-text-primary)' }}>
+              Etapa {step?.position} · {step?.title || CHANNEL_LABELS[channel as keyof typeof CHANNEL_LABELS]}
+            </span>
+            <span
+              className="text-[11px] font-bold px-1.5 py-0.5 rounded ml-auto"
+              style={{
+                background: 'var(--color-bg-surface)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-border)',
+              }}
+            >
+              {count}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LEGACY BUCKET (mantido só pra não quebrar imports que o TS ainda usa, mas não é renderizado)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function _LegacyBucket({
   title,
   description,
   icon,
@@ -507,7 +1033,7 @@ function Bucket({
   )
 }
 
-function RespondedBucket({
+function _LegacyRespondedBucket({
   title,
   description,
   items,
