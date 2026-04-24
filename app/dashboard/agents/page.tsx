@@ -659,9 +659,13 @@ export default function AgentsPage() {
       toast.success(ui.hired)
       await refresh()
 
-      // Redirecionar para a página do agente
+      // Redirecionar para a página do agente (bdr_email tem painel próprio)
       if (agent) {
-        router.push(`/dashboard/agents/${agent.id}`)
+        if (solution.slug === 'bdr_email') {
+          router.push('/dashboard/agents/email-bdr')
+        } else {
+          router.push(`/dashboard/agents/${agent.id}`)
+        }
       }
     } catch (err: any) {
       toast.error(`${ui.error}: ${err.message}`)
@@ -774,6 +778,8 @@ export default function AgentsPage() {
                     // Redirecionar para a página correta baseado no tipo de agente
                     if (agent.solution_slug.includes('followup')) {
                       router.push('/dashboard/follow-up')
+                    } else if (agent.solution_slug === 'bdr_email') {
+                      router.push('/dashboard/agents/email-bdr')
                     } else if (agent.solution_slug.includes('sdr')) {
                       router.push(`/dashboard/agents/${agent.id}`)
                     } else {

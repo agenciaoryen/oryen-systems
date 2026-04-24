@@ -267,8 +267,8 @@ export function getAllPlans(): PlanConfig[] {
 // '*' = todos os agentes disponíveis.
 
 export const PLAN_AGENT_ACCESS: Record<PlanName, string[] | '*'> = {
-  starter: ['sdr', 'sdr_imobiliario', 'followup', 'followup_imobiliario'],
-  pro: ['sdr', 'sdr_imobiliario', 'followup', 'followup_imobiliario', 'support'],
+  starter: ['sdr', 'sdr_imobiliario', 'followup', 'followup_imobiliario', 'bdr_email'],
+  pro: ['sdr', 'sdr_imobiliario', 'followup', 'followup_imobiliario', 'support', 'bdr_email'],
   business: '*',
   enterprise: '*',
 }
