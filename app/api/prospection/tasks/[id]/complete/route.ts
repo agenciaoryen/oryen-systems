@@ -30,10 +30,11 @@ export async function POST(
 
     const { id: taskId } = await context.params
     const body = await request.json().catch(() => ({}))
-    const { outcome, notes, variant_used } = body as {
+    const { outcome, notes, variant_used, move_to_stage } = body as {
       outcome?: string
       notes?: string
       variant_used?: string
+      move_to_stage?: string | null
     }
 
     // Buscar task + step + enrollment
@@ -41,7 +42,7 @@ export async function POST(
       .from('prospection_tasks')
       .select(`
         id, enrollment_id, step_id, lead_id, assignee_user_id, status, org_id,
-        step:prospection_steps(id, position, channel, outcomes_policy, sequence_id),
+        step:prospection_steps(id, position, channel, title, outcomes_policy, sequence_id),
         enrollment:prospection_enrollments(id, sequence_id, current_step_position, status, org_id)
       `)
       .eq('id', taskId)
@@ -96,7 +97,18 @@ export async function POST(
       variant_used: variant_used ?? null,
     })
 
-    // 3. Executa ação no enrollment
+    // 3. Sincronização com CRM (atividade no timeline, updated_at, assigned_to)
+    await syncLeadWithCrm({
+      orgId,
+      leadId: task.lead_id,
+      userId: auth.userId,
+      step,
+      outcome: outcome ?? null,
+      variantUsed: variant_used ?? null,
+      moveToStage: move_to_stage ?? null,
+    })
+
+    // 4. Executa ação no enrollment
     await executeAction(action, enrollment, task, orgId)
 
     return NextResponse.json({ ok: true, action })
@@ -200,4 +212,77 @@ async function createRetryTask(originalTask: any, hoursDelay: number) {
     status: 'pending',
     retry_of_task_id: originalTask.id,
   })
+}
+
+// ─── SINCRONIZAÇÃO COM CRM ───
+// Quando uma task é concluída:
+//   • registra evento na timeline do lead (lead_events)
+//   • atualiza leads.updated_at (pra refletir atividade recente)
+//   • se o lead não tem responsável, define o user que executou como responsável
+//   • se o BDR escolheu move_to_stage, atualiza leads.stage e registra evento de stage change
+async function syncLeadWithCrm(input: {
+  orgId: string
+  leadId: string
+  userId: string
+  step: any
+  outcome: string | null
+  variantUsed: string | null
+  moveToStage: string | null
+}) {
+  const { orgId, leadId, userId, step, outcome, variantUsed, moveToStage } = input
+
+  // Busca estado atual do lead
+  const { data: lead } = await supabase
+    .from('leads')
+    .select('id, stage, assigned_to')
+    .eq('id', leadId)
+    .eq('org_id', orgId)
+    .single()
+
+  if (!lead) return
+
+  // 1. Timeline: registra task concluída
+  await supabase.from('lead_events').insert({
+    org_id: orgId,
+    lead_id: leadId,
+    type: 'prospection_task_done',
+    user_id: userId,
+    content: `Etapa ${step.position} · ${step.title || step.channel} concluída${
+      outcome ? ` (${outcome})` : ''
+    }`,
+    details: {
+      step_position: step.position,
+      step_title: step.title,
+      channel: step.channel,
+      outcome,
+      variant_used: variantUsed,
+    },
+  })
+
+  // 2. Atualiza leads (updated_at, assigned_to se null, stage se move_to_stage)
+  const leadUpdate: Record<string, any> = { updated_at: new Date().toISOString() }
+  if (!lead.assigned_to) {
+    leadUpdate.assigned_to = userId
+  }
+  if (moveToStage && moveToStage !== lead.stage) {
+    leadUpdate.stage = moveToStage
+  }
+
+  await supabase.from('leads').update(leadUpdate).eq('id', leadId).eq('org_id', orgId)
+
+  // 3. Se mudou stage, registra evento dedicado pra relatórios de fluxo
+  if (moveToStage && moveToStage !== lead.stage) {
+    await supabase.from('lead_events').insert({
+      org_id: orgId,
+      lead_id: leadId,
+      type: 'stage_changed',
+      user_id: userId,
+      content: `Estágio alterado de "${lead.stage}" para "${moveToStage}"`,
+      details: {
+        from_stage: lead.stage,
+        to_stage: moveToStage,
+        source: 'prospection',
+      },
+    })
+  }
 }

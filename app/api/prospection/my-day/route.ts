@@ -116,6 +116,13 @@ export async function GET(request: NextRequest) {
       .eq('status', 'done')
       .gte('completed_at', new Date(now.toISOString().slice(0, 10)).toISOString())
 
+    // Stages do pipeline (pro modal de conclusão)
+    const { data: stageRows } = await supabase
+      .from('pipeline_stages')
+      .select('name, color, position')
+      .eq('org_id', orgId)
+      .order('position', { ascending: true })
+
     return NextResponse.json({
       buckets,
       responded: respondedEnrollments || [],
@@ -129,6 +136,11 @@ export async function GET(request: NextRequest) {
       },
       daily_capacity: dailyCapacity,
       user_id: userId,
+      stages: (stageRows || []).map((s: any) => ({
+        value: s.name,
+        label: s.name,
+        color: s.color,
+      })),
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

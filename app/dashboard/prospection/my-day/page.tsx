@@ -22,7 +22,7 @@ import {
   X,
 } from 'lucide-react'
 import Link from 'next/link'
-import { Settings2 } from 'lucide-react'
+import { Settings2, ExternalLink } from 'lucide-react'
 import {
   CHANNEL_LABELS,
   CALL_OUTCOME_LABELS,
@@ -156,6 +156,7 @@ interface MyDayResponse {
     done_today: number
   }
   daily_capacity: number
+  stages: { value: string; label: string; color?: string }[]
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -193,7 +194,7 @@ export default function MyDayPage() {
 
   async function handleComplete(
     taskId: string,
-    payload: { outcome?: string; notes?: string; variant_used?: string }
+    payload: { outcome?: string; notes?: string; variant_used?: string; move_to_stage?: string | null }
   ) {
     const res = await fetch(`/api/prospection/tasks/${taskId}/complete`, {
       method: 'POST',
@@ -330,6 +331,7 @@ export default function MyDayPage() {
       {completingTask && (
         <CompleteModal
           task={completingTask}
+          stages={data?.stages ?? []}
           onClose={() => setCompletingTask(null)}
           onConfirm={(payload) => handleComplete(completingTask.id, payload)}
           t={t}
@@ -581,18 +583,21 @@ function TaskCard({
 
 function CompleteModal({
   task,
+  stages,
   onClose,
   onConfirm,
   t,
 }: {
   task: any
+  stages: { value: string; label: string; color?: string }[]
   onClose: () => void
-  onConfirm: (payload: { outcome?: string; notes?: string; variant_used?: string }) => void
+  onConfirm: (payload: { outcome?: string; notes?: string; variant_used?: string; move_to_stage?: string | null }) => void
   t: (typeof TRANSLATIONS)['pt']
 }) {
   const step = Array.isArray(task.step) ? task.step[0] : task.step
   const lead = Array.isArray(task.lead) ? task.lead[0] : task.lead
   const isCall = step?.channel === 'call'
+  const isWhatsApp = step?.channel === 'whatsapp'
   const templates: MessageTemplate[] = step?.message_templates ?? []
 
   const [selectedVariant, setSelectedVariant] = useState<string | null>(
@@ -600,6 +605,7 @@ function CompleteModal({
   )
   const [outcome, setOutcome] = useState<ProspectionCallOutcome | null>(null)
   const [notes, setNotes] = useState('')
+  const [newStage, setNewStage] = useState<string>(lead?.stage ?? '')
   const [copied, setCopied] = useState(false)
 
   const currentTemplate = templates.find((t) => t.variant === selectedVariant)
@@ -614,11 +620,24 @@ function CompleteModal({
 
   function handleConfirm() {
     if (isCall && !outcome) return
+    const stageChanged = newStage && newStage !== lead?.stage
     onConfirm({
       outcome: outcome ?? undefined,
       notes: notes || undefined,
       variant_used: selectedVariant ?? undefined,
+      move_to_stage: stageChanged ? newStage : undefined,
     })
+  }
+
+  function openWhatsAppExternal() {
+    if (!lead?.phone) return
+    const num = String(lead.phone).replace(/\D/g, '')
+    window.open(`https://wa.me/${num}`, '_blank')
+  }
+
+  function openInternalChat() {
+    if (!lead?.id) return
+    window.open(`/dashboard/messages?lead_id=${lead.id}`, '_blank')
   }
 
   const outcomeKeys = Object.keys(CALL_OUTCOME_LABELS) as ProspectionCallOutcome[]
@@ -650,6 +669,28 @@ function CompleteModal({
           {step?.instruction && (
             <div className="text-xs bg-muted/40 border border-border rounded-lg px-3 py-2 text-muted-foreground">
               <span className="font-semibold text-foreground">{t.instruction}:</span> {step.instruction}
+            </div>
+          )}
+
+          {/* Ações rápidas: abrir mensagem ou WhatsApp (só pra steps de WhatsApp) */}
+          {isWhatsApp && (
+            <div className="flex gap-2">
+              <button
+                onClick={openInternalChat}
+                disabled={!lead?.id}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Abrir Mensagens
+              </button>
+              <button
+                onClick={openWhatsAppExternal}
+                disabled={!lead?.phone}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              >
+                <ExternalLink className="w-4 h-4" />
+                WhatsApp
+              </button>
             </div>
           )}
 
@@ -727,6 +768,46 @@ function CompleteModal({
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Mudar estágio do lead (opcional) */}
+          {stages.length > 0 && (
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-2">
+                Mudar estágio do lead
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  value={newStage}
+                  onChange={(e) => setNewStage(e.target.value)}
+                  className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary transition"
+                >
+                  <option value="">— Manter estágio atual —</option>
+                  {stages.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+                {newStage && newStage !== lead?.stage && (
+                  <button
+                    onClick={() => setNewStage(lead?.stage ?? '')}
+                    className="p-2 rounded-lg border border-border hover:bg-muted transition text-muted-foreground"
+                    title="Cancelar mudança"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              {lead?.stage && (
+                <div className="text-[11px] text-muted-foreground mt-1">
+                  Estágio atual: <span className="font-semibold">{lead.stage}</span>
+                  {newStage && newStage !== lead.stage && (
+                    <span> · mudará para <span className="font-semibold text-primary">{newStage}</span></span>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
