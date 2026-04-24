@@ -8,7 +8,7 @@ import {
   Loader2, ArrowLeft, MessageSquare, Mail, Phone, Bot, User, Users, Clock,
   Play, UserPlus, Search, Check, X, Zap, CheckCircle2, AlertTriangle,
   Filter, RotateCcw, Plus, Edit3, Trash2, ArrowUp, ArrowDown, Save,
-  FileText, Copy as CopyIcon, Settings,
+  FileText, Copy as CopyIcon, Settings, ArrowRight,
 } from 'lucide-react'
 import { CHANNEL_LABELS } from '@/lib/prospection/types'
 
@@ -1812,95 +1812,247 @@ function ConfigView({ sequence, onSaved }: { sequence: any; onSaved: () => void 
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      {/* Pausar por mudança de stage */}
-      <div className="border border-border rounded-xl bg-card p-5">
-        <h3 className="font-semibold mb-1">Pausar cadência por mudança de estágio</h3>
-        <p className="text-xs text-muted-foreground mb-4">
-          Quando o estágio do lead muda para um dos selecionados abaixo, o enrollment pausa automaticamente e aparece em "Responderam". Útil quando o time marca "lead respondeu" manualmente no CRM em vez de depender do webhook do WhatsApp.
-        </p>
-
+    <div className="space-y-5 max-w-3xl">
+      {/* Card 1 · Pausa por mudança de estágio */}
+      <ConfigCard
+        icon={<AlertTriangle className="w-4 h-4" />}
+        tone="warning"
+        title="Pausar por mudança de estágio"
+        subtitle="Quando o lead muda para um dos estágios selecionados, o enrollment pausa automaticamente e vai pra coluna Responderam no Meu Dia."
+      >
         {stages.length === 0 ? (
-          <div className="text-sm text-muted-foreground italic">Carregando estágios...</div>
+          <div
+            className="text-xs italic flex items-center gap-2"
+            style={{ color: 'var(--color-text-tertiary)' }}
+          >
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Carregando estágios do pipeline...
+          </div>
         ) : (
-          <div className="flex flex-wrap gap-2">
-            {stages.map((s) => {
-              const active = pauseOnStages.includes(s.value)
-              return (
-                <button
-                  key={s.value}
-                  onClick={() => toggleStage(s.value)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition"
-                  style={{
-                    background: active ? 'var(--color-primary)' : 'var(--color-bg-elevated)',
-                    border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                    color: active
-                      ? 'var(--color-text-on-primary)'
-                      : 'var(--color-text-secondary)',
-                    fontWeight: active ? 600 : 500,
-                  }}
-                >
-                  {s.color && (
-                    <span
-                      className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ background: s.color }}
-                    />
-                  )}
-                  {s.label}
-                </button>
-              )
-            })}
-          </div>
-        )}
-
-        {pauseOnStages.length > 0 && (
-          <div className="mt-3 text-xs text-muted-foreground">
-            Cadência pausará quando o lead atingir:{' '}
-            <span className="font-semibold text-foreground">
-              {pauseOnStages
-                .map((v) => stages.find((s) => s.value === v)?.label || v)
-                .join(', ')}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Exit on reply (webhook) */}
-      <div className="border border-border rounded-xl bg-card p-5">
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={exitOnReply}
-            onChange={(e) => setExitOnReply(e.target.checked)}
-            className="mt-1 accent-[var(--color-primary)]"
-          />
-          <div>
-            <div className="font-semibold text-sm">Pausar automaticamente quando o lead responder pelo WhatsApp</div>
-            <div className="text-xs text-muted-foreground mt-0.5">
-              Funciona quando o webhook do WhatsApp está conectado. Recebendo uma mensagem inbound do lead, o enrollment pausa. Se desligado, só a mudança de estágio pausa.
+          <>
+            <div className="flex flex-wrap gap-2">
+              {stages.map((s) => {
+                const active = pauseOnStages.includes(s.value)
+                return (
+                  <button
+                    key={s.value}
+                    onClick={() => toggleStage(s.value)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition"
+                    style={{
+                      background: active ? 'var(--color-primary)' : 'var(--color-bg-elevated)',
+                      border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                      color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
+                      fontWeight: active ? 600 : 500,
+                    }}
+                  >
+                    {active && <Check className="w-3 h-3" />}
+                    {s.color && !active && (
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ background: s.color }}
+                      />
+                    )}
+                    {s.label}
+                  </button>
+                )
+              })}
             </div>
-          </div>
-        </label>
-      </div>
 
-      {/* Save bar */}
-      <div className="flex items-center gap-2">
+            {pauseOnStages.length > 0 ? (
+              <div
+                className="mt-3 rounded-lg p-3 text-xs"
+                style={{
+                  background: 'var(--color-bg-elevated)',
+                  border: '1px solid var(--color-border)',
+                }}
+              >
+                <div
+                  className="flex items-center gap-1.5 mb-1"
+                  style={{ color: 'var(--color-primary)' }}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span className="font-bold">Cadência pausará ao atingir:</span>
+                </div>
+                <div
+                  className="font-semibold"
+                  style={{ color: 'var(--color-text-primary)' }}
+                >
+                  {pauseOnStages
+                    .map((v) => stages.find((s) => s.value === v)?.label || v)
+                    .join(' · ')}
+                </div>
+              </div>
+            ) : (
+              <div
+                className="mt-3 text-xs italic"
+                style={{ color: 'var(--color-text-tertiary)' }}
+              >
+                Nenhum estágio selecionado. Selecione os estágios que indicam avanço do lead (ex: "Lead respondeu", "Qualificado", "Venda cerrada").
+              </div>
+            )}
+          </>
+        )}
+      </ConfigCard>
+
+      {/* Card 2 · Pausa automática por resposta WhatsApp */}
+      <ConfigCard
+        icon={<MessageSquare className="w-4 h-4" />}
+        tone="primary"
+        title="Pausa automática por resposta WhatsApp"
+        subtitle="Exige webhook do WhatsApp conectado. Quando o lead responder, o enrollment pausa."
+      >
+        <ToggleRow
+          checked={exitOnReply}
+          onChange={setExitOnReply}
+          label="Pausar quando o lead responder"
+          hint={
+            exitOnReply
+              ? 'Ativo · toda mensagem inbound vai disparar a pausa automaticamente'
+              : 'Desligado · apenas mudança de estágio pausa a cadência'
+          }
+        />
+      </ConfigCard>
+
+      {/* Save bar sticky */}
+      <div
+        className="sticky bottom-4 z-10 rounded-xl p-3 flex items-center justify-between gap-3"
+        style={{
+          background: dirty ? 'var(--color-bg-surface)' : 'transparent',
+          border: dirty ? '1px solid var(--color-primary)' : '1px solid transparent',
+          boxShadow: dirty ? '0 12px 24px -8px rgba(0,0,0,0.25)' : 'none',
+          transition: 'all 0.2s ease',
+        }}
+      >
+        <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+          {dirty ? (
+            <>
+              <span className="w-2 h-2 rounded-full" style={{ background: 'var(--color-primary)' }} />
+              Alterações não salvas
+            </>
+          ) : saved ? (
+            <>
+              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--color-success, #10b981)' }} />
+              <span style={{ color: 'var(--color-success, #10b981)' }}>Salvo</span>
+            </>
+          ) : (
+            <span>Configuração atualizada</span>
+          )}
+        </div>
         <button
           onClick={handleSave}
           disabled={!dirty || saving}
-          className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2"
+          className="px-4 py-2 rounded-lg text-sm font-semibold transition inline-flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{
+            background: 'var(--color-primary)',
+            color: 'var(--color-text-on-primary)',
+          }}
         >
-          {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+          {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
           Salvar configuração
         </button>
-        {saved && (
-          <span className="text-xs text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1 font-semibold">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            Salvo
-          </span>
-        )}
       </div>
     </div>
+  )
+}
+
+function ConfigCard({
+  icon,
+  tone,
+  title,
+  subtitle,
+  children,
+}: {
+  icon: React.ReactNode
+  tone: 'primary' | 'warning' | 'success'
+  title: string
+  subtitle?: string
+  children: React.ReactNode
+}) {
+  const color =
+    tone === 'primary' ? 'var(--color-primary)' :
+    tone === 'warning' ? 'var(--color-warning, #f59e0b)' :
+    'var(--color-success, #10b981)'
+  const subtleBg =
+    tone === 'primary' ? 'var(--color-primary-subtle)' :
+    tone === 'warning' ? 'rgba(245, 158, 11, 0.12)' :
+    'rgba(16, 185, 129, 0.12)'
+
+  return (
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{
+        background: 'var(--color-bg-surface)',
+        border: '1px solid var(--color-border)',
+      }}
+    >
+      <div
+        className="p-5 flex items-start gap-3"
+        style={{ borderBottom: '1px solid var(--color-border)' }}
+      >
+        <div
+          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: subtleBg, color }}
+        >
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <h3 className="font-bold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+            {title}
+          </h3>
+          {subtitle && (
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+              {subtitle}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  )
+}
+
+function ToggleRow({
+  checked,
+  onChange,
+  label,
+  hint,
+}: {
+  checked: boolean
+  onChange: (v: boolean) => void
+  label: string
+  hint?: string
+}) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      className="w-full flex items-start gap-3 text-left transition"
+    >
+      <div
+        className="flex-shrink-0 mt-0.5 relative w-10 h-5 rounded-full transition"
+        style={{
+          background: checked ? 'var(--color-primary)' : 'var(--color-bg-elevated)',
+          border: `1px solid ${checked ? 'var(--color-primary)' : 'var(--color-border)'}`,
+        }}
+      >
+        <span
+          className="absolute top-0.5 w-3.5 h-3.5 rounded-full transition-all"
+          style={{
+            background: checked ? 'white' : 'var(--color-text-tertiary)',
+            left: checked ? 'calc(100% - 16px)' : '2px',
+          }}
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+          {label}
+        </div>
+        {hint && (
+          <div className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+            {hint}
+          </div>
+        )}
+      </div>
+    </button>
   )
 }
 
