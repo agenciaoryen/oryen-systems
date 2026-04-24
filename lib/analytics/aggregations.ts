@@ -54,6 +54,9 @@ export async function getLeadFunnelByStage(
   orgId: string,
   startDate: Date
 ): Promise<FunnelStage[]> {
+  // Inclui leads criados NO período OU que tiveram mudança de estágio NO período
+  // (leads antigos que estão avançando agora devem contar no funil atual).
+  const isoDate = startDate.toISOString()
   const [stagesRes, leadsRes] = await Promise.all([
     supabase
       .from('pipeline_stages')
@@ -65,7 +68,7 @@ export async function getLeadFunnelByStage(
       .from('leads')
       .select('id, stage, total_em_vendas, last_stage_change_at, updated_at, created_at')
       .eq('org_id', orgId)
-      .gte('created_at', startDate.toISOString()),
+      .or(`created_at.gte.${isoDate},last_stage_change_at.gte.${isoDate}`),
   ])
 
   if (stagesRes.error || leadsRes.error) return []
@@ -174,6 +177,8 @@ export async function getPipelineVelocity(
   orgId: string,
   startDate: Date
 ): Promise<PipelineVelocity[]> {
+  // Inclui leads com movimento recente, não só criados no período
+  const isoDate = startDate.toISOString()
   const [stagesRes, leadsRes] = await Promise.all([
     supabase
       .from('pipeline_stages')
@@ -185,7 +190,7 @@ export async function getPipelineVelocity(
       .from('leads')
       .select('id, stage, last_stage_change_at, updated_at, created_at')
       .eq('org_id', orgId)
-      .gte('created_at', startDate.toISOString()),
+      .or(`created_at.gte.${isoDate},last_stage_change_at.gte.${isoDate}`),
   ])
 
   if (stagesRes.error || leadsRes.error) return []
