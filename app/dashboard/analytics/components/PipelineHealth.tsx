@@ -97,7 +97,11 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
   const sortedFunnel = hasFunnel
     ? [...funnel].sort((a, b) => a.position - b.position)
     : []
-  const maxLeads = sortedFunnel.length > 0 ? sortedFunnel[0].leadCount : 1
+  // maxLeads = maior contagem entre todos os stages, não só o primeiro.
+  // Se leads avançaram direto pra um stage posterior, evita que a barra estoure o container.
+  const maxLeads = sortedFunnel.length > 0
+    ? Math.max(...sortedFunnel.map((s) => s.leadCount), 1)
+    : 1
 
   return (
     <div
@@ -197,14 +201,26 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
         {!hasFunnel ? (
           <div style={emptyStyle}>{l.noData}</div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              alignItems: 'center',
+              width: '100%',
+              overflow: 'hidden',
+            }}
+          >
             {sortedFunnel.map((stage) => {
-              const widthPct = maxLeads > 0 ? Math.max((stage.leadCount / maxLeads) * 100, 12) : 12
+              // Clamp entre 12% (mínimo legível) e 100% (máximo do container).
+              const rawPct = maxLeads > 0 ? (stage.leadCount / maxLeads) * 100 : 12
+              const widthPct = Math.min(Math.max(rawPct, 12), 100)
               return (
                 <div
                   key={stage.id}
                   style={{
                     width: `${widthPct}%`,
+                    maxWidth: '100%',
                     minWidth: '80px',
                     background: stage.color || '#6366f1',
                     borderRadius: '6px',
@@ -213,6 +229,7 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     transition: 'width 0.3s ease',
+                    boxSizing: 'border-box',
                   }}
                 >
                   <span style={{ fontSize: '12px', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
