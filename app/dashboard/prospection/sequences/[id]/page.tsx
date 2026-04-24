@@ -152,7 +152,12 @@ export default function SequenceDetailPage({ params }: { params: Promise<{ id: s
       {tab === 'enrollments' && <EnrollmentsView enrollments={enrollments} />}
 
       {showEnroll && (
-        <BulkEnrollModal sequenceId={id} onClose={() => setShowEnroll(false)} onDone={fetchData} />
+        <BulkEnrollModal
+          sequenceId={id}
+          steps={steps}
+          onClose={() => setShowEnroll(false)}
+          onDone={fetchData}
+        />
       )}
     </div>
   )
@@ -328,10 +333,12 @@ interface FilterMeta {
 
 function BulkEnrollModal({
   sequenceId,
+  steps,
   onClose,
   onDone,
 }: {
   sequenceId: string
+  steps: any[]
   onClose: () => void
   onDone: () => void
 }) {
@@ -342,6 +349,7 @@ function BulkEnrollModal({
   const [search, setSearch] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<any>(null)
+  const [startingStep, setStartingStep] = useState<number>(1)
 
   // Filtros
   const [meta, setMeta] = useState<FilterMeta>({ stages: [], sources: [], nichos: [], cities: [] })
@@ -434,7 +442,11 @@ function BulkEnrollModal({
       const res = await fetch('/api/prospection/enrollments/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sequence_id: sequenceId, lead_ids: Array.from(selected) }),
+        body: JSON.stringify({
+          sequence_id: sequenceId,
+          lead_ids: Array.from(selected),
+          starting_step_position: startingStep,
+        }),
       })
       const json = await res.json()
       setResult(json)
@@ -489,6 +501,48 @@ function BulkEnrollModal({
           >
             <X className="w-4 h-4" />
           </button>
+        </div>
+
+        {/* Seletor de etapa inicial */}
+        <div
+          className="px-5 py-3 flex items-center gap-3 flex-wrap"
+          style={{
+            borderBottom: '1px solid var(--color-border)',
+            background: 'var(--color-bg-elevated)',
+          }}
+        >
+          <span
+            className="text-[11px] font-bold uppercase tracking-wider flex-shrink-0"
+            style={{ color: 'var(--color-text-tertiary)' }}
+          >
+            Começar a partir da
+          </span>
+          <select
+            value={startingStep}
+            onChange={(e) => setStartingStep(Number(e.target.value))}
+            className="px-2.5 py-1.5 rounded text-xs font-semibold focus:outline-none"
+            style={{
+              background: 'var(--color-bg-surface)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text-primary)',
+            }}
+          >
+            {steps.map((s: any) => (
+              <option key={s.id} value={s.position}>
+                Etapa {s.position} · {s.title || s.channel}
+                {s.day_offset > 0 ? ` (dia ${s.day_offset})` : ''}
+              </option>
+            ))}
+          </select>
+          {startingStep > 1 && (
+            <span
+              className="text-[11px] flex items-center gap-1"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              <Zap className="w-3 h-3" />
+              Começa imediatamente ao inscrever
+            </span>
+          )}
         </div>
 
         {/* Filtros */}

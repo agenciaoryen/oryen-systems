@@ -25,9 +25,10 @@ export async function POST(request: NextRequest) {
     if (gate) return gate
 
     const body = await request.json()
-    const { sequence_id, lead_ids } = body as {
+    const { sequence_id, lead_ids, starting_step_position } = body as {
       sequence_id: string
       lead_ids: string[]
+      starting_step_position?: number
     }
 
     if (!sequence_id || !Array.isArray(lead_ids) || lead_ids.length === 0) {
@@ -36,6 +37,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    const startPosition = Math.max(1, Number(starting_step_position) || 1)
 
     // Valida sequence pertence à org
     const { data: sequence } = await supabase
@@ -48,16 +51,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Sequence não encontrada' }, { status: 404 })
     }
 
-    // Busca primeiro step da sequence
-    const { data: firstStep } = await supabase
+    // Busca o step escolhido como ponto de partida
+    const { data: startStep } = await supabase
       .from('prospection_steps')
-      .select('day_offset')
+      .select('position, day_offset')
       .eq('sequence_id', sequence_id)
-      .eq('position', 1)
+      .eq('position', startPosition)
       .single()
-    if (!firstStep) {
+    if (!startStep) {
       return NextResponse.json(
-        { error: 'Sequence não tem o step 1 configurado' },
+        { error: `Etapa ${startPosition} não existe nesta sequence` },
         { status: 400 }
       )
     }
@@ -88,15 +91,18 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // next_action_at baseado no day_offset do step 1
+    // Quando starting_step_position > 1, dispara imediatamente (o BDR já fez os
+    // passos anteriores manualmente). Caso contrário (etapa 1), respeita day_offset.
     const nextActionAt = new Date()
-    nextActionAt.setDate(nextActionAt.getDate() + Math.max(firstStep.day_offset - 1, 0))
+    if (startPosition === 1) {
+      nextActionAt.setDate(nextActionAt.getDate() + Math.max(startStep.day_offset - 1, 0))
+    }
 
     const rows = toEnroll.map((lead_id) => ({
       org_id: orgId,
       sequence_id,
       lead_id,
-      current_step_position: 1,
+      current_step_position: startPosition,
       status: 'active' as const,
       next_action_at: nextActionAt.toISOString(),
       enrolled_by_user_id: auth.userId,
