@@ -22,7 +22,7 @@ import {
   X,
 } from 'lucide-react'
 import Link from 'next/link'
-import { Settings2, ExternalLink, Tag, ChevronDown, Instagram, Globe } from 'lucide-react'
+import { Settings2, ExternalLink, Tag, ChevronDown, Instagram, Globe, Users } from 'lucide-react'
 import {
   CHANNEL_LABELS,
   CALL_OUTCOME_LABELS,
@@ -254,46 +254,124 @@ export default function MyDayPage() {
     data.counts.responded === 0
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+    <div className="p-6 md:p-8">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center">
+      <div
+        className="rounded-2xl mb-6 overflow-hidden"
+        style={{
+          background: 'var(--color-bg-surface)',
+          border: '1px solid var(--color-border)',
+        }}
+      >
+        <div className="flex items-center justify-between gap-4 p-5 flex-wrap">
+          {/* Título + ícone */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover, #6366f1) 100%)',
+                boxShadow: '0 8px 20px -8px var(--color-primary)',
+              }}
+            >
               <Rocket className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t.title}</h1>
+            <div className="min-w-0">
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight truncate" style={{ color: 'var(--color-text-primary)' }}>
+                {t.title}
+              </h1>
+              <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{t.subtitle}</p>
+            </div>
           </div>
-          <p className="text-muted-foreground text-sm">{t.subtitle}</p>
+
+          {/* Ações */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {data?.is_admin && team.length > 0 && (
+              <div className="relative">
+                <select
+                  value={view}
+                  onChange={(e) => setView(e.target.value)}
+                  className="appearance-none pl-9 pr-8 py-2 rounded-lg text-sm font-semibold focus:outline-none transition cursor-pointer"
+                  style={{
+                    background: 'var(--color-bg-elevated)',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-text-primary)',
+                  }}
+                  title="Visualizar dia de"
+                >
+                  <option value="self">Meu dia</option>
+                  <option value="all">Todo o time</option>
+                  <optgroup label="Por usuário">
+                    {team.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.full_name || u.email}{u.id === data.user_id ? ' (eu)' : ''}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+                <Users
+                  className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                  style={{ color: 'var(--color-text-tertiary)' }}
+                />
+                <ChevronDown
+                  className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                  style={{ color: 'var(--color-text-tertiary)' }}
+                />
+              </div>
+            )}
+
+            <Link
+              href="/dashboard/prospection/sequences"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition"
+              style={{
+                background: 'var(--color-bg-elevated)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text-secondary)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-primary)'
+                e.currentTarget.style.color = 'var(--color-text-primary)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-border)'
+                e.currentTarget.style.color = 'var(--color-text-secondary)'
+              }}
+            >
+              <Settings2 className="w-4 h-4" />
+              Sequences
+            </Link>
+
+            <button
+              onClick={() => fetchData(true)}
+              disabled={refreshing}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50"
+              style={{
+                background: 'var(--color-primary)',
+                color: 'var(--color-text-on-primary)',
+              }}
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              {t.refresh}
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
-          {data?.is_admin && team.length > 0 && (
-            <select
-              value={view}
-              onChange={(e) => setView(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-card border border-border text-sm font-semibold focus:outline-none focus:border-primary transition"
-              title="Visualizar dia de"
-            >
-              <option value="self">Meu dia</option>
-              <option value="all">Todo o time · visão geral</option>
-              <optgroup label="Por usuário">
-                {team.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.full_name || u.email}
-                    {u.id === data.user_id ? ' (eu)' : ''}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
-          )}
-          <StatPill
+        {/* Métricas embutidas na mesma barra (row inferior) */}
+        <div
+          className="flex items-center gap-6 px-5 py-3 flex-wrap"
+          style={{
+            borderTop: '1px solid var(--color-border)',
+            background: 'var(--color-bg-base)',
+          }}
+        >
+          <MetricInline
+            icon={<CheckCircle2 className="w-3.5 h-3.5" />}
             label={t.doneToday}
-            value={`${data?.counts.done_today ?? 0}`}
+            value={String(data?.counts.done_today ?? 0)}
             tone="success"
           />
           {view !== 'all' && (
-            <StatPill
+            <MetricInline
+              icon={<Clock className="w-3.5 h-3.5" />}
               label={t.capacity}
               value={`${data?.counts.done_today ?? 0}/${data?.daily_capacity ?? 50}`}
               tone={
@@ -303,35 +381,36 @@ export default function MyDayPage() {
               }
             />
           )}
-          <Link
-            href="/dashboard/prospection/sequences"
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border hover:bg-accent transition text-sm"
-          >
-            <Settings2 className="w-4 h-4" />
-            Sequences
-          </Link>
-          <button
-            onClick={() => fetchData(true)}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border hover:bg-accent transition text-sm"
-            disabled={refreshing}
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            {t.refresh}
-          </button>
+          <MetricInline
+            icon={<AlertTriangle className="w-3.5 h-3.5" />}
+            label="Vencidas"
+            value={String(data?.counts.overdue ?? 0)}
+            tone={(data?.counts.overdue ?? 0) > 0 ? 'danger' : 'neutral'}
+          />
+          <MetricInline
+            icon={<Inbox className="w-3.5 h-3.5" />}
+            label={t.responded}
+            value={String(data?.counts.responded ?? 0)}
+            tone={(data?.counts.responded ?? 0) > 0 ? 'success' : 'neutral'}
+          />
         </div>
       </div>
 
       {hasNothing ? (
         <EmptyState message={t.emptyAll} />
       ) : (
-        <div className="space-y-5 max-w-4xl mx-auto">
-          <Section
+        <div
+          className="grid gap-4"
+          style={{
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            alignItems: 'start',
+          }}
+        >
+          <Column
             title="A fazer hoje"
-            description="Agrupado por etapa — clica na etapa para expandir ou fechar"
             icon={<Clock className="w-4 h-4" />}
             tone="primary"
             count={data!.counts.overdue + data!.counts.now + data!.counts.today}
-            defaultOpen
           >
             <GroupedByStep
               tasks={[...data!.buckets.overdue, ...data!.buckets.now, ...data!.buckets.today]}
@@ -341,46 +420,42 @@ export default function MyDayPage() {
               showAssignee={data!.view_mode !== 'self'}
               t={t}
             />
-          </Section>
+          </Column>
 
-          {data!.responded.length > 0 && (
-            <Section
-              title={t.responded}
-              description={t.respondedDesc}
-              icon={<Inbox className="w-4 h-4" />}
-              tone="success"
-              count={data!.counts.responded}
-              defaultOpen
-            >
+          <Column
+            title={t.responded}
+            icon={<Inbox className="w-4 h-4" />}
+            tone="success"
+            count={data!.counts.responded}
+          >
+            {data!.responded.length === 0 ? (
+              <EmptyColumn message="Nenhum lead respondeu." />
+            ) : (
               <RespondedList items={data!.responded} t={t} />
-            </Section>
-          )}
+            )}
+          </Column>
 
-          <Section
+          <Column
             title="Feitas hoje"
-            description="Histórico do dia — gestor acompanha execução em tempo real"
             icon={<CheckCircle2 className="w-4 h-4" />}
             tone="neutral"
             count={data!.counts.done_today}
-            defaultOpen={false}
           >
             <DoneTodayView
               tasks={data!.done_today}
               automated={data!.automated_today}
               showAssignee={data!.view_mode !== 'self'}
             />
-          </Section>
+          </Column>
 
-          <Section
+          <Column
             title="Amanhã"
-            description="Preview do que vem — planejamento do próximo dia"
             icon={<Clock className="w-4 h-4" />}
             tone="muted"
             count={data!.buckets.tomorrow.length}
-            defaultOpen={false}
           >
             <TomorrowSummary tasks={data!.buckets.tomorrow} showAssignee={data!.view_mode !== 'self'} />
-          </Section>
+          </Column>
         </div>
       )}
 
@@ -402,53 +477,66 @@ export default function MyDayPage() {
 // SUB-COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function StatPill({
+function MetricInline({
+  icon,
   label,
   value,
   tone = 'neutral',
 }: {
+  icon: React.ReactNode
   label: string
   value: string
-  tone?: 'neutral' | 'success' | 'warning'
+  tone?: 'neutral' | 'success' | 'warning' | 'danger'
 }) {
-  const toneClasses: Record<string, string> = {
-    neutral: 'bg-card border-border text-foreground',
-    success: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400',
-    warning: 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400',
-  }
+  const toneColor =
+    tone === 'success' ? 'var(--color-success, #10b981)' :
+    tone === 'warning' ? 'var(--color-warning, #f59e0b)' :
+    tone === 'danger' ? 'var(--color-danger, #ef4444)' :
+    'var(--color-text-tertiary)'
+
   return (
-    <div className={`px-3 py-2 rounded-lg border text-xs ${toneClasses[tone]}`}>
-      <div className="opacity-70 uppercase tracking-wider text-[10px] font-semibold">
-        {label}
+    <div className="flex items-center gap-2">
+      <div
+        className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+        style={{
+          background: 'var(--color-bg-elevated)',
+          color: toneColor,
+        }}
+      >
+        {icon}
       </div>
-      <div className="font-bold text-sm">{value}</div>
+      <div className="flex flex-col min-w-0">
+        <span
+          className="text-[10px] font-semibold uppercase tracking-wider leading-tight"
+          style={{ color: 'var(--color-text-tertiary)' }}
+        >
+          {label}
+        </span>
+        <span className="font-bold text-sm leading-tight" style={{ color: toneColor }}>
+          {value}
+        </span>
+      </div>
     </div>
   )
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SECTION — container colapsável usado pelas 4 seções principais do Meu Dia
+// COLUMN — coluna fixa tipo kanban, com header sticky e scroll interno
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function Section({
+function Column({
   title,
-  description,
   icon,
   tone,
   count,
-  defaultOpen,
   children,
 }: {
   title: string
-  description?: string
   icon: React.ReactNode
   tone: 'primary' | 'success' | 'neutral' | 'muted' | 'danger'
   count: number
-  defaultOpen?: boolean
   children: React.ReactNode
 }) {
-  const [open, setOpen] = useState(defaultOpen ?? true)
-
   const toneColor =
     tone === 'primary' ? 'var(--color-primary)' :
     tone === 'success' ? 'var(--color-success, #10b981)' :
@@ -458,59 +546,53 @@ function Section({
 
   return (
     <div
-      className="rounded-xl overflow-hidden"
+      className="rounded-xl flex flex-col"
       style={{
         background: 'var(--color-bg-surface)',
         border: '1px solid var(--color-border)',
+        maxHeight: 'calc(100vh - 180px)',
+        minHeight: '300px',
       }}
     >
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 px-5 py-4 transition text-left"
-        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
-        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+      {/* Header sticky */}
+      <div
+        className="flex items-center gap-2.5 px-4 py-3 flex-shrink-0"
+        style={{ borderBottom: '1px solid var(--color-border)' }}
       >
         <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
           style={{ background: 'var(--color-bg-elevated)', color: toneColor }}
         >
           {icon}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-bold text-sm" style={{ color: 'var(--color-text-primary)' }}>
-              {title}
-            </h3>
-            <span
-              className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-              style={{
-                background: count > 0 ? toneColor : 'var(--color-bg-elevated)',
-                color: count > 0 ? 'var(--color-text-on-primary)' : 'var(--color-text-tertiary)',
-                border: '1px solid var(--color-border)',
-              }}
-            >
-              {count}
-            </span>
-          </div>
-          {description && (
-            <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
-              {description}
-            </p>
-          )}
-        </div>
-        <ChevronDown
-          className="w-4 h-4 flex-shrink-0 transition-transform"
+        <h3 className="font-bold text-sm flex-1 min-w-0" style={{ color: 'var(--color-text-primary)' }}>
+          {title}
+        </h3>
+        <span
+          className="text-[11px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
           style={{
-            color: 'var(--color-text-tertiary)',
-            transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+            background: count > 0 ? toneColor : 'var(--color-bg-elevated)',
+            color: count > 0 ? 'var(--color-text-on-primary)' : 'var(--color-text-tertiary)',
+            border: '1px solid var(--color-border)',
           }}
-        />
-      </button>
-      {open && (
-        <div className="px-5 pb-5 pt-1" style={{ borderTop: '1px solid var(--color-border)' }}>
-          {children}
-        </div>
-      )}
+        >
+          {count}
+        </span>
+      </div>
+
+      {/* Conteúdo com scroll interno */}
+      <div className="flex-1 overflow-y-auto p-3">{children}</div>
+    </div>
+  )
+}
+
+function EmptyColumn({ message }: { message: string }) {
+  return (
+    <div
+      className="text-center py-8 text-xs italic"
+      style={{ color: 'var(--color-text-tertiary)' }}
+    >
+      {message}
     </div>
   )
 }
@@ -555,7 +637,7 @@ function GroupedByStep({
   )
 
   return (
-    <div className="space-y-4 mt-3">
+    <div className="space-y-3">
       {sorted.map(({ step, tasks: stepTasks }) => (
         <StepGroup
           key={step?.id || Math.random()}
@@ -659,7 +741,7 @@ function RespondedList({
   t: (typeof TRANSLATIONS)['pt']
 }) {
   return (
-    <div className="space-y-2 mt-3">
+    <div className="space-y-2">
       {items.map((item) => {
         const lead = Array.isArray(item.lead) ? item.lead[0] : item.lead
         return (
@@ -735,7 +817,7 @@ function DoneTodayView({
   )
 
   return (
-    <div className="space-y-2 mt-3">
+    <div className="space-y-2">
       {sorted.map(({ step, items, kind }) => (
         <DoneStepGroup key={step?.id || Math.random()} step={step} items={items} kind={kind} showAssignee={showAssignee} />
       ))}
@@ -908,7 +990,7 @@ function TomorrowSummary({ tasks, showAssignee }: { tasks: any[]; showAssignee?:
   )
 
   return (
-    <div className="mt-3 space-y-2">
+    <div className="space-y-2">
       <div
         className="rounded-lg px-3 py-2 text-xs"
         style={{
