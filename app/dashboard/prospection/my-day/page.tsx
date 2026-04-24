@@ -22,6 +22,7 @@ import {
   X,
 } from 'lucide-react'
 import Link from 'next/link'
+import { Settings2 } from 'lucide-react'
 import {
   CHANNEL_LABELS,
   CALL_OUTCOME_LABELS,
@@ -250,6 +251,13 @@ export default function MyDayPage() {
                 : 'neutral'
             }
           />
+          <Link
+            href="/dashboard/prospection/sequences"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border hover:bg-accent transition text-sm"
+          >
+            <Settings2 className="w-4 h-4" />
+            Sequences
+          </Link>
           <button
             onClick={() => fetchData(true)}
             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border hover:bg-accent transition text-sm"
