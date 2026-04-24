@@ -15,7 +15,7 @@ export default function SequenceDetailPage({ params }: { params: Promise<{ id: s
   const { id } = use(params)
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'steps' | 'rules' | 'enrollments'>('steps')
+  const [tab, setTab] = useState<'steps' | 'rules' | 'enrollments' | 'config'>('steps')
   const [showEnroll, setShowEnroll] = useState(false)
   const [engineRunning, setEngineRunning] = useState(false)
   const [engineResult, setEngineResult] = useState<any>(null)
@@ -130,7 +130,7 @@ export default function SequenceDetailPage({ params }: { params: Promise<{ id: s
 
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-border mb-6">
-        {(['steps', 'rules', 'enrollments'] as const).map((k) => (
+        {(['steps', 'rules', 'enrollments', 'config'] as const).map((k) => (
           <button
             key={k}
             onClick={() => setTab(k)}
@@ -143,6 +143,7 @@ export default function SequenceDetailPage({ params }: { params: Promise<{ id: s
             {k === 'steps' && 'Etapas'}
             {k === 'rules' && 'Regras de inscrição'}
             {k === 'enrollments' && `Inscritos (${enrollments.length})`}
+            {k === 'config' && 'Configuração'}
           </button>
         ))}
       </div>
@@ -150,6 +151,7 @@ export default function SequenceDetailPage({ params }: { params: Promise<{ id: s
       {tab === 'steps' && <StepsView steps={steps} />}
       {tab === 'rules' && <RulesView rules={rules} />}
       {tab === 'enrollments' && <EnrollmentsView enrollments={enrollments} />}
+      {tab === 'config' && <ConfigView sequence={sequence} onSaved={fetchData} />}
 
       {showEnroll && (
         <BulkEnrollModal
@@ -322,6 +324,150 @@ function EnrollmentsView({ enrollments }: { enrollments: any[] }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // BULK ENROLL MODAL
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONFIG VIEW — edita comportamento da sequence (pause_on_stages etc)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function ConfigView({ sequence, onSaved }: { sequence: any; onSaved: () => void }) {
+  const [stages, setStages] = useState<{ value: string; label: string; color?: string }[]>([])
+  const [pauseOnStages, setPauseOnStages] = useState<string[]>(sequence.pause_on_stages || [])
+  const [exitOnReply, setExitOnReply] = useState<boolean>(sequence.exit_on_reply ?? true)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/prospection/leads-picker/filters')
+      .then((r) => r.json())
+      .then((json) => setStages(json.stages || []))
+      .catch(() => {})
+  }, [])
+
+  const dirty =
+    JSON.stringify([...pauseOnStages].sort()) !==
+      JSON.stringify([...(sequence.pause_on_stages || [])].sort()) ||
+    exitOnReply !== (sequence.exit_on_reply ?? true)
+
+  function toggleStage(value: string) {
+    setPauseOnStages((prev) =>
+      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value]
+    )
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    setSaved(false)
+    try {
+      const res = await fetch(`/api/prospection/sequences/${sequence.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pause_on_stages: pauseOnStages,
+          exit_on_reply: exitOnReply,
+        }),
+      })
+      if (res.ok) {
+        setSaved(true)
+        onSaved()
+        setTimeout(() => setSaved(false), 2000)
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      {/* Pausar por mudança de stage */}
+      <div className="border border-border rounded-xl bg-card p-5">
+        <h3 className="font-semibold mb-1">Pausar cadência por mudança de estágio</h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Quando o estágio do lead muda para um dos selecionados abaixo, o enrollment pausa automaticamente e aparece em "Responderam". Útil quando o time marca "lead respondeu" manualmente no CRM em vez de depender do webhook do WhatsApp.
+        </p>
+
+        {stages.length === 0 ? (
+          <div className="text-sm text-muted-foreground italic">Carregando estágios...</div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {stages.map((s) => {
+              const active = pauseOnStages.includes(s.value)
+              return (
+                <button
+                  key={s.value}
+                  onClick={() => toggleStage(s.value)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition"
+                  style={{
+                    background: active ? 'var(--color-primary)' : 'var(--color-bg-elevated)',
+                    border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                    color: active
+                      ? 'var(--color-text-on-primary)'
+                      : 'var(--color-text-secondary)',
+                    fontWeight: active ? 600 : 500,
+                  }}
+                >
+                  {s.color && (
+                    <span
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ background: s.color }}
+                    />
+                  )}
+                  {s.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {pauseOnStages.length > 0 && (
+          <div className="mt-3 text-xs text-muted-foreground">
+            Cadência pausará quando o lead atingir:{' '}
+            <span className="font-semibold text-foreground">
+              {pauseOnStages
+                .map((v) => stages.find((s) => s.value === v)?.label || v)
+                .join(', ')}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Exit on reply (webhook) */}
+      <div className="border border-border rounded-xl bg-card p-5">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={exitOnReply}
+            onChange={(e) => setExitOnReply(e.target.checked)}
+            className="mt-1 accent-[var(--color-primary)]"
+          />
+          <div>
+            <div className="font-semibold text-sm">Pausar automaticamente quando o lead responder pelo WhatsApp</div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              Funciona quando o webhook do WhatsApp está conectado. Recebendo uma mensagem inbound do lead, o enrollment pausa. Se desligado, só a mudança de estágio pausa.
+            </div>
+          </div>
+        </label>
+      </div>
+
+      {/* Save bar */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleSave}
+          disabled={!dirty || saving}
+          className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2"
+        >
+          {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+          Salvar configuração
+        </button>
+        {saved && (
+          <span className="text-xs text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1 font-semibold">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Salvo
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
 
 interface FilterOption { value: string; label: string; color?: string }
 interface FilterMeta {
