@@ -20,7 +20,8 @@ interface Filters {
   stages?: string[]
   assigned_to?: string | null
   score_labels?: string[]
-  nicho?: string
+  nicho?: string          // single — backward compat
+  nichos?: string[]       // multi — use um OU outro
   updated_before_days?: number
   created_before_days?: number
   exclude_already_emailed?: boolean
@@ -70,7 +71,10 @@ export async function POST(
   if (filters.score_labels && filters.score_labels.length > 0) {
     query = query.in('score_label', filters.score_labels)
   }
-  if (filters.nicho) {
+  // Nicho — suporta multi (nichos[]) ou single (nicho)
+  if (filters.nichos && filters.nichos.length > 0) {
+    query = query.in('nicho', filters.nichos)
+  } else if (filters.nicho) {
     query = query.eq('nicho', filters.nicho)
   }
   if (typeof filters.updated_before_days === 'number' && filters.updated_before_days > 0) {

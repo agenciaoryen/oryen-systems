@@ -66,6 +66,9 @@ const T = {
     importCrmHint: 'Pega leads do seu CRM aplicando filtros. Muito mais útil que upload de CSV quando os leads já estão no sistema.',
     filterStages: 'Etapas',
     filterAllStages: 'Todas as etapas',
+    filterNichos: 'Nichos',
+    filterAllNichos: 'Todos os nichos',
+    filterNoNicho: '(Sem nicho)',
     filterScore: 'Score',
     filterUpdatedBefore: 'Sem atividade há (dias)',
     filterUpdatedHint: 'Só inclui leads cujo updated_at é mais antigo que X dias. Use 0 pra não filtrar.',
@@ -128,6 +131,9 @@ const T = {
     importCrmHint: 'Pulls leads from your CRM using filters. Much more useful than CSV upload when the leads are already in the system.',
     filterStages: 'Stages',
     filterAllStages: 'All stages',
+    filterNichos: 'Niches',
+    filterAllNichos: 'All niches',
+    filterNoNicho: '(No niche)',
     filterScore: 'Score',
     filterUpdatedBefore: 'No activity for (days)',
     filterUpdatedHint: 'Only leads whose updated_at is older than X days. 0 = no filter.',
@@ -190,6 +196,9 @@ const T = {
     importCrmHint: 'Trae leads del CRM aplicando filtros. Mucho más útil que cargar CSV cuando los leads ya están en el sistema.',
     filterStages: 'Etapas',
     filterAllStages: 'Todas las etapas',
+    filterNichos: 'Nichos',
+    filterAllNichos: 'Todos los nichos',
+    filterNoNicho: '(Sin nicho)',
     filterScore: 'Score',
     filterUpdatedBefore: 'Sin actividad hace (días)',
     filterUpdatedHint: 'Solo leads con updated_at más antiguo que X días. 0 = sin filtro.',
@@ -523,6 +532,8 @@ function ImportFromCrmSection({
 }: { campaignId: string; orgId: string | null; onImported: () => void; t: any }) {
   const [stages, setStages] = useState<Stage[]>([])
   const [selectedStages, setSelectedStages] = useState<string[]>([])
+  const [availableNichos, setAvailableNichos] = useState<string[]>([])
+  const [selectedNichos, setSelectedNichos] = useState<string[]>([])
   const [updatedBeforeDays, setUpdatedBeforeDays] = useState<number>(0)
   const [excludeAlreadyEmailed, setExcludeAlreadyEmailed] = useState<boolean>(true)
   const [previewing, setPreviewing] = useState(false)
@@ -543,13 +554,35 @@ function ImportFromCrmSection({
       })
   }, [orgId])
 
+  // Carrega nichos distintos dos leads da org
+  useEffect(() => {
+    if (!orgId) return
+    supabase
+      .from('leads')
+      .select('nicho')
+      .eq('org_id', orgId)
+      .not('nicho', 'is', null)
+      .limit(20000)
+      .then(({ data }) => {
+        const all = (data || []).map((l: any) => l.nicho).filter(Boolean)
+        const distinct = Array.from(new Set(all)).sort()
+        setAvailableNichos(distinct as string[])
+      })
+  }, [orgId])
+
   const toggleStage = (name: string) => {
     setSelectedStages(prev => prev.includes(name) ? prev.filter(s => s !== name) : [...prev, name])
     setPreviewResult(null)
   }
 
+  const toggleNicho = (name: string) => {
+    setSelectedNichos(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name])
+    setPreviewResult(null)
+  }
+
   const buildFilters = (preview: boolean) => ({
     stages: selectedStages.length > 0 ? selectedStages : undefined,
+    nichos: selectedNichos.length > 0 ? selectedNichos : undefined,
     updated_before_days: updatedBeforeDays > 0 ? updatedBeforeDays : undefined,
     exclude_already_emailed: excludeAlreadyEmailed,
     preview,
@@ -630,6 +663,34 @@ function ImportFromCrmSection({
             </div>
             {selectedStages.length === 0 && (
               <p className="text-[11px] mt-1.5" style={{ color: 'var(--color-text-muted)' }}>{t.filterAllStages}</p>
+            )}
+          </div>
+        )}
+
+        {/* Nichos multi-select */}
+        {availableNichos.length > 0 && (
+          <div>
+            <label className="block text-xs font-semibold mb-2" style={{ color: 'var(--color-text-secondary)' }}>{t.filterNichos}</label>
+            <div className="flex flex-wrap gap-1.5">
+              {availableNichos.map(n => {
+                const active = selectedNichos.includes(n)
+                return (
+                  <button
+                    key={n}
+                    onClick={() => toggleNicho(n)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    style={active
+                      ? { background: 'var(--color-primary)', color: '#fff' }
+                      : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }
+                    }
+                  >
+                    {n}
+                  </button>
+                )
+              })}
+            </div>
+            {selectedNichos.length === 0 && (
+              <p className="text-[11px] mt-1.5" style={{ color: 'var(--color-text-muted)' }}>{t.filterAllNichos}</p>
             )}
           </div>
         )}
