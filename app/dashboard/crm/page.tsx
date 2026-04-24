@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { formatPrice, formatSource } from '@/lib/format'
+import { formatLeadName } from '@/lib/format/leadName'
 import { usePlan } from '@/lib/usePlan'
 import UpgradeModal from '@/app/dashboard/components/UpgradeModal'
 import {
@@ -1277,7 +1278,7 @@ export default function CrmPage() {
                   {filteredLeads.map((lead) => {
                     const stage = pipelineStages.find(s => s.name === lead.stage) || pipelineStages[0]
                     const stageColor = stage ? getStageColor(stage.color) : getStageColor('gray')
-                    const leadDisplayName = lead.name || 'Sem Nome'
+                    const leadDisplayName = formatLeadName(lead, activeOrg?.niche, { lang: userLang })
                     const daysSinceUpdate = getDaysSinceUpdate(lead.updated_at)
                     const isStale = daysSinceUpdate > 5
                     const leadTagsList = getLeadTags(lead.id)
@@ -1460,7 +1461,7 @@ export default function CrmPage() {
                     {/* Cards */}
                     <div className="flex-1 overflow-y-auto p-2 space-y-2">
                       {stageLeads[stage.name]?.map((lead, index) => {
-                        const leadDisplayName = lead.name || 'Sem Nome'
+                        const leadDisplayName = formatLeadName(lead, activeOrg?.niche, { lang: userLang })
                         const daysSinceUpdate = getDaysSinceUpdate(lead.updated_at)
                         const isStale = daysSinceUpdate > 5
                         const leadTagsList = getLeadTags(lead.id)

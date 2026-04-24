@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
+import { formatLeadName } from '@/lib/format/leadName'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import {
@@ -322,7 +323,7 @@ function friendlySource(source: string | null, lang: string): string {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function FollowUpPage() {
-  const { user } = useAuth()
+  const { user, activeOrg } = useAuth()
   const orgId = useActiveOrgId()
   const lang = (user?.language as Language) || 'pt'
   const t = TRANSLATIONS[lang]
@@ -341,7 +342,7 @@ export default function FollowUpPage() {
     try {
       const { data, error } = await supabase
         .from('follow_up_queue')
-        .select('*, lead:leads(id, name, phone, stage)')
+        .select('*, lead:leads(id, name, nome_empresa, phone, stage)')
         .eq('org_id', orgId)
         .order('created_at', { ascending: false })
         .limit(200)
@@ -499,6 +500,8 @@ export default function FollowUpPage() {
             <FollowUpCard key={item.id} item={item} t={t} expanded={expandedId === item.id}
               onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
               onCancel={() => handleCancel(item.id)}
+              orgNiche={(activeOrg as any)?.niche}
+              lang={((user as any)?.language as 'pt' | 'en' | 'es') || 'pt'}
             />
           ))}
         </div>
@@ -908,15 +911,17 @@ function StatCard({ icon: Icon, label, value, colorVar, bgVar }: {
 // FOLLOW-UP CARD
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function FollowUpCard({ item, t, expanded, onToggle, onCancel }: {
+function FollowUpCard({ item, t, expanded, onToggle, onCancel, orgNiche, lang }: {
   item: FollowUpItem
   t: typeof TRANSLATIONS['pt']
   expanded: boolean
   onToggle: () => void
   onCancel: () => void
+  orgNiche?: string | null
+  lang?: 'pt' | 'en' | 'es'
 }) {
   const lead = item.lead as any
-  const leadName = lead?.name || lead?.phone || '—'
+  const leadName = formatLeadName(lead, orgNiche, { lang })
   const leadPhone = lead?.phone || ''
 
   const statusConfig: Record<string, { colorVar: string; bgVar: string; icon: any }> = {

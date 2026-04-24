@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { formatLeadName } from '@/lib/format/leadName'
 import {
   AlertTriangle,
   RefreshCw,
@@ -84,6 +85,7 @@ const DATE_LOCALES = { pt: ptBR, en: enUS, es: esLocale }
 interface Props {
   orgId: string
   lang: 'pt' | 'en' | 'es'
+  orgNiche?: string | null
 }
 
 interface PriorityItem {
@@ -138,7 +140,7 @@ function formatCurrency(value: number): string {
 // COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export default function DailyPriorities({ orgId, lang }: Props) {
+export default function DailyPriorities({ orgId, lang, orgNiche }: Props) {
   const [categories, setCategories] = useState<PriorityCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
@@ -181,7 +183,7 @@ export default function DailyPriorities({ orgId, lang }: Props) {
         // 2. Follow-ups pendentes
         supabase
           .from('follow_up_queue')
-          .select('id, lead_id, attempt_number, max_attempts, last_conversation_summary, next_attempt_at, status, lead:leads(id, name, phone)')
+          .select('id, lead_id, attempt_number, max_attempts, last_conversation_summary, next_attempt_at, status, lead:leads(id, name, nome_empresa, phone)')
           .eq('org_id', orgId)
           .in('status', ['pending', 'active'])
           .lte('next_attempt_at', now.toISOString())
@@ -191,7 +193,7 @@ export default function DailyPriorities({ orgId, lang }: Props) {
         // 3. Visitas de hoje
         supabase
           .from('calendar_events')
-          .select('id, lead_id, title, start_time, address, leads(id, name, phone)')
+          .select('id, lead_id, title, start_time, address, leads(id, name, nome_empresa, phone)')
           .eq('org_id', orgId)
           .eq('event_date', todayStr)
           .eq('status', 'scheduled')
@@ -297,7 +299,7 @@ export default function DailyPriorities({ orgId, lang }: Props) {
             id: `fu-${fu.id}`,
             leadId: fu.lead_id,
             cols: [
-              truncate(lead?.name || 'Lead', 20),
+              truncate(formatLeadName(lead, orgNiche, { lang }), 20),
               `${t.attempt} ${fu.attempt_number}/${fu.max_attempts}`,
               truncate(fu.last_conversation_summary, 30),
             ],
@@ -315,7 +317,7 @@ export default function DailyPriorities({ orgId, lang }: Props) {
             id: `vi-${ev.id}`,
             leadId: ev.lead_id || '',
             cols: [
-              truncate(lead?.name || ev.title || 'Evento', 20),
+              truncate(lead ? formatLeadName(lead, orgNiche, { lang }) : (ev.title || 'Evento'), 20),
               timeStr,
               truncate(ev.address, 30),
             ],
@@ -332,7 +334,7 @@ export default function DailyPriorities({ orgId, lang }: Props) {
             id: `hot-${lead.id}`,
             leadId: lead.id,
             cols: [
-              truncate(lead.name || 'Lead', 20),
+              truncate(formatLeadName(lead, orgNiche, { lang }), 20),
               `${t.score} ${lead.score}`,
               `${days}${t.daysAgo}`,
             ],
@@ -349,7 +351,7 @@ export default function DailyPriorities({ orgId, lang }: Props) {
             id: `hv-${lead.id}`,
             leadId: lead.id,
             cols: [
-              truncate(lead.name || 'Lead', 20),
+              truncate(formatLeadName(lead, orgNiche, { lang }), 20),
               formatCurrency(lead.total_em_vendas || 0),
               `${days}${t.stale}`,
             ],

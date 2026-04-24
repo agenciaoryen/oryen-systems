@@ -424,7 +424,7 @@ const DashboardSkeleton = ({ message }: { message: string }) => (
 export default function DashboardPage() {
   const router = useRouter()
   
-  const { user, loading: authLoading, activeOrgName } = useAuth()
+  const { user, loading: authLoading, activeOrg, activeOrgName } = useAuth()
   const activeOrgId = useActiveOrgId()
   
   // Estados de UI
@@ -840,7 +840,7 @@ export default function DashboardPage() {
         {/* Prioridades do Dia */}
         {activeOrgId && (
           <div className="col-span-12">
-            <DailyPriorities orgId={activeOrgId} lang={userLang} />
+            <DailyPriorities orgId={activeOrgId} lang={userLang} orgNiche={(activeOrg as any)?.niche} />
           </div>
         )}
 

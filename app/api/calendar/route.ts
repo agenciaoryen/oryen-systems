@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('calendar_events')
-      .select('*, leads(id, name, phone)')
+      .select('*, leads(id, name, nome_empresa, phone)')
       .eq('org_id', orgId)
       .order('event_date', { ascending: true })
       .order('start_time', { ascending: true })
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
         created_by: body.created_by || 'user',
         notes: body.notes || null
       })
-      .select('*, leads(id, name, phone)')
+      .select('*, leads(id, name, nome_empresa, phone)')
       .single()
 
     if (error) {

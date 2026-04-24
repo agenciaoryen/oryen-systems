@@ -117,7 +117,7 @@ export function useLeadDocuments(leadId?: string) {
         .select(`
           *,
           template:document_templates(id, name, category),
-          lead:leads(id, name, phone, email)
+          lead:leads(id, name, nome_empresa, phone, email)
         `)
         .eq('org_id', activeOrgId)
         .order('created_at', { ascending: false })
@@ -164,7 +164,7 @@ export function useDocument(documentId: string) {
           .select(`
             *,
             template:document_templates(*),
-            lead:leads(id, name, phone, email)
+            lead:leads(id, name, nome_empresa, phone, email)
           `)
           .eq('id', documentId)
           .single()

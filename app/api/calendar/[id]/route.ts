@@ -34,7 +34,7 @@ export async function PATCH(
       .from('calendar_events')
       .update(updates)
       .eq('id', id)
-      .select('*, leads(id, name, phone)')
+      .select('*, leads(id, name, nome_empresa, phone)')
       .single()
 
     if (error) {

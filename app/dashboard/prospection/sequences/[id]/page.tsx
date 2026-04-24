@@ -11,6 +11,7 @@ import {
   FileText, Copy as CopyIcon, Settings, ArrowRight,
 } from 'lucide-react'
 import { CHANNEL_LABELS } from '@/lib/prospection/types'
+import { useLeadNameFormatter } from '@/lib/format/useLeadNameFormatter'
 
 export default function SequenceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -1511,7 +1512,7 @@ function EnrollmentsView({ enrollments }: { enrollments: any[] }) {
     if (statusFilter !== 'all' && e.status !== statusFilter) return false
     if (search) {
       const lead = Array.isArray(e.lead) ? e.lead[0] : e.lead
-      const haystack = `${lead?.name || ''} ${lead?.phone || ''} ${lead?.email || ''}`.toLowerCase()
+      const haystack = `${lead?.name || ''} ${lead?.nome_empresa || ''} ${lead?.phone || ''} ${lead?.email || ''}`.toLowerCase()
       if (!haystack.includes(search.toLowerCase())) return false
     }
     return true
@@ -1656,8 +1657,9 @@ function StatusPill({
 }
 
 function EnrollmentRow({ enrollment, lead }: { enrollment: any; lead: any }) {
-  const name = lead?.name && String(lead.name).trim() ? lead.name : '—'
-  const initial = (name && name !== '—' ? name.charAt(0) : '?').toUpperCase()
+  const { formatName, formatInitial } = useLeadNameFormatter()
+  const name = formatName(lead) || '—'
+  const initial = formatInitial(lead)
   const sub = lead?.phone ?? lead?.email ?? ''
 
   const statusTone =

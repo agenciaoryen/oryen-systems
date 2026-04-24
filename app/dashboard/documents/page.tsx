@@ -3,6 +3,7 @@
 
 import { useState, useMemo } from 'react'
 import { useAuth } from '@/lib/AuthContext'
+import { formatLeadName, formatLeadInitial } from '@/lib/format/leadName'
 import { useLeadDocuments, useDocumentCategories, deleteDocument } from '@/lib/documents'
 import {
   DOCUMENT_STATUS_LABELS,
@@ -179,7 +180,7 @@ function StatusBadge({ status, lang }: { status: DocumentStatus; lang: Language 
 // COMPONENTE: DocumentCard
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function DocumentCard({ doc, lang, t, onRefresh }: { doc: LeadDocument; lang: Language; t: any; onRefresh: () => void }) {
+function DocumentCard({ doc, lang, t, onRefresh, orgNiche }: { doc: LeadDocument; lang: Language; t: any; onRefresh: () => void; orgNiche?: string | null }) {
   const [showMenu, setShowMenu] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -292,7 +293,7 @@ function DocumentCard({ doc, lang, t, onRefresh }: { doc: LeadDocument; lang: La
                   style={{ color: 'var(--color-text-muted)' }}
                 >
                   <User size={11} />
-                  <span className="truncate max-w-[120px] sm:max-w-none">{doc.lead.name}</span>
+                  <span className="truncate max-w-[120px] sm:max-w-none">{formatLeadName(doc.lead, orgNiche, { lang })}</span>
                 </Link>
               )}
               <StatusBadge status={doc.status} lang={lang} />
@@ -504,7 +505,7 @@ const LEAD_SELECTOR_T = {
 }
 
 export default function DocumentsPage() {
-  const { user, activeOrgId } = useAuth()
+  const { user, activeOrg, activeOrgId } = useAuth()
   const { documents, loading, error, refetch } = useLeadDocuments()
 
   const lang = (user?.language as Language) || 'pt'
@@ -519,7 +520,7 @@ export default function DocumentsPage() {
   const [pendingAction, setPendingAction] = useState<'create' | 'upload'>('create')
   const [selectedLead, setSelectedLead] = useState<{ id: string; name: string; phone?: string; email?: string } | null>(null)
   const [leadSearch, setLeadSearch] = useState('')
-  const [leads, setLeads] = useState<{ id: string; name: string; phone?: string; email?: string }[]>([])
+  const [leads, setLeads] = useState<{ id: string; name: string; nome_empresa?: string; phone?: string; email?: string }[]>([])
   const [leadsLoading, setLeadsLoading] = useState(false)
 
   // Buscar leads quando abrir o seletor
@@ -530,7 +531,7 @@ export default function DocumentsPage() {
     setLeadsLoading(true)
     const { data } = await supabase
       .from('leads')
-      .select('id, name, phone, email')
+      .select('id, name, nome_empresa, phone, email')
       .eq('org_id', activeOrgId)
       .order('updated_at', { ascending: false })
       .limit(50)
@@ -696,7 +697,7 @@ export default function DocumentsPage() {
         ) : (
           <div className="grid gap-3">
             {filteredDocuments.map((doc) => (
-              <DocumentCard key={doc.id} doc={doc} lang={lang} t={t} onRefresh={refetch} />
+              <DocumentCard key={doc.id} doc={doc} lang={lang} t={t} onRefresh={refetch} orgNiche={(activeOrg as any)?.niche} />
             ))}
           </div>
         )}
@@ -750,11 +751,11 @@ export default function DocumentsPage() {
                       style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border-subtle)' }}
                     >
                       <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-xs font-bold" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
-                        {(lead.name || '?').charAt(0).toUpperCase()}
+                        {formatLeadInitial(lead, (activeOrg as any)?.niche)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
-                          {lead.name || 'Sem nome'}
+                          {formatLeadName(lead, (activeOrg as any)?.niche, { lang })}
                         </p>
                         <p className="text-xs truncate" style={{ color: 'var(--color-text-muted)' }}>
                           {lead.phone || lead.email || '—'}

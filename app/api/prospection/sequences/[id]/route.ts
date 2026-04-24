@@ -53,7 +53,7 @@ export async function GET(
       .from('prospection_enrollments')
       .select(`
         id, status, current_step_position, enrolled_at, next_action_at, paused_at, completed_at,
-        lead:leads(id, name, phone, email, city, stage, source)
+        lead:leads(id, name, nome_empresa, phone, email, city, stage, source)
       `)
       .eq('sequence_id', id)
       .order('enrolled_at', { ascending: false })

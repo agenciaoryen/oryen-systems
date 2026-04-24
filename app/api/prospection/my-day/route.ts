@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
           id, sequence_id, current_step_position, status,
           sequence:prospection_sequences(id, name)
         ),
-        lead:leads(id, name, phone, email, city, stage, instagram, url_site),
+        lead:leads(id, name, nome_empresa, phone, email, city, stage, instagram, url_site),
         assignee:users!prospection_tasks_assignee_user_id_fkey(id, full_name)
       `)
       .eq('org_id', orgId)
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
       .select(`
         id, sequence_id, lead_id, status, exit_reason, paused_at, current_step_position,
         sequence:prospection_sequences(id, name),
-        lead:leads(id, name, phone, email, city, stage, instagram, url_site)
+        lead:leads(id, name, nome_empresa, phone, email, city, stage, instagram, url_site)
       `)
       .eq('org_id', orgId)
       .eq('status', 'paused')
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
       .select(`
         id, step_id, lead_id, assignee_user_id, outcome, completed_at, notes,
         step:prospection_steps(id, position, channel, title, execution_mode),
-        lead:leads(id, name, phone, email, city, stage),
+        lead:leads(id, name, nome_empresa, phone, email, city, stage),
         assignee:users!prospection_tasks_assignee_user_id_fkey(id, full_name)
       `)
       .eq('org_id', orgId)
@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
       .select(`
         id, step_id, lead_id, result, outcome, executed_at, variant_used,
         step:prospection_steps(id, position, channel, title, execution_mode),
-        lead:leads(id, name, phone, email, stage)
+        lead:leads(id, name, nome_empresa, phone, email, stage)
       `)
       .eq('org_id', orgId)
       .gte('executed_at', startOfToday)

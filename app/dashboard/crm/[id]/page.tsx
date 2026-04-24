@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { formatPrice, formatSource } from '@/lib/format'
+import { formatLeadName } from '@/lib/format/leadName'
 import LeadDocuments from './components/LeadDocuments'
 import FinancingSimulation from './components/FinancingSimulation'
 import {
@@ -944,7 +945,7 @@ export default function LeadProfilePage() {
     )
   }
 
-  const displayName = lead.name || t.noName
+  const displayName = formatLeadName(lead, activeOrg?.niche, { lang: userLang })
   const currentStage = pipelineStages.find(s => s.name === lead.stage)
   const stageColor = currentStage ? getStageColor(currentStage.color) : getStageColor('gray')
   const availableTags = allTags.filter(tag => !leadTags.some(lt => lt.id === tag.id))

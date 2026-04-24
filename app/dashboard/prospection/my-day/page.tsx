@@ -5,6 +5,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '@/lib/AuthContext'
+import { formatLeadName } from '@/lib/format/leadName'
+import { useLeadNameFormatter } from '@/lib/format/useLeadNameFormatter'
 import {
   Rocket,
   Clock,
@@ -182,7 +184,7 @@ interface TeamMember {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function MyDayPage() {
-  const { user } = useAuth()
+  const { user, activeOrg } = useAuth()
   const lang = ((user?.language as Lang) || 'pt') as Lang
   const t = TRANSLATIONS[lang]
 
@@ -740,6 +742,7 @@ function RespondedList({
   items: any[]
   t: (typeof TRANSLATIONS)['pt']
 }) {
+  const { formatName } = useLeadNameFormatter()
   return (
     <div className="space-y-2">
       {items.map((item) => {
@@ -758,7 +761,7 @@ function RespondedList({
           >
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
-                {lead?.name ?? '—'}
+                {formatName(lead) || '—'}
               </div>
               <div className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>
                 {lead?.phone ?? lead?.email ?? ''}
@@ -918,6 +921,7 @@ function DoneStepGroup({
 }
 
 function DoneItem({ item, kind, showAssignee }: { item: any; kind: 'manual' | 'auto'; showAssignee?: boolean }) {
+  const { formatName } = useLeadNameFormatter()
   const lead = Array.isArray(item.lead) ? item.lead[0] : item.lead
   const assignee = Array.isArray(item.assignee) ? item.assignee[0] : item.assignee
   const when = item.completed_at || item.executed_at
@@ -935,7 +939,7 @@ function DoneItem({ item, kind, showAssignee }: { item: any; kind: 'manual' | 'a
       onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
     >
       <div className="flex-1 min-w-0 truncate" style={{ color: 'var(--color-text-primary)' }}>
-        <span className="font-semibold">{lead?.name ?? '—'}</span>
+        <span className="font-semibold">{formatName(lead) || '—'}</span>
         <span className="mx-1.5" style={{ color: 'var(--color-text-tertiary)' }}>·</span>
         <span style={{ color: 'var(--color-text-tertiary)' }}>{lead?.phone ?? lead?.email ?? ''}</span>
       </div>
@@ -1126,6 +1130,7 @@ function _LegacyRespondedBucket({
   items: any[]
   t: (typeof TRANSLATIONS)['pt']
 }) {
+  const { formatName } = useLeadNameFormatter()
   return (
     <div className="rounded-xl border border-border border-l-4 border-l-emerald-500 bg-card p-5">
       <div className="flex items-center justify-between mb-4">
@@ -1157,7 +1162,7 @@ function _LegacyRespondedBucket({
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate">{lead?.name ?? '—'}</div>
+                    <div className="font-semibold text-sm truncate">{formatName(lead) || '—'}</div>
                     <div className="text-xs text-muted-foreground truncate">
                       {lead?.phone ?? lead?.email ?? ''}
                     </div>
@@ -1193,6 +1198,7 @@ function TaskCard({
   showAssignee?: boolean
   t: (typeof TRANSLATIONS)['pt']
 }) {
+  const { formatName } = useLeadNameFormatter()
   const step = Array.isArray(task.step) ? task.step[0] : task.step
   const enrollment = Array.isArray(task.enrollment) ? task.enrollment[0] : task.enrollment
   const sequence = enrollment?.sequence
@@ -1269,7 +1275,7 @@ function TaskCard({
             className="font-semibold text-sm truncate"
             style={{ color: 'var(--color-text-primary)' }}
           >
-            {lead?.name && String(lead.name).trim() ? lead.name : '—'}
+            {formatName(lead) || '—'}
           </div>
           <div
             className="text-xs truncate"
@@ -1507,6 +1513,7 @@ function CompleteModal({
   onConfirm: (payload: { outcome?: string; notes?: string; variant_used?: string; move_to_stage?: string | null }) => void
   t: (typeof TRANSLATIONS)['pt']
 }) {
+  const { formatName } = useLeadNameFormatter()
   const step = Array.isArray(task.step) ? task.step[0] : task.step
   const lead = Array.isArray(task.lead) ? task.lead[0] : task.lead
   const isCall = step?.channel === 'call'
@@ -1587,7 +1594,7 @@ function CompleteModal({
               {CHANNEL_LABELS[step?.channel as keyof typeof CHANNEL_LABELS]} · {t.stepOf} {step?.position}
             </div>
             <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              {lead?.name && String(lead.name).trim() ? lead.name : '—'}
+              {formatName(lead) || '—'}
             </h3>
             <div className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
               {lead?.phone ?? lead?.email}

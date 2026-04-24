@@ -4,6 +4,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
+import { formatLeadName } from '@/lib/format/leadName'
 import {
   CalendarDays,
   ChevronLeft,
@@ -241,7 +242,7 @@ function getFirstDayOfMonth(year: number, month: number) {
    MAIN PAGE COMPONENT
    ============================================= */
 export default function CalendarPage() {
-  const { user } = useAuth()
+  const { user, activeOrg } = useAuth()
   const orgId = useActiveOrgId()
   const userLang = ((user as any)?.language as Language) || 'pt'
   const t = TRANSLATIONS[userLang]
@@ -481,10 +482,10 @@ export default function CalendarPage() {
                           <Clock size={12} />
                           <span>{formatTime(ev.start_time)}{ev.end_time ? ` - ${formatTime(ev.end_time)}` : ''}</span>
                         </div>
-                        {ev.leads?.name && (
+                        {ev.leads && (ev.leads.name || ev.leads.nome_empresa) && (
                           <div className="flex items-center gap-1.5 mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>
                             <User size={12} />
-                            <span className="truncate">{ev.leads.name}</span>
+                            <span className="truncate">{formatLeadName(ev.leads, (activeOrg as any)?.niche, { lang: userLang })}</span>
                           </div>
                         )}
                       </div>
@@ -780,10 +781,10 @@ function EventDetailModal({
           )}
 
           {/* Lead */}
-          {event.leads?.name && (
+          {event.leads && (event.leads.name || event.leads.nome_empresa) && (
             <div className="flex items-center gap-3 text-sm">
               <User size={16} style={{ color: 'var(--color-text-muted)' }} />
-              <span style={{ color: 'var(--color-text-secondary)' }}>{event.leads.name}</span>
+              <span style={{ color: 'var(--color-text-secondary)' }}>{formatLeadName(event.leads, (activeOrg as any)?.niche, { lang: userLang })}</span>
               <a href={`/dashboard/crm/${event.lead_id}`} className="flex items-center gap-1 text-xs" style={{ color: 'var(--color-primary)' }}>
                 <ExternalLink size={12} />
                 {t.viewLead}

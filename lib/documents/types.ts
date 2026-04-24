@@ -104,6 +104,7 @@ export interface LeadDocument {
   lead?: {
     id: string
     name: string
+    nome_empresa?: string | null
     phone?: string
     email?: string
   }
