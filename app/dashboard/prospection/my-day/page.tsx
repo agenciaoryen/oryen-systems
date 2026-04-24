@@ -66,6 +66,8 @@ const TRANSLATIONS = {
     instruction: 'Instrução',
     stepOf: 'Etapa',
     goToQualify: 'Qualificar agora',
+    openMessages: 'Mensagens',
+    callAction: 'Ligar',
   },
   es: {
     title: 'Mi Día · Prospección',
@@ -98,6 +100,8 @@ const TRANSLATIONS = {
     instruction: 'Instrucción',
     stepOf: 'Etapa',
     goToQualify: 'Calificar ahora',
+    openMessages: 'Mensajes',
+    callAction: 'Llamar',
   },
   en: {
     title: 'My Day · Prospecting',
@@ -130,6 +134,8 @@ const TRANSLATIONS = {
     instruction: 'Instruction',
     stepOf: 'Step',
     goToQualify: 'Qualify now',
+    openMessages: 'Messages',
+    callAction: 'Call',
   },
 }
 
@@ -556,21 +562,69 @@ function TaskCard({
       </div>
 
       {!compact && (
-        <div className="flex items-center gap-2 mt-2">
-          <Link
-            href={`/dashboard/crm/${task.lead_id}`}
-            className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-md bg-muted/40 hover:bg-muted border border-border transition"
-          >
-            {t.openLead}
-            <ArrowRight className="w-3 h-3" />
-          </Link>
-          <button
-            onClick={onComplete}
-            className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition font-semibold"
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            {t.markDone}
-          </button>
+        <div className="space-y-2 mt-2">
+          {/* Linha 1: ações de contato por canal */}
+          {channel === 'whatsapp' && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  if (!lead?.id) return
+                  window.open(`/dashboard/messages?lead_id=${lead.id}`, '_blank')
+                }}
+                disabled={!lead?.id}
+                className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition font-semibold"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                {t.openMessages}
+              </button>
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  if (!lead?.phone) return
+                  const num = String(lead.phone).replace(/\D/g, '')
+                  window.open(`https://wa.me/${num}`, '_blank')
+                }}
+                disabled={!lead?.phone}
+                className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-md bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-40 transition font-semibold"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                WhatsApp
+              </button>
+            </div>
+          )}
+          {channel === 'call' && lead?.phone && (
+            <div className="flex items-center gap-2">
+              <a
+                href={`tel:${String(lead.phone).replace(/\D/g, '')}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition font-semibold"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                {t.callAction} · {lead.phone}
+              </a>
+            </div>
+          )}
+
+          {/* Linha 2: ver lead + marcar feita */}
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/dashboard/crm/${task.lead_id}`}
+              className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-md bg-muted/40 hover:bg-muted border border-border transition"
+            >
+              {t.openLead}
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+            <button
+              onClick={onComplete}
+              className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-md bg-foreground text-background hover:opacity-90 transition font-semibold"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              {t.markDone}
+            </button>
+          </div>
         </div>
       )}
     </div>
