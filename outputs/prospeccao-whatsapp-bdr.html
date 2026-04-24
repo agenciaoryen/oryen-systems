@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Oryen · Prospecção WhatsApp (BDR Leonardo) · Fluxo 3 Etapas</title>
+<title>Oryen · Prospecção WhatsApp · BDR · v3.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -41,7 +41,6 @@
     padding: 48px 24px 96px;
   }
 
-  /* ===== HEADER ===== */
   header {
     text-align: center;
     padding: 32px 0 48px;
@@ -98,11 +97,10 @@
   .tagline {
     color: var(--text-dim);
     font-size: 17px;
-    max-width: 620px;
+    max-width: 640px;
     margin: 0 auto;
   }
 
-  /* ===== FLOW DIAGRAM ===== */
   .flow {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -161,7 +159,6 @@
     justify-content: center;
   }
 
-  /* ===== INTRO ===== */
   .intro {
     background: linear-gradient(135deg, rgba(79, 111, 255, 0.08), rgba(110, 95, 255, 0.05));
     border: 1px solid var(--line);
@@ -207,7 +204,6 @@
     font-weight: 600;
   }
 
-  /* ===== TABS ===== */
   .tabs {
     display: flex;
     gap: 8px;
@@ -247,7 +243,6 @@
     box-shadow: 0 4px 16px rgba(79, 111, 255, 0.35);
   }
 
-  /* ===== PANEL ===== */
   .panel { display: none; }
   .panel.active { display: block; animation: fadeIn 0.3s ease; }
 
@@ -256,10 +251,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ===== STAGE SECTION ===== */
-  .stage {
-    margin-bottom: 56px;
-  }
+  .stage { margin-bottom: 56px; }
 
   .stage-header {
     display: flex;
@@ -292,6 +284,26 @@
     letter-spacing: -0.01em;
   }
 
+  .stage-owner {
+    display: inline-block;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: rgba(79, 111, 255, 0.15);
+    color: var(--cobalt);
+    margin-left: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+
+  .stage-owner.teresita {
+    background: rgba(240, 160, 48, 0.15);
+    color: var(--amber);
+  }
+
   .stage-timing {
     background: var(--graphite);
     border: 1px solid var(--line);
@@ -314,7 +326,36 @@
     text-transform: uppercase;
   }
 
-  /* ===== SCENARIO HEADER ===== */
+  .substage-label {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--cobalt);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin: 24px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .substage-label::before {
+    content: '';
+    width: 4px;
+    height: 16px;
+    background: linear-gradient(180deg, var(--cobalt), var(--indigo));
+    border-radius: 2px;
+  }
+
+  .substage-label-text {
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: 4px;
+  }
+
   .scenario {
     margin-bottom: 28px;
     padding: 20px 24px;
@@ -343,7 +384,6 @@
     margin-bottom: 18px;
   }
 
-  /* ===== MESSAGE CARD ===== */
   .msg-card {
     background: var(--graphite);
     border: 1px solid var(--line);
@@ -370,6 +410,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
   }
 
   .msg-tag {
@@ -438,7 +479,6 @@
     font-weight: 500;
   }
 
-  /* ===== TIPS FOOTER ===== */
   .tips {
     margin-top: 56px;
     padding: 32px;
@@ -487,7 +527,6 @@
     font-size: 14px;
   }
 
-  /* ===== FOOTER ===== */
   footer {
     margin-top: 64px;
     padding-top: 32px;
@@ -506,7 +545,6 @@
     margin-bottom: 6px;
   }
 
-  /* ===== RESPONSIVE ===== */
   @media (max-width: 720px) {
     .flow { grid-template-columns: 1fr; }
     .flow-arrow { display: none; }
@@ -522,6 +560,7 @@
     .tips { padding: 20px; }
     .stage-title { font-size: 19px; }
     .scenario { padding: 16px 18px; }
+    .stage-owner { display: block; margin: 6px 0 0 0; width: fit-content; }
   }
 
   @media (max-width: 420px) {
@@ -536,41 +575,40 @@
 
   <header>
     <div class="wordmark">oryen</div>
-    <div class="subtitle">Playbook de Prospecção · BDR Leonardo</div>
-    <h1>Fluxo de <span class="highlight">3 etapas</span> · WhatsApp</h1>
-    <p class="tagline">Saudação → Gancho de curiosidade → Ferida + ligação · Versões PT e ES</p>
+    <div class="subtitle">Playbook de Prospecção · Davi + Teresita</div>
+    <h1>Fluxo em <span class="highlight">3 etapas</span> · WhatsApp</h1>
+    <p class="tagline">Abertura por curiosidade · Qualificação por mensagem · Reunião direta por videollamada</p>
   </header>
 
-  <!-- ===== FLOW DIAGRAM ===== -->
   <div class="flow">
     <div class="flow-step">
-      <div class="flow-step-num">Etapa 01</div>
+      <div class="flow-step-num">Etapa 01 · Davi</div>
       <h4>Saudação</h4>
-      <p>Abre o canal, ativa a dúvida ("quem é esse?") e detecta auto-resposta do lead.</p>
+      <p>Abre canal. Aguarda resposta automática do lead como gatilho para Etapa 02.</p>
       <div class="flow-arrow">→</div>
     </div>
     <div class="flow-step">
-      <div class="flow-step-num">Etapa 02</div>
+      <div class="flow-step-num">Etapa 02 · Davi</div>
       <h4>Curiosidade</h4>
-      <p>Gancho "Instagram / site" sem revelar a Oryen — faz o lead responder.</p>
+      <p>Gancho "vi seu Instagram / site" sem revelar Oryen. Faz o lead responder.</p>
       <div class="flow-arrow">→</div>
     </div>
     <div class="flow-step">
-      <div class="flow-step-num">Etapa 03</div>
-      <h4>Ferida + Ligação</h4>
-      <p>Toca na dor real (leads perdidos) e agenda a ligação de pré-qualificação.</p>
+      <div class="flow-step-num">Etapa 03 · Teresita</div>
+      <h4>Qualificação + Reunião</h4>
+      <p>Quando o lead responde, Teresita entra. Qualifica por mensagem e agenda reunião.</p>
     </div>
   </div>
 
   <section class="intro">
-    <h2>Princípios do fluxo</h2>
+    <h2>Princípios do fluxo v3.0</h2>
     <ul>
-      <li><strong>Etapa 1 isolada</strong> — dispara e aguarda. Se o lead tiver auto-resposta, usamos isso como gatilho pra Etapa 2 ("respondendo" ao bot dele)</li>
-      <li><strong>Etapa 2 sem Oryen</strong> — não revelamos a empresa. A ambiguidade cliente/vendedor é o motor da resposta</li>
-      <li><strong>Etapa 3 com ferida</strong> — só quando o lead responder, tocamos na dor (lead frio por demora) e aí propomos ligação</li>
-      <li><strong>Zero emoji</strong> — qualquer emoji soa automação. Letras puras</li>
-      <li><strong>Variar gancho</strong> — alterne Instagram / site conforme a origem real do lead. Nunca mentir o canal</li>
-      <li><strong>Meta: ligação</strong> — WhatsApp só abre a porta. Pré-qualificação real acontece na ligação de 10min</li>
+      <li><strong>Mesma voz, duas pessoas</strong> — Davi e Teresita usam o mesmo chip. Pro lead é sempre "Leonardo". A transição deve ser invisível</li>
+      <li><strong>Qualificação por mensagem</strong> — ICUVA completo via WhatsApp (Interesse, Urgência, Autoridade). Ligação não acontece, vai direto pra reunião</li>
+      <li><strong>Reunião com objetivo, sem tempo fixo</strong> — vender por voz é baixo ROI em SaaS de ticket médio. A reunião já é a demo, onde se fecha</li>
+      <li><strong>Escrita natural</strong> — sem <code style="color:var(--amber)">¿</code> de abertura, sem <code style="color:var(--amber)">:</code> no meio de frases, com "muletas" humanas (mire, el tema es, antes de seguir)</li>
+      <li><strong>Usted + LATAM neutro</strong> — zero gírias regionais (dale, mirá, acá, tenés, querés, vos)</li>
+      <li><strong>Reaquecimento 24h</strong> — quem travar na conversa recebe 1 toque de reengajamento antes de virar "lead perdido"</li>
     </ul>
   </section>
 
@@ -586,16 +624,18 @@
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">01</div>
-        <div class="stage-title">Saludo (aguarda respuesta automática)</div>
+        <div>
+          <div class="stage-title">Saludo <span class="stage-owner">Davi</span></div>
+        </div>
       </div>
       <div class="stage-timing">
         <strong>Timing</strong>
-        Dispara solo. Espera 2-5 min para ver si el lead tiene auto-respuesta. Si responde un bot/auto-respuesta, dispará la Etapa 2 pocos segundos después. Si no hay nada en 5 min, dispará la Etapa 2 igual.
+        Dispara solo. Espera 2-5 min para ver si el lead tiene respuesta automática. Si un bot responde, dispara la Etapa 2 entre 5-15 segundos después. Si no hay nada en 5 min, dispara la Etapa 2 igual.
       </div>
 
       <div class="msg-card">
         <div class="msg-header">
-          <div class="msg-label"><span class="msg-variant">Variación A · formal-neutral</span></div>
+          <div class="msg-label"><span class="msg-variant">Variación A</span></div>
           <button class="copy-btn" data-copy="es-1-a">Copiar</button>
         </div>
         <div class="msg-body" id="es-1-a">Hola <span class="placeholder">{{nombre}}</span>, buenas <span class="placeholder">{{tardes}}</span>. Soy Leonardo.</div>
@@ -603,15 +643,15 @@
 
       <div class="msg-card">
         <div class="msg-header">
-          <div class="msg-label"><span class="msg-variant">Variación B · más pessoal</span></div>
+          <div class="msg-label"><span class="msg-variant">Variación B</span></div>
           <button class="copy-btn" data-copy="es-1-b">Copiar</button>
         </div>
-        <div class="msg-body" id="es-1-b">Hola <span class="placeholder">{{nombre}}</span>, ¿cómo estás? Te habla Leonardo.</div>
+        <div class="msg-body" id="es-1-b">Hola <span class="placeholder">{{nombre}}</span>, cómo está? Le habla Leonardo.</div>
       </div>
 
       <div class="msg-card">
         <div class="msg-header">
-          <div class="msg-label"><span class="msg-variant">Variación C · estilo oficina</span></div>
+          <div class="msg-label"><span class="msg-variant">Variación C</span></div>
           <button class="copy-btn" data-copy="es-1-c">Copiar</button>
         </div>
         <div class="msg-body" id="es-1-c">Buenas <span class="placeholder">{{tardes}}</span> <span class="placeholder">{{nombre}}</span>, soy Leonardo.</div>
@@ -622,11 +662,13 @@
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">02</div>
-        <div class="stage-title">Gancho de curiosidad (Instagram / Sitio)</div>
+        <div>
+          <div class="stage-title">Gancho de curiosidad <span class="stage-owner">Davi</span></div>
+        </div>
       </div>
       <div class="stage-timing">
         <strong>Timing</strong>
-        Si el lead tuvo auto-respuesta: disparar 5-15 segundos después del mensaje automático. Si no hubo auto-respuesta: esperar 2-5 min desde la Etapa 1 y disparar igual. Nunca revelar Oryen acá.
+        Si el lead tuvo respuesta automática, disparar 5-15 segundos después del mensaje automático. Si no hubo, esperar 2-5 min desde la Etapa 1. Nunca revelar Oryen acá.
       </div>
 
       <div class="msg-card">
@@ -637,7 +679,7 @@
           </div>
           <button class="copy-btn" data-copy="es-2-a">Copiar</button>
         </div>
-        <div class="msg-body" id="es-2-a">Entré a tu perfil de Instagram y quería comentarte algo. ¿Tenés 1 minuto?</div>
+        <div class="msg-body" id="es-2-a">Entré a su perfil de Instagram y quería comentarle algo. Tiene un minuto?</div>
       </div>
 
       <div class="msg-card">
@@ -648,7 +690,7 @@
           </div>
           <button class="copy-btn" data-copy="es-2-b">Copiar</button>
         </div>
-        <div class="msg-body" id="es-2-b">Llegué acá a través de tu Instagram. ¿Te puedo hacer una pregunta rápida?</div>
+        <div class="msg-body" id="es-2-b">Llegué hasta aquí a través de su Instagram. Le puedo hacer una pregunta rápida?</div>
       </div>
 
       <div class="msg-card">
@@ -659,7 +701,7 @@
           </div>
           <button class="copy-btn" data-copy="es-2-c">Copiar</button>
         </div>
-        <div class="msg-body" id="es-2-c">Vi tu perfil en Instagram y me llamó la atención. ¿Podemos charlar un minuto?</div>
+        <div class="msg-body" id="es-2-c">Vi su perfil en Instagram y me llamó la atención. Podemos conversar un minuto?</div>
       </div>
 
       <div class="msg-card">
@@ -670,7 +712,7 @@
           </div>
           <button class="copy-btn" data-copy="es-2-d">Copiar</button>
         </div>
-        <div class="msg-body" id="es-2-d">Llegué a tu contacto por tu sitio web. ¿Tenés 1 minuto para hablar?</div>
+        <div class="msg-body" id="es-2-d">Llegué a su contacto por su sitio web. Tiene un minuto para hablar?</div>
       </div>
 
       <div class="msg-card">
@@ -681,7 +723,7 @@
           </div>
           <button class="copy-btn" data-copy="es-2-e">Copiar</button>
         </div>
-        <div class="msg-body" id="es-2-e">Vi tu sitio y quería hacerte una pregunta rápida. ¿Tenés un momento?</div>
+        <div class="msg-body" id="es-2-e">Vi su sitio y quería hacerle una pregunta rápida. Tiene un momento?</div>
       </div>
 
       <div class="msg-card">
@@ -692,7 +734,7 @@
           </div>
           <button class="copy-btn" data-copy="es-2-f">Copiar</button>
         </div>
-        <div class="msg-body" id="es-2-f">Te escribo porque vi tu sitio web y quería comentarte algo. ¿Tenés 1 minuto?</div>
+        <div class="msg-body" id="es-2-f">Le escribo porque vi su sitio web y quería comentarle algo. Tiene un minuto?</div>
       </div>
     </section>
 
@@ -700,94 +742,132 @@
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">03</div>
-        <div class="stage-title">Ferida + ligación (según respuesta del lead)</div>
+        <div>
+          <div class="stage-title">Qualificación + reunión <span class="stage-owner teresita">Teresita</span></div>
+        </div>
       </div>
       <div class="stage-timing">
         <strong>Timing</strong>
-        Responder al lead en menos de 5 minutos después de la respuesta de él. La velocidad acá multiplica la conversión a llamada. Ajustá al escenario real: A, B, C o D.
+        Responder al lead en menos de 5 minutos después de su respuesta a la Etapa 2. Velocidad acá multiplica la conversión. Las sub-etapas A, B, C, D se disparan en secuencia, una respuesta del lead por vez.
       </div>
 
-      <!-- Cenário A -->
+      <!-- Cenário principal: Lead receptivo -->
       <div class="scenario">
         <div class="scenario-title">Escenario A · Lead receptivo</div>
-        <div class="scenario-ex">"Hola, claro" · "Sí, decime" · "Dale, contame"</div>
+        <div class="scenario-ex">"Hola, claro" · "Sí, digame" · "Dígame"</div>
 
+        <div class="substage-label">03-A <span class="substage-label-text">· pregunta diagnóstica</span></div>
         <div class="msg-card">
           <div class="msg-header">
             <div class="msg-label">
               <span class="msg-tag ig">Instagram</span>
-              <span class="msg-variant">Ferida + CTA llamada</span>
+              <span class="msg-variant">Abre qualificación</span>
             </div>
-            <button class="copy-btn" data-copy="es-3-a1">Copiar</button>
+            <button class="copy-btn" data-copy="es-3-a">Copiar</button>
           </div>
-          <div class="msg-body" id="es-3-a1">Gracias por responder.
+          <div class="msg-body" id="es-3-a">Perfecto.
 
-Te escribí porque trabajo con asesores inmobiliarios y vi tu perfil de Instagram. Te hago una pregunta directa: de los leads que te llegan por Instagram o WhatsApp fuera del horario — madrugada, fin de semana, mientras estás en una visita — ¿cuántos terminan cerrando con vos?
-
-La realidad es fea: el asesor que responde primero gana la venta casi siempre. Y la mayoría pierde entre 30% y 40% de esos leads solo por demora.
-
-Soy del equipo comercial de Oryen — tenemos una IA que atiende tu WhatsApp 24h, califica al lead y agenda la visita en tu nombre. Si te encaja, te la muestro en una llamada de 10min. Si no, listo, no te robo más tiempo.
-
-¿Te puedo llamar hoy o mañana?</div>
+Trabajo con asesores inmobiliarios y antes de seguir quería preguntarle algo rápido. Los leads que le entran por WhatsApp fuera del horario, de noche, fin de semana o mientras está con otro cliente, cómo los atiende hoy?</div>
         </div>
 
+        <div class="substage-label">03-B <span class="substage-label-text">· empatía + ferida + volumen</span></div>
         <div class="msg-card">
           <div class="msg-header">
             <div class="msg-label">
-              <span class="msg-tag site">Sitio</span>
-              <span class="msg-variant">Ferida + CTA llamada</span>
+              <span class="msg-variant">Dispara después de que el lead cuenta cómo atiende</span>
             </div>
-            <button class="copy-btn" data-copy="es-3-a2">Copiar</button>
+            <button class="copy-btn" data-copy="es-3-b">Copiar</button>
           </div>
-          <div class="msg-body" id="es-3-a2">Gracias por responder.
+          <div class="msg-body" id="es-3-b">Le entiendo. Le pasa a la mayoría de los asesores con los que hablamos, responden cuando pueden y listo.
 
-Soy del equipo comercial de Oryen. Vi que tenés sitio web y seguramente captás leads desde el formulario de contacto. Te hago una pregunta honesta: de los contactos que llegan ahí, ¿cuántos respondés dentro de los primeros 5 minutos?
+El tema es que el mercado cambió. El primero que responde al lead casi siempre se queda con la venta, y la mayoría pierde entre un 30% y un 40% de los contactos solo por demora en el retorno.
 
-Te pregunto porque el dato es duro: lead que espera más de 5min casi siempre ya está hablando con otro asesor. Y el primero en responder se lleva la venta.
+Nosotros en Oryen armamos una herramienta justo para resolver eso. Una IA que atiende su WhatsApp las 24 horas, califica al lead y le agenda la visita en su nombre.
 
-Eso es justo lo que resolvemos — una IA que atiende tu WhatsApp al instante, califica al lead y te lo pasa solo cuando está listo para visita.
+Antes de avanzar, una pregunta rápida. Cuántos leads por semana le entran aproximadamente sumando Instagram, sitio web y referencias?</div>
+        </div>
 
-¿Te puedo llamar 10min hoy o mañana para mostrarte cómo funciona? Si no hay fit, quedamos en paz.</div>
+        <div class="substage-label">03-C <span class="substage-label-text">· autoridad (quien decide)</span></div>
+        <div class="msg-card">
+          <div class="msg-header">
+            <div class="msg-label">
+              <span class="msg-variant">Dispara después del volumen</span>
+            </div>
+            <button class="copy-btn" data-copy="es-3-c">Copiar</button>
+          </div>
+          <div class="msg-body" id="es-3-c">Perfecto, con ese volumen la herramienta tiene sentido.
+
+Una última cosa antes de avanzar, para organizarme bien de mi lado. La decisión sobre este tipo de inversión en su operación pasa solo por usted o hay alguien más involucrado?</div>
+        </div>
+
+        <div class="substage-label">03-D <span class="substage-label-text">· agenda la reunión (objetivo, sin tiempo)</span></div>
+        <div class="msg-card">
+          <div class="msg-header">
+            <div class="msg-label">
+              <span class="msg-variant">Dispara después de confirmar autoridad</span>
+            </div>
+            <button class="copy-btn" data-copy="es-3-d">Copiar</button>
+          </div>
+          <div class="msg-body" id="es-3-d">Excelente.
+
+Entonces le propongo una reunión por videollamada donde le muestro el sistema por dentro aplicado a su operación. Vamos a ver cómo respondería la IA a sus leads reales, cómo se vería su pipeline y cómo funcionan las visitas automáticas. Sin compromiso, si después no tiene sentido para usted quedamos así.
+
+Le queda mejor mañana por la mañana o por la tarde?</div>
+        </div>
+
+        <div class="substage-label">03-E <span class="substage-label-text">· confirmación 1-2h antes de la reunión</span></div>
+        <div class="msg-card">
+          <div class="msg-header">
+            <div class="msg-label">
+              <span class="msg-variant">Reduce no-show</span>
+            </div>
+            <button class="copy-btn" data-copy="es-3-e">Copiar</button>
+          </div>
+          <div class="msg-body" id="es-3-e">Hola <span class="placeholder">{{nombre}}</span>, buen día. Le escribo para confirmar nuestra reunión hoy a las <span class="placeholder">{{hora}}</span>.
+
+Le mando el enlace 10 minutos antes. Ideal si puede estar frente al computador para ver bien la demostración.
+
+Me confirma?</div>
         </div>
       </div>
 
       <!-- Cenário B -->
       <div class="scenario desconfiado">
         <div class="scenario-title">Escenario B · Lead desconfiado</div>
-        <div class="scenario-ex">"¿Quién sos?" · "¿Para qué?" · "¿De qué se trata?"</div>
+        <div class="scenario-ex">"Quién es usted?" · "De qué se trata?" · "Para qué?"</div>
 
         <div class="msg-card">
           <div class="msg-header">
-            <div class="msg-label"><span class="msg-variant">Transparencia + ferida + CTA</span></div>
+            <div class="msg-label"><span class="msg-variant">Transparencia rápida + puente a qualificación</span></div>
             <button class="copy-btn" data-copy="es-3-b1">Copiar</button>
           </div>
-          <div class="msg-body" id="es-3-b1">Te explico sin vueltas.
+          <div class="msg-body" id="es-3-b1">Le explico sin vueltas.
 
-Soy Leonardo, del equipo comercial de Oryen. Trabajamos con asesores e inmobiliarias en LATAM — tenemos una IA que atiende WhatsApp 24h, responde, califica leads y agenda visitas en nombre del asesor.
+Soy Leonardo, del equipo comercial de Oryen. Trabajamos con asesores e inmobiliarias, armamos una herramienta que atiende su WhatsApp las 24 horas, responde a los leads, los califica y le agenda las visitas en su nombre.
 
-Te escribí porque vi tu <span class="placeholder">{{perfil/sitio}}</span> y pensé que podía tener sentido. La mayoría de los asesores con quienes hablamos pierde una parte grande de sus leads simplemente por no responder a tiempo — y es exactamente eso lo que resolvemos.
+Le escribí porque vi su <span class="placeholder">{{perfil/sitio}}</span> y pensé que podía hacerle sentido.
 
-¿Te animás a una llamada de 10min para que te explique mejor? Si no encaja, quedamos acá tranquilos.</div>
+Antes de seguir, una pregunta rápida. Los leads que le entran por WhatsApp fuera del horario, de noche, fin de semana o mientras está con otro cliente, cómo los atiende hoy?</div>
         </div>
       </div>
 
       <!-- Cenário C -->
       <div class="scenario frio">
-        <div class="scenario-title">Escenario C · Lead directo/frío</div>
-        <div class="scenario-ex">"¿Qué necesitás?" · "Decime" · "Al grano"</div>
+        <div class="scenario-title">Escenario C · Lead directo</div>
+        <div class="scenario-ex">"Qué necesita?" · "Dígame" · "Al grano"</div>
 
         <div class="msg-card">
           <div class="msg-header">
-            <div class="msg-label"><span class="msg-variant">Ferida directa + CTA</span></div>
+            <div class="msg-label"><span class="msg-variant">Contexto breve + pregunta de volumen</span></div>
             <button class="copy-btn" data-copy="es-3-c1">Copiar</button>
           </div>
-          <div class="msg-body" id="es-3-c1">Perfecto, al grano.
+          <div class="msg-body" id="es-3-c1">Perfecto, directo al punto.
 
-Soy del equipo comercial de Oryen. Plataforma para asesores inmobiliarios con una IA que atiende WhatsApp 24h, califica leads y agenda visitas automáticamente.
+Soy del equipo comercial de Oryen. Armamos una herramienta para asesores inmobiliarios, con una IA que atiende WhatsApp las 24 horas, califica leads y agenda visitas automáticamente.
 
-El problema que resolvemos es simple: el asesor promedio pierde 30-40% de los leads de Instagram y WhatsApp solo por no responder a tiempo. Si eso te pasa, vale una charla.
+El problema que resolvemos es simple. El asesor promedio pierde entre un 30% y un 40% de los leads de Instagram y WhatsApp solo por no responder a tiempo. Si le pasa algo parecido, vale una conversación.
 
-¿Te puedo llamar 10min hoy o mañana para mostrarte cómo funciona? Si no hay fit, cero problema.</div>
+Antes de avanzar, una pregunta rápida. Cuántos leads por semana le entran aproximadamente sumando Instagram, sitio web y referencias?</div>
         </div>
       </div>
 
@@ -798,25 +878,55 @@ El problema que resolvemos es simple: el asesor promedio pierde 30-40% de los le
 
         <div class="msg-card">
           <div class="msg-header">
-            <div class="msg-label"><span class="msg-variant">Salida elegante · deja la puerta abierta</span></div>
+            <div class="msg-label"><span class="msg-variant">Salida elegante</span></div>
             <button class="copy-btn" data-copy="es-3-d1">Copiar</button>
           </div>
           <div class="msg-body" id="es-3-d1">Todo bien, <span class="placeholder">{{nombre}}</span>. Gracias por la honestidad.
 
-Te dejo el canal abierto por si más adelante querés ver cómo funciona. Éxitos con tu trabajo.</div>
+Le dejo el canal abierto por si más adelante quiere ver cómo funciona. Éxitos con su trabajo.</div>
         </div>
 
         <div class="msg-card">
           <div class="msg-header">
-            <div class="msg-label"><span class="msg-variant">Variación · más breve</span></div>
+            <div class="msg-label"><span class="msg-variant">Variación más breve</span></div>
             <button class="copy-btn" data-copy="es-3-d2">Copiar</button>
           </div>
-          <div class="msg-body" id="es-3-d2">Todo tranquilo, <span class="placeholder">{{nombre}}</span>. Disculpá la molestia.
+          <div class="msg-body" id="es-3-d2">Todo tranquilo, <span class="placeholder">{{nombre}}</span>. Disculpe la molestia.
 
-Si en algún momento te interesa saber más, acá estoy. Un abrazo.</div>
+Si en algún momento quiere saber más, me escribe por este mismo canal. Un abrazo.</div>
         </div>
       </div>
 
+    </section>
+
+    <!-- REAQUECIMENTO -->
+    <section class="stage">
+      <div class="stage-header">
+        <div class="stage-num">04</div>
+        <div>
+          <div class="stage-title">Reaquecimiento <span class="stage-owner teresita">Teresita</span></div>
+        </div>
+      </div>
+      <div class="stage-timing">
+        <strong>Timing</strong>
+        Disparar 24 horas después de silencio en cualquier punto de la Etapa 3. Un toque solo. Si no responde, marca como "lead perdido · retomar en 30-60 días".
+      </div>
+
+      <div class="msg-card">
+        <div class="msg-header">
+          <div class="msg-label"><span class="msg-variant">Variación A · educada</span></div>
+          <button class="copy-btn" data-copy="es-4-a">Copiar</button>
+        </div>
+        <div class="msg-body" id="es-4-a">Hola <span class="placeholder">{{nombre}}</span>, qué tal. Quedamos pendientes con la conversación. Sigue interesado en que le cuente cómo funciona o prefiere que cerremos por acá?</div>
+      </div>
+
+      <div class="msg-card">
+        <div class="msg-header">
+          <div class="msg-label"><span class="msg-variant">Variación B · más breve</span></div>
+          <button class="copy-btn" data-copy="es-4-b">Copiar</button>
+        </div>
+        <div class="msg-body" id="es-4-b">Hola <span class="placeholder">{{nombre}}</span>. Quedé a la espera de su respuesta. La idea sigue en pie o cierro por acá?</div>
+      </div>
     </section>
 
   </div>
@@ -828,16 +938,18 @@ Si en algún momento te interesa saber más, acá estoy. Un abrazo.</div>
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">01</div>
-        <div class="stage-title">Saudação (aguarda resposta automática)</div>
+        <div>
+          <div class="stage-title">Saudação <span class="stage-owner">Davi</span></div>
+        </div>
       </div>
       <div class="stage-timing">
         <strong>Timing</strong>
-        Dispara sozinha. Aguarda 2-5 min pra ver se o lead tem auto-resposta. Se um bot/mensagem automática responder, dispare a Etapa 2 poucos segundos depois. Se nada acontecer em 5 min, dispare a Etapa 2 igual.
+        Dispara sozinha. Aguarda 2-5 min pra ver se o lead tem auto-resposta. Se um bot responder, dispara a Etapa 2 em 5-15 segundos. Se não tiver, aguarda 2-5 min e dispara a Etapa 2 igual.
       </div>
 
       <div class="msg-card">
         <div class="msg-header">
-          <div class="msg-label"><span class="msg-variant">Variação A · formal-neutra</span></div>
+          <div class="msg-label"><span class="msg-variant">Variação A</span></div>
           <button class="copy-btn" data-copy="pt-1-a">Copiar</button>
         </div>
         <div class="msg-body" id="pt-1-a">Olá <span class="placeholder">{{nome}}</span>, boa <span class="placeholder">{{tarde}}</span>. Aqui é o Leonardo.</div>
@@ -845,7 +957,7 @@ Si en algún momento te interesa saber más, acá estoy. Un abrazo.</div>
 
       <div class="msg-card">
         <div class="msg-header">
-          <div class="msg-label"><span class="msg-variant">Variação B · mais pessoal</span></div>
+          <div class="msg-label"><span class="msg-variant">Variação B</span></div>
           <button class="copy-btn" data-copy="pt-1-b">Copiar</button>
         </div>
         <div class="msg-body" id="pt-1-b">Oi <span class="placeholder">{{nome}}</span>, tudo bem? Meu nome é Leonardo.</div>
@@ -853,7 +965,7 @@ Si en algún momento te interesa saber más, acá estoy. Un abrazo.</div>
 
       <div class="msg-card">
         <div class="msg-header">
-          <div class="msg-label"><span class="msg-variant">Variação C · estilo escritório</span></div>
+          <div class="msg-label"><span class="msg-variant">Variação C</span></div>
           <button class="copy-btn" data-copy="pt-1-c">Copiar</button>
         </div>
         <div class="msg-body" id="pt-1-c">Boa <span class="placeholder">{{tarde}}</span>, <span class="placeholder">{{nome}}</span>. Aqui é o Leonardo.</div>
@@ -864,11 +976,13 @@ Si en algún momento te interesa saber más, acá estoy. Un abrazo.</div>
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">02</div>
-        <div class="stage-title">Gancho de curiosidade (Instagram / Site)</div>
+        <div>
+          <div class="stage-title">Gancho de curiosidade <span class="stage-owner">Davi</span></div>
+        </div>
       </div>
       <div class="stage-timing">
         <strong>Timing</strong>
-        Se o lead teve auto-resposta: dispara 5-15 segundos depois da mensagem automática. Se não teve: aguarda 2-5 min desde a Etapa 1 e dispara igual. Nunca revelar Oryen aqui.
+        Se o lead teve auto-resposta, dispara 5-15 segundos depois. Se não teve, aguarda 2-5 min desde a Etapa 1. Nunca revelar Oryen aqui.
       </div>
 
       <div class="msg-card">
@@ -879,7 +993,7 @@ Si en algún momento te interesa saber más, acá estoy. Un abrazo.</div>
           </div>
           <button class="copy-btn" data-copy="pt-2-a">Copiar</button>
         </div>
-        <div class="msg-body" id="pt-2-a">Entrei no seu perfil do Instagram e queria te comentar uma coisa. Tem 1 minuto?</div>
+        <div class="msg-body" id="pt-2-a">Entrei no seu perfil do Instagram e queria te comentar uma coisa. Tem um minuto?</div>
       </div>
 
       <div class="msg-card">
@@ -901,7 +1015,7 @@ Si en algún momento te interesa saber más, acá estoy. Un abrazo.</div>
           </div>
           <button class="copy-btn" data-copy="pt-2-c">Copiar</button>
         </div>
-        <div class="msg-body" id="pt-2-c">Vi seu perfil no Instagram e me chamou a atenção. Dá pra conversar rapidinho?</div>
+        <div class="msg-body" id="pt-2-c">Vi seu perfil no Instagram e me chamou a atenção. Dá pra gente conversar rapidinho?</div>
       </div>
 
       <div class="msg-card">
@@ -912,7 +1026,7 @@ Si en algún momento te interesa saber más, acá estoy. Un abrazo.</div>
           </div>
           <button class="copy-btn" data-copy="pt-2-d">Copiar</button>
         </div>
-        <div class="msg-body" id="pt-2-d">Cheguei até seu contato pelo seu site. Tem 1 minuto pra conversar?</div>
+        <div class="msg-body" id="pt-2-d">Cheguei até seu contato pelo seu site. Tem um minuto pra conversar?</div>
       </div>
 
       <div class="msg-card">
@@ -934,7 +1048,7 @@ Si en algún momento te interesa saber más, acá estoy. Un abrazo.</div>
           </div>
           <button class="copy-btn" data-copy="pt-2-f">Copiar</button>
         </div>
-        <div class="msg-body" id="pt-2-f">Te chamo porque vi seu site e queria comentar uma coisa. Tem 1 minuto?</div>
+        <div class="msg-body" id="pt-2-f">Te chamo porque vi seu site e queria comentar uma coisa. Tem um minuto?</div>
       </div>
     </section>
 
@@ -942,94 +1056,132 @@ Si en algún momento te interesa saber más, acá estoy. Un abrazo.</div>
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">03</div>
-        <div class="stage-title">Ferida + ligação (conforme a resposta do lead)</div>
+        <div>
+          <div class="stage-title">Qualificação + reunião <span class="stage-owner teresita">Teresita</span></div>
+        </div>
       </div>
       <div class="stage-timing">
         <strong>Timing</strong>
-        Responder o lead em menos de 5 minutos depois da resposta dele. Velocidade aqui multiplica a conversão em ligação. Use o cenário certo: A, B, C ou D.
+        Responder o lead em menos de 5 minutos depois da resposta dele na Etapa 2. Velocidade aqui multiplica a conversão. As sub-etapas A, B, C, D disparam em sequência, uma resposta do lead por vez.
       </div>
 
-      <!-- Cenário A -->
+      <!-- Cenário principal: Lead receptivo -->
       <div class="scenario">
         <div class="scenario-title">Cenário A · Lead receptivo</div>
         <div class="scenario-ex">"Oi, claro" · "Pode falar" · "Diz aí"</div>
 
+        <div class="substage-label">03-A <span class="substage-label-text">· pergunta diagnóstica</span></div>
         <div class="msg-card">
           <div class="msg-header">
             <div class="msg-label">
               <span class="msg-tag ig">Instagram</span>
-              <span class="msg-variant">Ferida + CTA ligação</span>
+              <span class="msg-variant">Abre qualificação</span>
             </div>
-            <button class="copy-btn" data-copy="pt-3-a1">Copiar</button>
+            <button class="copy-btn" data-copy="pt-3-a">Copiar</button>
           </div>
-          <div class="msg-body" id="pt-3-a1">Obrigado por responder.
+          <div class="msg-body" id="pt-3-a">Perfeito.
 
-Te escrevi porque trabalho com corretores de imóveis e vi seu perfil do Instagram. Uma pergunta direta: dos leads que chegam no seu Instagram ou WhatsApp fora do horário — madrugada, fim de semana, enquanto você tá numa visita — quantos realmente fecham com você?
-
-A realidade é dura: o corretor que responde primeiro ganha a venda quase sempre. E a maioria perde entre 30% e 40% desses leads só por demora no retorno.
-
-Sou do time comercial da Oryen — temos uma IA que atende seu WhatsApp 24h, qualifica o lead e agenda a visita no seu nome. Se fizer sentido pra você, te mostro numa ligação de 10min. Se não, tranquilo, não te tomo mais tempo.
-
-Posso te ligar hoje ou amanhã?</div>
+Trabalho com corretores de imóveis e antes de seguir queria te perguntar uma coisa rápida. Os leads que chegam no seu WhatsApp fora do horário, de madrugada, fim de semana ou enquanto você tá com outro cliente, como você atende hoje?</div>
         </div>
 
+        <div class="substage-label">03-B <span class="substage-label-text">· empatia + ferida + volume</span></div>
         <div class="msg-card">
           <div class="msg-header">
             <div class="msg-label">
-              <span class="msg-tag site">Site</span>
-              <span class="msg-variant">Ferida + CTA ligação</span>
+              <span class="msg-variant">Dispara depois que o lead conta como atende</span>
             </div>
-            <button class="copy-btn" data-copy="pt-3-a2">Copiar</button>
+            <button class="copy-btn" data-copy="pt-3-b">Copiar</button>
           </div>
-          <div class="msg-body" id="pt-3-a2">Obrigado por responder.
+          <div class="msg-body" id="pt-3-b">Entendo. Acontece com a maioria dos corretores com quem a gente fala, responde quando dá e pronto.
 
-Sou do time comercial da Oryen. Vi que você tem site e provavelmente capta lead pelo formulário de contato. Pergunta honesta: dos leads que chegam aí, quantos você responde nos primeiros 5 minutos?
+O ponto é que o mercado mudou. O primeiro que responde o lead quase sempre ganha a venda, e a maioria perde entre 30% e 40% dos contatos só por demora no retorno.
 
-Pergunto porque o dado é pesado: lead que espera mais de 5min quase sempre já tá falando com outro corretor. E quem responde primeiro fecha a venda.
+A gente na Oryen criou uma ferramenta justamente pra resolver isso. Uma IA que atende seu WhatsApp 24 horas, qualifica o lead e agenda a visita no seu nome.
 
-É exatamente isso que a gente resolve — uma IA que atende seu WhatsApp na hora, qualifica o lead e te passa só quando ele tá pronto pra visita.
+Antes de avançar, uma pergunta rápida. Quantos leads por semana chegam aproximadamente somando Instagram, site e indicações?</div>
+        </div>
 
-Posso te ligar 10min hoje ou amanhã pra mostrar como funciona? Se não tiver fit, ficamos de boa.</div>
+        <div class="substage-label">03-C <span class="substage-label-text">· autoridade (quem decide)</span></div>
+        <div class="msg-card">
+          <div class="msg-header">
+            <div class="msg-label">
+              <span class="msg-variant">Dispara depois do volume</span>
+            </div>
+            <button class="copy-btn" data-copy="pt-3-c">Copiar</button>
+          </div>
+          <div class="msg-body" id="pt-3-c">Perfeito, com esse volume a ferramenta faz sentido.
+
+Só uma última coisa antes de avançar, pra me organizar melhor aqui. A decisão sobre esse tipo de investimento na sua operação passa só por você ou tem mais alguém envolvido?</div>
+        </div>
+
+        <div class="substage-label">03-D <span class="substage-label-text">· agenda a reunião (objetivo, sem tempo)</span></div>
+        <div class="msg-card">
+          <div class="msg-header">
+            <div class="msg-label">
+              <span class="msg-variant">Dispara depois de confirmar autoridade</span>
+            </div>
+            <button class="copy-btn" data-copy="pt-3-d">Copiar</button>
+          </div>
+          <div class="msg-body" id="pt-3-d">Excelente.
+
+Então te proponho uma reunião por videochamada onde eu te mostro o sistema por dentro aplicado à sua operação. A gente vai ver como a IA responderia os seus leads reais, como ficaria seu pipeline e como funcionam as visitas automáticas. Sem compromisso, se depois não fizer sentido pra você a gente para por aí.
+
+Fica melhor amanhã de manhã ou à tarde?</div>
+        </div>
+
+        <div class="substage-label">03-E <span class="substage-label-text">· confirmação 1-2h antes da reunião</span></div>
+        <div class="msg-card">
+          <div class="msg-header">
+            <div class="msg-label">
+              <span class="msg-variant">Reduz no-show</span>
+            </div>
+            <button class="copy-btn" data-copy="pt-3-e">Copiar</button>
+          </div>
+          <div class="msg-body" id="pt-3-e">Oi <span class="placeholder">{{nome}}</span>, bom dia. Estou te escrevendo pra confirmar nossa reunião hoje às <span class="placeholder">{{hora}}</span>.
+
+Te mando o link 10 minutinhos antes. Se puder estar no computador, fica melhor pra ver a demonstração.
+
+Confirma?</div>
         </div>
       </div>
 
       <!-- Cenário B -->
       <div class="scenario desconfiado">
         <div class="scenario-title">Cenário B · Lead desconfiado</div>
-        <div class="scenario-ex">"Quem é você?" · "Pra quê?" · "Do que se trata?"</div>
+        <div class="scenario-ex">"Quem é você?" · "Do que se trata?" · "Pra quê?"</div>
 
         <div class="msg-card">
           <div class="msg-header">
-            <div class="msg-label"><span class="msg-variant">Transparência + ferida + CTA</span></div>
+            <div class="msg-label"><span class="msg-variant">Transparência rápida + ponte pra qualificação</span></div>
             <button class="copy-btn" data-copy="pt-3-b1">Copiar</button>
           </div>
           <div class="msg-body" id="pt-3-b1">Te explico sem rodeio.
 
-Sou o Leonardo, do time comercial da Oryen. Trabalhamos com corretores e imobiliárias no Brasil e LATAM — temos uma IA que atende WhatsApp 24h, responde, qualifica leads e agenda visitas no nome do corretor.
+Sou o Leonardo, do time comercial da Oryen. Trabalhamos com corretores e imobiliárias, criamos uma ferramenta que atende seu WhatsApp 24 horas, responde os leads, qualifica e agenda as visitas no seu nome.
 
-Te escrevi porque vi seu <span class="placeholder">{{perfil/site}}</span> e achei que poderia fazer sentido. A maioria dos corretores com quem a gente fala perde uma parte grande dos leads simplesmente por não responder a tempo — e é exatamente isso que a gente resolve.
+Te escrevi porque vi seu <span class="placeholder">{{perfil/site}}</span> e achei que podia fazer sentido pra você.
 
-Topa uma ligação de 10min pra eu te explicar melhor? Se não encaixar, ficamos por aqui tranquilos.</div>
+Antes de seguir, uma pergunta rápida. Os leads que chegam no seu WhatsApp fora do horário, de madrugada, fim de semana ou enquanto você tá com outro cliente, como você atende hoje?</div>
         </div>
       </div>
 
       <!-- Cenário C -->
       <div class="scenario frio">
-        <div class="scenario-title">Cenário C · Lead direto/frio</div>
+        <div class="scenario-title">Cenário C · Lead direto</div>
         <div class="scenario-ex">"O que precisa?" · "Diz aí" · "Direto ao ponto"</div>
 
         <div class="msg-card">
           <div class="msg-header">
-            <div class="msg-label"><span class="msg-variant">Ferida direta + CTA</span></div>
+            <div class="msg-label"><span class="msg-variant">Contexto curto + pergunta de volume</span></div>
             <button class="copy-btn" data-copy="pt-3-c1">Copiar</button>
           </div>
           <div class="msg-body" id="pt-3-c1">Perfeito, direto ao ponto.
 
-Sou do time comercial da Oryen. Plataforma pra corretores de imóveis com uma IA que atende WhatsApp 24h, qualifica leads e agenda visitas automaticamente.
+Sou do time comercial da Oryen. Criamos uma ferramenta pra corretores de imóveis, com uma IA que atende o WhatsApp 24 horas, qualifica leads e agenda visitas automaticamente.
 
-O problema que a gente resolve é simples: o corretor médio perde 30-40% dos leads de Instagram e WhatsApp só por não responder a tempo. Se isso acontece aí, vale uma conversa.
+O problema que a gente resolve é simples. O corretor médio perde entre 30% e 40% dos leads do Instagram e WhatsApp só por não responder a tempo. Se isso acontece aí, vale uma conversa.
 
-Posso te ligar 10min hoje ou amanhã pra mostrar como funciona? Se não tiver fit, sem problema.</div>
+Antes de avançar, uma pergunta rápida. Quantos leads por semana chegam aproximadamente somando Instagram, site e indicações?</div>
         </div>
       </div>
 
@@ -1040,25 +1192,55 @@ Posso te ligar 10min hoje ou amanhã pra mostrar como funciona? Se não tiver fi
 
         <div class="msg-card">
           <div class="msg-header">
-            <div class="msg-label"><span class="msg-variant">Saída elegante · deixa porta aberta</span></div>
+            <div class="msg-label"><span class="msg-variant">Saída elegante</span></div>
             <button class="copy-btn" data-copy="pt-3-d1">Copiar</button>
           </div>
           <div class="msg-body" id="pt-3-d1">Tudo certo, <span class="placeholder">{{nome}}</span>. Obrigado pela honestidade.
 
-Te deixo o canal aberto pra caso mais pra frente queira entender como funciona. Sucesso no seu trabalho.</div>
+Deixo o canal aberto caso mais pra frente queira entender como funciona. Sucesso no seu trabalho.</div>
         </div>
 
         <div class="msg-card">
           <div class="msg-header">
-            <div class="msg-label"><span class="msg-variant">Variação · mais breve</span></div>
+            <div class="msg-label"><span class="msg-variant">Variação mais breve</span></div>
             <button class="copy-btn" data-copy="pt-3-d2">Copiar</button>
           </div>
           <div class="msg-body" id="pt-3-d2">Tranquilo, <span class="placeholder">{{nome}}</span>. Desculpa incomodar.
 
-Se em algum momento quiser saber mais, tô por aqui. Abraço.</div>
+Se em algum momento quiser saber mais, é só me chamar por aqui. Abraço.</div>
         </div>
       </div>
 
+    </section>
+
+    <!-- REAQUECIMENTO -->
+    <section class="stage">
+      <div class="stage-header">
+        <div class="stage-num">04</div>
+        <div>
+          <div class="stage-title">Reaquecimento <span class="stage-owner teresita">Teresita</span></div>
+        </div>
+      </div>
+      <div class="stage-timing">
+        <strong>Timing</strong>
+        Dispara 24 horas depois de silêncio em qualquer ponto da Etapa 3. Só um toque. Se não responder, marca como "lead perdido · retomar em 30-60 dias".
+      </div>
+
+      <div class="msg-card">
+        <div class="msg-header">
+          <div class="msg-label"><span class="msg-variant">Variação A · educada</span></div>
+          <button class="copy-btn" data-copy="pt-4-a">Copiar</button>
+        </div>
+        <div class="msg-body" id="pt-4-a">Oi <span class="placeholder">{{nome}}</span>, tudo bem? A gente ficou pendente na conversa. Ainda tem interesse em ver como funciona ou prefere que eu feche por aqui?</div>
+      </div>
+
+      <div class="msg-card">
+        <div class="msg-header">
+          <div class="msg-label"><span class="msg-variant">Variação B · mais breve</span></div>
+          <button class="copy-btn" data-copy="pt-4-b">Copiar</button>
+        </div>
+        <div class="msg-body" id="pt-4-b">Oi <span class="placeholder">{{nome}}</span>. Fiquei no aguardo da sua resposta. A ideia ainda tá de pé ou fecho por aqui?</div>
+      </div>
     </section>
 
   </div>
@@ -1068,36 +1250,44 @@ Se em algum momento quiser saber mais, tô por aqui. Abraço.</div>
     <h3>Execução · o que move o ponteiro</h3>
     <div class="tips-grid">
       <div class="tip">
-        <strong>Timing da Etapa 2</strong>
-        <span>O insight principal: se o lead tem auto-resposta, dispare a Etapa 2 entre 5-15 segundos depois da mensagem automática dele — isso cria a ilusão de "Leonardo está reagindo em tempo real" e quebra o fluxo de automação.</span>
+        <strong>Densidade de resposta</strong>
+        <span>Match entre o tamanho da mensagem que o lead mandou e o tamanho da sua resposta. Se ele mandou 3 letras, a sua vem curta. Texto longo demais em resposta a "sim" dá sensação de copy-paste e mata a conversa.</span>
       </div>
       <div class="tip">
-        <strong>Perfil do número Leonardo</strong>
-        <span>Foto de pessoa real (não stock/IA), descrição discreta ("Equipe comercial · Oryen"). Se o avatar parecer genérico, a curiosidade vira desconfiança e a taxa cai.</span>
-      </div>
-      <div class="tip">
-        <strong>Meta da Etapa 2: resposta</strong>
-        <span>Não é agendar, não é pitch. É só fazer o lead responder qualquer coisa. A partir daí ele está "na conversa" e as Etapa 3 tem conversão alta.</span>
+        <strong>Transição invisível Davi → Teresita</strong>
+        <span>Como usam o mesmo chip, o lead nunca pode perceber que trocou de pessoa. Teresita entra com "Perfecto" seguido de pergunta diagnóstica, sem apresentação adicional. Do ponto de vista do lead é "Leonardo" continuando a conversa.</span>
       </div>
       <div class="tip">
         <strong>Velocidade na Etapa 3</strong>
-        <span>Quando o lead responder a Etapa 2, você tem janela de 5 minutos pra responder com a Etapa 3. Depois disso, a curiosidade esfria e o agendamento cai.</span>
+        <span>Janela de ouro de 5 minutos depois da resposta do lead. Teresita tem que estar de plantão quando Davi avisar. Depois dos 5min a curiosidade esfria e a taxa de qualificação cai muito.</span>
+      </div>
+      <div class="tip">
+        <strong>Confirmação 1-2h antes reduz no-show</strong>
+        <span>Como trocamos ligação por mensagem, o compromisso com a reunião fica menor. A msg 03-E é crítica. Sem ela, no-show pode chegar a 40-50%. Com ela, cai pra 15-20%.</span>
+      </div>
+      <div class="tip">
+        <strong>Escrita natural, não perfeita</strong>
+        <span>Zero <code style="color:var(--amber)">¿</code> de abertura. Zero <code style="color:var(--amber)">:</code> no meio de frases. "Muletas" humanas ajudam (antes de seguir, el tema es, para organizarme bien, solo una última cosa).</span>
       </div>
       <div class="tip">
         <strong>Rodízio de variações</strong>
-        <span>Use as 3 de Etapa 1 e as 6 de Etapa 2 (3 IG + 3 site) em rodízio. Tag cada envio no CRM com qual variação foi. Em 2 semanas dá pra saber qual combinação converte mais.</span>
+        <span>Use as 3 da Etapa 1 e as 6 da Etapa 2 em rodízio. Tag cada envio no CRM (tag: etapa-2-ig-a, etapa-2-site-b...). Em 2 semanas dá pra saber qual combinação converte mais.</span>
       </div>
       <div class="tip">
-        <strong>Nunca mentir o canal</strong>
-        <span>Se o gancho é "vi seu Instagram", tem que ter visto de verdade. Se ele perguntar "qual post?", precisa ter resposta. Mentira na Etapa 2 queima o lead pra sempre.</span>
+        <strong>Autoridade é filtro, não formalidade</strong>
+        <span>A pergunta "quem decide?" na 03-C existe pra filtrar leads que não podem comprar. Se ele disser que o sócio/esposa decide, peça pra trazê-los na reunião. Vender pra quem não decide = perder tempo.</span>
+      </div>
+      <div class="tip">
+        <strong>Reaquecimento só 1x</strong>
+        <span>Na 24h de silêncio, um toque. Se não responder, SND (Smart Sales) diz "não fazer questão". Insistir queima a lista e fere a postura. Marca como "retomar em 30-60 dias" com contexto novo.</span>
       </div>
     </div>
   </section>
 
   <footer>
     <div class="wordmark-sm">oryen</div>
-    <div>Playbook WhatsApp · Fluxo 3 Etapas · Leonardo BDR · v2.0</div>
-    <div style="margin-top: 4px; opacity: 0.6;">Abertura antiga (curiosidade) + metodologia Smart Sales (pré-qualificação por ligação)</div>
+    <div>Playbook WhatsApp · Davi + Teresita · v3.0</div>
+    <div style="margin-top: 4px; opacity: 0.6;">Usted · LATAM neutro · qualificação por mensagem · reunião direta · reaquecimento 24h</div>
   </footer>
 
 </div>

@@ -7,9 +7,12 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import {
   ArrowLeft, Upload, Play, Pause, Eye, Loader2, Mail,
-  CheckCircle2, AlertCircle, Clock, XCircle, MousePointerClick
+  CheckCircle2, AlertCircle, Clock, XCircle, MousePointerClick,
+  Database, Users
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
+import { useActiveOrgId } from '@/lib/AuthContext'
 
 type Lang = 'pt' | 'en' | 'es'
 
@@ -59,6 +62,22 @@ const T = {
     toastImported: 'contatos importados',
     toastStarted: 'Campanha iniciada! O primeiro disparo sai no próximo ciclo (até 5 min).',
     toastPaused: 'Campanha pausada.',
+    importCrm: 'Importar do CRM',
+    importCrmHint: 'Pega leads do seu CRM aplicando filtros. Muito mais útil que upload de CSV quando os leads já estão no sistema.',
+    filterStages: 'Etapas',
+    filterAllStages: 'Todas as etapas',
+    filterScore: 'Score',
+    filterUpdatedBefore: 'Sem atividade há (dias)',
+    filterUpdatedHint: 'Só inclui leads cujo updated_at é mais antigo que X dias. Use 0 pra não filtrar.',
+    filterExclude: 'Só os que ainda não receberam email de outra campanha',
+    previewBtn: 'Ver quantos se aplicam',
+    importBtn: 'Importar agora',
+    previewing: 'Calculando...',
+    previewResult: '{{n}} leads seriam importados',
+    previewReasons: 'Dos {{total}} leads encontrados:',
+    rc_already_other: 'já estão em outra campanha de email',
+    rc_already_this: 'já estão nesta campanha',
+    rc_invalid_email: 'email inválido ou ausente',
   },
   en: {
     back: 'Back',
@@ -105,6 +124,22 @@ const T = {
     toastImported: 'contacts imported',
     toastStarted: 'Campaign started! First batch goes in the next cycle (up to 5 min).',
     toastPaused: 'Campaign paused.',
+    importCrm: 'Import from CRM',
+    importCrmHint: 'Pulls leads from your CRM using filters. Much more useful than CSV upload when the leads are already in the system.',
+    filterStages: 'Stages',
+    filterAllStages: 'All stages',
+    filterScore: 'Score',
+    filterUpdatedBefore: 'No activity for (days)',
+    filterUpdatedHint: 'Only leads whose updated_at is older than X days. 0 = no filter.',
+    filterExclude: 'Only leads not yet in another email campaign',
+    previewBtn: 'See how many match',
+    importBtn: 'Import now',
+    previewing: 'Calculating...',
+    previewResult: '{{n}} leads would be imported',
+    previewReasons: 'Out of {{total}} matching leads:',
+    rc_already_other: 'already in another email campaign',
+    rc_already_this: 'already in this campaign',
+    rc_invalid_email: 'invalid or missing email',
   },
   es: {
     back: 'Volver',
@@ -151,6 +186,22 @@ const T = {
     toastImported: 'contactos importados',
     toastStarted: '¡Campaña iniciada! El primer envío sale en el próximo ciclo (hasta 5 min).',
     toastPaused: 'Campaña pausada.',
+    importCrm: 'Importar del CRM',
+    importCrmHint: 'Trae leads del CRM aplicando filtros. Mucho más útil que cargar CSV cuando los leads ya están en el sistema.',
+    filterStages: 'Etapas',
+    filterAllStages: 'Todas las etapas',
+    filterScore: 'Score',
+    filterUpdatedBefore: 'Sin actividad hace (días)',
+    filterUpdatedHint: 'Solo leads con updated_at más antiguo que X días. 0 = sin filtro.',
+    filterExclude: 'Solo los que aún no recibieron email de otra campaña',
+    previewBtn: 'Ver cuántos aplican',
+    importBtn: 'Importar ahora',
+    previewing: 'Calculando...',
+    previewResult: '{{n}} leads serían importados',
+    previewReasons: 'De los {{total}} leads encontrados:',
+    rc_already_other: 'ya están en otra campaña',
+    rc_already_this: 'ya están en esta campaña',
+    rc_invalid_email: 'email inválido o ausente',
   },
 }
 
@@ -229,6 +280,7 @@ interface Stats {
 
 export default function EmailCampaignDetailPage() {
   const { user } = useAuth()
+  const orgId = useActiveOrgId()
   const router = useRouter()
   const params = useParams()
   const id = String(params?.id)
@@ -384,6 +436,14 @@ export default function EmailCampaignDetailPage() {
           </div>
         </div>
 
+        {/* Importar do CRM */}
+        <ImportFromCrmSection
+          campaignId={id}
+          orgId={orgId}
+          onImported={load}
+          t={t}
+        />
+
         {/* CSV Upload */}
         <div className="rounded-2xl p-5" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
           <h3 className="text-sm font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>{t.uploadCsv}</h3>
@@ -448,6 +508,205 @@ export default function EmailCampaignDetailPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Seção: Importar leads do CRM com filtros
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface Stage { name: string; label: string }
+
+function ImportFromCrmSection({
+  campaignId, orgId, onImported, t,
+}: { campaignId: string; orgId: string | null; onImported: () => void; t: any }) {
+  const [stages, setStages] = useState<Stage[]>([])
+  const [selectedStages, setSelectedStages] = useState<string[]>([])
+  const [updatedBeforeDays, setUpdatedBeforeDays] = useState<number>(0)
+  const [excludeAlreadyEmailed, setExcludeAlreadyEmailed] = useState<boolean>(true)
+  const [previewing, setPreviewing] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [previewResult, setPreviewResult] = useState<any | null>(null)
+
+  // Carrega stages da org
+  useEffect(() => {
+    if (!orgId) return
+    supabase
+      .from('pipeline_stages')
+      .select('name, label')
+      .eq('org_id', orgId)
+      .eq('is_active', true)
+      .order('position')
+      .then(({ data }) => {
+        setStages((data || []).map((s: any) => ({ name: s.name, label: s.label || s.name })))
+      })
+  }, [orgId])
+
+  const toggleStage = (name: string) => {
+    setSelectedStages(prev => prev.includes(name) ? prev.filter(s => s !== name) : [...prev, name])
+    setPreviewResult(null)
+  }
+
+  const buildFilters = (preview: boolean) => ({
+    stages: selectedStages.length > 0 ? selectedStages : undefined,
+    updated_before_days: updatedBeforeDays > 0 ? updatedBeforeDays : undefined,
+    exclude_already_emailed: excludeAlreadyEmailed,
+    preview,
+  })
+
+  const handlePreview = async () => {
+    setPreviewing(true)
+    try {
+      const res = await fetch(`/api/email/campaigns/${campaignId}/import-crm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildFilters(true)),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setPreviewResult(data)
+    } catch (err: any) {
+      toast.error(err.message)
+    } finally {
+      setPreviewing(false)
+    }
+  }
+
+  const handleImport = async () => {
+    setImporting(true)
+    try {
+      const res = await fetch(`/api/email/campaigns/${campaignId}/import-crm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildFilters(false)),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast.success(`${data.imported} ${t.toastImported}`)
+      setPreviewResult(null)
+      onImported()
+    } catch (err: any) {
+      toast.error(err.message)
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl p-5" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
+      <div className="flex items-start gap-3 mb-4">
+        <div className="p-2 rounded-lg shrink-0" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
+          <Database size={18} />
+        </div>
+        <div>
+          <h3 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.importCrm}</h3>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>{t.importCrmHint}</p>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {/* Stages multi-select */}
+        {stages.length > 0 && (
+          <div>
+            <label className="block text-xs font-semibold mb-2" style={{ color: 'var(--color-text-secondary)' }}>{t.filterStages}</label>
+            <div className="flex flex-wrap gap-1.5">
+              {stages.map(s => {
+                const active = selectedStages.includes(s.name)
+                return (
+                  <button
+                    key={s.name}
+                    onClick={() => toggleStage(s.name)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    style={active
+                      ? { background: 'var(--color-primary)', color: '#fff' }
+                      : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }
+                    }
+                  >
+                    {s.label}
+                  </button>
+                )
+              })}
+            </div>
+            {selectedStages.length === 0 && (
+              <p className="text-[11px] mt-1.5" style={{ color: 'var(--color-text-muted)' }}>{t.filterAllStages}</p>
+            )}
+          </div>
+        )}
+
+        {/* Dias sem atividade */}
+        <div>
+          <label className="block text-xs font-semibold mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+            {t.filterUpdatedBefore}: <strong>{updatedBeforeDays > 0 ? updatedBeforeDays : '—'}</strong>
+          </label>
+          <input
+            type="range"
+            min={0}
+            max={60}
+            value={updatedBeforeDays}
+            onChange={e => { setUpdatedBeforeDays(Number(e.target.value)); setPreviewResult(null) }}
+            className="w-full"
+          />
+          <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-muted)' }}>{t.filterUpdatedHint}</p>
+        </div>
+
+        {/* Excluir já contatados */}
+        <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: 'var(--color-text-secondary)' }}>
+          <input
+            type="checkbox"
+            checked={excludeAlreadyEmailed}
+            onChange={e => { setExcludeAlreadyEmailed(e.target.checked); setPreviewResult(null) }}
+          />
+          {t.filterExclude}
+        </label>
+
+        {/* Ações */}
+        <div className="flex items-center gap-2 pt-2">
+          <button
+            onClick={handlePreview}
+            disabled={previewing || importing}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+            style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+          >
+            {previewing ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />}
+            {previewing ? t.previewing : t.previewBtn}
+          </button>
+          {previewResult && previewResult.would_import > 0 && (
+            <button
+              onClick={handleImport}
+              disabled={importing}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold disabled:opacity-50"
+              style={{ background: 'var(--color-primary)', color: '#fff' }}
+            >
+              {importing ? <Loader2 size={14} className="animate-spin" /> : <Users size={14} />}
+              {t.importBtn}
+            </button>
+          )}
+        </div>
+
+        {/* Resultado preview */}
+        {previewResult && (
+          <div className="rounded-lg p-3 text-sm" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+            <p className="font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+              {t.previewResult.replace('{{n}}', String(previewResult.would_import))}
+            </p>
+            {previewResult.matched > 0 && previewResult.would_skip > 0 && (
+              <div className="text-xs space-y-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                <p>{t.previewReasons.replace('{{total}}', String(previewResult.matched))}</p>
+                {previewResult.reason_counts?.already_in_other_campaign > 0 && (
+                  <p>• <strong>{previewResult.reason_counts.already_in_other_campaign}</strong> {t.rc_already_other}</p>
+                )}
+                {previewResult.reason_counts?.already_in_this_campaign > 0 && (
+                  <p>• <strong>{previewResult.reason_counts.already_in_this_campaign}</strong> {t.rc_already_this}</p>
+                )}
+                {previewResult.reason_counts?.invalid_email > 0 && (
+                  <p>• <strong>{previewResult.reason_counts.invalid_email}</strong> {t.rc_invalid_email}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
