@@ -119,12 +119,36 @@ export default function SequenceDetailPage({ params }: { params: Promise<{ id: s
           <EnginePanel running={engineRunning} result={engineResult} />
         )}
 
-        {/* Stats */}
+        {/* Stats · premium com ícones e cores semânticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-          <StatCard label="Etapas" value={steps.length} />
-          <StatCard label="Regras" value={rules.filter((r: any) => r.is_active).length} />
-          <StatCard label="Ativos" value={activeCount} tone="primary" />
-          <StatCard label="Pausados" value={pausedCount} tone="warning" />
+          <StatCard
+            icon={<Zap className="w-4 h-4" />}
+            label="Etapas"
+            value={steps.length}
+            tone="primary"
+            hint={steps.length > 0 ? `${Math.max(...steps.map((s: any) => s.day_offset))} dias` : 'sem etapas'}
+          />
+          <StatCard
+            icon={<Filter className="w-4 h-4" />}
+            label="Regras ativas"
+            value={rules.filter((r: any) => r.is_active).length}
+            tone="indigo"
+            hint={`${rules.length} total`}
+          />
+          <StatCard
+            icon={<Users className="w-4 h-4" />}
+            label="Leads ativos"
+            value={activeCount}
+            tone="success"
+            hint="em execução"
+          />
+          <StatCard
+            icon={<AlertTriangle className="w-4 h-4" />}
+            label="Pausados"
+            value={pausedCount}
+            tone={pausedCount > 0 ? 'warning' : 'muted'}
+            hint="aguardam qualificação"
+          />
         </div>
       </div>
 
@@ -415,14 +439,75 @@ function ResultChip({ label, value }: { label: string; value: number }) {
   )
 }
 
-function StatCard({ label, value, tone }: { label: string; value: number; tone?: 'primary' | 'warning' }) {
-  const toneClasses =
-    tone === 'primary' ? 'text-primary' :
-    tone === 'warning' ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'
+function StatCard({
+  icon,
+  label,
+  value,
+  tone = 'muted',
+  hint,
+}: {
+  icon?: React.ReactNode
+  label: string
+  value: number
+  tone?: 'primary' | 'warning' | 'success' | 'indigo' | 'muted'
+  hint?: string
+}) {
+  const color =
+    tone === 'primary' ? 'var(--color-primary)' :
+    tone === 'warning' ? 'var(--color-warning, #f59e0b)' :
+    tone === 'success' ? 'var(--color-success, #10b981)' :
+    tone === 'indigo' ? 'var(--color-primary-hover, #6366f1)' :
+    'var(--color-text-primary)'
+
+  const subtleBg =
+    tone === 'primary' ? 'var(--color-primary-subtle)' :
+    tone === 'warning' ? 'rgba(245, 158, 11, 0.12)' :
+    tone === 'success' ? 'rgba(16, 185, 129, 0.12)' :
+    tone === 'indigo' ? 'rgba(99, 102, 241, 0.12)' :
+    'var(--color-bg-elevated)'
+
   return (
-    <div className="border border-border rounded-xl p-3 bg-card">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">{label}</div>
-      <div className={`text-2xl font-bold ${toneClasses}`}>{value}</div>
+    <div
+      className="rounded-xl p-4 relative overflow-hidden"
+      style={{
+        background: 'var(--color-bg-surface)',
+        border: '1px solid var(--color-border)',
+      }}
+    >
+      {/* Decorative corner glow */}
+      <div
+        className="absolute -top-8 -right-8 w-20 h-20 rounded-full pointer-events-none opacity-40"
+        style={{
+          background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
+        }}
+      />
+
+      <div className="flex items-start justify-between gap-3 relative">
+        <div className="min-w-0">
+          <div
+            className="text-[10px] uppercase tracking-wider font-bold mb-1"
+            style={{ color: 'var(--color-text-tertiary)' }}
+          >
+            {label}
+          </div>
+          <div className="text-2xl font-bold leading-none mb-1" style={{ color }}>
+            {value}
+          </div>
+          {hint && (
+            <div className="text-[11px]" style={{ color: 'var(--color-text-tertiary)' }}>
+              {hint}
+            </div>
+          )}
+        </div>
+        {icon && (
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: subtleBg, color }}
+          >
+            {icon}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -1275,37 +1360,141 @@ function VariantRow({
 function RulesView({ rules }: { rules: any[] }) {
   if (rules.length === 0) {
     return (
-      <div className="border border-border rounded-xl p-8 text-center text-sm text-muted-foreground">
-        Nenhuma regra configurada. Leads só entram inscritos manualmente (botão "Inscrever leads").
+      <div
+        className="rounded-2xl p-10 text-center"
+        style={{
+          background: 'var(--color-bg-surface)',
+          border: '1px dashed var(--color-border)',
+        }}
+      >
+        <div
+          className="w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center"
+          style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)' }}
+        >
+          <Filter className="w-6 h-6" />
+        </div>
+        <p className="text-sm font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+          Nenhuma regra configurada
+        </p>
+        <p className="text-xs max-w-sm mx-auto" style={{ color: 'var(--color-text-tertiary)' }}>
+          Sem regras, leads só entram via inscrição manual (botão "Inscrever leads" no topo).
+        </p>
       </div>
     )
   }
+
+  const eventLabel: Record<string, string> = {
+    lead_created: 'Lead criado',
+    stage_changed: 'Estágio mudou',
+    stale_in_stage: 'Parado há muito tempo',
+    tag_added: 'Tag adicionada',
+    manual: 'Manual',
+  }
+
   return (
     <div className="space-y-3">
       {rules.map((r) => (
-        <div key={r.id} className="border border-border rounded-xl bg-card p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-semibold">{r.name}</h4>
-            <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full border ${
-              r.is_active
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                : 'bg-muted text-muted-foreground border-border'
-            }`}>
-              {r.is_active ? 'ativa' : 'inativa'}
+        <div
+          key={r.id}
+          className="rounded-xl p-4"
+          style={{
+            background: 'var(--color-bg-surface)',
+            border: '1px solid var(--color-border)',
+          }}
+        >
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <h4 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                  {r.name}
+                </h4>
+                <span
+                  className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                  style={{
+                    background: r.is_active
+                      ? 'var(--color-primary-subtle)'
+                      : 'var(--color-bg-elevated)',
+                    color: r.is_active
+                      ? 'var(--color-primary)'
+                      : 'var(--color-text-tertiary)',
+                  }}
+                >
+                  {r.is_active ? 'Ativa' : 'Inativa'}
+                </span>
+              </div>
+              {r.description && (
+                <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                  {r.description}
+                </p>
+              )}
+            </div>
+            <span
+              className="text-[10px] font-mono font-bold px-2 py-1 rounded flex-shrink-0"
+              style={{
+                background: 'var(--color-bg-elevated)',
+                color: 'var(--color-text-tertiary)',
+                border: '1px solid var(--color-border)',
+              }}
+              title="Prioridade (menor = executada primeiro)"
+            >
+              P{r.priority}
             </span>
-            <span className="text-[10px] text-muted-foreground">prioridade {r.priority}</span>
           </div>
-          {r.description && <p className="text-xs text-muted-foreground mb-2">{r.description}</p>}
-          <div className="text-xs space-y-1">
+
+          <div
+            className="rounded-lg p-3 grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-3"
+            style={{ background: 'var(--color-bg-elevated)' }}
+          >
             <div>
-              <span className="font-semibold">Evento:</span>{' '}
-              <code className="bg-muted/50 px-1.5 py-0.5 rounded text-[11px]">{r.trigger_event}</code>
+              <div
+                className="text-[10px] uppercase tracking-wider font-bold mb-1"
+                style={{ color: 'var(--color-text-tertiary)' }}
+              >
+                Evento
+              </div>
+              <span
+                className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded"
+                style={{
+                  background: 'var(--color-bg-surface)',
+                  color: 'var(--color-primary)',
+                  border: '1px solid var(--color-border)',
+                }}
+              >
+                <Zap className="w-3 h-3" />
+                {eventLabel[r.trigger_event] || r.trigger_event}
+              </span>
             </div>
             <div>
-              <span className="font-semibold">Condições:</span>{' '}
-              <code className="bg-muted/50 px-1.5 py-0.5 rounded text-[11px] text-foreground">
-                {JSON.stringify(r.conditions) || '{}'}
-              </code>
+              <div
+                className="text-[10px] uppercase tracking-wider font-bold mb-1"
+                style={{ color: 'var(--color-text-tertiary)' }}
+              >
+                Condições
+              </div>
+              {r.conditions && Object.keys(r.conditions).length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(r.conditions).map(([k, v]) => (
+                    <span
+                      key={k}
+                      className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-1 rounded"
+                      style={{
+                        background: 'var(--color-bg-surface)',
+                        border: '1px solid var(--color-border)',
+                        color: 'var(--color-text-secondary)',
+                      }}
+                    >
+                      <span style={{ color: 'var(--color-text-tertiary)' }}>{k}:</span>
+                      <span style={{ color: 'var(--color-text-primary)' }}>
+                        {Array.isArray(v) ? v.join(', ') : String(v)}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-xs italic" style={{ color: 'var(--color-text-tertiary)' }}>
+                  Sem condições (aceita qualquer lead)
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -1315,54 +1504,256 @@ function RulesView({ rules }: { rules: any[] }) {
 }
 
 function EnrollmentsView({ enrollments }: { enrollments: any[] }) {
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused' | 'completed' | 'exited'>('all')
+  const [search, setSearch] = useState('')
+
+  const filtered = enrollments.filter((e) => {
+    if (statusFilter !== 'all' && e.status !== statusFilter) return false
+    if (search) {
+      const lead = Array.isArray(e.lead) ? e.lead[0] : e.lead
+      const haystack = `${lead?.name || ''} ${lead?.phone || ''} ${lead?.email || ''}`.toLowerCase()
+      if (!haystack.includes(search.toLowerCase())) return false
+    }
+    return true
+  })
+
+  const counts = {
+    all: enrollments.length,
+    active: enrollments.filter((e) => e.status === 'active').length,
+    paused: enrollments.filter((e) => e.status === 'paused').length,
+    completed: enrollments.filter((e) => e.status === 'completed').length,
+    exited: enrollments.filter((e) => e.status === 'exited').length,
+  }
+
   if (enrollments.length === 0) {
     return (
-      <div className="border border-border rounded-xl p-8 text-center text-sm text-muted-foreground">
-        Nenhum lead inscrito ainda. Clique em "Inscrever leads" acima para começar.
+      <div
+        className="rounded-2xl p-10 text-center"
+        style={{
+          background: 'var(--color-bg-surface)',
+          border: '1px dashed var(--color-border)',
+        }}
+      >
+        <div
+          className="w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center"
+          style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)' }}
+        >
+          <Users className="w-6 h-6" />
+        </div>
+        <p className="text-sm font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+          Nenhum lead inscrito ainda
+        </p>
+        <p className="text-xs max-w-sm mx-auto" style={{ color: 'var(--color-text-tertiary)' }}>
+          Clique em "Inscrever leads" no topo para começar a adicionar leads nesta sequence.
+        </p>
       </div>
     )
   }
+
   return (
-    <div className="border border-border rounded-xl overflow-hidden">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-muted/30 text-xs text-muted-foreground uppercase tracking-wider">
-            <th className="text-left p-3 font-semibold">Lead</th>
-            <th className="text-left p-3 font-semibold">Etapa</th>
-            <th className="text-left p-3 font-semibold">Status</th>
-            <th className="text-left p-3 font-semibold">Inscrito em</th>
-          </tr>
-        </thead>
-        <tbody>
-          {enrollments.map((e) => {
+    <div className="space-y-4">
+      {/* Toolbar: filtros de status + busca */}
+      <div
+        className="rounded-xl p-3 flex items-center gap-2 flex-wrap"
+        style={{
+          background: 'var(--color-bg-surface)',
+          border: '1px solid var(--color-border)',
+        }}
+      >
+        <StatusPill label="Todos" count={counts.all} active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
+        <StatusPill label="Ativos" count={counts.active} tone="primary" active={statusFilter === 'active'} onClick={() => setStatusFilter('active')} />
+        <StatusPill label="Pausados" count={counts.paused} tone="warning" active={statusFilter === 'paused'} onClick={() => setStatusFilter('paused')} />
+        <StatusPill label="Concluídos" count={counts.completed} tone="success" active={statusFilter === 'completed'} onClick={() => setStatusFilter('completed')} />
+        {counts.exited > 0 && (
+          <StatusPill label="Saíram" count={counts.exited} tone="danger" active={statusFilter === 'exited'} onClick={() => setStatusFilter('exited')} />
+        )}
+        <div className="flex-1 min-w-[180px]">
+          <div className="relative">
+            <Search
+              className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ color: 'var(--color-text-tertiary)' }}
+            />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar nome, telefone, email..."
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs focus:outline-none"
+              style={{
+                background: 'var(--color-bg-elevated)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text-primary)',
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div
+          className="rounded-xl p-8 text-center text-sm italic"
+          style={{
+            background: 'var(--color-bg-surface)',
+            border: '1px dashed var(--color-border)',
+            color: 'var(--color-text-tertiary)',
+          }}
+        >
+          Nenhum lead com esses filtros.
+        </div>
+      ) : (
+        <div className="grid gap-2">
+          {filtered.map((e) => {
             const lead = Array.isArray(e.lead) ? e.lead[0] : e.lead
-            return (
-              <tr key={e.id} className="border-t border-border hover:bg-muted/20">
-                <td className="p-3">
-                  <div className="font-semibold">{lead?.name ?? '—'}</div>
-                  <div className="text-xs text-muted-foreground">{lead?.phone ?? lead?.email ?? ''}</div>
-                </td>
-                <td className="p-3 text-xs">Etapa {e.current_step_position}</td>
-                <td className="p-3">
-                  <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full border ${
-                    e.status === 'active' ? 'bg-primary/10 text-primary border-primary/30' :
-                    e.status === 'paused' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30' :
-                    e.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' :
-                    'bg-muted text-muted-foreground border-border'
-                  }`}>
-                    {e.status}
-                  </span>
-                </td>
-                <td className="p-3 text-xs text-muted-foreground">
-                  {new Date(e.enrolled_at).toLocaleString()}
-                </td>
-              </tr>
-            )
+            return <EnrollmentRow key={e.id} enrollment={e} lead={lead} />
           })}
-        </tbody>
-      </table>
+        </div>
+      )}
     </div>
   )
+}
+
+function StatusPill({
+  label,
+  count,
+  tone,
+  active,
+  onClick,
+}: {
+  label: string
+  count: number
+  tone?: 'primary' | 'warning' | 'success' | 'danger'
+  active: boolean
+  onClick: () => void
+}) {
+  const color =
+    tone === 'primary' ? 'var(--color-primary)' :
+    tone === 'warning' ? 'var(--color-warning, #f59e0b)' :
+    tone === 'success' ? 'var(--color-success, #10b981)' :
+    tone === 'danger' ? 'var(--color-danger, #ef4444)' :
+    'var(--color-text-primary)'
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+      style={{
+        background: active ? color : 'var(--color-bg-elevated)',
+        color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
+        border: `1px solid ${active ? color : 'var(--color-border)'}`,
+      }}
+    >
+      {label}
+      <span
+        className="text-[10px] font-bold px-1.5 rounded"
+        style={{
+          background: active ? 'rgba(255,255,255,0.2)' : 'var(--color-bg-surface)',
+          color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-tertiary)',
+        }}
+      >
+        {count}
+      </span>
+    </button>
+  )
+}
+
+function EnrollmentRow({ enrollment, lead }: { enrollment: any; lead: any }) {
+  const name = lead?.name && String(lead.name).trim() ? lead.name : '—'
+  const initial = (name && name !== '—' ? name.charAt(0) : '?').toUpperCase()
+  const sub = lead?.phone ?? lead?.email ?? ''
+
+  const statusTone =
+    enrollment.status === 'active' ? { bg: 'var(--color-primary-subtle)', color: 'var(--color-primary)', label: 'Ativo' } :
+    enrollment.status === 'paused' ? { bg: 'rgba(245, 158, 11, 0.12)', color: 'var(--color-warning, #f59e0b)', label: 'Pausado' } :
+    enrollment.status === 'completed' ? { bg: 'rgba(16, 185, 129, 0.12)', color: 'var(--color-success, #10b981)', label: 'Concluído' } :
+    { bg: 'rgba(239, 68, 68, 0.12)', color: 'var(--color-danger, #ef4444)', label: 'Saiu' }
+
+  return (
+    <Link
+      href={`/dashboard/crm/${enrollment.lead_id}`}
+      className="rounded-xl p-3 flex items-center gap-3 transition group"
+      style={{
+        background: 'var(--color-bg-surface)',
+        border: '1px solid var(--color-border)',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--color-primary)')}
+      onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
+    >
+      {/* Avatar */}
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm"
+        style={{
+          background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-hover, #6366f1))',
+          color: 'var(--color-text-on-primary)',
+        }}
+      >
+        {initial}
+      </div>
+
+      {/* Name + sub */}
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
+          {name}
+        </div>
+        <div className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>
+          {sub}
+        </div>
+      </div>
+
+      {/* Step */}
+      <div
+        className="hidden sm:flex flex-col items-center px-3 flex-shrink-0"
+        style={{ borderLeft: '1px solid var(--color-border)' }}
+      >
+        <span
+          className="text-[10px] uppercase tracking-wider font-bold"
+          style={{ color: 'var(--color-text-tertiary)' }}
+        >
+          Etapa
+        </span>
+        <span className="font-bold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+          {enrollment.current_step_position}
+        </span>
+      </div>
+
+      {/* Status badge */}
+      <div className="flex-shrink-0">
+        <span
+          className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md"
+          style={{ background: statusTone.bg, color: statusTone.color }}
+        >
+          {statusTone.label}
+        </span>
+      </div>
+
+      {/* Date */}
+      <div
+        className="text-xs text-right hidden md:block flex-shrink-0 min-w-[110px]"
+        style={{ color: 'var(--color-text-tertiary)' }}
+      >
+        {formatRelative(enrollment.enrolled_at)}
+      </div>
+
+      {/* Arrow */}
+      <ArrowRight
+        className="w-4 h-4 flex-shrink-0 transition group-hover:translate-x-0.5"
+        style={{ color: 'var(--color-text-tertiary)' }}
+      />
+    </Link>
+  )
+}
+
+function formatRelative(date: string): string {
+  const now = new Date()
+  const d = new Date(date)
+  const diffMs = now.getTime() - d.getTime()
+  const diffMin = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMin < 1) return 'agora'
+  if (diffMin < 60) return `há ${diffMin} min`
+  if (diffHours < 24) return `há ${diffHours}h`
+  if (diffDays < 7) return `há ${diffDays}d`
+  return d.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: '2-digit' })
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
