@@ -22,7 +22,7 @@ import {
   X,
 } from 'lucide-react'
 import Link from 'next/link'
-import { Settings2, ExternalLink, Tag, ChevronDown } from 'lucide-react'
+import { Settings2, ExternalLink, Tag, ChevronDown, Instagram, Globe } from 'lucide-react'
 import {
   CHANNEL_LABELS,
   CALL_OUTCOME_LABELS,
@@ -605,85 +605,155 @@ function TaskCard({
   const due = new Date(task.due_at)
   const dueLabel = due.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
+  const instagramUrl = normalizeInstagramUrl(lead?.instagram)
+  const siteUrl = normalizeSiteUrl(lead?.url_site)
+
   return (
-    <div className="p-3 rounded-lg border border-border bg-background hover:border-primary/50 transition group">
-      <div className="flex items-start justify-between gap-3 mb-2">
+    <div
+      className="rounded-xl p-4 transition"
+      style={{
+        background: 'var(--color-bg-surface)',
+        border: '1px solid var(--color-border)',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--color-border-strong, var(--color-primary))')}
+      onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
+    >
+      {/* Header badges */}
+      <div className="flex items-center gap-2 flex-wrap mb-3">
+        <span
+          className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md"
+          style={{
+            background: 'var(--color-primary-subtle)',
+            color: 'var(--color-primary)',
+          }}
+        >
+          {channelIcon}
+          {CHANNEL_LABELS[channel as keyof typeof CHANNEL_LABELS]}
+        </span>
+        <span className="text-[10px]" style={{ color: 'var(--color-text-tertiary)' }}>
+          {t.stepOf} {step?.position ?? '-'} · {step?.title ?? ''}
+        </span>
+        {showAssignee && (
+          <span
+            className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
+            style={{
+              background: assignee ? 'var(--color-primary-subtle)' : 'var(--color-bg-elevated)',
+              color: assignee ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+              border: '1px solid var(--color-border)',
+            }}
+            title="Responsável pela task"
+          >
+            {assigneeName}
+          </span>
+        )}
+        <span
+          className="text-[10px] ml-auto font-mono"
+          style={{ color: 'var(--color-text-tertiary)' }}
+        >
+          {dueLabel}
+        </span>
+      </div>
+
+      {/* Lead info + social icons */}
+      <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-              {channelIcon}
-              {CHANNEL_LABELS[channel as keyof typeof CHANNEL_LABELS]}
-            </span>
-            <span className="text-[10px] text-muted-foreground">
-              {t.stepOf} {step?.position ?? '-'} · {step?.title ?? ''}
-            </span>
-            {showAssignee && (
-              <span
-                className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
-                style={{
-                  background: assignee ? 'var(--color-primary-subtle)' : 'var(--color-bg-elevated)',
-                  color: assignee ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
-                  border: '1px solid var(--color-border)',
-                }}
-                title="Responsável pela task"
-              >
-                {assigneeName}
-              </span>
-            )}
-            <span className="text-[10px] text-muted-foreground ml-auto">
-              {dueLabel}
-            </span>
+          <div
+            className="font-semibold text-sm truncate"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            {lead?.name && String(lead.name).trim() ? lead.name : '—'}
           </div>
-          <div className="font-semibold text-sm truncate">{lead?.name ?? '—'}</div>
-          <div className="text-xs text-muted-foreground truncate">
+          <div
+            className="text-xs truncate"
+            style={{ color: 'var(--color-text-tertiary)' }}
+          >
             {lead?.phone ?? lead?.email ?? ''}{lead?.city ? ` · ${lead.city}` : ''}
           </div>
-          {lead?.id && !compact && stages.length > 0 && (
-            <div className="mt-1.5">
-              <StagePill
-                leadId={lead.id}
-                currentStage={lead.stage}
-                stages={stages}
-                onChanged={onRefresh}
-              />
-            </div>
-          )}
-          {!compact && step?.instruction && (
-            <div className="mt-2 text-xs bg-muted/40 border border-border rounded px-2 py-1.5 text-muted-foreground">
-              <span className="font-semibold text-foreground">{t.instruction}:</span> {step.instruction}
-            </div>
-          )}
+        </div>
+
+        {/* Social icons */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <SocialIcon
+            Icon={Instagram}
+            url={instagramUrl}
+            title={instagramUrl ? `Instagram: ${lead.instagram}` : 'Sem Instagram'}
+            activeColor="#E4405F"
+          />
+          <SocialIcon
+            Icon={Globe}
+            url={siteUrl}
+            title={siteUrl ? `Site: ${lead.url_site}` : 'Sem site'}
+            activeColor="var(--color-primary)"
+          />
         </div>
       </div>
 
+      {/* Stage pill */}
+      {lead?.id && !compact && stages.length > 0 && (
+        <div className="mb-3">
+          <StagePill
+            leadId={lead.id}
+            currentStage={lead.stage}
+            stages={stages}
+            onChanged={onRefresh}
+          />
+        </div>
+      )}
+
+      {/* Instruction */}
+      {!compact && step?.instruction && (
+        <div
+          className="text-xs rounded-lg px-3 py-2 mb-3"
+          style={{
+            background: 'var(--color-bg-elevated)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text-secondary)',
+          }}
+        >
+          <span
+            className="font-semibold"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            {t.instruction}:
+          </span>{' '}
+          {step.instruction}
+        </div>
+      )}
+
+      {/* Action rows */}
       {!compact && (
-        <div className="space-y-2 mt-2">
-          {/* Linha 1: ações de contato por canal */}
+        <div className="space-y-2">
           {channel === 'whatsapp' && (
             <div className="flex items-center gap-2">
               <button
                 onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
+                  e.preventDefault(); e.stopPropagation()
                   if (!lead?.id) return
                   window.open(`/dashboard/messages?lead_id=${lead.id}`, '_blank')
                 }}
                 disabled={!lead?.id}
-                className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition font-semibold"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-lg font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  background: 'var(--color-primary)',
+                  color: 'var(--color-text-on-primary)',
+                }}
               >
                 <MessageSquare className="w-3.5 h-3.5" />
                 {t.openMessages}
               </button>
               <button
                 onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
+                  e.preventDefault(); e.stopPropagation()
                   if (!lead?.phone) return
                   const num = String(lead.phone).replace(/\D/g, '')
                   window.open(`https://wa.me/${num}`, '_blank')
                 }}
                 disabled={!lead?.phone}
-                className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-md bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-40 transition font-semibold"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-lg font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  background: '#25D366',
+                  color: '#fff',
+                }}
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 WhatsApp
@@ -691,30 +761,40 @@ function TaskCard({
             </div>
           )}
           {channel === 'call' && lead?.phone && (
-            <div className="flex items-center gap-2">
-              <a
-                href={`tel:${String(lead.phone).replace(/\D/g, '')}`}
-                onClick={(e) => e.stopPropagation()}
-                className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition font-semibold"
-              >
-                <Phone className="w-3.5 h-3.5" />
-                {t.callAction} · {lead.phone}
-              </a>
-            </div>
+            <a
+              href={`tel:${String(lead.phone).replace(/\D/g, '')}`}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full inline-flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-lg font-semibold transition"
+              style={{
+                background: 'var(--color-primary)',
+                color: 'var(--color-text-on-primary)',
+              }}
+            >
+              <Phone className="w-3.5 h-3.5" />
+              {t.callAction} · {lead.phone}
+            </a>
           )}
 
-          {/* Linha 2: ver lead + marcar feita */}
           <div className="flex items-center gap-2">
             <Link
               href={`/dashboard/crm/${task.lead_id}`}
-              className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-md bg-muted/40 hover:bg-muted border border-border transition"
+              className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-3 py-2 rounded-lg transition"
+              style={{
+                background: 'var(--color-bg-elevated)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text-secondary)',
+              }}
             >
               {t.openLead}
               <ArrowRight className="w-3 h-3" />
             </Link>
             <button
               onClick={onComplete}
-              className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-md bg-foreground text-background hover:opacity-90 transition font-semibold"
+              className="flex-1 inline-flex items-center justify-center gap-1 text-xs px-3 py-2 rounded-lg font-semibold transition"
+              style={{
+                background: 'var(--color-text-primary)',
+                color: 'var(--color-bg-base)',
+              }}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               {t.markDone}
@@ -724,6 +804,82 @@ function TaskCard({
       )}
     </div>
   )
+}
+
+// ─── Ícone social (clicável quando tem URL, apagado quando não) ───
+function SocialIcon({
+  Icon,
+  url,
+  title,
+  activeColor,
+}: {
+  Icon: any
+  url: string | null
+  title: string
+  activeColor: string
+}) {
+  const enabled = !!url
+  const common: React.CSSProperties = {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    border: '1px solid var(--color-border)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'var(--color-bg-elevated)',
+    color: enabled ? activeColor : 'var(--color-text-tertiary)',
+    opacity: enabled ? 1 : 0.4,
+    cursor: enabled ? 'pointer' : 'not-allowed',
+    transition: 'all 0.15s ease',
+  }
+
+  if (!enabled) {
+    return (
+      <span style={common} title={title}>
+        <Icon className="w-3.5 h-3.5" />
+      </span>
+    )
+  }
+
+  return (
+    <a
+      href={url!}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      title={title}
+      style={common}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = activeColor
+        e.currentTarget.style.background = 'var(--color-bg-hover)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--color-border)'
+        e.currentTarget.style.background = 'var(--color-bg-elevated)'
+      }}
+    >
+      <Icon className="w-3.5 h-3.5" />
+    </a>
+  )
+}
+
+function normalizeInstagramUrl(raw: string | null | undefined): string | null {
+  if (!raw || typeof raw !== 'string') return null
+  const v = raw.trim()
+  if (!v) return null
+  if (v.startsWith('http')) return v
+  const handle = v.replace(/^@/, '').replace(/\s+/g, '')
+  if (!handle) return null
+  return `https://instagram.com/${handle}`
+}
+
+function normalizeSiteUrl(raw: string | null | undefined): string | null {
+  if (!raw || typeof raw !== 'string') return null
+  const v = raw.trim()
+  if (!v) return null
+  if (v.startsWith('http')) return v
+  return `https://${v}`
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -791,23 +947,50 @@ function CompleteModal({
 
   const outcomeKeys = Object.keys(CALL_OUTCOME_LABELS) as ProspectionCallOutcome[]
 
+  const labelSecondary: React.CSSProperties = {
+    color: 'var(--color-text-tertiary)',
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+  }
+
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+      style={{ background: 'var(--color-bg-overlay)' }}
+      onClick={onClose}
+    >
+      <div
+        className="rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+        style={{
+          background: 'var(--color-bg-surface)',
+          border: '1px solid var(--color-border)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="p-6 border-b border-border flex items-center justify-between">
+        <div
+          className="p-6 flex items-center justify-between"
+          style={{ borderBottom: '1px solid var(--color-border)' }}
+        >
           <div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">
+            <div className="mb-1" style={labelSecondary}>
               {CHANNEL_LABELS[step?.channel as keyof typeof CHANNEL_LABELS]} · {t.stepOf} {step?.position}
             </div>
-            <h3 className="text-lg font-bold">{lead?.name}</h3>
-            <div className="text-xs text-muted-foreground">
+            <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+              {lead?.name && String(lead.name).trim() ? lead.name : '—'}
+            </h3>
+            <div className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
               {lead?.phone ?? lead?.email}
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-muted transition"
+            className="p-1.5 rounded-lg transition"
+            style={{ color: 'var(--color-text-secondary)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           >
             <X className="w-4 h-4" />
           </button>
@@ -816,26 +999,40 @@ function CompleteModal({
         {/* Body */}
         <div className="p-6 space-y-5">
           {step?.instruction && (
-            <div className="text-xs bg-muted/40 border border-border rounded-lg px-3 py-2 text-muted-foreground">
-              <span className="font-semibold text-foreground">{t.instruction}:</span> {step.instruction}
+            <div
+              className="text-xs rounded-lg px-3 py-2"
+              style={{
+                background: 'var(--color-bg-elevated)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                {t.instruction}:
+              </span>{' '}
+              {step.instruction}
             </div>
           )}
 
-          {/* Ações rápidas: abrir mensagem ou WhatsApp (só pra steps de WhatsApp) */}
           {isWhatsApp && (
             <div className="flex gap-2">
               <button
                 onClick={openInternalChat}
                 disabled={!lead?.id}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  background: 'var(--color-primary)',
+                  color: 'var(--color-text-on-primary)',
+                }}
               >
                 <MessageSquare className="w-4 h-4" />
-                Abrir Mensagens
+                {t.openMessages}
               </button>
               <button
                 onClick={openWhatsAppExternal}
                 disabled={!lead?.phone}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: '#25D366', color: '#fff' }}
               >
                 <ExternalLink className="w-4 h-4" />
                 WhatsApp
@@ -846,30 +1043,42 @@ function CompleteModal({
           {/* Variações */}
           {templates.length > 0 && (
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              <div style={labelSecondary} className="mb-2">
                 {t.selectVariation}
               </div>
               <div className="flex gap-2 flex-wrap mb-3">
-                {templates.map((tpl) => (
-                  <button
-                    key={tpl.variant}
-                    onClick={() => setSelectedVariant(tpl.variant)}
-                    className={`px-3 py-1.5 text-xs rounded-md border transition ${
-                      selectedVariant === tpl.variant
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background border-border hover:border-primary/50'
-                    }`}
-                  >
-                    {tpl.variant}
-                    {tpl.label && <span className="ml-1 opacity-70">· {tpl.label}</span>}
-                  </button>
-                ))}
+                {templates.map((tpl) => {
+                  const active = selectedVariant === tpl.variant
+                  return (
+                    <button
+                      key={tpl.variant}
+                      onClick={() => setSelectedVariant(tpl.variant)}
+                      className="px-3 py-1.5 text-xs rounded-md transition"
+                      style={{
+                        background: active ? 'var(--color-primary)' : 'var(--color-bg-elevated)',
+                        border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                        color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
+                        fontWeight: active ? 600 : 500,
+                      }}
+                    >
+                      {tpl.variant}
+                      {tpl.label && <span className="ml-1 opacity-80">· {tpl.label}</span>}
+                    </button>
+                  )
+                })}
               </div>
 
               {currentTemplate && (
-                <div className="relative bg-background border border-border rounded-lg p-4 font-mono text-sm whitespace-pre-wrap">
+                <div
+                  className="relative rounded-lg p-4 font-mono text-sm whitespace-pre-wrap"
+                  style={{
+                    background: 'var(--color-bg-elevated)',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-text-primary)',
+                  }}
+                >
                   {currentTemplate.subject && (
-                    <div className="text-xs text-muted-foreground mb-2">
+                    <div className="text-xs mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
                       <span className="font-semibold">Subject:</span> {currentTemplate.subject}
                     </div>
                   )}
@@ -882,11 +1091,16 @@ function CompleteModal({
                           : currentTemplate.body
                       )
                     }
-                    className="absolute top-2 right-2 p-1.5 rounded-md bg-card border border-border hover:border-primary transition"
+                    className="absolute top-2 right-2 p-1.5 rounded-md transition"
+                    style={{
+                      background: 'var(--color-bg-surface)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-secondary)',
+                    }}
                     title={t.copy}
                   >
                     {copied ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <Check className="w-3.5 h-3.5" style={{ color: 'var(--color-success, #10b981)' }} />
                     ) : (
                       <Copy className="w-3.5 h-3.5" />
                     )}
@@ -899,38 +1113,48 @@ function CompleteModal({
           {/* Call outcome */}
           {isCall && (
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              <div style={labelSecondary} className="mb-2">
                 {t.callOutcome}
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {outcomeKeys.map((key) => (
-                  <button
-                    key={key}
-                    onClick={() => setOutcome(key)}
-                    className={`px-3 py-2 text-xs rounded-md border transition text-left ${
-                      outcome === key
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background border-border hover:border-primary/50'
-                    }`}
-                  >
-                    {CALL_OUTCOME_LABELS[key]}
-                  </button>
-                ))}
+                {outcomeKeys.map((key) => {
+                  const active = outcome === key
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setOutcome(key)}
+                      className="px-3 py-2 text-xs rounded-md transition text-left"
+                      style={{
+                        background: active ? 'var(--color-primary)' : 'var(--color-bg-elevated)',
+                        border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                        color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
+                        fontWeight: active ? 600 : 500,
+                      }}
+                    >
+                      {CALL_OUTCOME_LABELS[key]}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
 
-          {/* Mudar estágio do lead (opcional) */}
+          {/* Mudar estágio */}
           {stages.length > 0 && (
             <div>
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-2">
+              <label style={labelSecondary} className="block mb-2">
                 Mudar estágio do lead
               </label>
               <div className="flex items-center gap-2">
                 <select
                   value={newStage}
                   onChange={(e) => setNewStage(e.target.value)}
-                  className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary transition"
+                  className="flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none transition"
+                  style={{
+                    background: 'var(--color-bg-elevated)',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-text-primary)',
+                  }}
                 >
                   <option value="">— Manter estágio atual —</option>
                   {stages.map((s) => (
@@ -942,7 +1166,12 @@ function CompleteModal({
                 {newStage && newStage !== lead?.stage && (
                   <button
                     onClick={() => setNewStage(lead?.stage ?? '')}
-                    className="p-2 rounded-lg border border-border hover:bg-muted transition text-muted-foreground"
+                    className="p-2 rounded-lg transition"
+                    style={{
+                      background: 'var(--color-bg-elevated)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-tertiary)',
+                    }}
                     title="Cancelar mudança"
                   >
                     <X className="w-4 h-4" />
@@ -953,10 +1182,18 @@ function CompleteModal({
                 const currentLabel = stages.find((s) => s.value === lead.stage)?.label ?? lead.stage
                 const newLabel = stages.find((s) => s.value === newStage)?.label ?? newStage
                 return (
-                  <div className="text-[11px] text-muted-foreground mt-1">
-                    Estágio atual: <span className="font-semibold">{currentLabel}</span>
+                  <div className="text-[11px] mt-1.5" style={{ color: 'var(--color-text-tertiary)' }}>
+                    Estágio atual:{' '}
+                    <span className="font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
+                      {currentLabel}
+                    </span>
                     {newStage && newStage !== lead.stage && (
-                      <span> · mudará para <span className="font-semibold text-primary">{newLabel}</span></span>
+                      <>
+                        {' '}· mudará para{' '}
+                        <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>
+                          {newLabel}
+                        </span>
+                      </>
                     )}
                   </div>
                 )
@@ -966,13 +1203,18 @@ function CompleteModal({
 
           {/* Notas */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-2">
+            <label style={labelSecondary} className="block mb-2">
               {t.addNote}
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary transition"
+              className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition"
+              style={{
+                background: 'var(--color-bg-elevated)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text-primary)',
+              }}
               rows={2}
               placeholder="..."
             />
@@ -980,17 +1222,29 @@ function CompleteModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border flex items-center justify-end gap-2">
+        <div
+          className="p-4 flex items-center justify-end gap-2"
+          style={{ borderTop: '1px solid var(--color-border)' }}
+        >
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted transition"
+            className="px-4 py-2 text-sm rounded-lg transition font-medium"
+            style={{
+              background: 'var(--color-bg-elevated)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text-primary)',
+            }}
           >
             {t.cancel}
           </button>
           <button
             onClick={handleConfirm}
             disabled={isCall && !outcome}
-            className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="px-4 py-2 text-sm rounded-lg font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              background: 'var(--color-primary)',
+              color: 'var(--color-text-on-primary)',
+            }}
           >
             {t.confirm}
           </button>

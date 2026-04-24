@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
           id, sequence_id, current_step_position, status,
           sequence:prospection_sequences(id, name)
         ),
-        lead:leads(id, name, phone, email, city, stage),
+        lead:leads(id, name, phone, email, city, stage, instagram, url_site),
         assignee:users!prospection_tasks_assignee_user_id_fkey(id, full_name)
       `)
       .eq('org_id', orgId)
@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
       .select(`
         id, sequence_id, lead_id, status, exit_reason, paused_at, current_step_position,
         sequence:prospection_sequences(id, name),
-        lead:leads(id, name, phone, email, city, stage)
+        lead:leads(id, name, phone, email, city, stage, instagram, url_site)
       `)
       .eq('org_id', orgId)
       .eq('status', 'paused')
