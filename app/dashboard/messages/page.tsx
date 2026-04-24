@@ -79,6 +79,8 @@ const TRANSLATIONS = {
     channelLabel_email: 'Email',
     channelLabel_instagram: 'Instagram',
     channelLabel_linkedin: 'LinkedIn',
+    noIdentification: 'Sem identificação',
+    noName: 'Sem nome',
     startConversation: 'Iniciar conversa...',
     openWhatsapp: 'Abrir no WhatsApp',
     openLeadProfile: 'Ver perfil do contato',
@@ -120,6 +122,8 @@ const TRANSLATIONS = {
     channelLabel_email: 'Email',
     channelLabel_instagram: 'Instagram',
     channelLabel_linkedin: 'LinkedIn',
+    noIdentification: 'No identification',
+    noName: 'No name',
     startConversation: 'Start conversation...',
     openWhatsapp: 'Open in WhatsApp',
     openLeadProfile: 'View contact profile',
@@ -161,6 +165,8 @@ const TRANSLATIONS = {
     channelLabel_email: 'Email',
     channelLabel_instagram: 'Instagram',
     channelLabel_linkedin: 'LinkedIn',
+    noIdentification: 'Sin identificación',
+    noName: 'Sin nombre',
     startConversation: 'Iniciar conversación...',
     openWhatsapp: 'Abrir en WhatsApp',
     openLeadProfile: 'Ver perfil del contacto',
@@ -307,14 +313,30 @@ function formatPhone(phone: string | null): string {
   return `+${c}`
 }
 
-function getDisplayName(conv: Conversation): string {
-  if (conv.lead_name && conv.lead_name !== 'null') return conv.lead_name
-  if (conv.lead_phone) return formatPhone(conv.lead_phone)
-  return 'Sem identificação'
+// Pra orgs B2B (ex: ai_agency), o nome da empresa é tão útil quanto o nome
+// do contato e em muitos casos é a única coisa que veio do CSV/captação.
+// Pra real_estate é menos comum ter empresa preenchida, então só cai no fallback
+// se o nicho da org pedir.
+const NICHES_USING_COMPANY = ['ai_agency']
+
+function shouldUseCompanyFallback(orgNiche?: string | null): boolean {
+  return !!orgNiche && NICHES_USING_COMPANY.includes(orgNiche)
 }
 
-function getInitial(conv: Conversation): string {
+function getDisplayName(conv: Conversation, orgNiche?: string | null, t?: any): string {
+  if (conv.lead_name && conv.lead_name !== 'null') return conv.lead_name
+  if (shouldUseCompanyFallback(orgNiche) && conv.lead_nome_empresa && conv.lead_nome_empresa !== 'null') {
+    return conv.lead_nome_empresa
+  }
+  if (conv.lead_phone) return formatPhone(conv.lead_phone)
+  return t?.noIdentification || 'Sem identificação'
+}
+
+function getInitial(conv: Conversation, orgNiche?: string | null): string {
   if (conv.lead_name && conv.lead_name !== 'null') return conv.lead_name[0].toUpperCase()
+  if (shouldUseCompanyFallback(orgNiche) && conv.lead_nome_empresa && conv.lead_nome_empresa !== 'null') {
+    return conv.lead_nome_empresa[0].toUpperCase()
+  }
   return '#'
 }
 
@@ -530,13 +552,14 @@ function MessageBubble({
    CONVERSATION LIST ITEM
    ============================================= */
 function ConversationItem({
-  conversation: c, isActive, onClick, userLang, t,
+  conversation: c, isActive, onClick, userLang, t, orgNiche,
 }: {
   conversation: Conversation
   isActive: boolean
   onClick: () => void
   userLang: string
   t: TranslationType
+  orgNiche?: string | null
 }) {
   return (
     <div
@@ -549,7 +572,7 @@ function ConversationItem({
       {/* Avatar */}
       <div className="relative shrink-0">
         <div className="w-[49px] h-[49px] rounded-full flex items-center justify-center text-lg font-medium" style={{ backgroundColor: 'var(--color-bg-hover)', color: 'var(--color-text-primary)' }}>
-          {getInitial(c)}
+          {getInitial(c, orgNiche)}
         </div>
         {c.channel === 'whatsapp' && (
           <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center border-2" style={{ backgroundColor: '#25D366', borderColor: 'var(--color-bg-base)' }}>
@@ -569,7 +592,7 @@ function ConversationItem({
       <div className="flex-1 min-w-0 pb-[10px]" style={{ borderBottom: '1px solid var(--color-border)' }}>
         <div className="flex justify-between items-baseline mb-[2px]">
           <h4 className="text-[16px] font-normal truncate pr-2" style={{ color: 'var(--color-text-primary)' }}>
-            {getDisplayName(c)}
+            {getDisplayName(c, orgNiche, t)}
           </h4>
           <span className="text-[11px] shrink-0" style={{ color: c.unread_count > 0 ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}>
             {formatLastMessageTime(c.last_message_at, userLang)}
@@ -800,7 +823,7 @@ function MessageInput({
    ============================================= */
 function MessagesContent() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, activeOrg } = useAuth()
   const orgId = useActiveOrgId()
   const searchParams = useSearchParams()
   const targetLeadId = searchParams.get('lead_id')
@@ -1297,7 +1320,7 @@ function MessagesContent() {
     .filter(c => {
       if (!searchTerm.trim()) return true
       const query = searchTerm.toLowerCase()
-      const name = getDisplayName(c).toLowerCase()
+      const name = getDisplayName(c, (activeOrg as any)?.niche, t).toLowerCase()
       const phone = (c.lead_phone || '').replace(/\D/g, '')
       const searchDigits = searchTerm.replace(/\D/g, '')
       
@@ -1417,6 +1440,7 @@ function MessagesContent() {
                   onClick={() => setActiveConversation(conv)}
                   userLang={userLang}
                   t={t}
+                  orgNiche={(activeOrg as any)?.niche}
                 />
               ))
             )}
@@ -1439,11 +1463,11 @@ function MessagesContent() {
                 </button>
                 
                 <div className="w-10 h-10 rounded-full flex items-center justify-center font-medium text-sm" style={{ backgroundColor: 'var(--color-bg-hover)', color: 'var(--color-text-primary)' }}>
-                  {getInitial(activeConversation)}
+                  {getInitial(activeConversation, (activeOrg as any)?.niche)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="font-normal text-[15px] truncate" style={{ color: 'var(--color-text-primary)' }}>
-                    {getDisplayName(activeConversation)}
+                    {getDisplayName(activeConversation, (activeOrg as any)?.niche, t)}
                   </h3>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[11px] uppercase tracking-wide flex items-center gap-1" style={{ color: 'var(--color-text-secondary)' }}>

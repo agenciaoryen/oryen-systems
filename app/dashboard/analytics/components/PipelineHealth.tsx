@@ -12,22 +12,6 @@ import {
 } from 'recharts'
 import type { FunnelStage, PipelineVelocity } from '@/lib/analytics/types'
 
-// Detecta se uma cor hex é "clara" (luminância alta).
-// Usada pra escolher cor de texto que contraste com o background do stage.
-function isLightColor(hex: string): boolean {
-  const normalized = hex.trim().replace(/^#/, '')
-  if (!/^[0-9a-fA-F]{6}$/.test(normalized) && !/^[0-9a-fA-F]{3}$/.test(normalized)) return false
-  const full = normalized.length === 3
-    ? normalized.split('').map((c) => c + c).join('')
-    : normalized
-  const r = parseInt(full.substring(0, 2), 16)
-  const g = parseInt(full.substring(2, 4), 16)
-  const b = parseInt(full.substring(4, 6), 16)
-  // Luminância relativa (ITU-R BT.709)
-  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
-  return luma > 186 // threshold empírico — acima disso, fundo "claro demais" pra texto branco
-}
-
 interface Props {
   funnel: FunnelStage[]
   velocity: PipelineVelocity[]
@@ -222,72 +206,83 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
               display: 'flex',
               flexDirection: 'column',
               gap: '6px',
-              alignItems: 'center',
+              alignItems: 'stretch',
               width: '100%',
               overflow: 'hidden',
             }}
           >
             {sortedFunnel.map((stage) => {
               const rawPct = maxLeads > 0 ? (stage.leadCount / maxLeads) * 100 : 12
-              const widthPct = Math.min(Math.max(rawPct, 12), 100)
-
-              const bg = stage.color || '#6366f1'
-              const isLight = isLightColor(bg)
-              const textColor = isLight ? '#0E0E20' : '#fff'
-              const subtleTextColor = isLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.85)'
-              const chipBg = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(0,0,0,0.25)'
+              const widthPct = Math.min(Math.max(rawPct, 20), 100)
+              const color = stage.color || 'var(--color-primary)'
 
               // Só mostra conversão se faz sentido (0 < rate <= 100).
-              // Acima de 100% significa que o stage posterior tem mais leads
-              // que o anterior (caso de leads que avançaram direto) — métrica
-              // enganosa, melhor ocultar.
               const showConversion = stage.conversionFromPrev > 0 && stage.conversionFromPrev <= 100
 
               return (
-                <div
-                  key={stage.id}
-                  style={{
-                    width: `${widthPct}%`,
-                    maxWidth: '100%',
-                    minWidth: '80px',
-                    background: bg,
-                    // Borda sutil escura sempre que o fundo é claro, pra
-                    // garantir visibilidade do stage quando a cor é branca.
-                    border: isLight ? '1px solid rgba(0,0,0,0.15)' : '1px solid transparent',
-                    borderRadius: '6px',
-                    padding: '8px 12px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    transition: 'width 0.3s ease',
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <span
+                <div key={stage.id} style={{ width: '100%', display: 'flex' }}>
+                  <div
                     style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: textColor,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
+                      width: `${widthPct}%`,
+                      maxWidth: '100%',
+                      minWidth: '180px',
+                      background: 'var(--color-bg-elevated)',
+                      border: '1px solid var(--color-border)',
+                      borderLeft: `4px solid ${color}`,
+                      borderRadius: '8px',
+                      padding: '10px 14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      transition: 'width 0.3s ease',
+                      boxSizing: 'border-box',
                     }}
                   >
-                    {stage.label}
-                  </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: textColor }}>
+                    {/* Dot indicador da cor do stage */}
+                    <span
+                      style={{
+                        width: '10px',
+                        height: '10px',
+                        borderRadius: '50%',
+                        background: color,
+                        border: '1px solid var(--color-border)',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: 'var(--color-text-primary)',
+                        flex: 1,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {stage.label}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        color: 'var(--color-text-primary)',
+                        flexShrink: 0,
+                      }}
+                    >
                       {stage.leadCount}
                     </span>
                     {showConversion && (
                       <span
                         style={{
                           fontSize: '10px',
-                          color: subtleTextColor,
-                          background: chipBg,
-                          padding: '1px 6px',
-                          borderRadius: '8px',
-                          fontWeight: 600,
+                          fontWeight: 700,
+                          color: 'var(--color-text-tertiary)',
+                          background: 'var(--color-bg-surface)',
+                          border: '1px solid var(--color-border)',
+                          padding: '2px 6px',
+                          borderRadius: '6px',
+                          flexShrink: 0,
                         }}
                       >
                         {stage.conversionFromPrev.toFixed(1)}%
