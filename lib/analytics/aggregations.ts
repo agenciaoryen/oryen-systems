@@ -4,6 +4,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js'
 import { subDays, startOfMonth, format, differenceInDays, differenceInMinutes } from 'date-fns'
+import { stageColorHex } from '@/lib/stage-colors'
 import type {
   FunnelStage,
   SourceConversion,
@@ -99,7 +100,7 @@ export async function getLeadFunnelByStage(
       id: stage.id,
       name: stage.name,
       label: stage.label || stage.name,
-      color: stage.color || '#6366f1',
+      color: stageColorHex(stage.color),
       position: stage.position,
       isWon: stage.is_won || false,
       isLost: stage.is_lost || false,
@@ -212,7 +213,7 @@ export async function getPipelineVelocity(
         stageId: stage.id,
         stageName: stage.name,
         stageLabel: stage.label || stage.name,
-        stageColor: stage.color || '#6366f1',
+        stageColor: stageColorHex(stage.color),
         position: stage.position,
         medianDays: Math.round(median(daysArr) * 10) / 10,
         leadCount: stageLeads.length,
@@ -436,7 +437,7 @@ export async function getRevenueProjection(
       byStage.push({
         stageName: stage.name,
         stageLabel: stage.label || stage.name,
-        stageColor: stage.color || '#6366f1',
+        stageColor: stageColorHex(stage.color),
         totalValue,
         probability: Math.round(probability * 100),
         weightedValue: Math.round(weighted),

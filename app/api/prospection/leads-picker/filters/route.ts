@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth, resolveOrgId } from '@/lib/api-auth'
 import { ensureProspectionAccess } from '@/lib/prospection/access'
+import { stageColorHex } from '@/lib/stage-colors'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     const stages = (stageRows || []).map((s: any) => ({
       value: s.name,
       label: s.label || s.name,
-      color: s.color,
+      color: stageColorHex(s.color),
     }))
 
     // Campos distintos — busca leads da org e extrai únicos

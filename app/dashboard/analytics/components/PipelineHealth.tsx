@@ -11,6 +11,7 @@ import {
   Cell,
 } from 'recharts'
 import type { FunnelStage, PipelineVelocity } from '@/lib/analytics/types'
+import { stageColorHex } from '@/lib/stage-colors'
 
 interface Props {
   funnel: FunnelStage[]
@@ -214,7 +215,7 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
             {sortedFunnel.map((stage) => {
               const rawPct = maxLeads > 0 ? (stage.leadCount / maxLeads) * 100 : 12
               const widthPct = Math.min(Math.max(rawPct, 20), 100)
-              const color = stage.color || 'var(--color-primary)'
+              const color = stageColorHex(stage.color)
 
               // Só mostra conversão se faz sentido (0 < rate <= 100).
               const showConversion = stage.conversionFromPrev > 0 && stage.conversionFromPrev <= 100
