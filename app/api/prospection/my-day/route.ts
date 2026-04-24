@@ -116,11 +116,12 @@ export async function GET(request: NextRequest) {
       .eq('status', 'done')
       .gte('completed_at', new Date(now.toISOString().slice(0, 10)).toISOString())
 
-    // Stages do pipeline (pro modal de conclusão)
+    // Stages do pipeline ATIVO da org (pro modal de conclusão e pill inline)
     const { data: stageRows } = await supabase
       .from('pipeline_stages')
       .select('name, color, position')
       .eq('org_id', orgId)
+      .eq('is_active', true)
       .order('position', { ascending: true })
 
     return NextResponse.json({

@@ -24,11 +24,12 @@ export async function GET(request: NextRequest) {
     const gate = await ensureProspectionAccess(orgId)
     if (gate) return gate
 
-    // Stages do pipeline
+    // Stages do pipeline ATIVO da org
     const { data: stageRows } = await supabase
       .from('pipeline_stages')
       .select('name, color, position')
       .eq('org_id', orgId)
+      .eq('is_active', true)
       .order('position', { ascending: true })
     const stages = (stageRows || []).map((s: any) => ({ value: s.name, label: s.name, color: s.color }))
 

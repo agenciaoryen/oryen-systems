@@ -48,12 +48,13 @@ export async function POST(
       return NextResponse.json({ ok: true, unchanged: true })
     }
 
-    // Valida que o stage existe no pipeline da org
+    // Valida que o stage existe no pipeline ATIVO da org
     const { data: stageRow } = await supabase
       .from('pipeline_stages')
       .select('name')
       .eq('org_id', orgId)
       .eq('name', stage)
+      .eq('is_active', true)
       .maybeSingle()
 
     if (!stageRow) {
