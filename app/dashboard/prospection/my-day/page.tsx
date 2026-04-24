@@ -882,14 +882,18 @@ function CompleteModal({
                   </button>
                 )}
               </div>
-              {lead?.stage && (
-                <div className="text-[11px] text-muted-foreground mt-1">
-                  Estágio atual: <span className="font-semibold">{lead.stage}</span>
-                  {newStage && newStage !== lead.stage && (
-                    <span> · mudará para <span className="font-semibold text-primary">{newStage}</span></span>
-                  )}
-                </div>
-              )}
+              {lead?.stage && (() => {
+                const currentLabel = stages.find((s) => s.value === lead.stage)?.label ?? lead.stage
+                const newLabel = stages.find((s) => s.value === newStage)?.label ?? newStage
+                return (
+                  <div className="text-[11px] text-muted-foreground mt-1">
+                    Estágio atual: <span className="font-semibold">{currentLabel}</span>
+                    {newStage && newStage !== lead.stage && (
+                      <span> · mudará para <span className="font-semibold text-primary">{newLabel}</span></span>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
           )}
 
@@ -982,6 +986,8 @@ function StagePill({
 
   if (stages.length === 0) return null
 
+  const currentLabel = stages.find((s) => s.value === localStage)?.label ?? localStage ?? '—'
+
   return (
     <div ref={ref} className="relative inline-block">
       <button
@@ -991,15 +997,15 @@ function StagePill({
           setOpen(!open)
         }}
         disabled={saving}
-        className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md transition disabled:opacity-50"
+        className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md transition disabled:opacity-50"
         style={{
           background: 'var(--color-bg-elevated)',
           border: '1px solid var(--color-border)',
           color: 'var(--color-text-primary)',
         }}
       >
-        <Tag className="w-2.5 h-2.5" style={{ color: 'var(--color-text-tertiary)' }} />
-        <span className="normal-case font-semibold">{localStage ?? '—'}</span>
+        <Tag className="w-3 h-3" style={{ color: 'var(--color-text-tertiary)' }} />
+        <span className="font-semibold">{currentLabel}</span>
         <ChevronDown className="w-3 h-3" style={{ color: 'var(--color-text-tertiary)' }} />
       </button>
 

@@ -27,11 +27,15 @@ export async function GET(request: NextRequest) {
     // Stages do pipeline ATIVO da org
     const { data: stageRows } = await supabase
       .from('pipeline_stages')
-      .select('name, color, position')
+      .select('name, label, color, position')
       .eq('org_id', orgId)
       .eq('is_active', true)
       .order('position', { ascending: true })
-    const stages = (stageRows || []).map((s: any) => ({ value: s.name, label: s.name, color: s.color }))
+    const stages = (stageRows || []).map((s: any) => ({
+      value: s.name,
+      label: s.label || s.name,
+      color: s.color,
+    }))
 
     // Campos distintos — busca leads da org e extrai únicos
     const { data: leadRows } = await supabase
