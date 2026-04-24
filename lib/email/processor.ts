@@ -169,6 +169,27 @@ export async function processEmailCampaign(campaignId: string): Promise<ProcessR
         .update({ status: 'sent', updated_at: new Date().toISOString() })
         .eq('id', contact.id)
 
+      // Se o contato vem do CRM (lead_id preenchido), registra no módulo Conversas
+      // como mensagem outbound no canal 'email' — assim fica na timeline unificada do lead.
+      if (contact.lead_id) {
+        try {
+          const bodyForTimeline = `📧 ${generated.subject}\n\n${generated.body_text}`
+          await supabase.rpc('fn_insert_message', {
+            p_org_id: campaign.org_id,
+            p_lead_id: contact.lead_id,
+            p_channel: 'email',
+            p_direction: 'outbound',
+            p_body: bodyForTimeline,
+            p_sender_type: 'agent_bot',
+            p_sender_name: senderName,
+            p_message_type: 'text',
+            p_timestamp: new Date().toISOString(),
+          })
+        } catch (convErr: any) {
+          console.warn('[email-processor] fn_insert_message falhou (não bloqueia envio):', convErr.message)
+        }
+      }
+
       processed++
 
       // Delay pequeno pra espalhar no tempo (ajuda deliverability)

@@ -537,10 +537,15 @@ function ConversationItem({
           {getInitial(c)}
         </div>
         {c.channel === 'whatsapp' && (
-          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center border-2" style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-bg-base)' }}>
+          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center border-2" style={{ backgroundColor: '#25D366', borderColor: 'var(--color-bg-base)' }}>
             <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 text-white fill-current">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
             </svg>
+          </div>
+        )}
+        {c.channel === 'email' && (
+          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center border-2" style={{ backgroundColor: '#4F46E5', borderColor: 'var(--color-bg-base)' }}>
+            <Mail size={9} className="text-white" strokeWidth={2.5} />
           </div>
         )}
       </div>
@@ -1558,8 +1563,24 @@ function MessagesContent() {
                 </button>
               )}
 
-              {/* Input */}
-              <MessageInput onSend={handleSendMessage} onSendAudio={handleSendAudio} isSending={isSending} sendError={sendError} t={t} />
+              {/* Input — em conversas de email mostra aviso informativo (envio sai pelo BDR) */}
+              {activeConversation.channel === 'email' ? (
+                <div className="shrink-0 p-4" style={{ backgroundColor: 'var(--color-bg-surface)', borderTop: '1px solid var(--color-border)' }}>
+                  <div className="rounded-xl p-3 flex items-start gap-3" style={{ background: 'rgba(79, 70, 229, 0.08)', border: '1px solid rgba(79, 70, 229, 0.25)' }}>
+                    <Mail size={18} className="shrink-0 mt-0.5" style={{ color: '#4F46E5' }} />
+                    <div className="flex-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                      <p className="font-semibold mb-0.5" style={{ color: 'var(--color-text-primary)' }}>
+                        {userLang === 'en' ? 'Email conversation (read-only here)' : userLang === 'es' ? 'Conversación por email (solo lectura aquí)' : 'Conversa por email (só leitura aqui)'}
+                      </p>
+                      <p className="text-xs">
+                        {userLang === 'en' ? 'Emails are sent via the BDR Email agent. To send a new email to this lead, add it to an email campaign.' : userLang === 'es' ? 'Los emails se envían por el agente BDR Email. Para enviar nuevo email, agrega el lead a una campaña.' : 'Emails são enviados pelo agente BDR Email. Pra mandar um email novo, adiciona o lead a uma campanha.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <MessageInput onSend={handleSendMessage} onSendAudio={handleSendAudio} isSending={isSending} sendError={sendError} t={t} />
+              )}
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center" style={{ backgroundColor: 'var(--color-bg-surface)' }}>
