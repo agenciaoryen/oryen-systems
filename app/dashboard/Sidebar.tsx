@@ -38,6 +38,7 @@ import {
   Zap,
   Shield,
   Plug,
+  Rocket,
   type LucideIcon
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
@@ -67,6 +68,7 @@ const TRANSLATIONS = {
       financing: 'Financiamento',
       financial: 'Financeiro',
       goals: 'Metas',
+      prospection: 'Prospecção',
       subscription: 'Minha Assinatura',
       portfolio: 'Portfólio',
       propertyStats: 'Estatísticas',
@@ -110,6 +112,7 @@ const TRANSLATIONS = {
       financing: 'Financing',
       financial: 'Financial',
       goals: 'Goals',
+      prospection: 'Prospecting',
       subscription: 'My Subscription',
       portfolio: 'Portfolio',
       propertyStats: 'Statistics',
@@ -153,6 +156,7 @@ const TRANSLATIONS = {
       financing: 'Financiamiento',
       financial: 'Financiero',
       goals: 'Metas',
+      prospection: 'Prospección',
       subscription: 'Mi Suscripción',
       portfolio: 'Portafolio',
       propertyStats: 'Estadísticas',
@@ -192,6 +196,9 @@ const NICHES_WITH_PROPERTIES = ['real_estate']
 
 // Módulos de comunicação com cliente — documentos e WhatsApp servem pra qualquer negócio
 const NICHES_WITH_CLIENT_COMMS = ['real_estate', 'ai_agency']
+
+// Módulo de prospecção multi-canal — atualmente exclusivo para ai_agency
+const NICHES_WITH_PROSPECTION = ['ai_agency']
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
@@ -388,6 +395,7 @@ export default function Sidebar() {
         { href: '/dashboard/calendar', label: t.menu.calendar, icon: CalendarDays, permission: 'calendar' },
         { href: '/dashboard/distribuicao', label: t.menu.distribution, icon: Shuffle, permission: 'distribution' },
         { href: '/dashboard/metas', label: t.menu.goals, icon: Target, permission: 'goals' },
+        { href: '/dashboard/prospection', label: t.menu.prospection, icon: Rocket, requiredNiche: NICHES_WITH_PROSPECTION },
       ],
     },
     {

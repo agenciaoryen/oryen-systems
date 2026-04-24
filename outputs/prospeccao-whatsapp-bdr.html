@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Oryen · Playbook de Prospecção · Davi + Teresita</title>
+<title>Oryen · Playbook de Prospecção · Funil Multi-canal</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -105,7 +105,7 @@
   /* ===== CADENCE ===== */
   .cadence {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
     margin-bottom: 40px;
   }
@@ -121,6 +121,7 @@
   .cadence-day.day-0 { border-left: 3px solid var(--cobalt); }
   .cadence-day.day-1 { border-left: 3px solid var(--indigo); }
   .cadence-day.day-2 { border-left: 3px solid var(--amber); }
+  .cadence-day.day-5 { border-left: 3px solid var(--green); }
 
   .cadence-label {
     font-family: 'Plus Jakarta Sans', sans-serif;
@@ -134,6 +135,7 @@
   .day-0 .cadence-label { color: var(--cobalt); }
   .day-1 .cadence-label { color: var(--indigo); }
   .day-2 .cadence-label { color: var(--amber); }
+  .day-5 .cadence-label { color: var(--green); }
 
   .cadence-day h4 {
     font-family: 'Plus Jakarta Sans', sans-serif;
@@ -147,13 +149,6 @@
     font-size: 13px;
     color: var(--text-dim);
     line-height: 1.5;
-  }
-
-  .cadence-owner {
-    margin-top: 10px;
-    font-size: 11px;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
   }
 
   .cadence-arrow {
@@ -341,31 +336,6 @@
     font-size: 22px;
     color: var(--text);
     letter-spacing: -0.01em;
-  }
-
-  .stage-owner {
-    display: inline-block;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 600;
-    font-size: 11px;
-    padding: 3px 10px;
-    border-radius: 6px;
-    background: rgba(79, 111, 255, 0.15);
-    color: var(--cobalt);
-    margin-left: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    vertical-align: middle;
-  }
-
-  .stage-owner.teresita {
-    background: rgba(240, 160, 48, 0.15);
-    color: var(--amber);
-  }
-
-  .stage-owner.auto {
-    background: rgba(47, 212, 138, 0.15);
-    color: var(--green);
   }
 
   .stage-timing {
@@ -644,9 +614,13 @@
     margin-bottom: 6px;
   }
 
-  @media (max-width: 720px) {
-    .cadence { grid-template-columns: 1fr; }
+  @media (max-width: 900px) {
+    .cadence { grid-template-columns: repeat(2, 1fr); }
     .cadence-arrow { display: none; }
+  }
+
+  @media (max-width: 520px) {
+    .cadence { grid-template-columns: 1fr; }
   }
 
   @media (max-width: 640px) {
@@ -660,7 +634,6 @@
     .tips { padding: 20px; }
     .stage-title { font-size: 19px; }
     .scenario { padding: 16px 18px; }
-    .stage-owner { display: block; margin: 6px 0 0 0; width: fit-content; }
   }
 
   @media (max-width: 420px) {
@@ -675,44 +648,47 @@
 
   <header>
     <div class="wordmark">oryen</div>
-    <div class="subtitle">Playbook de Prospecção · Davi + Teresita</div>
+    <div class="subtitle">Playbook de Prospecção · Funil Multi-canal</div>
     <h1>Funil <span class="highlight">multi-canal</span> · 3 dias · 3 canais</h1>
-    <p class="tagline">WhatsApp no dia 0 · Email no dia 1 · Ligação no dia 2 com ICUVA</p>
+    <p class="tagline">Dia 1 WhatsApp · Dia 2 Email · Dia 3 Ligação com ICUVA · Dia 5 último toque</p>
   </header>
 
   <!-- ===== CADENCE ===== -->
   <div class="cadence">
     <div class="cadence-day day-0">
-      <div class="cadence-label">Dia 0</div>
+      <div class="cadence-label">Dia 1</div>
       <h4>WhatsApp</h4>
-      <p>Davi abre. Se o lead responde, Teresita entra para qualificar e agendar reunião.</p>
-      <div class="cadence-owner">Davi + Teresita</div>
+      <p>Primeiro contato. Se o lead responder, segue na mesma conversa para qualificação e agendamento da reunião.</p>
       <div class="cadence-arrow">→</div>
     </div>
     <div class="cadence-day day-1">
-      <div class="cadence-label">Dia 1</div>
+      <div class="cadence-label">Dia 2</div>
       <h4>Email</h4>
-      <p>Se não respondeu no WhatsApp, o agente BDR Email dispara automaticamente.</p>
-      <div class="cadence-owner">BDR Email · automático</div>
+      <p>Se não teve resposta no WhatsApp, o agente BDR Email dispara automaticamente.</p>
       <div class="cadence-arrow">→</div>
     </div>
     <div class="cadence-day day-2">
-      <div class="cadence-label">Dia 2</div>
+      <div class="cadence-label">Dia 3</div>
       <h4>Ligação</h4>
-      <p>Se ainda não respondeu, Teresita liga usando WhatsApp e email como pretexto. Aplica ICUVA.</p>
-      <div class="cadence-owner">Teresita</div>
+      <p>Se ainda não teve resposta, ligação direta usando o WhatsApp e o email como pretexto. Aplica ICUVA.</p>
+      <div class="cadence-arrow">→</div>
+    </div>
+    <div class="cadence-day day-5">
+      <div class="cadence-label">Dia 5</div>
+      <h4>Último toque</h4>
+      <p>Depois de 2 dias de respiro, último WhatsApp de encerramento respeitoso com porta aberta.</p>
     </div>
   </div>
 
   <section class="intro">
     <h2>Como funciona na prática</h2>
     <ul>
-      <li><strong>Davi dispara as mensagens 01 e 02</strong> do WhatsApp. Quando o lead responde, avisa a Teresita no mesmo instante</li>
-      <li><strong>Teresita assume a conversa</strong> e segue o roteiro 03-A até 03-E até agendar a reunião</li>
-      <li><strong>Mesma voz nos dois turnos</strong> — para o lead é sempre "Leonardo". Nunca revelar a troca</li>
-      <li><strong>Se não houver resposta em 24h</strong> no WhatsApp, o email dispara automaticamente no dia seguinte</li>
-      <li><strong>Se ainda não houver resposta em 24h</strong>, Teresita liga no dia seguinte aplicando ICUVA</li>
-      <li><strong>A reunião é sempre o destino final</strong> — é onde a venda acontece, pelos 3 canais</li>
+      <li><strong>Etapas 01 e 02</strong> abrem a porta no WhatsApp. Quando o lead responde, a conversa segue direto para a Etapa 03 sem pausa</li>
+      <li><strong>Mesma voz</strong> do começo ao fim — para o lead é sempre "Leonardo". Se trocar de pessoa no bastidor, nunca revelar</li>
+      <li><strong>Etapa 03</strong> qualifica e agenda a reunião de demonstração, que é onde a venda acontece</li>
+      <li><strong>Sem resposta em 24h</strong> no WhatsApp, o email dispara automaticamente no dia seguinte</li>
+      <li><strong>Sem resposta em 24h</strong> no email, a ligação entra no dia seguinte aplicando ICUVA</li>
+      <li><strong>A reunião é sempre o destino final</strong> nos 3 canais</li>
     </ul>
   </section>
 
@@ -726,7 +702,7 @@
 
     <!-- ===== CANAL 1: WHATSAPP ===== -->
     <div class="channel wa">
-      <div class="channel-eyebrow">Canal 1 · Dia 0</div>
+      <div class="channel-eyebrow">Canal 1 · Dia 1</div>
       <h2>WhatsApp</h2>
       <p class="channel-desc">Primer contacto. Abrir puerta, generar curiosidad y calificar por mensaje hasta agendar la reunión.</p>
     </div>
@@ -735,9 +711,7 @@
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">01</div>
-        <div>
-          <div class="stage-title">Saludo <span class="stage-owner">Davi</span></div>
-        </div>
+        <div class="stage-title">Saludo</div>
       </div>
       <div class="stage-timing">
         <strong>Cuándo</strong>
@@ -773,9 +747,7 @@
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">02</div>
-        <div>
-          <div class="stage-title">Gancho de curiosidad <span class="stage-owner">Davi</span></div>
-        </div>
+        <div class="stage-title">Gancho de curiosidad</div>
       </div>
       <div class="stage-timing">
         <strong>Cuándo</strong>
@@ -790,7 +762,7 @@
           </div>
           <button class="copy-btn" data-copy="es-2-a">Copiar</button>
         </div>
-        <div class="msg-body" id="es-2-a">Entré a su perfil de Instagram y quería comentarle algo. Tiene un minuto?</div>
+        <div class="msg-body" id="es-2-a">Entré a su perfil de Instagram y quería comentarle algo.</div>
       </div>
 
       <div class="msg-card">
@@ -801,7 +773,7 @@
           </div>
           <button class="copy-btn" data-copy="es-2-b">Copiar</button>
         </div>
-        <div class="msg-body" id="es-2-b">Llegué hasta aquí a través de su Instagram. Le puedo hacer una pregunta rápida?</div>
+        <div class="msg-body" id="es-2-b">Llegué hasta aquí a través de su Instagram y me quedé con una duda.</div>
       </div>
 
       <div class="msg-card">
@@ -812,7 +784,7 @@
           </div>
           <button class="copy-btn" data-copy="es-2-c">Copiar</button>
         </div>
-        <div class="msg-body" id="es-2-c">Vi su perfil en Instagram y me llamó la atención. Podemos conversar un minuto?</div>
+        <div class="msg-body" id="es-2-c">Vi su perfil en Instagram y me llamó la atención.</div>
       </div>
 
       <div class="msg-card">
@@ -823,7 +795,7 @@
           </div>
           <button class="copy-btn" data-copy="es-2-d">Copiar</button>
         </div>
-        <div class="msg-body" id="es-2-d">Llegué a su contacto por su sitio web. Tiene un minuto para hablar?</div>
+        <div class="msg-body" id="es-2-d">Llegué a su contacto por su sitio web y quería comentarle algo.</div>
       </div>
 
       <div class="msg-card">
@@ -834,7 +806,7 @@
           </div>
           <button class="copy-btn" data-copy="es-2-e">Copiar</button>
         </div>
-        <div class="msg-body" id="es-2-e">Vi su sitio y quería hacerle una pregunta rápida. Tiene un momento?</div>
+        <div class="msg-body" id="es-2-e">Vi su sitio y me quedé con una duda.</div>
       </div>
 
       <div class="msg-card">
@@ -845,7 +817,7 @@
           </div>
           <button class="copy-btn" data-copy="es-2-f">Copiar</button>
         </div>
-        <div class="msg-body" id="es-2-f">Le escribo porque vi su sitio web y quería comentarle algo. Tiene un minuto?</div>
+        <div class="msg-body" id="es-2-f">Le escribo porque vi su sitio web y quería hacerle un comentario.</div>
       </div>
     </section>
 
@@ -853,9 +825,7 @@
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">03</div>
-        <div>
-          <div class="stage-title">Calificación + reunión <span class="stage-owner teresita">Teresita</span></div>
-        </div>
+        <div class="stage-title">Calificación + reunión</div>
       </div>
       <div class="stage-timing">
         <strong>Cuándo</strong>
@@ -994,13 +964,11 @@ Si en algún momento quiere saber más, me escribe por este mismo canal. Un abra
       </div>
     </section>
 
-    <!-- ETAPA 3-F REAQUECIMENTO -->
+    <!-- ETAPA 3F REAQUECIMENTO -->
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">3F</div>
-        <div>
-          <div class="stage-title">Reenganche <span class="stage-owner teresita">Teresita</span></div>
-        </div>
+        <div class="stage-title">Reenganche</div>
       </div>
       <div class="stage-timing">
         <strong>Cuándo</strong>
@@ -1026,7 +994,7 @@ Si en algún momento quiere saber más, me escribe por este mismo canal. Un abra
 
     <!-- ===== CANAL 2: EMAIL ===== -->
     <div class="channel email">
-      <div class="channel-eyebrow">Canal 2 · Dia 1</div>
+      <div class="channel-eyebrow">Canal 2 · Dia 2</div>
       <h2>Email</h2>
       <p class="channel-desc">Dispara automáticamente al día siguiente si el lead no respondió el WhatsApp. El agente BDR Email personaliza cada envío.</p>
     </div>
@@ -1034,13 +1002,11 @@ Si en algún momento quiere saber más, me escribe por este mismo canal. Un abra
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">04</div>
-        <div>
-          <div class="stage-title">Email de continuidad <span class="stage-owner auto">BDR Email</span></div>
-        </div>
+        <div class="stage-title">Email de continuidad</div>
       </div>
       <div class="stage-timing">
         <strong>Cuándo</strong>
-        Se dispara automáticamente 24 horas después de la Etapa 2 si el lead no respondió. No requiere acción manual. Teresita debe conocer el contenido base para poder referenciarlo en la llamada del Día 2.
+        Se dispara automáticamente 24 horas después de la Etapa 2 si el lead no respondió. No requiere acción manual. Conocer el contenido base es importante para poder referenciarlo en la llamada del Día 2.
       </div>
 
       <div class="substage-label">04-A <span class="substage-label-text">· asunto</span></div>
@@ -1086,17 +1052,15 @@ Equipo Oryen</div>
 
     <!-- ===== CANAL 3: LLAMADA ===== -->
     <div class="channel call">
-      <div class="channel-eyebrow">Canal 3 · Dia 2</div>
+      <div class="channel-eyebrow">Canal 3 · Dia 3</div>
       <h2>Llamada con ICUVA</h2>
-      <p class="channel-desc">Si no hubo respuesta en WhatsApp ni en email, Teresita llama al teléfono. Usa ambos canales anteriores como pretexto y aplica ICUVA.</p>
+      <p class="channel-desc">Si no hubo respuesta en WhatsApp ni en email, llamada directa al teléfono usando ambos canales anteriores como pretexto y aplicando ICUVA.</p>
     </div>
 
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">05</div>
-        <div>
-          <div class="stage-title">Llamada telefónica <span class="stage-owner teresita">Teresita</span></div>
-        </div>
+        <div class="stage-title">Llamada telefónica</div>
       </div>
       <div class="stage-timing">
         <strong>Cuándo</strong>
@@ -1119,7 +1083,7 @@ Equipo Oryen</div>
         </div>
         <div class="msg-body" id="es-5-a">Hola, buenas tardes. Hablo con <span class="placeholder">{{nombre}}</span>?
 
-Soy Teresita, del equipo de Oryen. Le escribí hace un par de días por WhatsApp y ayer le mandé un email. Aproveché este momento para llamarlo directamente y aclarar cualquier duda. Tiene 2 minutos ahora?</div>
+Soy <span class="placeholder">{{su nombre}}</span>, del equipo de Oryen. Le escribimos hace un par de días por WhatsApp y ayer le enviamos un email. Aproveché este momento para llamarlo directamente y aclarar cualquier duda. Tiene 2 minutos ahora?</div>
       </div>
 
       <div class="substage-label">05-B <span class="substage-label-text">· Interés (diagnóstico)</span></div>
@@ -1219,6 +1183,52 @@ Lo que le propongo es una reunión por videollamada donde le muestro el sistema 
       </div>
     </section>
 
+    <!-- ===== CANAL 4: ÚLTIMO TOQUE ===== -->
+    <div class="channel wa">
+      <div class="channel-eyebrow">Canal 4 · Día 5</div>
+      <h2>Último toque WhatsApp</h2>
+      <p class="channel-desc">Después de 2 días de respiro desde la llamada, mensaje de cierre respetuoso por WhatsApp. Si no responde, el lead va a la lista de recontacto en 30-60 días.</p>
+    </div>
+
+    <section class="stage">
+      <div class="stage-header">
+        <div class="stage-num">06</div>
+        <div class="stage-title">Mensaje de cierre</div>
+      </div>
+      <div class="stage-timing">
+        <strong>Cuándo</strong>
+        2 días después de la llamada (Día 5). Es el último toque de esta secuencia. Postura firme, sin insistir. Puerta abierta sin forzar.
+      </div>
+
+      <div class="msg-card">
+        <div class="msg-header">
+          <div class="msg-label"><span class="msg-variant">Variación A · completa</span></div>
+          <button class="copy-btn" data-copy="es-6-a">Copiar</button>
+        </div>
+        <div class="msg-body" id="es-6-a">Hola <span class="placeholder">{{nombre}}</span>.
+
+Intenté contacto en los últimos días porque creo que lo que hacemos en Oryen podría impactar directamente en sus resultados de ventas. Además de la IA que atiende WhatsApp las 24 horas, tenemos CRM, portafolio de inmuebles, sitio web profesional y documentos inteligentes — todo pensado para estructurar la parte comercial del asesor en un único lugar.
+
+Respeto si no es el momento. Le dejo el canal abierto para cuando tenga sentido.
+
+Un abrazo.</div>
+      </div>
+
+      <div class="msg-card">
+        <div class="msg-header">
+          <div class="msg-label"><span class="msg-variant">Variación B · breve</span></div>
+          <button class="copy-btn" data-copy="es-6-b">Copiar</button>
+        </div>
+        <div class="msg-body" id="es-6-b">Hola <span class="placeholder">{{nombre}}</span>.
+
+Intenté contacto porque creo que podemos impactar directamente en sus resultados de ventas. Oryen no es solo IA de WhatsApp — es un ecosistema que estructura la parte comercial del asesor con CRM, portafolio, sitio web y documentos inteligentes.
+
+Respeto si no es prioridad ahora. El canal queda abierto.
+
+Un abrazo.</div>
+      </div>
+    </section>
+
   </div>
 
   <!-- ============ PORTUGUÊS ============ -->
@@ -1226,7 +1236,7 @@ Lo que le propongo es una reunión por videollamada donde le muestro el sistema 
 
     <!-- ===== CANAL 1: WHATSAPP ===== -->
     <div class="channel wa">
-      <div class="channel-eyebrow">Canal 1 · Dia 0</div>
+      <div class="channel-eyebrow">Canal 1 · Dia 1</div>
       <h2>WhatsApp</h2>
       <p class="channel-desc">Primeiro contato. Abrir a porta, gerar curiosidade e qualificar por mensagem até agendar a reunião.</p>
     </div>
@@ -1235,9 +1245,7 @@ Lo que le propongo es una reunión por videollamada donde le muestro el sistema 
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">01</div>
-        <div>
-          <div class="stage-title">Saudação <span class="stage-owner">Davi</span></div>
-        </div>
+        <div class="stage-title">Saudação</div>
       </div>
       <div class="stage-timing">
         <strong>Quando</strong>
@@ -1273,9 +1281,7 @@ Lo que le propongo es una reunión por videollamada donde le muestro el sistema 
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">02</div>
-        <div>
-          <div class="stage-title">Gancho de curiosidade <span class="stage-owner">Davi</span></div>
-        </div>
+        <div class="stage-title">Gancho de curiosidade</div>
       </div>
       <div class="stage-timing">
         <strong>Quando</strong>
@@ -1290,7 +1296,7 @@ Lo que le propongo es una reunión por videollamada donde le muestro el sistema 
           </div>
           <button class="copy-btn" data-copy="pt-2-a">Copiar</button>
         </div>
-        <div class="msg-body" id="pt-2-a">Entrei no seu perfil do Instagram e queria te comentar uma coisa. Tem um minuto?</div>
+        <div class="msg-body" id="pt-2-a">Entrei no seu perfil do Instagram e queria te comentar uma coisa.</div>
       </div>
 
       <div class="msg-card">
@@ -1301,7 +1307,7 @@ Lo que le propongo es una reunión por videollamada donde le muestro el sistema 
           </div>
           <button class="copy-btn" data-copy="pt-2-b">Copiar</button>
         </div>
-        <div class="msg-body" id="pt-2-b">Cheguei até você pelo seu Instagram. Posso te fazer uma pergunta rápida?</div>
+        <div class="msg-body" id="pt-2-b">Cheguei até você pelo seu Instagram e fiquei com uma dúvida.</div>
       </div>
 
       <div class="msg-card">
@@ -1312,7 +1318,7 @@ Lo que le propongo es una reunión por videollamada donde le muestro el sistema 
           </div>
           <button class="copy-btn" data-copy="pt-2-c">Copiar</button>
         </div>
-        <div class="msg-body" id="pt-2-c">Vi seu perfil no Instagram e me chamou a atenção. Dá pra gente conversar rapidinho?</div>
+        <div class="msg-body" id="pt-2-c">Vi seu perfil no Instagram e me chamou a atenção.</div>
       </div>
 
       <div class="msg-card">
@@ -1323,7 +1329,7 @@ Lo que le propongo es una reunión por videollamada donde le muestro el sistema 
           </div>
           <button class="copy-btn" data-copy="pt-2-d">Copiar</button>
         </div>
-        <div class="msg-body" id="pt-2-d">Cheguei até seu contato pelo seu site. Tem um minuto pra conversar?</div>
+        <div class="msg-body" id="pt-2-d">Cheguei até seu contato pelo seu site e queria te comentar uma coisa.</div>
       </div>
 
       <div class="msg-card">
@@ -1334,7 +1340,7 @@ Lo que le propongo es una reunión por videollamada donde le muestro el sistema 
           </div>
           <button class="copy-btn" data-copy="pt-2-e">Copiar</button>
         </div>
-        <div class="msg-body" id="pt-2-e">Vi seu site e queria te fazer uma pergunta rápida. Tem um momento?</div>
+        <div class="msg-body" id="pt-2-e">Vi seu site e fiquei com uma dúvida.</div>
       </div>
 
       <div class="msg-card">
@@ -1345,7 +1351,7 @@ Lo que le propongo es una reunión por videollamada donde le muestro el sistema 
           </div>
           <button class="copy-btn" data-copy="pt-2-f">Copiar</button>
         </div>
-        <div class="msg-body" id="pt-2-f">Te chamo porque vi seu site e queria comentar uma coisa. Tem um minuto?</div>
+        <div class="msg-body" id="pt-2-f">Te chamo porque vi seu site e queria te fazer um comentário.</div>
       </div>
     </section>
 
@@ -1353,9 +1359,7 @@ Lo que le propongo es una reunión por videollamada donde le muestro el sistema 
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">03</div>
-        <div>
-          <div class="stage-title">Qualificação + reunião <span class="stage-owner teresita">Teresita</span></div>
-        </div>
+        <div class="stage-title">Qualificação + reunião</div>
       </div>
       <div class="stage-timing">
         <strong>Quando</strong>
@@ -1498,9 +1502,7 @@ Se em algum momento quiser saber mais, é só me chamar por aqui. Abraço.</div>
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">3F</div>
-        <div>
-          <div class="stage-title">Reengajamento <span class="stage-owner teresita">Teresita</span></div>
-        </div>
+        <div class="stage-title">Reengajamento</div>
       </div>
       <div class="stage-timing">
         <strong>Quando</strong>
@@ -1526,7 +1528,7 @@ Se em algum momento quiser saber mais, é só me chamar por aqui. Abraço.</div>
 
     <!-- ===== CANAL 2: EMAIL ===== -->
     <div class="channel email">
-      <div class="channel-eyebrow">Canal 2 · Dia 1</div>
+      <div class="channel-eyebrow">Canal 2 · Dia 2</div>
       <h2>Email</h2>
       <p class="channel-desc">Dispara automaticamente no dia seguinte se o lead não respondeu o WhatsApp. O agente BDR Email personaliza cada envio.</p>
     </div>
@@ -1534,13 +1536,11 @@ Se em algum momento quiser saber mais, é só me chamar por aqui. Abraço.</div>
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">04</div>
-        <div>
-          <div class="stage-title">Email de continuidade <span class="stage-owner auto">BDR Email</span></div>
-        </div>
+        <div class="stage-title">Email de continuidade</div>
       </div>
       <div class="stage-timing">
         <strong>Quando</strong>
-        Dispara automaticamente 24 horas depois da Etapa 2 se o lead não respondeu. Não requer ação manual. Teresita precisa conhecer o conteúdo base pra poder referenciá-lo na ligação do Dia 2.
+        Dispara automaticamente 24 horas depois da Etapa 2 se o lead não respondeu. Não requer ação manual. Conhecer o conteúdo base é importante pra poder referenciá-lo na ligação do Dia 2.
       </div>
 
       <div class="substage-label">04-A <span class="substage-label-text">· assunto</span></div>
@@ -1586,17 +1586,15 @@ Time Oryen</div>
 
     <!-- ===== CANAL 3: LIGAÇÃO ===== -->
     <div class="channel call">
-      <div class="channel-eyebrow">Canal 3 · Dia 2</div>
+      <div class="channel-eyebrow">Canal 3 · Dia 3</div>
       <h2>Ligação com ICUVA</h2>
-      <p class="channel-desc">Se não teve resposta no WhatsApp nem no email, Teresita liga no telefone. Usa os dois canais anteriores como pretexto e aplica ICUVA.</p>
+      <p class="channel-desc">Se não teve resposta no WhatsApp nem no email, ligação direta usando os dois canais anteriores como pretexto e aplicando ICUVA.</p>
     </div>
 
     <section class="stage">
       <div class="stage-header">
         <div class="stage-num">05</div>
-        <div>
-          <div class="stage-title">Ligação telefônica <span class="stage-owner teresita">Teresita</span></div>
-        </div>
+        <div class="stage-title">Ligação telefônica</div>
       </div>
       <div class="stage-timing">
         <strong>Quando</strong>
@@ -1619,7 +1617,7 @@ Time Oryen</div>
         </div>
         <div class="msg-body" id="pt-5-a">Alô, boa tarde. Falo com <span class="placeholder">{{nome}}</span>?
 
-Aqui é a Teresita, do time da Oryen. Te escrevi há uns dias pelo WhatsApp e ontem te mandei um email. Aproveitei esse momento pra te ligar diretamente e esclarecer qualquer dúvida. Tem 2 minutinhos agora?</div>
+Aqui é <span class="placeholder">{{seu nome}}</span>, do time da Oryen. Te escrevemos há uns dias pelo WhatsApp e ontem te enviamos um email. Aproveitei esse momento pra te ligar diretamente e esclarecer qualquer dúvida. Tem 2 minutinhos agora?</div>
       </div>
 
       <div class="substage-label">05-B <span class="substage-label-text">· Interesse (diagnóstico)</span></div>
@@ -1628,7 +1626,7 @@ Aqui é a Teresita, do time da Oryen. Te escrevi há uns dias pelo WhatsApp e on
           <div class="msg-label"><span class="msg-variant">Disparar se confirma que tem tempo</span></div>
           <button class="copy-btn" data-copy="pt-5-b">Copiar</button>
         </div>
-        <div class="msg-body" id="pt-5-b">Obrigada pelo tempo. Vou direto ao ponto.
+        <div class="msg-body" id="pt-5-b">Obrigado pelo tempo. Vou direto ao ponto.
 
 Os leads que chegam no seu Instagram, site ou WhatsApp, como você atende hoje? Principalmente os que chegam fora do horário, de madrugada, fim de semana ou enquanto você tá com outro cliente.</div>
       </div>
@@ -1719,6 +1717,52 @@ O que eu te proponho é uma reunião por videochamada onde eu te mostro o sistem
       </div>
     </section>
 
+    <!-- ===== CANAL 4: ÚLTIMO TOQUE ===== -->
+    <div class="channel wa">
+      <div class="channel-eyebrow">Canal 4 · Dia 5</div>
+      <h2>Último toque WhatsApp</h2>
+      <p class="channel-desc">Depois de 2 dias de respiro desde a ligação, mensagem de encerramento respeitoso por WhatsApp. Se não responder, o lead vai pra lista de recontato em 30-60 dias.</p>
+    </div>
+
+    <section class="stage">
+      <div class="stage-header">
+        <div class="stage-num">06</div>
+        <div class="stage-title">Mensagem de encerramento</div>
+      </div>
+      <div class="stage-timing">
+        <strong>Quando</strong>
+        2 dias depois da ligação (Dia 5). É o último toque dessa sequência. Postura firme, sem insistir. Porta aberta sem forçar.
+      </div>
+
+      <div class="msg-card">
+        <div class="msg-header">
+          <div class="msg-label"><span class="msg-variant">Variação A · completa</span></div>
+          <button class="copy-btn" data-copy="pt-6-a">Copiar</button>
+        </div>
+        <div class="msg-body" id="pt-6-a">Olá <span class="placeholder">{{nome}}</span>.
+
+Tentei contato nos últimos dias porque acredito que o que a gente faz na Oryen poderia impactar diretamente seus resultados de vendas. Além da IA que atende WhatsApp 24 horas, temos CRM, portfólio de imóveis, site profissional e documentos inteligentes — tudo pensado pra estruturar o comercial do corretor num único lugar.
+
+Respeito se não for o momento. Deixo o canal aberto pra quando fizer sentido.
+
+Abraço.</div>
+      </div>
+
+      <div class="msg-card">
+        <div class="msg-header">
+          <div class="msg-label"><span class="msg-variant">Variação B · breve</span></div>
+          <button class="copy-btn" data-copy="pt-6-b">Copiar</button>
+        </div>
+        <div class="msg-body" id="pt-6-b">Olá <span class="placeholder">{{nome}}</span>.
+
+Tentei contato porque acho que podemos impactar diretamente seus resultados de vendas. A Oryen não é só IA de WhatsApp — é um ecossistema que estrutura o comercial do corretor com CRM, portfólio, site e documentos inteligentes.
+
+Respeito se não for prioridade agora. O canal fica aberto.
+
+Abraço.</div>
+      </div>
+    </section>
+
   </div>
 
   <!-- ============ TIPS ============ -->
@@ -1726,20 +1770,20 @@ O que eu te proponho é uma reunião por videochamada onde eu te mostro o sistem
     <h3>Execução</h3>
     <div class="tips-grid">
       <div class="tip">
-        <strong>Transição invisível Davi → Teresita</strong>
-        <span>Mesmo chip, mesma voz "Leonardo". Teresita entra direto com "Perfeito" + pergunta diagnóstica, sem se apresentar de novo.</span>
+        <strong>Transição invisível entre etapas</strong>
+        <span>Mesmo chip, mesma voz "Leonardo". Se trocar de pessoa na Etapa 03, entrar direto com "Perfeito" + pergunta diagnóstica, sem se apresentar de novo.</span>
       </div>
       <div class="tip">
-        <strong>Velocidade na Etapa 3</strong>
-        <span>Janela de ouro de 5 minutos depois da resposta do lead. Teresita precisa estar de plantão quando Davi avisar.</span>
+        <strong>Velocidade na Etapa 03</strong>
+        <span>Janela de ouro de 5 minutos depois da resposta do lead. Quem responder precisa estar de plantão no momento da resposta, não depois.</span>
       </div>
       <div class="tip">
         <strong>Densidade de resposta</strong>
-        <span>Mensagem da Teresita tem tamanho parecido com a resposta do lead. Se ele mandou "sim", ela responde curto. Texto longo demais dá sensação de copy-paste.</span>
+        <span>A mensagem da Etapa 03 tem tamanho parecido com a resposta do lead. Se ele mandou "sim", a resposta vem curta. Texto longo demais dá sensação de copy-paste.</span>
       </div>
       <div class="tip">
         <strong>Confirmação 1-2h antes</strong>
-        <span>Mandar a 03-E no dia da reunião reduz no-show de ~45% para ~20%. Nunca pular.</span>
+        <span>A 03-E no dia da reunião reduz no-show de ~45% para ~20%. Nunca pular.</span>
       </div>
       <div class="tip">
         <strong>Horário ideal de disparo</strong>
@@ -1751,23 +1795,23 @@ O que eu te proponho é uma reunião por videochamada onde eu te mostro o sistem
       </div>
       <div class="tip">
         <strong>Reengajamento só 1x</strong>
-        <span>Se o lead travou no meio da Etapa 3, 1 toque 24h depois. Se não responder, marcar "retomar em 30-60 dias".</span>
+        <span>Se o lead travou no meio da Etapa 03, 1 toque 24h depois. Se não responder, marcar "retomar em 30-60 dias".</span>
       </div>
       <div class="tip">
         <strong>Nunca mentir o canal</strong>
-        <span>Se a Etapa 2 disse "vi seu Instagram", tem que ter visto. Se ele perguntar qual post, precisa ter resposta. Mentira queima o lead pra sempre.</span>
+        <span>Se a Etapa 02 disse "vi seu Instagram", tem que ter visto. Se ele perguntar qual post, precisa ter resposta. Mentira queima o lead pra sempre.</span>
       </div>
       <div class="tip">
         <strong>Autoridade é filtro</strong>
-        <span>Se o lead disser que o sócio/esposa decide, pedir pra trazê-lo na reunião. Vender pra quem não decide = perder tempo.</span>
+        <span>Se o lead disser que o sócio ou esposa decide, pedir pra trazê-lo na reunião. Vender pra quem não decide é perder tempo.</span>
       </div>
     </div>
   </section>
 
   <footer>
     <div class="wordmark-sm">oryen</div>
-    <div>Playbook de Prospecção · Multi-canal · v4.0</div>
-    <div style="margin-top: 4px; opacity: 0.6;">WhatsApp · Email · Ligação · Davi + Teresita</div>
+    <div>Playbook de Prospecção · Funil Multi-canal · v6.0</div>
+    <div style="margin-top: 4px; opacity: 0.6;">WhatsApp · Email · Ligação · Último toque</div>
   </footer>
 
 </div>
