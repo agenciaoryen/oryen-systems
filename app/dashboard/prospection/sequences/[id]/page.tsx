@@ -89,14 +89,24 @@ export default function SequenceDetailPage({ params }: { params: Promise<{ id: s
             <button
               onClick={runEngine}
               disabled={engineRunning}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm border border-border bg-card hover:bg-accent disabled:opacity-50 transition"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{
+                background: 'var(--color-bg-elevated)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text-secondary)',
+              }}
             >
               {engineRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
               Rodar motor agora
             </button>
             <button
               onClick={() => setShowEnroll(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition"
+              style={{
+                background: 'var(--color-primary)',
+                color: 'var(--color-text-on-primary)',
+                boxShadow: '0 4px 12px -4px var(--color-primary)',
+              }}
             >
               <UserPlus className="w-4 h-4" />
               Inscrever leads
@@ -104,20 +114,9 @@ export default function SequenceDetailPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
-        {engineResult && (
-          <div className={`mt-4 p-3 rounded-lg border text-sm ${
-            engineResult.error
-              ? 'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
-              : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
-          }`}>
-            {engineResult.error ? (
-              <>Erro: {engineResult.error}</>
-            ) : (
-              <>
-                <strong>Motor rodou</strong> — avançados: {engineResult.advanced} · tasks criadas: {engineResult.tasks_created} · automáticos executados: {engineResult.automated_executed} · overdue: {engineResult.overdue_marked} · stale: {engineResult.stale_enrolled}
-              </>
-            )}
-          </div>
+        {/* Engine progress / result */}
+        {(engineRunning || engineResult) && (
+          <EnginePanel running={engineRunning} result={engineResult} />
         )}
 
         {/* Stats */}
@@ -129,24 +128,41 @@ export default function SequenceDetailPage({ params }: { params: Promise<{ id: s
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-border mb-6">
-        {(['steps', 'rules', 'enrollments', 'config'] as const).map((k) => (
-          <button
-            key={k}
-            onClick={() => setTab(k)}
-            className={`px-4 py-2 text-sm font-semibold transition border-b-2 -mb-px ${
-              tab === k
-                ? 'border-primary text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {k === 'steps' && 'Etapas'}
-            {k === 'rules' && 'Regras de inscrição'}
-            {k === 'enrollments' && `Inscritos (${enrollments.length})`}
-            {k === 'config' && 'Configuração'}
-          </button>
-        ))}
+      {/* Tabs · pill style premium */}
+      <div
+        className="inline-flex items-center gap-1 p-1 rounded-xl mb-6"
+        style={{
+          background: 'var(--color-bg-surface)',
+          border: '1px solid var(--color-border)',
+        }}
+      >
+        <TabButton
+          active={tab === 'steps'}
+          onClick={() => setTab('steps')}
+          icon={<Zap className="w-3.5 h-3.5" />}
+          label="Etapas"
+          count={steps.length}
+        />
+        <TabButton
+          active={tab === 'rules'}
+          onClick={() => setTab('rules')}
+          icon={<Filter className="w-3.5 h-3.5" />}
+          label="Regras"
+          count={rules.filter((r: any) => r.is_active).length}
+        />
+        <TabButton
+          active={tab === 'enrollments'}
+          onClick={() => setTab('enrollments')}
+          icon={<Users className="w-3.5 h-3.5" />}
+          label="Inscritos"
+          count={enrollments.length}
+        />
+        <TabButton
+          active={tab === 'config'}
+          onClick={() => setTab('config')}
+          icon={<Settings className="w-3.5 h-3.5" />}
+          label="Configuração"
+        />
       </div>
 
       {tab === 'steps' && (
@@ -173,6 +189,231 @@ export default function SequenceDetailPage({ params }: { params: Promise<{ id: s
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+
+function TabButton({
+  active,
+  onClick,
+  icon,
+  label,
+  count,
+}: {
+  active: boolean
+  onClick: () => void
+  icon: React.ReactNode
+  label: string
+  count?: number
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition"
+      style={{
+        background: active ? 'var(--color-bg-elevated)' : 'transparent',
+        color: active ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+        boxShadow: active ? 'inset 0 0 0 1px var(--color-primary)' : 'none',
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.background = 'var(--color-bg-hover)'
+          e.currentTarget.style.color = 'var(--color-text-primary)'
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.background = 'transparent'
+          e.currentTarget.style.color = 'var(--color-text-tertiary)'
+        }
+      }}
+    >
+      {icon}
+      <span>{label}</span>
+      {count !== undefined && count > 0 && (
+        <span
+          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
+          style={{
+            background: active ? 'var(--color-primary)' : 'var(--color-bg-elevated)',
+            color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-tertiary)',
+          }}
+        >
+          {count}
+        </span>
+      )}
+    </button>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ENGINE PANEL — progress bar durante run + resumo do resultado
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function EnginePanel({
+  running,
+  result,
+}: {
+  running: boolean
+  result: any
+}) {
+  // Etapas simuladas do motor pra UX — o backend não stream progress,
+  // então animamos um progress de 0 → 92% em ~7s (tempo típico).
+  // Quando o result chega, jump pra 100%.
+  const steps = [
+    { label: 'Verificando tasks vencidas', until: 20 },
+    { label: 'Avançando enrollments', until: 55 },
+    { label: 'Disparando steps automáticos', until: 80 },
+    { label: 'Processando leads parados', until: 92 },
+  ]
+
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    if (running && !result) {
+      setProgress(0)
+      const interval = setInterval(() => {
+        setProgress((p) => {
+          if (p >= 92) return p
+          // Aceleração gradativa: começa rápido, desacelera
+          const delta = p < 30 ? 2 : p < 60 ? 1.2 : p < 85 ? 0.6 : 0.3
+          return Math.min(p + delta, 92)
+        })
+      }, 120)
+      return () => clearInterval(interval)
+    } else if (result) {
+      setProgress(100)
+    }
+  }, [running, result])
+
+  const currentStepIdx = steps.findIndex((s) => progress <= s.until)
+  const activeStepIdx = currentStepIdx === -1 ? steps.length - 1 : currentStepIdx
+
+  const hasError = result?.error
+  const finished = !running && result
+
+  return (
+    <div
+      className="mt-4 rounded-xl overflow-hidden"
+      style={{
+        background: 'var(--color-bg-surface)',
+        border: `1px solid ${hasError ? 'var(--color-danger, #ef4444)' : 'var(--color-border)'}`,
+      }}
+    >
+      {/* Header + progress bar */}
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            {running ? (
+              <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--color-primary)' }} />
+            ) : hasError ? (
+              <AlertTriangle className="w-4 h-4" style={{ color: 'var(--color-danger, #ef4444)' }} />
+            ) : (
+              <CheckCircle2 className="w-4 h-4" style={{ color: 'var(--color-success, #10b981)' }} />
+            )}
+            <span className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+              {running
+                ? steps[activeStepIdx]?.label || 'Processando...'
+                : hasError
+                  ? 'Erro ao executar'
+                  : 'Motor executado com sucesso'}
+            </span>
+          </div>
+          <span className="text-xs font-mono font-bold" style={{ color: 'var(--color-text-secondary)' }}>
+            {Math.round(progress)}%
+          </span>
+        </div>
+        <div
+          className="h-1.5 rounded-full overflow-hidden"
+          style={{ background: 'var(--color-bg-elevated)' }}
+        >
+          <div
+            className="h-full rounded-full transition-all"
+            style={{
+              width: `${progress}%`,
+              background: hasError
+                ? 'var(--color-danger, #ef4444)'
+                : 'linear-gradient(90deg, var(--color-primary), var(--color-primary-hover, #6366f1))',
+              transitionDuration: running ? '100ms' : '300ms',
+            }}
+          />
+        </div>
+
+        {/* Steps checklist */}
+        {running && (
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
+            {steps.map((s, i) => {
+              const done = progress >= s.until
+              const isActive = i === activeStepIdx && !done
+              return (
+                <div
+                  key={s.label}
+                  className="flex items-center gap-1.5 text-[11px] transition"
+                  style={{
+                    color: done
+                      ? 'var(--color-success, #10b981)'
+                      : isActive
+                        ? 'var(--color-primary)'
+                        : 'var(--color-text-tertiary)',
+                    opacity: done || isActive ? 1 : 0.6,
+                  }}
+                >
+                  {done ? (
+                    <CheckCircle2 className="w-3 h-3" />
+                  ) : isActive ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{
+                        border: '1.5px solid var(--color-border)',
+                      }}
+                    />
+                  )}
+                  {s.label}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Resultado final */}
+      {finished && (
+        <div
+          className="px-4 py-3 text-xs flex items-center gap-4 flex-wrap"
+          style={{
+            background: hasError ? 'rgba(239, 68, 68, 0.08)' : 'var(--color-bg-elevated)',
+            borderTop: '1px solid var(--color-border)',
+            color: hasError ? 'var(--color-danger, #ef4444)' : 'var(--color-text-secondary)',
+          }}
+        >
+          {hasError ? (
+            <span>{result.error}</span>
+          ) : (
+            <>
+              <ResultChip label="Avançados" value={result.advanced} />
+              <ResultChip label="Tasks criadas" value={result.tasks_created} />
+              <ResultChip label="Automáticos" value={result.automated_executed} />
+              <ResultChip label="Vencidas marcadas" value={result.overdue_marked} />
+              <ResultChip label="Stale inscritos" value={result.stale_enrolled} />
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ResultChip({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex items-center gap-1">
+      <span style={{ color: 'var(--color-text-tertiary)' }}>{label}:</span>
+      <span
+        className="font-bold"
+        style={{ color: value > 0 ? 'var(--color-primary)' : 'var(--color-text-primary)' }}
+      >
+        {value ?? 0}
+      </span>
+    </div>
+  )
+}
 
 function StatCard({ label, value, tone }: { label: string; value: number; tone?: 'primary' | 'warning' }) {
   const toneClasses =
