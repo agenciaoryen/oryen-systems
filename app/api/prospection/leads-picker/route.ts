@@ -3,10 +3,14 @@
 // Marca quais já estão em alguma sequence ativa.
 //
 // Query params:
-//   ?search=texto       → busca por nome ou telefone
-//   ?source=X           → filtra por source
-//   ?stage=Y            → filtra por stage
-//   ?limit=100          → default 100
+//   ?search=texto       → busca por nome/telefone/email
+//   ?source=X           → filtro exato por source (pode repetir: source=a&source=b)
+//   ?stage=Y            → filtro exato por stage (pode repetir)
+//   ?nicho=Z            → filtro exato por nicho (pode repetir)
+//   ?city=W             → busca ilike por city
+//   ?interesse=compra   → filtro exato
+//   ?limit=200          → default 200 (max 500)
+//   ?only_eligible=1    → retorna só leads sem enrollment ativo
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
@@ -29,13 +33,17 @@ export async function GET(request: NextRequest) {
 
     const params = request.nextUrl.searchParams
     const search = params.get('search')?.trim()
-    const source = params.get('source')
-    const stage = params.get('stage')
-    const limit = Math.min(parseInt(params.get('limit') || '100', 10), 500)
+    const sources = params.getAll('source').filter(Boolean)
+    const stages = params.getAll('stage').filter(Boolean)
+    const nichos = params.getAll('nicho').filter(Boolean)
+    const city = params.get('city')?.trim()
+    const interesse = params.get('interesse')
+    const limit = Math.min(parseInt(params.get('limit') || '200', 10), 500)
+    const onlyEligible = params.get('only_eligible') === '1'
 
     let query = supabase
       .from('leads')
-      .select('id, name, phone, email, city, source, stage, created_at')
+      .select('id, name, phone, email, city, source, stage, nicho, interesse, created_at')
       .eq('org_id', orgId)
       .order('created_at', { ascending: false })
       .limit(limit)
@@ -43,8 +51,11 @@ export async function GET(request: NextRequest) {
     if (search) {
       query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%,email.ilike.%${search}%`)
     }
-    if (source) query = query.eq('source', source)
-    if (stage) query = query.eq('stage', stage)
+    if (sources.length > 0) query = query.in('source', sources)
+    if (stages.length > 0) query = query.in('stage', stages)
+    if (nichos.length > 0) query = query.in('nicho', nichos)
+    if (city) query = query.ilike('city', `%${city}%`)
+    if (interesse) query = query.eq('interesse', interesse)
 
     const { data: leads, error } = await query
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -54,18 +65,26 @@ export async function GET(request: NextRequest) {
     if (leadIds.length > 0) {
       const { data: active } = await supabase
         .from('prospection_enrollments')
-        .select('lead_id, sequence:prospection_sequences(name)')
+        .select('lead_id')
         .eq('status', 'active')
         .in('lead_id', leadIds)
       activeSet = new Set((active || []).map((a: any) => a.lead_id))
     }
 
-    const enriched = (leads || []).map((l: any) => ({
+    let enriched = (leads || []).map((l: any) => ({
       ...l,
       has_active_enrollment: activeSet.has(l.id),
     }))
 
-    return NextResponse.json({ leads: enriched, total: enriched.length })
+    if (onlyEligible) {
+      enriched = enriched.filter((l: any) => !l.has_active_enrollment)
+    }
+
+    return NextResponse.json({
+      leads: enriched,
+      total: enriched.length,
+      has_more: enriched.length === limit,
+    })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

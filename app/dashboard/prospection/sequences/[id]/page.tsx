@@ -7,6 +7,7 @@ import Link from 'next/link'
 import {
   Loader2, ArrowLeft, MessageSquare, Mail, Phone, Bot, User, Users, Clock,
   Play, UserPlus, Search, Check, X, Zap, CheckCircle2, AlertTriangle,
+  Filter, RotateCcw,
 } from 'lucide-react'
 import { CHANNEL_LABELS } from '@/lib/prospection/types'
 
@@ -317,6 +318,14 @@ function EnrollmentsView({ enrollments }: { enrollments: any[] }) {
 // BULK ENROLL MODAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
+interface FilterOption { value: string; label: string; color?: string }
+interface FilterMeta {
+  stages: FilterOption[]
+  sources: FilterOption[]
+  nichos: FilterOption[]
+  cities: FilterOption[]
+}
+
 function BulkEnrollModal({
   sequenceId,
   onClose,
@@ -329,24 +338,55 @@ function BulkEnrollModal({
   const [leads, setLeads] = useState<any[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
+  const [hasMore, setHasMore] = useState(false)
   const [search, setSearch] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<any>(null)
+
+  // Filtros
+  const [meta, setMeta] = useState<FilterMeta>({ stages: [], sources: [], nichos: [], cities: [] })
+  const [fStages, setFStages] = useState<Set<string>>(new Set())
+  const [fSources, setFSources] = useState<Set<string>>(new Set())
+  const [fNichos, setFNichos] = useState<Set<string>>(new Set())
+  const [fCity, setFCity] = useState('')
+  const [fInteresse, setFInteresse] = useState('')
+  const [onlyEligible, setOnlyEligible] = useState(true)
+
+  const activeFilters =
+    fStages.size + fSources.size + fNichos.size + (fCity ? 1 : 0) + (fInteresse ? 1 : 0)
+
+  // Carrega meta (filtros disponíveis) uma vez
+  useEffect(() => {
+    fetch('/api/prospection/leads-picker/filters')
+      .then((r) => r.json())
+      .then((data) => setMeta(data))
+      .catch(console.error)
+  }, [])
 
   async function fetchLeads() {
     setLoading(true)
     const qs = new URLSearchParams()
     if (search) qs.set('search', search)
+    fStages.forEach((v) => qs.append('stage', v))
+    fSources.forEach((v) => qs.append('source', v))
+    fNichos.forEach((v) => qs.append('nicho', v))
+    if (fCity) qs.set('city', fCity)
+    if (fInteresse) qs.set('interesse', fInteresse)
+    if (onlyEligible) qs.set('only_eligible', '1')
+    qs.set('limit', '200')
+
     const res = await fetch(`/api/prospection/leads-picker?${qs.toString()}`)
     const json = await res.json()
     setLeads(json.leads || [])
+    setHasMore(json.has_more || false)
     setLoading(false)
   }
 
   useEffect(() => {
-    const t = setTimeout(() => fetchLeads(), 300)
+    const t = setTimeout(fetchLeads, 300)
     return () => clearTimeout(t)
-  }, [search])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, fStages, fSources, fNichos, fCity, fInteresse, onlyEligible])
 
   function toggle(id: string) {
     const next = new Set(selected)
@@ -355,12 +395,34 @@ function BulkEnrollModal({
     setSelected(next)
   }
 
-  function toggleAll() {
+  function toggleSet(setState: React.Dispatch<React.SetStateAction<Set<string>>>, value: string) {
+    setState((prev) => {
+      const next = new Set(prev)
+      if (next.has(value)) next.delete(value)
+      else next.add(value)
+      return next
+    })
+  }
+
+  function clearFilters() {
+    setFStages(new Set())
+    setFSources(new Set())
+    setFNichos(new Set())
+    setFCity('')
+    setFInteresse('')
+    setSearch('')
+  }
+
+  function toggleAllVisible() {
     const eligible = leads.filter((l) => !l.has_active_enrollment).map((l) => l.id)
     if (eligible.every((id) => selected.has(id))) {
-      setSelected(new Set())
+      const next = new Set(selected)
+      eligible.forEach((id) => next.delete(id))
+      setSelected(next)
     } else {
-      setSelected(new Set(eligible))
+      const next = new Set(selected)
+      eligible.forEach((id) => next.add(id))
+      setSelected(next)
     }
   }
 
@@ -389,56 +451,220 @@ function BulkEnrollModal({
     }
   }
 
+  const eligibleVisible = leads.filter((l) => !l.has_active_enrollment).length
+
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl">
-        <div className="p-5 border-b border-border flex items-center justify-between">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+      style={{ background: 'var(--color-bg-overlay)' }}
+      onClick={onClose}
+    >
+      <div
+        className="rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
+        style={{
+          background: 'var(--color-bg-surface)',
+          border: '1px solid var(--color-border)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          className="p-5 flex items-center justify-between"
+          style={{ borderBottom: '1px solid var(--color-border)' }}
+        >
           <div>
-            <h3 className="text-lg font-bold">Inscrever leads na sequence</h3>
-            <p className="text-xs text-muted-foreground">
-              Leads já em outra sequence ativa aparecem bloqueados.
+            <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+              Inscrever leads na sequence
+            </h3>
+            <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+              Use os filtros para encontrar leads. Os que já estão em outra sequence ativa ficam bloqueados.
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg transition"
+            style={{ color: 'var(--color-text-secondary)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-4 border-b border-border">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Buscar por nome, telefone ou email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-lg bg-background border border-border focus:border-primary focus:outline-none text-sm"
+        {/* Filtros */}
+        <div
+          className="p-4 space-y-3"
+          style={{
+            borderBottom: '1px solid var(--color-border)',
+            background: 'var(--color-bg-subtle)',
+          }}
+        >
+          {/* Busca + contador de filtros + limpar */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search
+                className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: 'var(--color-text-tertiary)' }}
+              />
+              <input
+                type="text"
+                placeholder="Buscar por nome, telefone ou email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 rounded-lg text-sm focus:outline-none transition"
+                style={{
+                  background: 'var(--color-bg-elevated)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-text-primary)',
+                }}
+              />
+            </div>
+            {(activeFilters > 0 || search) && (
+              <button
+                onClick={clearFilters}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition"
+                style={{
+                  background: 'var(--color-bg-elevated)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-text-secondary)',
+                }}
+              >
+                <RotateCcw className="w-3 h-3" />
+                Limpar filtros
+              </button>
+            )}
+          </div>
+
+          {/* Grupos de filtros */}
+          <FilterGroup
+            label="Estágio"
+            options={meta.stages}
+            selected={fStages}
+            onToggle={(v) => toggleSet(setFStages, v)}
+          />
+          <FilterGroup
+            label="Origem"
+            options={meta.sources}
+            selected={fSources}
+            onToggle={(v) => toggleSet(setFSources, v)}
+          />
+          {meta.nichos.length > 0 && (
+            <FilterGroup
+              label="Nicho do lead"
+              options={meta.nichos}
+              selected={fNichos}
+              onToggle={(v) => toggleSet(setFNichos, v)}
             />
+          )}
+
+          <div className="flex items-center gap-3 flex-wrap">
+            {meta.cities.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-[11px] font-bold uppercase tracking-wider"
+                  style={{ color: 'var(--color-text-tertiary)' }}
+                >
+                  Cidade
+                </span>
+                <select
+                  value={fCity}
+                  onChange={(e) => setFCity(e.target.value)}
+                  className="px-2 py-1 rounded text-xs focus:outline-none"
+                  style={{
+                    background: 'var(--color-bg-elevated)',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-text-primary)',
+                  }}
+                >
+                  <option value="">Todas</option>
+                  {meta.cities.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <span
+                className="text-[11px] font-bold uppercase tracking-wider"
+                style={{ color: 'var(--color-text-tertiary)' }}
+              >
+                Interesse
+              </span>
+              <select
+                value={fInteresse}
+                onChange={(e) => setFInteresse(e.target.value)}
+                className="px-2 py-1 rounded text-xs focus:outline-none"
+                style={{
+                  background: 'var(--color-bg-elevated)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-text-primary)',
+                }}
+              >
+                <option value="">Todos</option>
+                <option value="compra">Compra</option>
+                <option value="locacao">Locação</option>
+                <option value="ambos">Ambos</option>
+              </select>
+            </div>
+
+            <label className="inline-flex items-center gap-2 cursor-pointer text-xs ml-auto">
+              <input
+                type="checkbox"
+                checked={onlyEligible}
+                onChange={(e) => setOnlyEligible(e.target.checked)}
+                className="accent-[var(--color-primary)]"
+              />
+              <span style={{ color: 'var(--color-text-secondary)' }}>
+                Esconder leads já em outra sequence
+              </span>
+            </label>
           </div>
         </div>
 
+        {/* Toolbar */}
+        <div
+          className="px-4 py-2.5 flex items-center justify-between text-xs"
+          style={{
+            borderBottom: '1px solid var(--color-border)',
+            background: 'var(--color-bg-surface)',
+          }}
+        >
+          <button
+            onClick={toggleAllVisible}
+            disabled={eligibleVisible === 0}
+            className="font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ color: eligibleVisible ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}
+          >
+            {eligibleVisible > 0
+              ? `Selecionar todos visíveis (${eligibleVisible})`
+              : 'Nenhum elegível visível'}
+          </button>
+          <div className="flex items-center gap-3" style={{ color: 'var(--color-text-tertiary)' }}>
+            <span>{leads.length} leads{hasMore ? '+' : ''}</span>
+            {selected.size > 0 && (
+              <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>
+                {selected.size} selecionado(s)
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Lista */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-primary)' }} />
             </div>
           ) : leads.length === 0 ? (
-            <div className="text-center py-12 text-sm text-muted-foreground">
-              Nenhum lead encontrado.
+            <div
+              className="text-center py-12 text-sm"
+              style={{ color: 'var(--color-text-tertiary)' }}
+            >
+              Nenhum lead encontrado com esses filtros.
             </div>
           ) : (
             <div>
-              <div className="p-3 border-b border-border flex items-center justify-between bg-muted/20 text-xs">
-                <button
-                  onClick={toggleAll}
-                  className="font-semibold hover:text-primary transition"
-                >
-                  Selecionar todos elegíveis ({leads.filter((l) => !l.has_active_enrollment).length})
-                </button>
-                <span className="text-muted-foreground">
-                  {selected.size} selecionado(s)
-                </span>
-              </div>
               {leads.map((l) => {
                 const isActive = l.has_active_enrollment
                 const isSelected = selected.has(l.id)
@@ -447,29 +673,63 @@ function BulkEnrollModal({
                     key={l.id}
                     onClick={() => !isActive && toggle(l.id)}
                     disabled={isActive}
-                    className={`w-full flex items-center gap-3 px-4 py-3 border-b border-border text-left transition ${
-                      isActive ? 'opacity-50 cursor-not-allowed bg-muted/10' :
-                      isSelected ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-muted/20'
-                    }`}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left transition disabled:cursor-not-allowed"
+                    style={{
+                      borderBottom: '1px solid var(--color-border)',
+                      background: isActive
+                        ? 'var(--color-bg-subtle)'
+                        : isSelected
+                          ? 'var(--color-primary-subtle)'
+                          : 'transparent',
+                      opacity: isActive ? 0.5 : 1,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive && !isSelected) {
+                        e.currentTarget.style.background = 'var(--color-bg-hover)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive && !isSelected) {
+                        e.currentTarget.style.background = 'transparent'
+                      }
+                    }}
                   >
-                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition flex-shrink-0 ${
-                      isSelected && !isActive
-                        ? 'bg-primary border-primary'
-                        : 'border-border'
-                    }`}>
-                      {isSelected && !isActive && <Check className="w-3 h-3 text-primary-foreground" />}
+                    <div
+                      className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition"
+                      style={{
+                        background: isSelected && !isActive ? 'var(--color-primary)' : 'transparent',
+                        border: `2px solid ${
+                          isSelected && !isActive ? 'var(--color-primary)' : 'var(--color-border)'
+                        }`,
+                      }}
+                    >
+                      {isSelected && !isActive && (
+                        <Check className="w-3 h-3" style={{ color: 'var(--color-text-on-primary)' }} />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm truncate">{l.name ?? '—'}</div>
-                      <div className="text-xs text-muted-foreground truncate">
+                      <div
+                        className="font-semibold text-sm truncate"
+                        style={{ color: 'var(--color-text-primary)' }}
+                      >
+                        {l.name && String(l.name).trim() ? l.name : '—'}
+                      </div>
+                      <div
+                        className="text-xs truncate"
+                        style={{ color: 'var(--color-text-tertiary)' }}
+                      >
                         {l.phone ?? l.email ?? ''}
-                        {l.source && <span className="ml-2 opacity-60">· {l.source}</span>}
-                        {l.stage && <span className="ml-1 opacity-60">· {l.stage}</span>}
+                        {l.source && <span className="ml-2">· {l.source}</span>}
+                        {l.stage && <span className="ml-1">· {l.stage}</span>}
+                        {l.nicho && <span className="ml-1">· {l.nicho}</span>}
                       </div>
                     </div>
                     {isActive && (
-                      <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 flex-shrink-0">
-                        já em sequence
+                      <span
+                        className="text-[10px] font-bold uppercase flex-shrink-0"
+                        style={{ color: 'var(--color-warning, #f59e0b)' }}
+                      >
+                        em sequence
                       </span>
                     )}
                   </button>
@@ -479,36 +739,109 @@ function BulkEnrollModal({
           )}
         </div>
 
+        {/* Resultado */}
         {result && (
-          <div className={`px-4 py-2 text-xs ${
-            result.error
-              ? 'bg-red-500/10 text-red-600 dark:text-red-400'
-              : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-          }`}>
+          <div
+            className="px-4 py-2 text-xs"
+            style={{
+              background: result.error
+                ? 'var(--color-danger-subtle, rgba(239, 68, 68, 0.1))'
+                : 'var(--color-success-subtle, rgba(16, 185, 129, 0.1))',
+              color: result.error
+                ? 'var(--color-danger, #ef4444)'
+                : 'var(--color-success, #10b981)',
+            }}
+          >
             {result.error ? (
-              <><AlertTriangle className="w-3 h-3 inline mr-1" />{result.error}</>
+              <>
+                <AlertTriangle className="w-3 h-3 inline mr-1" />
+                {result.error}
+              </>
             ) : (
-              <><CheckCircle2 className="w-3 h-3 inline mr-1" />{result.enrolled} inscrito(s) · {result.skipped} ignorado(s)</>
+              <>
+                <CheckCircle2 className="w-3 h-3 inline mr-1" />
+                {result.enrolled} inscrito(s) · {result.skipped} ignorado(s)
+              </>
             )}
           </div>
         )}
 
-        <div className="p-4 border-t border-border flex items-center justify-end gap-2">
+        {/* Footer */}
+        <div
+          className="p-4 flex items-center justify-end gap-2"
+          style={{ borderTop: '1px solid var(--color-border)' }}
+        >
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted transition"
+            className="px-4 py-2 text-sm rounded-lg transition font-medium"
+            style={{
+              background: 'var(--color-bg-elevated)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text-primary)',
+            }}
           >
             Cancelar
           </button>
           <button
             onClick={handleConfirm}
             disabled={selected.size === 0 || submitting}
-            className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center gap-2"
+            className="px-4 py-2 text-sm rounded-lg font-semibold transition inline-flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              background: 'var(--color-primary)',
+              color: 'var(--color-text-on-primary)',
+            }}
           >
             {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
             Inscrever {selected.size} lead(s)
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function FilterGroup({
+  label,
+  options,
+  selected,
+  onToggle,
+}: {
+  label: string
+  options: FilterOption[]
+  selected: Set<string>
+  onToggle: (value: string) => void
+}) {
+  if (options.length === 0) return null
+
+  return (
+    <div className="flex items-start gap-2 flex-wrap">
+      <span
+        className="text-[11px] font-bold uppercase tracking-wider pt-1.5 flex-shrink-0"
+        style={{ color: 'var(--color-text-tertiary)' }}
+      >
+        {label}
+      </span>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {options.map((o) => {
+          const active = selected.has(o.value)
+          return (
+            <button
+              key={o.value}
+              onClick={() => onToggle(o.value)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs transition"
+              style={{
+                background: active ? 'var(--color-primary)' : 'var(--color-bg-elevated)',
+                border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                color: active
+                  ? 'var(--color-text-on-primary)'
+                  : 'var(--color-text-secondary)',
+                fontWeight: active ? 600 : 500,
+              }}
+            >
+              {o.label}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
