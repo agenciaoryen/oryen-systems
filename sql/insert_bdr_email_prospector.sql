@@ -87,7 +87,7 @@ INSERT INTO agent_solutions (
     "min_interval_hours": 1
   }'::jsonb,
 
-  '[]'::jsonb,
+  ARRAY[]::text[],
 
   true,
   true,
