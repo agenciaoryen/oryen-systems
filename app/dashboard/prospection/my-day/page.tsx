@@ -1676,45 +1676,84 @@ function CompleteModal({
                 })}
               </div>
 
-              {currentTemplate && (
-                <div
-                  className="relative rounded-lg p-4 font-mono text-sm whitespace-pre-wrap"
-                  style={{
-                    background: 'var(--color-bg-elevated)',
-                    border: '1px solid var(--color-border)',
-                    color: 'var(--color-text-primary)',
-                  }}
-                >
-                  {currentTemplate.subject && (
-                    <div className="text-xs mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
-                      <span className="font-semibold">Subject:</span> {currentTemplate.subject}
-                    </div>
-                  )}
-                  {currentTemplate.body}
-                  <button
-                    onClick={() =>
-                      copyToClipboard(
-                        currentTemplate.subject
-                          ? `${currentTemplate.subject}\n\n${currentTemplate.body}`
-                          : currentTemplate.body
-                      )
-                    }
-                    className="absolute top-2 right-2 p-1.5 rounded-md transition"
-                    style={{
-                      background: 'var(--color-bg-surface)',
-                      border: '1px solid var(--color-border)',
-                      color: 'var(--color-text-secondary)',
-                    }}
-                    title={t.copy}
-                  >
-                    {copied ? (
-                      <Check className="w-3.5 h-3.5" style={{ color: 'var(--color-success, #10b981)' }} />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
+              {currentTemplate && (() => {
+                // Divide body por "---" pra suportar múltiplas mensagens sequenciais
+                const parts = (currentTemplate.body || '')
+                  .split(/\n?-{3,}\n?/)
+                  .map((p: string) => p.trim())
+                  .filter(Boolean)
+                const hasMultiple = parts.length > 1
+
+                return (
+                  <div className="space-y-2">
+                    {currentTemplate.subject && (
+                      <div
+                        className="rounded-lg px-3 py-2 text-xs"
+                        style={{
+                          background: 'var(--color-bg-elevated)',
+                          border: '1px solid var(--color-border)',
+                          color: 'var(--color-text-tertiary)',
+                        }}
+                      >
+                        <span className="font-semibold">Subject:</span> {currentTemplate.subject}
+                      </div>
                     )}
-                  </button>
-                </div>
-              )}
+                    {parts.map((part: string, idx: number) => (
+                      <div
+                        key={idx}
+                        className="relative rounded-lg p-4 font-mono text-sm whitespace-pre-wrap"
+                        style={{
+                          background: 'var(--color-bg-elevated)',
+                          border: '1px solid var(--color-border)',
+                          color: 'var(--color-text-primary)',
+                        }}
+                      >
+                        {hasMultiple && (
+                          <div
+                            className="text-[10px] font-bold uppercase tracking-wider mb-1.5"
+                            style={{ color: 'var(--color-primary)' }}
+                          >
+                            Mensagem {idx + 1}
+                            {idx === 0 && parts.length > 1 && (
+                              <span
+                                className="ml-2 font-medium normal-case"
+                                style={{ color: 'var(--color-text-tertiary)' }}
+                              >
+                                · envie primeiro
+                              </span>
+                            )}
+                            {idx > 0 && (
+                              <span
+                                className="ml-2 font-medium normal-case"
+                                style={{ color: 'var(--color-text-tertiary)' }}
+                              >
+                                · envie 5-15s após auto-resposta, ou 2-5min depois
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {part}
+                        <button
+                          onClick={() => copyToClipboard(part)}
+                          className="absolute top-2 right-2 p-1.5 rounded-md transition"
+                          style={{
+                            background: 'var(--color-bg-surface)',
+                            border: '1px solid var(--color-border)',
+                            color: 'var(--color-text-secondary)',
+                          }}
+                          title={t.copy}
+                        >
+                          {copied ? (
+                            <Check className="w-3.5 h-3.5" style={{ color: 'var(--color-success, #10b981)' }} />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
             </div>
           )}
 

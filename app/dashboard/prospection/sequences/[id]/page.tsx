@@ -7,7 +7,8 @@ import Link from 'next/link'
 import {
   Loader2, ArrowLeft, MessageSquare, Mail, Phone, Bot, User, Users, Clock,
   Play, UserPlus, Search, Check, X, Zap, CheckCircle2, AlertTriangle,
-  Filter, RotateCcw,
+  Filter, RotateCcw, Plus, Edit3, Trash2, ArrowUp, ArrowDown, Save,
+  FileText, Copy as CopyIcon, Settings,
 } from 'lucide-react'
 import { CHANNEL_LABELS } from '@/lib/prospection/types'
 
@@ -148,7 +149,13 @@ export default function SequenceDetailPage({ params }: { params: Promise<{ id: s
         ))}
       </div>
 
-      {tab === 'steps' && <StepsView steps={steps} />}
+      {tab === 'steps' && (
+        <StepsEditor
+          sequenceId={id}
+          steps={steps}
+          onRefresh={fetchData}
+        />
+      )}
       {tab === 'rules' && <RulesView rules={rules} />}
       {tab === 'enrollments' && <EnrollmentsView enrollments={enrollments} />}
       {tab === 'config' && <ConfigView sequence={sequence} onSaved={fetchData} />}
@@ -227,6 +234,802 @@ function StepsView({ steps }: { steps: any[] }) {
     </div>
   )
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STEPS EDITOR — adicionar, editar, reordenar, remover steps
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function StepsEditor({
+  sequenceId,
+  steps,
+  onRefresh,
+}: {
+  sequenceId: string
+  steps: any[]
+  onRefresh: () => void
+}) {
+  const [editing, setEditing] = useState<any | null>(null) // step sendo editado
+  const [creating, setCreating] = useState(false)
+  const [busy, setBusy] = useState<string | null>(null)
+
+  async function moveStep(stepId: string, direction: 'up' | 'down') {
+    setBusy(stepId)
+    try {
+      await fetch(`/api/prospection/sequences/${sequenceId}/steps/${stepId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'move', direction }),
+      })
+      await onRefresh()
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function deleteStep(stepId: string) {
+    if (!confirm('Deletar esta etapa? Isso não afeta enrollments ativos no step.')) return
+    setBusy(stepId)
+    try {
+      await fetch(`/api/prospection/sequences/${sequenceId}/steps/${stepId}`, {
+        method: 'DELETE',
+      })
+      await onRefresh()
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const sorted = [...steps].sort((a, b) => a.position - b.position)
+
+  return (
+    <div className="space-y-3">
+      {sorted.length === 0 ? (
+        <div
+          className="rounded-xl p-8 text-center text-sm"
+          style={{
+            background: 'var(--color-bg-surface)',
+            border: '1px dashed var(--color-border)',
+            color: 'var(--color-text-tertiary)',
+          }}
+        >
+          Nenhuma etapa ainda. Clica no botão abaixo pra começar.
+        </div>
+      ) : (
+        sorted.map((s, i) => (
+          <StepRow
+            key={s.id}
+            step={s}
+            isFirst={i === 0}
+            isLast={i === sorted.length - 1}
+            busy={busy === s.id}
+            onMove={(dir) => moveStep(s.id, dir)}
+            onEdit={() => setEditing(s)}
+            onDelete={() => deleteStep(s.id)}
+          />
+        ))
+      )}
+
+      <button
+        onClick={() => setCreating(true)}
+        className="w-full rounded-xl py-4 flex items-center justify-center gap-2 text-sm font-semibold transition"
+        style={{
+          background: 'var(--color-bg-surface)',
+          border: '2px dashed var(--color-border)',
+          color: 'var(--color-text-secondary)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-primary)'
+          e.currentTarget.style.color = 'var(--color-primary)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-border)'
+          e.currentTarget.style.color = 'var(--color-text-secondary)'
+        }}
+      >
+        <Plus className="w-4 h-4" />
+        Adicionar etapa
+      </button>
+
+      {editing && (
+        <StepEditorModal
+          sequenceId={sequenceId}
+          step={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null)
+            onRefresh()
+          }}
+        />
+      )}
+
+      {creating && (
+        <StepEditorModal
+          sequenceId={sequenceId}
+          step={null}
+          onClose={() => setCreating(false)}
+          onSaved={() => {
+            setCreating(false)
+            onRefresh()
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+function StepRow({
+  step,
+  isFirst,
+  isLast,
+  busy,
+  onMove,
+  onEdit,
+  onDelete,
+}: {
+  step: any
+  isFirst: boolean
+  isLast: boolean
+  busy: boolean
+  onMove: (dir: 'up' | 'down') => void
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  const Icon = step.channel === 'email' ? Mail : step.channel === 'call' ? Phone : MessageSquare
+  const ExecIcon = step.execution_mode === 'automated' ? Bot : User
+  const templatesCount = Array.isArray(step.message_templates) ? step.message_templates.length : 0
+
+  return (
+    <div
+      className="rounded-xl overflow-hidden transition"
+      style={{
+        background: 'var(--color-bg-surface)',
+        border: '1px solid var(--color-border)',
+      }}
+    >
+      <div className="flex items-stretch">
+        {/* Side: position + move */}
+        <div
+          className="flex flex-col items-center justify-between py-3 px-2 gap-1"
+          style={{
+            background: 'var(--color-bg-elevated)',
+            borderRight: '1px solid var(--color-border)',
+          }}
+        >
+          <button
+            onClick={() => onMove('up')}
+            disabled={isFirst || busy}
+            className="p-1 rounded transition disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{ color: 'var(--color-text-tertiary)' }}
+            onMouseEnter={(e) => !isFirst && !busy && (e.currentTarget.style.color = 'var(--color-primary)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-tertiary)')}
+            title="Mover pra cima"
+          >
+            <ArrowUp className="w-3.5 h-3.5" />
+          </button>
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-hover, #6366f1))',
+              color: 'var(--color-text-on-primary)',
+            }}
+          >
+            {String(step.position).padStart(2, '0')}
+          </div>
+          <button
+            onClick={() => onMove('down')}
+            disabled={isLast || busy}
+            className="p-1 rounded transition disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{ color: 'var(--color-text-tertiary)' }}
+            title="Mover pra baixo"
+          >
+            <ArrowDown className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                <h4 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                  {step.title || `Etapa ${step.position}`}
+                </h4>
+                <Badge icon={<Icon className="w-3 h-3" />} tone="primary">
+                  {CHANNEL_LABELS[step.channel as keyof typeof CHANNEL_LABELS]}
+                </Badge>
+                <Badge icon={<Clock className="w-3 h-3" />} tone="muted">
+                  Dia {step.day_offset}
+                </Badge>
+                <Badge
+                  icon={<ExecIcon className="w-3 h-3" />}
+                  tone={step.execution_mode === 'automated' ? 'success' : 'muted'}
+                >
+                  {step.execution_mode === 'automated' ? `Auto · ${step.agent_slug}` : 'Manual'}
+                </Badge>
+                {templatesCount > 0 && (
+                  <Badge icon={<FileText className="w-3 h-3" />} tone="muted">
+                    {templatesCount} variação(ões)
+                  </Badge>
+                )}
+              </div>
+              {step.instruction && (
+                <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text-tertiary)' }}>
+                  {step.instruction}
+                </p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <button
+                onClick={onEdit}
+                disabled={busy}
+                title="Editar"
+                className="p-2 rounded-lg transition"
+                style={{
+                  background: 'var(--color-bg-elevated)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-text-secondary)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--color-primary)'
+                  e.currentTarget.style.color = 'var(--color-primary)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--color-border)'
+                  e.currentTarget.style.color = 'var(--color-text-secondary)'
+                }}
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={onDelete}
+                disabled={busy}
+                title="Deletar"
+                className="p-2 rounded-lg transition"
+                style={{
+                  background: 'var(--color-bg-elevated)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-text-secondary)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--color-danger, #ef4444)'
+                  e.currentTarget.style.color = 'var(--color-danger, #ef4444)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--color-border)'
+                  e.currentTarget.style.color = 'var(--color-text-secondary)'
+                }}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Badge({
+  icon,
+  children,
+  tone,
+}: {
+  icon: React.ReactNode
+  children: React.ReactNode
+  tone: 'primary' | 'muted' | 'success'
+}) {
+  const bg =
+    tone === 'primary' ? 'var(--color-primary-subtle)' :
+    tone === 'success' ? 'rgba(16, 185, 129, 0.12)' :
+    'var(--color-bg-elevated)'
+  const fg =
+    tone === 'primary' ? 'var(--color-primary)' :
+    tone === 'success' ? 'var(--color-success, #10b981)' :
+    'var(--color-text-tertiary)'
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded"
+      style={{ background: bg, color: fg, border: '1px solid var(--color-border)' }}
+    >
+      {icon}
+      {children}
+    </span>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STEP EDITOR MODAL — formulário completo pra criar/editar step
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface Variant {
+  variant: string
+  label?: string
+  body: string
+  subject?: string
+}
+
+function StepEditorModal({
+  sequenceId,
+  step,
+  onClose,
+  onSaved,
+}: {
+  sequenceId: string
+  step: any | null  // null = criar
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const [title, setTitle] = useState(step?.title ?? '')
+  const [instruction, setInstruction] = useState(step?.instruction ?? '')
+  const [dayOffset, setDayOffset] = useState<number>(step?.day_offset ?? 1)
+  const [channel, setChannel] = useState<string>(step?.channel ?? 'whatsapp')
+  const [executionMode, setExecutionMode] = useState<string>(step?.execution_mode ?? 'manual')
+  const [agentSlug, setAgentSlug] = useState<string>(step?.agent_slug ?? 'bdr_email')
+  const [assigneeMode, setAssigneeMode] = useState<string>(step?.assignee_mode ?? 'team_round_robin')
+  const [assigneeRole, setAssigneeRole] = useState<string>(step?.assignee_role ?? '')
+  const [variants, setVariants] = useState<Variant[]>(
+    Array.isArray(step?.message_templates) ? step.message_templates : []
+  )
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const isCall = channel === 'call'
+  const isEmail = channel === 'email'
+
+  function addVariant() {
+    setVariants((prev) => [
+      ...prev,
+      {
+        variant: String.fromCharCode(65 + prev.length),
+        label: '',
+        body: '',
+        subject: isEmail ? '' : undefined,
+      },
+    ])
+  }
+
+  function updateVariant(idx: number, patch: Partial<Variant>) {
+    setVariants((prev) => prev.map((v, i) => (i === idx ? { ...v, ...patch } : v)))
+  }
+
+  function removeVariant(idx: number) {
+    setVariants((prev) => prev.filter((_, i) => i !== idx))
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    setError(null)
+    try {
+      const payload: any = {
+        title: title || null,
+        instruction: instruction || null,
+        day_offset: dayOffset,
+        channel,
+        execution_mode: executionMode,
+        agent_slug: executionMode === 'automated' ? agentSlug : null,
+        assignee_mode: assigneeMode,
+        assignee_role: assigneeMode === 'role_based' ? assigneeRole : null,
+        message_templates: variants.filter((v) => v.variant && v.body),
+      }
+
+      const url = step
+        ? `/api/prospection/sequences/${sequenceId}/steps/${step.id}`
+        : `/api/prospection/sequences/${sequenceId}/steps`
+      const method = step ? 'PATCH' : 'POST'
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Erro ao salvar')
+        return
+      }
+      onSaved()
+    } catch (e: any) {
+      setError(e.message || 'Erro ao salvar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+      style={{ background: 'var(--color-bg-overlay)' }}
+      onClick={onClose}
+    >
+      <div
+        className="rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl"
+        style={{
+          background: 'var(--color-bg-surface)',
+          border: '1px solid var(--color-border)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="p-5 flex items-center justify-between"
+          style={{ borderBottom: '1px solid var(--color-border)' }}
+        >
+          <div>
+            <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+              {step ? 'Editar etapa' : 'Nova etapa'}
+            </h3>
+            {step && (
+              <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+                Posição {step.position} · {step.channel}
+              </p>
+            )}
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg" style={{ color: 'var(--color-text-secondary)' }}>
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+          {/* Título + instrução */}
+          <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
+            <FormField label="Título" required>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ex: Abordagem Dia 1"
+                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                style={inputStyle}
+              />
+            </FormField>
+            <FormField label="Dia (offset)" hint="Dia relativo ao início">
+              <input
+                type="number"
+                min={1}
+                value={dayOffset}
+                onChange={(e) => setDayOffset(Math.max(1, Number(e.target.value) || 1))}
+                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                style={inputStyle}
+              />
+            </FormField>
+          </div>
+
+          <FormField label="Instrução" hint="Nota pra quem executar a etapa">
+            <textarea
+              value={instruction}
+              onChange={(e) => setInstruction(e.target.value)}
+              rows={2}
+              className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
+              style={inputStyle}
+            />
+          </FormField>
+
+          {/* Canal + execução */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <FormField label="Canal" required>
+              <div className="grid grid-cols-3 gap-1.5">
+                {(['whatsapp', 'email', 'call'] as const).map((c) => (
+                  <ChannelChip
+                    key={c}
+                    active={channel === c}
+                    onClick={() => setChannel(c)}
+                    channel={c}
+                  />
+                ))}
+              </div>
+            </FormField>
+            <FormField label="Execução" required>
+              <div className="grid grid-cols-2 gap-1.5">
+                <ModeChip active={executionMode === 'manual'} onClick={() => setExecutionMode('manual')} icon={<User className="w-3.5 h-3.5" />} label="Manual" />
+                <ModeChip active={executionMode === 'automated'} onClick={() => setExecutionMode('automated')} icon={<Bot className="w-3.5 h-3.5" />} label="Automática" />
+              </div>
+            </FormField>
+          </div>
+
+          {executionMode === 'automated' && (
+            <FormField label="Agente IA" hint="slug do agent que dispara esta etapa">
+              <input
+                type="text"
+                value={agentSlug}
+                onChange={(e) => setAgentSlug(e.target.value)}
+                placeholder="bdr_email"
+                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                style={inputStyle}
+              />
+            </FormField>
+          )}
+
+          {executionMode === 'manual' && (
+            <FormField label="Quem executa" hint="Como atribuir a task">
+              <div className="grid grid-cols-3 gap-1.5">
+                <ModeChip active={assigneeMode === 'team_round_robin'} onClick={() => setAssigneeMode('team_round_robin')} icon={<Users className="w-3.5 h-3.5" />} label="Time todo" />
+                <ModeChip active={assigneeMode === 'role_based'} onClick={() => setAssigneeMode('role_based')} icon={<User className="w-3.5 h-3.5" />} label="Por role" />
+                <ModeChip active={assigneeMode === 'specific_user'} onClick={() => setAssigneeMode('specific_user')} icon={<User className="w-3.5 h-3.5" />} label="User fixo" />
+              </div>
+              {assigneeMode === 'role_based' && (
+                <input
+                  type="text"
+                  value={assigneeRole}
+                  onChange={(e) => setAssigneeRole(e.target.value)}
+                  placeholder="slug do role (ex: vendedor)"
+                  className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none mt-2"
+                  style={inputStyle}
+                />
+              )}
+            </FormField>
+          )}
+
+          {/* Variações */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div
+                  className="text-[10px] font-bold uppercase tracking-wider"
+                  style={{ color: 'var(--color-text-tertiary)' }}
+                >
+                  Variações de mensagem
+                </div>
+                <div className="text-[11px]" style={{ color: 'var(--color-text-tertiary)' }}>
+                  Diferentes textos para rotacionar ou escolher no ato
+                </div>
+              </div>
+              <button
+                onClick={addVariant}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold transition"
+                style={{
+                  background: 'var(--color-primary-subtle)',
+                  color: 'var(--color-primary)',
+                  border: '1px solid var(--color-primary)',
+                }}
+              >
+                <Plus className="w-3 h-3" />
+                Adicionar variação
+              </button>
+            </div>
+            <div className="space-y-2">
+              {variants.length === 0 && (
+                <div
+                  className="rounded-lg py-4 text-center text-xs italic"
+                  style={{
+                    background: 'var(--color-bg-elevated)',
+                    border: '1px dashed var(--color-border)',
+                    color: 'var(--color-text-tertiary)',
+                  }}
+                >
+                  Sem variações ainda. Adicione pelo menos uma pra steps manuais.
+                </div>
+              )}
+              {variants.map((v, idx) => (
+                <VariantRow
+                  key={idx}
+                  variant={v}
+                  isEmail={isEmail}
+                  onChange={(p) => updateVariant(idx, p)}
+                  onRemove={() => removeVariant(idx)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {error && (
+            <div
+              className="text-xs rounded-lg px-3 py-2"
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: 'var(--color-danger, #ef4444)',
+              }}
+            >
+              {error}
+            </div>
+          )}
+        </div>
+
+        <div
+          className="p-4 flex items-center justify-end gap-2"
+          style={{ borderTop: '1px solid var(--color-border)' }}
+        >
+          <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg font-medium" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}>
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !title.trim()}
+            className="px-4 py-2 text-sm rounded-lg font-semibold inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              background: 'var(--color-primary)',
+              color: 'var(--color-text-on-primary)',
+            }}
+          >
+            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            {step ? 'Salvar' : 'Criar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const inputStyle: React.CSSProperties = {
+  background: 'var(--color-bg-elevated)',
+  border: '1px solid var(--color-border)',
+  color: 'var(--color-text-primary)',
+}
+
+function FormField({
+  label,
+  hint,
+  required,
+  children,
+}: {
+  label: string
+  hint?: string
+  required?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-1 mb-1.5">
+        <span
+          className="text-[10px] font-bold uppercase tracking-wider"
+          style={{ color: 'var(--color-text-tertiary)' }}
+        >
+          {label}
+        </span>
+        {required && <span className="text-[10px]" style={{ color: 'var(--color-danger, #ef4444)' }}>*</span>}
+      </div>
+      {children}
+      {hint && (
+        <div className="text-[10px] mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+          {hint}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ChannelChip({
+  channel,
+  active,
+  onClick,
+}: {
+  channel: 'whatsapp' | 'email' | 'call'
+  active: boolean
+  onClick: () => void
+}) {
+  const Icon = channel === 'email' ? Mail : channel === 'call' ? Phone : MessageSquare
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs transition"
+      style={{
+        background: active ? 'var(--color-primary)' : 'var(--color-bg-elevated)',
+        border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+        color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
+        fontWeight: active ? 600 : 500,
+      }}
+    >
+      <Icon className="w-3.5 h-3.5" />
+      {CHANNEL_LABELS[channel]}
+    </button>
+  )
+}
+
+function ModeChip({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean
+  onClick: () => void
+  icon: React.ReactNode
+  label: string
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs transition"
+      style={{
+        background: active ? 'var(--color-primary)' : 'var(--color-bg-elevated)',
+        border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+        color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
+        fontWeight: active ? 600 : 500,
+      }}
+    >
+      {icon}
+      {label}
+    </button>
+  )
+}
+
+function VariantRow({
+  variant,
+  isEmail,
+  onChange,
+  onRemove,
+}: {
+  variant: Variant
+  isEmail: boolean
+  onChange: (patch: Partial<Variant>) => void
+  onRemove: () => void
+}) {
+  return (
+    <div
+      className="rounded-lg p-3"
+      style={{
+        background: 'var(--color-bg-elevated)',
+        border: '1px solid var(--color-border)',
+      }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <input
+          type="text"
+          value={variant.variant}
+          onChange={(e) => onChange({ variant: e.target.value })}
+          placeholder="A"
+          className="w-16 rounded px-2 py-1 text-xs font-bold text-center focus:outline-none"
+          style={{
+            background: 'var(--color-bg-surface)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-primary)',
+          }}
+        />
+        <input
+          type="text"
+          value={variant.label || ''}
+          onChange={(e) => onChange({ label: e.target.value })}
+          placeholder="rótulo (opcional, ex: Instagram direta)"
+          className="flex-1 rounded px-2 py-1 text-xs focus:outline-none"
+          style={{
+            background: 'var(--color-bg-surface)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text-primary)',
+          }}
+        />
+        <button
+          onClick={onRemove}
+          className="p-1.5 rounded transition"
+          style={{ color: 'var(--color-text-tertiary)' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-danger, #ef4444)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-tertiary)')}
+          title="Remover variação"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      {isEmail && (
+        <input
+          type="text"
+          value={variant.subject || ''}
+          onChange={(e) => onChange({ subject: e.target.value })}
+          placeholder="Assunto do email"
+          className="w-full rounded px-2 py-1.5 text-xs focus:outline-none mb-2"
+          style={{
+            background: 'var(--color-bg-surface)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text-primary)',
+          }}
+        />
+      )}
+      <textarea
+        value={variant.body}
+        onChange={(e) => onChange({ body: e.target.value })}
+        rows={4}
+        placeholder="Conteúdo da mensagem. Para steps de WhatsApp com 2 envios, separe por '---' em linha própria."
+        className="w-full rounded px-2 py-1.5 text-xs focus:outline-none font-mono resize-y"
+        style={{
+          background: 'var(--color-bg-surface)',
+          border: '1px solid var(--color-border)',
+          color: 'var(--color-text-primary)',
+          minHeight: 80,
+        }}
+      />
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 
 function RulesView({ rules }: { rules: any[] }) {
   if (rules.length === 0) {
