@@ -12,6 +12,22 @@ import {
 } from 'recharts'
 import type { FunnelStage, PipelineVelocity } from '@/lib/analytics/types'
 
+// Detecta se uma cor hex é "clara" (luminância alta).
+// Usada pra escolher cor de texto que contraste com o background do stage.
+function isLightColor(hex: string): boolean {
+  const normalized = hex.trim().replace(/^#/, '')
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized) && !/^[0-9a-fA-F]{3}$/.test(normalized)) return false
+  const full = normalized.length === 3
+    ? normalized.split('').map((c) => c + c).join('')
+    : normalized
+  const r = parseInt(full.substring(0, 2), 16)
+  const g = parseInt(full.substring(2, 4), 16)
+  const b = parseInt(full.substring(4, 6), 16)
+  // Luminância relativa (ITU-R BT.709)
+  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return luma > 186 // threshold empírico — acima disso, fundo "claro demais" pra texto branco
+}
+
 interface Props {
   funnel: FunnelStage[]
   velocity: PipelineVelocity[]
@@ -212,9 +228,21 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
             }}
           >
             {sortedFunnel.map((stage) => {
-              // Clamp entre 12% (mínimo legível) e 100% (máximo do container).
               const rawPct = maxLeads > 0 ? (stage.leadCount / maxLeads) * 100 : 12
               const widthPct = Math.min(Math.max(rawPct, 12), 100)
+
+              const bg = stage.color || '#6366f1'
+              const isLight = isLightColor(bg)
+              const textColor = isLight ? '#0E0E20' : '#fff'
+              const subtleTextColor = isLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.85)'
+              const chipBg = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(0,0,0,0.25)'
+
+              // Só mostra conversão se faz sentido (0 < rate <= 100).
+              // Acima de 100% significa que o stage posterior tem mais leads
+              // que o anterior (caso de leads que avançaram direto) — métrica
+              // enganosa, melhor ocultar.
+              const showConversion = stage.conversionFromPrev > 0 && stage.conversionFromPrev <= 100
+
               return (
                 <div
                   key={stage.id}
@@ -222,7 +250,10 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
                     width: `${widthPct}%`,
                     maxWidth: '100%',
                     minWidth: '80px',
-                    background: stage.color || '#6366f1',
+                    background: bg,
+                    // Borda sutil escura sempre que o fundo é claro, pra
+                    // garantir visibilidade do stage quando a cor é branca.
+                    border: isLight ? '1px solid rgba(0,0,0,0.15)' : '1px solid transparent',
                     borderRadius: '6px',
                     padding: '8px 12px',
                     display: 'flex',
@@ -232,21 +263,31 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
                     boxSizing: 'border-box',
                   }}
                 >
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: textColor,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
                     {stage.label}
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#fff' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: textColor }}>
                       {stage.leadCount}
                     </span>
-                    {stage.conversionFromPrev > 0 && (
+                    {showConversion && (
                       <span
                         style={{
                           fontSize: '10px',
-                          color: 'rgba(255,255,255,0.8)',
-                          background: 'rgba(0,0,0,0.2)',
+                          color: subtleTextColor,
+                          background: chipBg,
                           padding: '1px 6px',
                           borderRadius: '8px',
+                          fontWeight: 600,
                         }}
                       >
                         {stage.conversionFromPrev.toFixed(1)}%
