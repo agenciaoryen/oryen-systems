@@ -74,6 +74,11 @@ const TRANSLATIONS = {
   pt: {
     activePipeline: 'Pipeline Ativo',
     searchPlaceholder: 'Buscar por nome ou telefone...',
+    channelAll: 'Todos',
+    channelLabel_whatsapp: 'WhatsApp',
+    channelLabel_email: 'Email',
+    channelLabel_instagram: 'Instagram',
+    channelLabel_linkedin: 'LinkedIn',
     startConversation: 'Iniciar conversa...',
     openWhatsapp: 'Abrir no WhatsApp',
     openLeadProfile: 'Ver perfil do contato',
@@ -110,6 +115,11 @@ const TRANSLATIONS = {
   en: {
     activePipeline: 'Active Pipeline',
     searchPlaceholder: 'Search by name or phone...',
+    channelAll: 'All',
+    channelLabel_whatsapp: 'WhatsApp',
+    channelLabel_email: 'Email',
+    channelLabel_instagram: 'Instagram',
+    channelLabel_linkedin: 'LinkedIn',
     startConversation: 'Start conversation...',
     openWhatsapp: 'Open in WhatsApp',
     openLeadProfile: 'View contact profile',
@@ -146,6 +156,11 @@ const TRANSLATIONS = {
   es: {
     activePipeline: 'Pipeline Activo',
     searchPlaceholder: 'Buscar por nombre o teléfono...',
+    channelAll: 'Todos',
+    channelLabel_whatsapp: 'WhatsApp',
+    channelLabel_email: 'Email',
+    channelLabel_instagram: 'Instagram',
+    channelLabel_linkedin: 'LinkedIn',
     startConversation: 'Iniciar conversación...',
     openWhatsapp: 'Abrir en WhatsApp',
     openLeadProfile: 'Ver perfil del contacto',
@@ -579,6 +594,45 @@ function ConversationItem({
 }
 
 /* =============================================
+   CHANNEL CHIP (filtro de canais na sidebar)
+   ============================================= */
+function ChannelChip({
+  channel, label, active, onClick,
+}: {
+  channel?: string
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  // Ícone colorido pra cada canal — facilita identificação visual
+  const channelDot = (ch?: string) => {
+    if (!ch) return null
+    const colors: Record<string, string> = {
+      whatsapp: '#25D366',
+      email: '#4F46E5',
+      instagram: '#E4405F',
+      linkedin: '#0A66C2',
+    }
+    const color = colors[ch] || 'var(--color-text-muted)'
+    return <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} />
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors"
+      style={active
+        ? { background: 'var(--color-primary)', color: '#fff' }
+        : { background: 'var(--color-bg-surface)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }
+      }
+    >
+      {channelDot(channel)}
+      {label}
+    </button>
+  )
+}
+
+/* =============================================
    MESSAGE INPUT
    ============================================= */
 function MessageInput({
@@ -756,6 +810,7 @@ function MessagesContent() {
   const [messages, setMessages] = useState<Message[]>([])
   const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([])
   const [filterStage, setFilterStage] = useState('todos')
+  const [filterChannel, setFilterChannel] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [loadingConversations, setLoadingConversations] = useState(true)
   const [loadingMessages, setLoadingMessages] = useState(false)
@@ -1226,8 +1281,15 @@ function MessagesContent() {
   }, [activeConversation?.id])
 
   // ---- Filters ----
+  // Canais distintos — pra renderizar os chips dinamicamente (futuros: instagram, linkedin, etc)
+  const availableChannels = Array.from(new Set(conversations.map(c => c.channel).filter(Boolean)))
+
   // Busca por nome OU número de telefone
   const filteredConversations = conversations
+    .filter(c => {
+      if (filterChannel === 'all') return true
+      return c.channel === filterChannel
+    })
     .filter(c => {
       if (filterStage === 'todos') return true
       return c.lead_stage === filterStage
@@ -1301,6 +1363,26 @@ function MessagesContent() {
         {/* COL 2: CONVERSATION LIST */}
         <div className={`w-full sm:w-[340px] flex flex-col transition-opacity duration-300
           ${activeConversation ? 'hidden sm:flex sm:opacity-40 sm:hover:opacity-100' : ''}`} style={{ borderRight: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-base)' }}>
+          {/* Channel filter chips — só aparece se houver mais de 1 canal */}
+          {availableChannels.length > 1 && (
+            <div className="px-2 pt-2 flex items-center gap-1 overflow-x-auto sidebar-scrollbar">
+              <ChannelChip
+                label={t.channelAll}
+                active={filterChannel === 'all'}
+                onClick={() => setFilterChannel('all')}
+              />
+              {availableChannels.map(ch => (
+                <ChannelChip
+                  key={ch}
+                  channel={ch}
+                  label={(t as any)[`channelLabel_${ch}`] || ch.charAt(0).toUpperCase() + ch.slice(1)}
+                  active={filterChannel === ch}
+                  onClick={() => setFilterChannel(ch)}
+                />
+              ))}
+            </div>
+          )}
+
           {/* Search */}
           <div className="p-2" style={{ backgroundColor: 'var(--color-bg-base)' }}>
             <div className="relative">
