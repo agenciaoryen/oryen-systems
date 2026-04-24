@@ -163,6 +163,16 @@ interface MyDayResponse {
   }
   daily_capacity: number
   stages: { value: string; label: string; color?: string }[]
+  view_mode: 'self' | 'all' | 'user'
+  view_user_id: string
+  is_admin: boolean
+}
+
+interface TeamMember {
+  id: string
+  full_name: string | null
+  email: string
+  role: string | null
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -178,11 +188,14 @@ export default function MyDayPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [completingTask, setCompletingTask] = useState<any | null>(null)
+  const [view, setView] = useState<string>('self') // 'self' | 'all' | <user_id>
+  const [team, setTeam] = useState<TeamMember[]>([])
 
   const fetchData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
     try {
-      const res = await fetch('/api/prospection/my-day')
+      const qs = view === 'self' ? '' : `?view=${view}`
+      const res = await fetch(`/api/prospection/my-day${qs}`)
       if (!res.ok) throw new Error('Erro ao buscar tasks')
       const json = await res.json()
       setData(json)
@@ -192,11 +205,20 @@ export default function MyDayPage() {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [])
+  }, [view])
 
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  // Carrega o time só se admin
+  useEffect(() => {
+    if (!data?.is_admin) return
+    fetch('/api/prospection/team')
+      .then((r) => (r.ok ? r.json() : { users: [] }))
+      .then((json) => setTeam(json.users || []))
+      .catch(() => {})
+  }, [data?.is_admin])
 
   async function handleComplete(
     taskId: string,
@@ -243,21 +265,42 @@ export default function MyDayPage() {
           <p className="text-muted-foreground text-sm">{t.subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {data?.is_admin && team.length > 0 && (
+            <select
+              value={view}
+              onChange={(e) => setView(e.target.value)}
+              className="px-3 py-2 rounded-lg bg-card border border-border text-sm font-semibold focus:outline-none focus:border-primary transition"
+              title="Visualizar dia de"
+            >
+              <option value="self">Meu dia</option>
+              <option value="all">Todo o time · visão geral</option>
+              <optgroup label="Por usuário">
+                {team.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.full_name || u.email}
+                    {u.id === data.user_id ? ' (eu)' : ''}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          )}
           <StatPill
             label={t.doneToday}
             value={`${data?.counts.done_today ?? 0}`}
             tone="success"
           />
-          <StatPill
-            label={t.capacity}
-            value={`${data?.counts.done_today ?? 0}/${data?.daily_capacity ?? 50}`}
-            tone={
-              (data?.counts.done_today ?? 0) >= (data?.daily_capacity ?? 50)
-                ? 'warning'
-                : 'neutral'
-            }
-          />
+          {view !== 'all' && (
+            <StatPill
+              label={t.capacity}
+              value={`${data?.counts.done_today ?? 0}/${data?.daily_capacity ?? 50}`}
+              tone={
+                (data?.counts.done_today ?? 0) >= (data?.daily_capacity ?? 50)
+                  ? 'warning'
+                  : 'neutral'
+              }
+            />
+          )}
           <Link
             href="/dashboard/prospection/sequences"
             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border hover:bg-accent transition text-sm"
@@ -291,6 +334,7 @@ export default function MyDayPage() {
               onComplete={setCompletingTask}
               stages={data!.stages ?? []}
               onRefresh={() => fetchData(true)}
+              showAssignee={data!.view_mode !== 'self'}
               t={t}
             />
             <Bucket
@@ -302,6 +346,7 @@ export default function MyDayPage() {
               onComplete={setCompletingTask}
               stages={data!.stages ?? []}
               onRefresh={() => fetchData(true)}
+              showAssignee={data!.view_mode !== 'self'}
               t={t}
             />
             <Bucket
@@ -313,6 +358,7 @@ export default function MyDayPage() {
               onComplete={setCompletingTask}
               stages={data!.stages ?? []}
               onRefresh={() => fetchData(true)}
+              showAssignee={data!.view_mode !== 'self'}
               t={t}
             />
           </div>
@@ -334,6 +380,7 @@ export default function MyDayPage() {
               onComplete={setCompletingTask}
               stages={data!.stages ?? []}
               onRefresh={() => fetchData(true)}
+              showAssignee={data!.view_mode !== 'self'}
               compact
               t={t}
             />
@@ -393,6 +440,7 @@ function Bucket({
   stages,
   onRefresh,
   compact,
+  showAssignee,
   t,
 }: {
   title: string
@@ -404,6 +452,7 @@ function Bucket({
   stages: { value: string; label: string; color?: string }[]
   onRefresh: () => void
   compact?: boolean
+  showAssignee?: boolean
   t: (typeof TRANSLATIONS)['pt']
 }) {
   const borders: Record<string, string> = {
@@ -448,6 +497,7 @@ function Bucket({
               stages={stages}
               onRefresh={onRefresh}
               compact={compact}
+              showAssignee={showAssignee}
               t={t}
             />
           ))}
@@ -524,6 +574,7 @@ function TaskCard({
   stages,
   onRefresh,
   compact,
+  showAssignee,
   t,
 }: {
   task: any
@@ -531,6 +582,7 @@ function TaskCard({
   stages: { value: string; label: string; color?: string }[]
   onRefresh: () => void
   compact?: boolean
+  showAssignee?: boolean
   t: (typeof TRANSLATIONS)['pt']
 }) {
   const step = Array.isArray(task.step) ? task.step[0] : task.step
@@ -541,6 +593,8 @@ function TaskCard({
       : enrollment.sequence
     : null
   const lead = Array.isArray(task.lead) ? task.lead[0] : task.lead
+  const assignee = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee
+  const assigneeName = assignee?.full_name || assignee?.email || 'Sem responsável'
 
   const channel = step?.channel ?? 'whatsapp'
   const channelIcon =
@@ -563,6 +617,19 @@ function TaskCard({
             <span className="text-[10px] text-muted-foreground">
               {t.stepOf} {step?.position ?? '-'} · {step?.title ?? ''}
             </span>
+            {showAssignee && (
+              <span
+                className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                style={{
+                  background: assignee ? 'var(--color-primary-subtle)' : 'var(--color-bg-elevated)',
+                  color: assignee ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+                  border: '1px solid var(--color-border)',
+                }}
+                title="Responsável pela task"
+              >
+                {assigneeName}
+              </span>
+            )}
             <span className="text-[10px] text-muted-foreground ml-auto">
               {dueLabel}
             </span>

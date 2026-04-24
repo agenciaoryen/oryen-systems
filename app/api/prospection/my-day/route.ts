@@ -27,7 +27,26 @@ export async function GET(request: NextRequest) {
     const gate = await ensureProspectionAccess(orgId)
     if (gate) return gate
 
-    const userId = auth.userId
+    const currentUserId = auth.userId
+    const requestedView = request.nextUrl.searchParams.get('view') // 'all' | UUID | null
+    const isAdmin = auth.role === 'admin' || auth.isStaff
+
+    // Se requisitou view != próprio user e NÃO é admin → bloqueia
+    if (requestedView && requestedView !== currentUserId && !isAdmin) {
+      return NextResponse.json({ error: 'Sem permissão para ver o dia de outro usuário' }, { status: 403 })
+    }
+
+    // Resolve o view efetivo
+    // - 'all'           → todas as tasks da org (só admin)
+    // - UUID específico → tasks daquele user (só admin pode mudar)
+    // - null/próprio    → tasks do próprio user
+    const viewMode: 'self' | 'all' | 'user' =
+      requestedView === 'all'
+        ? 'all'
+        : requestedView && requestedView !== currentUserId
+          ? 'user'
+          : 'self'
+    const viewUserId = viewMode === 'user' ? requestedView : currentUserId
 
     const now = new Date()
     const endOfToday = new Date(now)
@@ -35,16 +54,16 @@ export async function GET(request: NextRequest) {
     const endOfTomorrow = new Date(endOfToday)
     endOfTomorrow.setDate(endOfTomorrow.getDate() + 1)
 
-    // Capacidade diária do user
+    // Capacidade diária do user visualizado
     const { data: userRow } = await supabase
       .from('users')
       .select('daily_task_capacity')
-      .eq('id', userId)
+      .eq('id', viewUserId || currentUserId)
       .single()
     const dailyCapacity = userRow?.daily_task_capacity ?? 50
 
-    // Tasks ativas do user (ou team, onde assignee ainda é null)
-    const { data: rawTasks, error } = await supabase
+    // Monta a query de tasks
+    let tasksQuery = supabase
       .from('prospection_tasks')
       .select(`
         id, enrollment_id, step_id, lead_id, assignee_user_id,
@@ -57,13 +76,24 @@ export async function GET(request: NextRequest) {
           id, sequence_id, current_step_position, status,
           sequence:prospection_sequences(id, name)
         ),
-        lead:leads(id, name, phone, email, city, stage)
+        lead:leads(id, name, phone, email, city, stage),
+        assignee:users!prospection_tasks_assignee_user_id_fkey(id, full_name)
       `)
       .eq('org_id', orgId)
       .in('status', ['pending', 'in_progress', 'overdue', 'queued'])
-      .or(`assignee_user_id.eq.${userId},assignee_user_id.is.null`)
       .lte('due_at', endOfTomorrow.toISOString())
       .order('due_at', { ascending: true })
+
+    if (viewMode === 'self') {
+      // Próprio user: tasks dele + orfãs (sem assignee ainda)
+      tasksQuery = tasksQuery.or(`assignee_user_id.eq.${currentUserId},assignee_user_id.is.null`)
+    } else if (viewMode === 'user') {
+      // Admin vendo um user específico: só tasks daquele user
+      tasksQuery = tasksQuery.eq('assignee_user_id', viewUserId!)
+    }
+    // viewMode === 'all': sem filtro de assignee, mostra tudo da org
+
+    const { data: rawTasks, error } = await tasksQuery
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
@@ -108,13 +138,18 @@ export async function GET(request: NextRequest) {
       .order('paused_at', { ascending: false })
       .limit(20)
 
-    const doneTodayCount = await supabase
+    let doneTodayQuery = supabase
       .from('prospection_tasks')
       .select('id', { count: 'exact', head: true })
       .eq('org_id', orgId)
-      .eq('assignee_user_id', userId)
       .eq('status', 'done')
       .gte('completed_at', new Date(now.toISOString().slice(0, 10)).toISOString())
+
+    if (viewMode === 'self' || viewMode === 'user') {
+      doneTodayQuery = doneTodayQuery.eq('assignee_user_id', viewUserId!)
+    }
+
+    const doneTodayCount = await doneTodayQuery
 
     // Stages do pipeline ATIVO da org (pro modal de conclusão e pill inline)
     const { data: stageRows } = await supabase
@@ -136,7 +171,10 @@ export async function GET(request: NextRequest) {
         done_today: doneTodayCount.count || 0,
       },
       daily_capacity: dailyCapacity,
-      user_id: userId,
+      user_id: currentUserId,
+      view_mode: viewMode,
+      view_user_id: viewUserId,
+      is_admin: isAdmin,
       stages: (stageRows || []).map((s: any) => ({
         value: s.name,
         label: s.label || s.name,
