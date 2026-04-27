@@ -55,7 +55,7 @@ export default function SequenceDetailPage({ params }: { params: Promise<{ id: s
     )
   }
 
-  const { sequence, steps, rules, enrollments } = data
+  const { sequence, steps, rules, enrollments, stepExecStats } = data
   const activeCount = enrollments.filter((e: any) => e.status === 'active').length
   const pausedCount = enrollments.filter((e: any) => e.status === 'paused').length
 
@@ -194,6 +194,7 @@ export default function SequenceDetailPage({ params }: { params: Promise<{ id: s
         <StepsEditor
           sequenceId={id}
           steps={steps}
+          stepExecStats={stepExecStats || {}}
           onRefresh={fetchData}
         />
       )}
@@ -566,13 +567,17 @@ function StepsView({ steps }: { steps: any[] }) {
 // STEPS EDITOR — adicionar, editar, reordenar, remover steps
 // ═══════════════════════════════════════════════════════════════════════════════
 
+type StepExecStat = { success: number; failed: number; skipped: number; lastError?: string; lastErrorAt?: string }
+
 function StepsEditor({
   sequenceId,
   steps,
+  stepExecStats,
   onRefresh,
 }: {
   sequenceId: string
   steps: any[]
+  stepExecStats: Record<string, StepExecStat>
   onRefresh: () => void
 }) {
   const [editing, setEditing] = useState<any | null>(null) // step sendo editado
@@ -626,6 +631,7 @@ function StepsEditor({
           <StepRow
             key={s.id}
             step={s}
+            execStats={stepExecStats[s.id]}
             isFirst={i === 0}
             isLast={i === sorted.length - 1}
             busy={busy === s.id}
@@ -686,6 +692,7 @@ function StepsEditor({
 
 function StepRow({
   step,
+  execStats,
   isFirst,
   isLast,
   busy,
@@ -694,6 +701,7 @@ function StepRow({
   onDelete,
 }: {
   step: any
+  execStats?: StepExecStat
   isFirst: boolean
   isLast: boolean
   busy: boolean
@@ -704,6 +712,24 @@ function StepRow({
   const Icon = step.channel === 'email' ? Mail : step.channel === 'call' ? Phone : MessageSquare
   const ExecIcon = step.execution_mode === 'automated' ? Bot : User
   const templatesCount = Array.isArray(step.message_templates) ? step.message_templates.length : 0
+  const templates = Array.isArray(step.message_templates) ? step.message_templates : []
+  const isAutomated = step.execution_mode === 'automated'
+  const isEmail = step.channel === 'email'
+  const hasTemplate = templates.length > 0
+  const firstTpl = templates[0]
+  const tplBodyOk = !!(firstTpl && firstTpl.body && String(firstTpl.body).trim())
+  const tplSubjectOk = !isEmail || !!(firstTpl && firstTpl.subject && String(firstTpl.subject).trim())
+
+  // Diagnóstico de configuração — pra ajudar o user a achar steps quebrados
+  const configIssues: string[] = []
+  if (isAutomated) {
+    if (!step.agent_slug) configIssues.push('agente IA não selecionado')
+    else if (step.agent_slug !== 'bdr_email') configIssues.push(`agente "${step.agent_slug}" não suportado`)
+    if (!isEmail) configIssues.push('canal automático precisa ser email')
+    if (!hasTemplate) configIssues.push('sem variação de mensagem')
+    else if (!tplBodyOk) configIssues.push('1ª variação sem corpo')
+    else if (!tplSubjectOk) configIssues.push('1ª variação sem assunto')
+  }
 
   return (
     <div
@@ -778,11 +804,62 @@ function StepRow({
                     {templatesCount} variação(ões)
                   </Badge>
                 )}
+                {execStats && execStats.success > 0 && (
+                  <Badge icon={<CheckCircle2 className="w-3 h-3" />} tone="success">
+                    {execStats.success} enviado(s)
+                  </Badge>
+                )}
+                {execStats && execStats.failed > 0 && (
+                  <Badge icon={<AlertTriangle className="w-3 h-3" />} tone="danger">
+                    {execStats.failed} falha(s)
+                  </Badge>
+                )}
+                {execStats && execStats.skipped > 0 && (
+                  <Badge icon={<X className="w-3 h-3" />} tone="muted">
+                    {execStats.skipped} pulado(s)
+                  </Badge>
+                )}
               </div>
               {step.instruction && (
-                <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text-tertiary)' }}>
+                <p className="text-xs line-clamp-2 mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
                   {step.instruction}
                 </p>
+              )}
+
+              {configIssues.length > 0 && (
+                <div
+                  className="mt-2 rounded-md px-2.5 py-1.5 text-[11px] flex items-start gap-1.5"
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.08)',
+                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                    color: 'var(--color-text-secondary)',
+                  }}
+                >
+                  <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: '#f59e0b' }} />
+                  <span>
+                    <span className="font-semibold" style={{ color: '#f59e0b' }}>Configuração incompleta:</span>{' '}
+                    {configIssues.join(' · ')}
+                  </span>
+                </div>
+              )}
+
+              {execStats?.lastError && (
+                <div
+                  className="mt-2 rounded-md px-2.5 py-1.5 text-[11px] flex items-start gap-1.5"
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.08)',
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                    color: 'var(--color-text-secondary)',
+                  }}
+                >
+                  <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: '#ef4444' }} />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold" style={{ color: '#ef4444' }}>
+                      Última falha {execStats.lastErrorAt ? `· ${new Date(execStats.lastErrorAt).toLocaleString()}` : ''}
+                    </div>
+                    <div className="break-words">{execStats.lastError}</div>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -845,15 +922,17 @@ function Badge({
 }: {
   icon: React.ReactNode
   children: React.ReactNode
-  tone: 'primary' | 'muted' | 'success'
+  tone: 'primary' | 'muted' | 'success' | 'danger'
 }) {
   const bg =
     tone === 'primary' ? 'var(--color-primary-subtle)' :
     tone === 'success' ? 'rgba(16, 185, 129, 0.12)' :
+    tone === 'danger' ? 'rgba(239, 68, 68, 0.12)' :
     'var(--color-bg-elevated)'
   const fg =
     tone === 'primary' ? 'var(--color-primary)' :
     tone === 'success' ? 'var(--color-success, #10b981)' :
+    tone === 'danger' ? '#ef4444' :
     'var(--color-text-tertiary)'
   return (
     <span
@@ -904,6 +983,17 @@ function StepEditorModal({
 
   const isCall = channel === 'call'
   const isEmail = channel === 'email'
+
+  // Modo automático só funciona em email (único agent disponível: bdr_email).
+  // Se trocar pra whatsapp/call em modo automated, força volta pra manual.
+  useEffect(() => {
+    if (executionMode === 'automated' && channel !== 'email') {
+      setExecutionMode('manual')
+    }
+    if (executionMode === 'automated' && channel === 'email') {
+      setAgentSlug('bdr_email')
+    }
+  }, [channel, executionMode])
 
   function addVariant() {
     setVariants((prev) => [
@@ -1055,15 +1145,27 @@ function StepEditorModal({
           </div>
 
           {executionMode === 'automated' && (
-            <FormField label="Agente IA" hint="slug do agent que dispara esta etapa">
-              <input
-                type="text"
+            <FormField
+              label="Agente IA"
+              hint={
+                channel === 'email'
+                  ? 'BDR Email envia via Resend usando a 1ª variação como template.'
+                  : 'Hoje só temos agente automático para email. Use modo Manual para WhatsApp/Call.'
+              }
+            >
+              <select
                 value={agentSlug}
                 onChange={(e) => setAgentSlug(e.target.value)}
-                placeholder="bdr_email"
                 className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
                 style={inputStyle}
-              />
+                disabled={channel !== 'email'}
+              >
+                {channel === 'email' ? (
+                  <option value="bdr_email">BDR Email — envio via Resend</option>
+                ) : (
+                  <option value="">Sem agente automático para este canal</option>
+                )}
+              </select>
             </FormField>
           )}
 

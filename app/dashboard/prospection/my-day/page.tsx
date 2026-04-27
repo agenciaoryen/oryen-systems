@@ -342,6 +342,51 @@ export default function MyDayPage() {
               Sequences
             </Link>
 
+            {data?.is_admin && (
+              <>
+                <Link
+                  href="/dashboard/prospection/team"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition"
+                  style={{
+                    background: 'var(--color-bg-elevated)',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-text-secondary)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--color-primary)'
+                    e.currentTarget.style.color = 'var(--color-text-primary)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--color-border)'
+                    e.currentTarget.style.color = 'var(--color-text-secondary)'
+                  }}
+                >
+                  <Users className="w-4 h-4" />
+                  Capacidade
+                </Link>
+                <Link
+                  href="/dashboard/prospection/upcoming"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition"
+                  style={{
+                    background: 'var(--color-bg-elevated)',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-text-secondary)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--color-primary)'
+                    e.currentTarget.style.color = 'var(--color-text-primary)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--color-border)'
+                    e.currentTarget.style.color = 'var(--color-text-secondary)'
+                  }}
+                >
+                  <Mail className="w-4 h-4" />
+                  Emails de hoje
+                </Link>
+              </>
+            )}
+
             <button
               onClick={() => fetchData(true)}
               disabled={refreshing}

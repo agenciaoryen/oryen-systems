@@ -59,11 +59,38 @@ export async function GET(
       .order('enrolled_at', { ascending: false })
       .limit(100)
 
+    // Estatísticas de execução por step (success/failed/skipped + último erro)
+    const stepIds = (steps || []).map((s: any) => s.id)
+    const stepExecStats: Record<string, { success: number; failed: number; skipped: number; lastError?: string; lastErrorAt?: string }> = {}
+    if (stepIds.length > 0) {
+      const { data: executions } = await supabase
+        .from('prospection_step_executions')
+        .select('step_id, result, metadata, executed_at')
+        .in('step_id', stepIds)
+        .order('executed_at', { ascending: false })
+        .limit(2000)
+
+      for (const e of executions || []) {
+        const sid = e.step_id as string
+        if (!stepExecStats[sid]) stepExecStats[sid] = { success: 0, failed: 0, skipped: 0 }
+        const stats = stepExecStats[sid]
+        if (e.result === 'success') stats.success++
+        else if (e.result === 'failed') {
+          stats.failed++
+          if (!stats.lastError && e.metadata?.error) {
+            stats.lastError = String(e.metadata.error)
+            stats.lastErrorAt = e.executed_at
+          }
+        } else if (e.result === 'skipped') stats.skipped++
+      }
+    }
+
     return NextResponse.json({
       sequence,
       steps: steps || [],
       rules: rules || [],
       enrollments: enrollments || [],
+      stepExecStats,
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

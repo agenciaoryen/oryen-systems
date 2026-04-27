@@ -314,14 +314,25 @@ async function createManualTask(enrollment: any, step: any) {
 
 async function resolveAssignee(orgId: string, step: any): Promise<string | null> {
   if (step.assignee_mode === 'specific_user') {
-    return step.assignee_user_id
+    // Se o user específico está em opt-out (capacity=0), respeita e não atribui.
+    if (!step.assignee_user_id) return null
+    const { data: u } = await supabase
+      .from('users')
+      .select('id, daily_task_capacity')
+      .eq('id', step.assignee_user_id)
+      .maybeSingle()
+    if (!u || (u.daily_task_capacity ?? 0) <= 0) return null
+    return u.id
   }
 
   // team_round_robin ou role_based: escolhe user com menos tasks abertas
+  // entre os que NÃO estão em opt-out (daily_task_capacity > 0).
   let query = supabase
     .from('users')
-    .select('id')
+    .select('id, daily_task_capacity')
     .eq('org_id', orgId)
+    .gt('daily_task_capacity', 0)
+    .neq('status', 'inactive')
 
   if (step.assignee_mode === 'role_based' && step.assignee_role) {
     query = query.eq('role', step.assignee_role)
@@ -331,20 +342,42 @@ async function resolveAssignee(orgId: string, step: any): Promise<string | null>
 
   if (!users || users.length === 0) return null
 
-  // Para cada user, conta tasks abertas
-  const counts: { id: string; count: number }[] = []
+  // Para cada user, conta tasks abertas + tasks criadas hoje (contra limite diário)
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+
+  type Candidate = { id: string; openCount: number; todayCount: number; capacity: number }
+  const candidates: Candidate[] = []
   for (const u of users) {
-    const { count } = await supabase
+    const { count: openCount } = await supabase
       .from('prospection_tasks')
       .select('id', { count: 'exact', head: true })
       .eq('org_id', orgId)
       .eq('assignee_user_id', u.id)
       .in('status', ['pending', 'in_progress', 'overdue', 'queued'])
-    counts.push({ id: u.id, count: count || 0 })
+
+    const { count: todayCount } = await supabase
+      .from('prospection_tasks')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', orgId)
+      .eq('assignee_user_id', u.id)
+      .gte('created_at', todayStart.toISOString())
+
+    candidates.push({
+      id: u.id,
+      openCount: openCount || 0,
+      todayCount: todayCount || 0,
+      capacity: u.daily_task_capacity ?? 50,
+    })
   }
 
-  counts.sort((a, b) => a.count - b.count)
-  return counts[0]?.id || null
+  // Filtra quem ainda tem capacidade hoje
+  const available = candidates.filter((c) => c.todayCount < c.capacity)
+  if (available.length === 0) return null
+
+  // Round-robin pelo menor número de tasks abertas
+  available.sort((a, b) => a.openCount - b.openCount)
+  return available[0]?.id || null
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
