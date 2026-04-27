@@ -23,6 +23,15 @@ type UpcomingItem = {
   bucket: 'overdue' | 'today' | 'tomorrow'
 }
 
+// Mesmo critério usado pelo motor (lib/prospection/engine.ts) — em sync.
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+function isLikelyValidEmail(s: string | null | undefined): boolean {
+  if (!s) return false
+  const v = String(s).trim().toLowerCase()
+  if (!v || v === 'null' || v === 'undefined' || v === 'n/a' || v === '-' || v === '—') return false
+  return EMAIL_REGEX.test(v)
+}
+
 type Summary = {
   total: number
   automated_email: number
@@ -325,6 +334,7 @@ function ItemRow({
     if (!templates.length) issues.push('sem variação')
     else if (!tplBodyOk) issues.push('1ª variação sem corpo')
     if (!lead?.email) issues.push('lead sem email')
+    else if (!isLikelyValidEmail(lead.email)) issues.push(`email inválido (${lead.email})`)
   }
 
   const dueAt = new Date(next_action_at)

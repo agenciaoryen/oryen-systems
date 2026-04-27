@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Rocket, Plus, Loader2, ChevronRight, MessageSquare, Mail, Phone, Users, Copy,
-  X, Sparkles, CheckCircle2, Activity, ArrowRight,
+  X, Sparkles, CheckCircle2, Activity, ArrowRight, Archive, ArchiveRestore, Trash2, AlertTriangle,
 } from 'lucide-react'
 import { CHANNEL_LABELS } from '@/lib/prospection/types'
 
@@ -28,6 +28,9 @@ export default function SequencesPage() {
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [duplicateSource, setDuplicateSource] = useState<SequenceRow | null>(null)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<SequenceRow | null>(null)
 
   async function fetchData() {
     setLoading(true)
@@ -43,6 +46,47 @@ export default function SequencesPage() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  async function toggleArchive(seq: SequenceRow) {
+    setBusyId(seq.id)
+    setErrorMsg(null)
+    try {
+      const res = await fetch(`/api/prospection/sequences/${seq.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: !seq.is_active }),
+      })
+      if (!res.ok) {
+        const j = await res.json()
+        throw new Error(j.error || 'Erro ao alterar')
+      }
+      await fetchData()
+    } catch (e: any) {
+      setErrorMsg(e.message)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function deleteSequence(seq: SequenceRow) {
+    setBusyId(seq.id)
+    setErrorMsg(null)
+    try {
+      const res = await fetch(`/api/prospection/sequences/${seq.id}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const j = await res.json()
+        throw new Error(j.error || 'Erro ao excluir')
+      }
+      setConfirmDelete(null)
+      await fetchData()
+    } catch (e: any) {
+      setErrorMsg(e.message)
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -170,11 +214,33 @@ export default function SequencesPage() {
         </div>
       ) : (
         <div className="space-y-3">
+          {errorMsg && (
+            <div
+              className="rounded-lg px-3 py-2 text-sm flex items-center gap-2"
+              style={{
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                color: '#ef4444',
+              }}
+            >
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+              <span>{errorMsg}</span>
+              <button
+                onClick={() => setErrorMsg(null)}
+                className="ml-auto text-xs underline"
+              >
+                fechar
+              </button>
+            </div>
+          )}
           {sequences.map((s) => (
             <SequenceCard
               key={s.id}
               sequence={s}
+              busy={busyId === s.id}
               onDuplicate={() => setDuplicateSource(s)}
+              onToggleArchive={() => toggleArchive(s)}
+              onDelete={() => setConfirmDelete(s)}
             />
           ))}
         </div>
@@ -201,6 +267,15 @@ export default function SequencesPage() {
           }}
         />
       )}
+
+      {confirmDelete && (
+        <ConfirmDeleteModal
+          sequence={confirmDelete}
+          busy={busyId === confirmDelete.id}
+          onClose={() => setConfirmDelete(null)}
+          onConfirm={() => deleteSequence(confirmDelete)}
+        />
+      )}
     </div>
   )
 }
@@ -209,10 +284,16 @@ export default function SequencesPage() {
 
 function SequenceCard({
   sequence,
+  busy,
   onDuplicate,
+  onToggleArchive,
+  onDelete,
 }: {
   sequence: SequenceRow
+  busy: boolean
   onDuplicate: () => void
+  onToggleArchive: () => void
+  onDelete: () => void
 }) {
   return (
     <div
@@ -260,14 +341,16 @@ function SequenceCard({
           <div className="flex items-center gap-1 flex-shrink-0">
             <button
               onClick={onDuplicate}
+              disabled={busy}
               title="Duplicar esta sequence"
-              className="p-2 rounded-lg transition"
+              className="p-2 rounded-lg transition disabled:opacity-50"
               style={{
                 background: 'var(--color-bg-elevated)',
                 border: '1px solid var(--color-border)',
                 color: 'var(--color-text-secondary)',
               }}
               onMouseEnter={(e) => {
+                if (busy) return
                 e.currentTarget.style.borderColor = 'var(--color-primary)'
                 e.currentTarget.style.color = 'var(--color-primary)'
               }}
@@ -277,6 +360,58 @@ function SequenceCard({
               }}
             >
               <Copy className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={onToggleArchive}
+              disabled={busy}
+              title={sequence.is_active ? 'Arquivar (pausa nova inscrição via regras)' : 'Reativar'}
+              className="p-2 rounded-lg transition disabled:opacity-50"
+              style={{
+                background: 'var(--color-bg-elevated)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text-secondary)',
+              }}
+              onMouseEnter={(e) => {
+                if (busy) return
+                e.currentTarget.style.borderColor = '#f59e0b'
+                e.currentTarget.style.color = '#f59e0b'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-border)'
+                e.currentTarget.style.color = 'var(--color-text-secondary)'
+              }}
+            >
+              {sequence.is_active ? (
+                <Archive className="w-3.5 h-3.5" />
+              ) : (
+                <ArchiveRestore className="w-3.5 h-3.5" />
+              )}
+            </button>
+            <button
+              onClick={onDelete}
+              disabled={busy}
+              title="Excluir sequence"
+              className="p-2 rounded-lg transition disabled:opacity-50"
+              style={{
+                background: 'var(--color-bg-elevated)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text-secondary)',
+              }}
+              onMouseEnter={(e) => {
+                if (busy) return
+                e.currentTarget.style.borderColor = '#ef4444'
+                e.currentTarget.style.color = '#ef4444'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-border)'
+                e.currentTarget.style.color = 'var(--color-text-secondary)'
+              }}
+            >
+              {busy ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="w-3.5 h-3.5" />
+              )}
             </button>
             <Link
               href={`/dashboard/prospection/sequences/${sequence.id}`}
@@ -414,6 +549,148 @@ function Metric({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+
+function ConfirmDeleteModal({
+  sequence,
+  busy,
+  onClose,
+  onConfirm,
+}: {
+  sequence: SequenceRow
+  busy: boolean
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  const [typed, setTyped] = useState('')
+  const canConfirm = typed.trim() === sequence.name && !busy
+  const hasActive = sequence.active_count > 0
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+      style={{ background: 'var(--color-bg-overlay)' }}
+      onClick={onClose}
+    >
+      <div
+        className="rounded-2xl max-w-md w-full shadow-2xl"
+        style={{
+          background: 'var(--color-bg-surface)',
+          border: '1px solid var(--color-border)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="p-5 flex items-start justify-between gap-3"
+          style={{ borderBottom: '1px solid var(--color-border)' }}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'rgba(239, 68, 68, 0.12)',
+                color: '#ef4444',
+              }}
+            >
+              <Trash2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                Excluir sequence?
+              </h3>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+                Essa ação não pode ser desfeita.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg transition"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {hasActive && (
+            <div
+              className="rounded-lg px-3 py-2 text-xs flex items-start gap-2"
+              style={{
+                background: 'rgba(245, 158, 11, 0.08)',
+                border: '1px solid rgba(245, 158, 11, 0.25)',
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
+              <span>
+                <strong>{sequence.active_count}</strong> lead(s) ativo(s) nesta sequence. Para excluir,
+                pause os enrollments ativos primeiro (ou apenas <em>arquive</em> a sequence pra impedir
+                novas inscrições).
+              </span>
+            </div>
+          )}
+
+          <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            Vai apagar steps, regras e o histórico de execução. Para confirmar, digite o nome
+            exato:
+          </div>
+          <div
+            className="rounded-lg px-3 py-2 text-sm font-mono"
+            style={{
+              background: 'var(--color-bg-elevated)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text-primary)',
+            }}
+          >
+            {sequence.name}
+          </div>
+          <input
+            type="text"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            placeholder="Digite aqui o nome da sequence"
+            autoFocus
+            className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+            style={{
+              background: 'var(--color-bg-elevated)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text-primary)',
+            }}
+          />
+        </div>
+
+        <div
+          className="p-4 flex items-center justify-end gap-2"
+          style={{ borderTop: '1px solid var(--color-border)' }}
+        >
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm rounded-lg font-medium transition"
+            style={{
+              background: 'var(--color-bg-elevated)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text-primary)',
+            }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={!canConfirm}
+            className="px-4 py-2 text-sm rounded-lg font-semibold transition inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              background: '#ef4444',
+              color: '#fff',
+            }}
+          >
+            {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+            Excluir definitivamente
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function CreateSequenceModal({
   duplicateOf,

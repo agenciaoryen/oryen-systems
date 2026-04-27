@@ -227,6 +227,17 @@ async function executeAutomatedStep(enrollment: any, step: any) {
   throw new Error(`Agent não suportado: ${step.agent_slug}`)
 }
 
+// Regex razoável pra validar email antes de enviar pro Resend.
+// Não tenta cobrir todos os edge cases do RFC; só pega lixo óbvio
+// (string vazia, "null", "n/a", "—", sem @, etc) que estourava no provedor.
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+function isValidEmail(s: string | null | undefined): boolean {
+  if (!s) return false
+  const v = String(s).trim().toLowerCase()
+  if (!v || v === 'null' || v === 'undefined' || v === 'n/a' || v === '-' || v === '—') return false
+  return EMAIL_REGEX.test(v)
+}
+
 async function executeBdrEmailStep(enrollment: any, step: any) {
   // Busca dados do lead
   const { data: lead } = await supabase
@@ -236,15 +247,18 @@ async function executeBdrEmailStep(enrollment: any, step: any) {
     .single()
 
   if (!lead) throw new Error('Lead não encontrado')
-  if (!lead.email) {
-    // Sem email, loga skip
+  if (!isValidEmail(lead.email)) {
+    // Email vazio ou mal formatado — pula sem chamar o provedor.
     await supabase.from('prospection_step_executions').insert({
       org_id: enrollment.org_id,
       enrollment_id: enrollment.id,
       step_id: step.id,
       lead_id: enrollment.lead_id,
       result: 'skipped',
-      metadata: { reason: 'lead_without_email' },
+      metadata: {
+        reason: lead.email ? 'invalid_email_format' : 'lead_without_email',
+        email_value: lead.email || null,
+      },
     })
     return
   }
