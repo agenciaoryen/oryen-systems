@@ -302,6 +302,16 @@ export default function ProspectionTeamPage() {
   )
 }
 
+type StepGroup = {
+  step_id: string
+  step_position: number
+  step_title: string | null
+  step_channel: string
+  sequence_id: string
+  sequence_name: string
+  count: number
+}
+
 function TransferTasksModal({
   fromUser,
   team,
@@ -319,9 +329,67 @@ function TransferTasksModal({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<number | null>(null)
+  const [stepGroups, setStepGroups] = useState<StepGroup[]>([])
+  const [loadingSteps, setLoadingSteps] = useState(true)
+  const [selectedStepIds, setSelectedStepIds] = useState<Set<string>>(new Set())
+
+  // Carrega quais steps esse user tem tasks abertas. Inicialmente todos selecionados.
+  useEffect(() => {
+    let cancelled = false
+    setLoadingSteps(true)
+    fetch(`/api/prospection/tasks/reassign?user_id=${fromUser.id}`)
+      .then((r) => (r.ok ? r.json() : { steps: [] }))
+      .then((j) => {
+        if (cancelled) return
+        const steps: StepGroup[] = j.steps || []
+        setStepGroups(steps)
+        setSelectedStepIds(new Set(steps.map((s) => s.step_id)))
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingSteps(false)
+      })
+    return () => { cancelled = true }
+  }, [fromUser.id])
+
+  // Total disponível dado o filtro de steps selecionado
+  const allSelected = selectedStepIds.size === stepGroups.length && stepGroups.length > 0
+  const availableForSelection = allSelected
+    ? fromUser.open_tasks
+    : stepGroups
+        .filter((s) => selectedStepIds.has(s.step_id))
+        .reduce((acc, s) => acc + s.count, 0)
+
+  // Ajusta count se o filtro reduzir o disponível
+  useEffect(() => {
+    if (count > availableForSelection && availableForSelection > 0) {
+      setCount(availableForSelection)
+    }
+    if (availableForSelection === 0) {
+      setCount(0)
+    }
+  }, [availableForSelection]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function toggleStep(stepId: string) {
+    setSelectedStepIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(stepId)) next.delete(stepId)
+      else next.add(stepId)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    if (selectedStepIds.size === stepGroups.length) {
+      setSelectedStepIds(new Set())
+    } else {
+      setSelectedStepIds(new Set(stepGroups.map((s) => s.step_id)))
+    }
+  }
 
   const toUser = team.find((u) => u.id === toUserId)
-  const canSubmit = !!toUserId && count > 0 && count <= fromUser.open_tasks && !busy
+  const canSubmit =
+    !!toUserId && count > 0 && count <= availableForSelection && selectedStepIds.size > 0 && !busy
 
   const overCapacity =
     toUser && toUser.today_tasks + count > toUser.daily_task_capacity
@@ -339,6 +407,7 @@ function TransferTasksModal({
           from_user_id: fromUser.id,
           to_user_id: toUserId,
           count,
+          step_ids: allSelected ? null : Array.from(selectedStepIds),
         }),
       })
       if (!res.ok) {
@@ -457,25 +526,94 @@ function TransferTasksModal({
           </div>
 
           <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+                Etapas elegíveis
+              </label>
+              {stepGroups.length > 0 && (
+                <button
+                  onClick={toggleAll}
+                  className="text-[10px] font-semibold underline"
+                  style={{ color: 'var(--color-primary)' }}
+                >
+                  {selectedStepIds.size === stepGroups.length ? 'Desmarcar todas' : 'Marcar todas'}
+                </button>
+              )}
+            </div>
+
+            {loadingSteps ? (
+              <div className="rounded-lg px-3 py-3 text-xs flex items-center gap-2"
+                   style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-tertiary)' }}>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Carregando etapas...
+              </div>
+            ) : stepGroups.length === 0 ? (
+              <div className="rounded-lg px-3 py-3 text-xs"
+                   style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-tertiary)' }}>
+                Nenhuma etapa com tasks abertas.
+              </div>
+            ) : (
+              <div
+                className="rounded-lg max-h-48 overflow-y-auto"
+                style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}
+              >
+                {stepGroups.map((s) => {
+                  const checked = selectedStepIds.has(s.step_id)
+                  return (
+                    <label
+                      key={s.step_id}
+                      className="flex items-center gap-2 px-3 py-2 cursor-pointer transition border-b last:border-b-0"
+                      style={{ borderColor: 'var(--color-border)' }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleStep(s.step_id)}
+                        className="cursor-pointer"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>
+                          Etapa {s.step_position}{s.step_title ? ` · ${s.step_title}` : ''}
+                        </div>
+                        <div className="text-[10px] truncate" style={{ color: 'var(--color-text-tertiary)' }}>
+                          {s.sequence_name} · canal {s.step_channel}
+                        </div>
+                      </div>
+                      <span
+                        className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                        style={{ background: 'var(--color-bg-surface)', color: 'var(--color-text-secondary)' }}
+                      >
+                        {s.count}
+                      </span>
+                    </label>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <div>
             <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: 'var(--color-text-tertiary)' }}>
-              Quantidade (máx {fromUser.open_tasks})
+              Quantidade (máx {availableForSelection})
             </label>
             <div className="flex items-center gap-2">
               <input
                 type="range"
-                min={1}
-                max={fromUser.open_tasks}
+                min={availableForSelection > 0 ? 1 : 0}
+                max={Math.max(1, availableForSelection)}
                 value={count}
-                onChange={(e) => setCount(Math.max(1, Math.min(fromUser.open_tasks, Number(e.target.value))))}
+                disabled={availableForSelection === 0}
+                onChange={(e) => setCount(Math.max(1, Math.min(availableForSelection, Number(e.target.value))))}
                 className="flex-1"
               />
               <input
                 type="number"
-                min={1}
-                max={fromUser.open_tasks}
+                min={availableForSelection > 0 ? 1 : 0}
+                max={availableForSelection}
                 value={count}
-                onChange={(e) => setCount(Math.max(1, Math.min(fromUser.open_tasks, Number(e.target.value) || 1)))}
-                className="w-20 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none"
+                disabled={availableForSelection === 0}
+                onChange={(e) => setCount(Math.max(1, Math.min(availableForSelection, Number(e.target.value) || 1)))}
+                className="w-20 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none disabled:opacity-50"
                 style={{
                   background: 'var(--color-bg-elevated)',
                   border: '1px solid var(--color-border)',
