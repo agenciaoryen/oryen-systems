@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   Users, Loader2, ArrowLeft, Save, Check, AlertTriangle,
-  ToggleLeft, ToggleRight,
+  ToggleLeft, ToggleRight, ArrowRightLeft, X,
 } from 'lucide-react'
 import { useAuth } from '@/lib/AuthContext'
 
@@ -33,6 +33,7 @@ export default function ProspectionTeamPage() {
   const [savingId, setSavingId] = useState<string | null>(null)
   const [savedId, setSavedId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [transferFrom, setTransferFrom] = useState<TeamUser | null>(null)
 
   async function fetchTeam() {
     setLoading(true)
@@ -185,7 +186,31 @@ export default function ProspectionTeamPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {u.open_tasks > 0 && (
+                    <button
+                      onClick={() => setTransferFrom(u)}
+                      title="Transferir tasks abertas para outro user"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition"
+                      style={{
+                        background: 'var(--color-bg-elevated)',
+                        border: '1px solid var(--color-border)',
+                        color: 'var(--color-text-secondary)',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--color-primary)'
+                        e.currentTarget.style.color = 'var(--color-primary)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--color-border)'
+                        e.currentTarget.style.color = 'var(--color-text-secondary)'
+                      }}
+                    >
+                      <ArrowRightLeft className="w-3.5 h-3.5" />
+                      Transferir
+                    </button>
+                  )}
+
                   <button
                     onClick={() => {
                       const next = isOptOut ? 50 : 0
@@ -261,6 +286,281 @@ export default function ProspectionTeamPage() {
           )}
         </div>
       )}
+
+      {transferFrom && (
+        <TransferTasksModal
+          fromUser={transferFrom}
+          team={team.filter((u) => u.id !== transferFrom.id)}
+          onClose={() => setTransferFrom(null)}
+          onTransferred={() => {
+            setTransferFrom(null)
+            fetchTeam()
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+function TransferTasksModal({
+  fromUser,
+  team,
+  onClose,
+  onTransferred,
+}: {
+  fromUser: TeamUser
+  team: TeamUser[]
+  onClose: () => void
+  onTransferred: () => void
+}) {
+  const eligibleTeam = team.filter((u) => u.daily_task_capacity > 0 && u.status !== 'inactive')
+  const [toUserId, setToUserId] = useState<string>(eligibleTeam[0]?.id || '')
+  const [count, setCount] = useState<number>(Math.min(10, fromUser.open_tasks))
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [done, setDone] = useState<number | null>(null)
+
+  const toUser = team.find((u) => u.id === toUserId)
+  const canSubmit = !!toUserId && count > 0 && count <= fromUser.open_tasks && !busy
+
+  const overCapacity =
+    toUser && toUser.today_tasks + count > toUser.daily_task_capacity
+      ? toUser.today_tasks + count - toUser.daily_task_capacity
+      : 0
+
+  async function handleConfirm() {
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/prospection/tasks/reassign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from_user_id: fromUser.id,
+          to_user_id: toUserId,
+          count,
+        }),
+      })
+      if (!res.ok) {
+        const j = await res.json()
+        throw new Error(j.error || 'Erro ao transferir')
+      }
+      const j = await res.json()
+      setDone(j.transferred ?? 0)
+      setTimeout(() => onTransferred(), 700)
+    } catch (e: any) {
+      setError(e.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+      style={{ background: 'var(--color-bg-overlay)' }}
+      onClick={onClose}
+    >
+      <div
+        className="rounded-2xl max-w-md w-full shadow-2xl"
+        style={{
+          background: 'var(--color-bg-surface)',
+          border: '1px solid var(--color-border)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="p-5 flex items-start justify-between gap-3"
+          style={{ borderBottom: '1px solid var(--color-border)' }}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'var(--color-primary-subtle)',
+                color: 'var(--color-primary)',
+              }}
+            >
+              <ArrowRightLeft className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                Transferir tasks
+              </h3>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+                Pega as tasks mais urgentes do origem (due_at mais próximo) e reatribui ao destino.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg transition"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: 'var(--color-text-tertiary)' }}>
+              De
+            </label>
+            <div
+              className="rounded-lg px-3 py-2 text-sm"
+              style={{
+                background: 'var(--color-bg-elevated)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text-primary)',
+              }}
+            >
+              <div className="font-semibold">{fromUser.full_name || fromUser.email}</div>
+              <div className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+                {fromUser.open_tasks} aberta(s) · {fromUser.today_tasks} hoje
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: 'var(--color-text-tertiary)' }}>
+              Para
+            </label>
+            {eligibleTeam.length === 0 ? (
+              <div
+                className="rounded-lg px-3 py-2 text-xs"
+                style={{
+                  background: 'rgba(245, 158, 11, 0.08)',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                  color: '#f59e0b',
+                }}
+              >
+                Nenhum outro colaborador elegível. Active alguém (capacidade &gt; 0) primeiro.
+              </div>
+            ) : (
+              <select
+                value={toUserId}
+                onChange={(e) => setToUserId(e.target.value)}
+                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                style={{
+                  background: 'var(--color-bg-elevated)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-text-primary)',
+                }}
+              >
+                {eligibleTeam.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.full_name || u.email} · {u.today_tasks}/{u.daily_task_capacity} hoje · {u.open_tasks} abertas
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: 'var(--color-text-tertiary)' }}>
+              Quantidade (máx {fromUser.open_tasks})
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="range"
+                min={1}
+                max={fromUser.open_tasks}
+                value={count}
+                onChange={(e) => setCount(Math.max(1, Math.min(fromUser.open_tasks, Number(e.target.value))))}
+                className="flex-1"
+              />
+              <input
+                type="number"
+                min={1}
+                max={fromUser.open_tasks}
+                value={count}
+                onChange={(e) => setCount(Math.max(1, Math.min(fromUser.open_tasks, Number(e.target.value) || 1)))}
+                className="w-20 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none"
+                style={{
+                  background: 'var(--color-bg-elevated)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-text-primary)',
+                }}
+              />
+            </div>
+          </div>
+
+          {overCapacity > 0 && (
+            <div
+              className="rounded-lg px-3 py-2 text-xs flex items-start gap-2"
+              style={{
+                background: 'rgba(245, 158, 11, 0.08)',
+                border: '1px solid rgba(245, 158, 11, 0.25)',
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
+              <span>
+                Vai estourar em <strong>{overCapacity}</strong> a capacidade diária do destino. A
+                transferência continua, mas o motor não vai criar mais tarefas pra ele hoje.
+              </span>
+            </div>
+          )}
+
+          {error && (
+            <div
+              className="rounded-lg px-3 py-2 text-xs flex items-start gap-2"
+              style={{
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                color: '#ef4444',
+              }}
+            >
+              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {done !== null && (
+            <div
+              className="rounded-lg px-3 py-2 text-xs flex items-center gap-2"
+              style={{
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                color: '#10b981',
+              }}
+            >
+              <Check className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>{done} task(s) transferida(s)!</span>
+            </div>
+          )}
+        </div>
+
+        <div
+          className="p-4 flex items-center justify-end gap-2"
+          style={{ borderTop: '1px solid var(--color-border)' }}
+        >
+          <button
+            onClick={onClose}
+            disabled={busy}
+            className="px-4 py-2 text-sm rounded-lg font-medium transition disabled:opacity-50"
+            style={{
+              background: 'var(--color-bg-elevated)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text-primary)',
+            }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={!canSubmit}
+            className="px-4 py-2 text-sm rounded-lg font-semibold transition inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              background: 'var(--color-primary)',
+              color: 'var(--color-text-on-primary, #fff)',
+            }}
+          >
+            {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRightLeft className="w-3.5 h-3.5" />}
+            Transferir {count} task(s)
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
