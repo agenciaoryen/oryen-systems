@@ -68,16 +68,37 @@ export default function SequencesPage() {
     }
   }
 
-  async function deleteSequence(seq: SequenceRow) {
+  async function deleteSequence(seq: SequenceRow, force = false) {
+    setBusyId(seq.id)
+    setErrorMsg(null)
+    try {
+      const url = `/api/prospection/sequences/${seq.id}${force ? '?force=true' : ''}`
+      const res = await fetch(url, { method: 'DELETE' })
+      if (!res.ok) {
+        const j = await res.json()
+        throw new Error(j.error || 'Erro ao excluir')
+      }
+      setConfirmDelete(null)
+      await fetchData()
+    } catch (e: any) {
+      setErrorMsg(e.message)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function archiveAndClose(seq: SequenceRow) {
     setBusyId(seq.id)
     setErrorMsg(null)
     try {
       const res = await fetch(`/api/prospection/sequences/${seq.id}`, {
-        method: 'DELETE',
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: false }),
       })
       if (!res.ok) {
         const j = await res.json()
-        throw new Error(j.error || 'Erro ao excluir')
+        throw new Error(j.error || 'Erro ao arquivar')
       }
       setConfirmDelete(null)
       await fetchData()
@@ -273,7 +294,8 @@ export default function SequencesPage() {
           sequence={confirmDelete}
           busy={busyId === confirmDelete.id}
           onClose={() => setConfirmDelete(null)}
-          onConfirm={() => deleteSequence(confirmDelete)}
+          onArchive={() => archiveAndClose(confirmDelete)}
+          onConfirmDelete={(force) => deleteSequence(confirmDelete, force)}
         />
       )}
     </div>
@@ -554,16 +576,18 @@ function ConfirmDeleteModal({
   sequence,
   busy,
   onClose,
-  onConfirm,
+  onArchive,
+  onConfirmDelete,
 }: {
   sequence: SequenceRow
   busy: boolean
   onClose: () => void
-  onConfirm: () => void
+  onArchive: () => void
+  onConfirmDelete: (force: boolean) => void
 }) {
   const [typed, setTyped] = useState('')
-  const canConfirm = typed.trim() === sequence.name && !busy
   const hasActive = sequence.active_count > 0
+  const canConfirm = typed.trim() === sequence.name && !busy
 
   return (
     <div
@@ -572,7 +596,7 @@ function ConfirmDeleteModal({
       onClick={onClose}
     >
       <div
-        className="rounded-2xl max-w-md w-full shadow-2xl"
+        className="rounded-2xl max-w-lg w-full shadow-2xl"
         style={{
           background: 'var(--color-bg-surface)',
           border: '1px solid var(--color-border)',
@@ -598,7 +622,7 @@ function ConfirmDeleteModal({
                 Excluir sequence?
               </h3>
               <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
-                Essa ação não pode ser desfeita.
+                Os leads <strong>não</strong> são afetados — só a inscrição deles nesta cadência.
               </p>
             </div>
           </div>
@@ -614,7 +638,7 @@ function ConfirmDeleteModal({
         <div className="p-5 space-y-4">
           {hasActive && (
             <div
-              className="rounded-lg px-3 py-2 text-xs flex items-start gap-2"
+              className="rounded-lg px-3 py-2.5 text-xs flex items-start gap-2"
               style={{
                 background: 'rgba(245, 158, 11, 0.08)',
                 border: '1px solid rgba(245, 158, 11, 0.25)',
@@ -622,17 +646,27 @@ function ConfirmDeleteModal({
               }}
             >
               <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
-              <span>
-                <strong>{sequence.active_count}</strong> lead(s) ativo(s) nesta sequence. Para excluir,
-                pause os enrollments ativos primeiro (ou apenas <em>arquive</em> a sequence pra impedir
-                novas inscrições).
-              </span>
+              <div>
+                <div className="font-semibold mb-1" style={{ color: '#f59e0b' }}>
+                  {sequence.active_count} lead(s) ativo(s) nesta sequence
+                </div>
+                <div>
+                  Você pode apenas <strong>arquivar</strong> (impede novas inscrições, mas mantém
+                  histórico) ou <strong>excluir mesmo assim</strong> (remove inscrições, tasks e
+                  histórico desta cadência — leads ficam intactos).
+                </div>
+              </div>
             </div>
           )}
 
+          <div className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+            O que vai ser apagado: steps, regras de inscrição, enrollments, tasks pendentes e log de
+            execuções. <strong>Não</strong> mexe em <code>leads.stage</code>, dados do lead nem
+            histórico de mensagens.
+          </div>
+
           <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Vai apagar steps, regras e o histórico de execução. Para confirmar, digite o nome
-            exato:
+            Para confirmar exclusão, digite o nome exato:
           </div>
           <div
             className="rounded-lg px-3 py-2 text-sm font-mono"
@@ -660,12 +694,13 @@ function ConfirmDeleteModal({
         </div>
 
         <div
-          className="p-4 flex items-center justify-end gap-2"
+          className="p-4 flex items-center justify-between gap-2 flex-wrap"
           style={{ borderTop: '1px solid var(--color-border)' }}
         >
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm rounded-lg font-medium transition"
+            disabled={busy}
+            className="px-4 py-2 text-sm rounded-lg font-medium transition disabled:opacity-50"
             style={{
               background: 'var(--color-bg-elevated)',
               border: '1px solid var(--color-border)',
@@ -674,18 +709,35 @@ function ConfirmDeleteModal({
           >
             Cancelar
           </button>
-          <button
-            onClick={onConfirm}
-            disabled={!canConfirm}
-            className="px-4 py-2 text-sm rounded-lg font-semibold transition inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{
-              background: '#ef4444',
-              color: '#fff',
-            }}
-          >
-            {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-            Excluir definitivamente
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {hasActive && sequence.is_active && (
+              <button
+                onClick={onArchive}
+                disabled={busy}
+                className="px-3 py-2 text-sm rounded-lg font-semibold transition inline-flex items-center gap-1.5 disabled:opacity-50"
+                style={{
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.35)',
+                  color: '#f59e0b',
+                }}
+              >
+                {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Archive className="w-3.5 h-3.5" />}
+                Apenas arquivar
+              </button>
+            )}
+            <button
+              onClick={() => onConfirmDelete(hasActive)}
+              disabled={!canConfirm}
+              className="px-4 py-2 text-sm rounded-lg font-semibold transition inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                background: '#ef4444',
+                color: '#fff',
+              }}
+            >
+              {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+              {hasActive ? 'Excluir mesmo assim' : 'Excluir definitivamente'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

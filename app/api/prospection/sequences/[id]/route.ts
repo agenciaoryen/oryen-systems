@@ -114,21 +114,33 @@ export async function DELETE(
     if (gate) return gate
 
     const { id } = await context.params
+    const force = request.nextUrl.searchParams.get('force') === 'true'
 
-    // Verifica se há enrollments ativos
-    const { count: activeCount } = await supabase
-      .from('prospection_enrollments')
-      .select('id', { count: 'exact', head: true })
-      .eq('sequence_id', id)
-      .eq('status', 'active')
+    // Sem force: bloqueia se houver enrollments ativos
+    if (!force) {
+      const { count: activeCount } = await supabase
+        .from('prospection_enrollments')
+        .select('id', { count: 'exact', head: true })
+        .eq('sequence_id', id)
+        .eq('status', 'active')
 
-    if ((activeCount || 0) > 0) {
-      return NextResponse.json(
-        { error: `${activeCount} lead(s) ainda ativos nesta sequence. Pause-os antes de deletar.` },
-        { status: 400 }
-      )
+      if ((activeCount || 0) > 0) {
+        return NextResponse.json(
+          {
+            error: `${activeCount} lead(s) ainda ativos nesta sequence.`,
+            active_count: activeCount,
+            can_force: true,
+          },
+          { status: 409 }
+        )
+      }
     }
 
+    // Com force=true, o cascade do schema cuida de:
+    //   - prospection_steps
+    //   - prospection_enrollments (e via FK em cascade: tasks, executions)
+    //   - prospection_enrollment_rules
+    // Leads NÃO são tocados (leads.stage, dados do lead, lead_events, etc).
     const { error } = await supabase
       .from('prospection_sequences')
       .delete()
@@ -136,7 +148,7 @@ export async function DELETE(
       .eq('org_id', orgId)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, forced: force })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
