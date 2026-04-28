@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { usePlan } from '@/lib/usePlan'
-import { FeatureLock, UpgradeBanner } from '@/app/dashboard/components/FeatureLock'
 import {
   Plus, FileText, Settings, Trash2, X, Save,
   Clock, Calendar, MessageCircle, BarChart3, Loader2, Info,
@@ -318,7 +317,7 @@ function countSelectedMetrics(report: any): number {
 export default function ReportsPage() {
   const { user } = useAuth()
   const activeOrgId = useActiveOrgId()
-  const { canUseReports, isBasic } = usePlan()
+  const { canUseReports } = usePlan()
 
   const userLang = ((user as any)?.language as Language) || 'pt'
   const t = TRANSLATIONS[userLang]
@@ -540,40 +539,6 @@ export default function ReportsPage() {
     + Object.values(formData.goals).filter(Boolean).length
     + Object.values(formData.followup).filter(Boolean).length
 
-  // Se não tem acesso a Reports, mostra tela de upgrade
-  if (!canUseReports) {
-    return (
-      <div className="min-h-[calc(100vh-100px)] p-4 sm:p-6 font-sans animate-in fade-in duration-300" style={{ background: 'var(--color-bg-surface)' }}>
-        <div className="max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-              <BarChart3 className="shrink-0" size={24} style={{ color: 'var(--color-primary)' }} />
-              <span>{t.title}</span>
-            </h1>
-            <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>{t.subtitle}</p>
-          </div>
-
-          {/* FeatureLock Replace */}
-          <FeatureLock
-            feature="hasReports"
-            variant="replace"
-            lang={userLang}
-            title={t.title}
-            description={userLang === 'pt'
-              ? 'Envie métricas automaticamente via WhatsApp para sua equipe.'
-              : userLang === 'es'
-              ? 'Envía métricas automáticamente vía WhatsApp a tu equipo.'
-              : 'Automatically send metrics via WhatsApp to your team.'
-            }
-          >
-            <div />
-          </FeatureLock>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-[calc(100vh-100px)] p-4 sm:p-6 font-sans animate-in fade-in duration-300 overflow-x-hidden" style={{ background: 'var(--color-bg-surface)' }}>
 
@@ -586,29 +551,67 @@ export default function ReportsPage() {
           </h1>
           <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>{t.subtitle}</p>
         </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="w-full sm:w-auto px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all shrink-0"
-          style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)' }}
-        >
-          <Plus size={18} /> {t.newReport}
-        </button>
+        {canUseReports && (
+          <button
+            onClick={() => handleOpenModal()}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all shrink-0"
+            style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 6px -1px rgba(59,130,246,0.2)' }}
+          >
+            <Plus size={18} /> {t.newReport}
+          </button>
+        )}
       </div>
 
-      {/* RELATÓRIO MANUAL — sempre visível, independente de ter reports agendados ou WhatsApp conectado */}
+      {/* RELATÓRIO MANUAL — disponível pra todos os planos (incluindo legado basic) */}
       <div className="max-w-full mb-8">
         <ManualReport lang={userLang} />
       </div>
 
+      {/* Card de upgrade — só pra quem não tem relatórios automatizados */}
+      {!canUseReports && (
+        <div className="max-w-full mb-8 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+          style={{ background: 'var(--color-accent-subtle)', border: '1px solid rgba(221, 160, 50, 0.2)' }}>
+          <div className="flex items-start gap-4 min-w-0">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)' }}>
+              <Send className="w-5 h-5" style={{ color: '#000' }} />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-base sm:text-lg" style={{ color: 'var(--color-text-primary)' }}>
+                {userLang === 'pt'
+                  ? 'Relatórios automatizados via WhatsApp'
+                  : userLang === 'es'
+                  ? 'Reportes automatizados vía WhatsApp'
+                  : 'Automated WhatsApp reports'}
+              </h3>
+              <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                {userLang === 'pt'
+                  ? 'Envie métricas automaticamente para sua equipe — agendado por dia, semana ou mês.'
+                  : userLang === 'es'
+                  ? 'Envía métricas automáticamente a tu equipo — programado diario, semanal o mensual.'
+                  : 'Automatically send metrics to your team — scheduled daily, weekly or monthly.'}
+              </p>
+            </div>
+          </div>
+          <a
+            href="/dashboard/settings/billing"
+            className="w-full sm:w-auto shrink-0 font-bold px-5 py-2.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+            style={{ background: 'linear-gradient(135deg, #F0A030, #E08020)', color: '#000', boxShadow: '0 4px 16px rgba(221, 160, 50, 0.25)' }}
+          >
+            {userLang === 'pt' ? 'Fazer upgrade' : userLang === 'es' ? 'Mejorar plan' : 'Upgrade'}
+          </a>
+        </div>
+      )}
+
       {/* LOADING */}
-      {loading && (
+      {canUseReports && loading && (
         <div className="flex justify-center py-20">
           <Loader2 className="animate-spin" size={32} style={{ color: 'var(--color-primary)' }} />
         </div>
       )}
 
       {/* EMPTY STATE */}
-      {!loading && reports.length === 0 && (
+      {canUseReports && !loading && reports.length === 0 && (
         <div className="rounded-2xl p-8 sm:p-12 flex flex-col items-center justify-center text-center" style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)' }}>
           <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: 'var(--color-primary-subtle)' }}>
             <FileText size={32} style={{ color: 'var(--color-primary)' }} />
@@ -626,7 +629,7 @@ export default function ReportsPage() {
       )}
 
       {/* REPORTS GRID */}
-      {!loading && reports.length > 0 && (
+      {canUseReports && !loading && reports.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {reports.map((report) => (
             <div
@@ -737,7 +740,7 @@ export default function ReportsPage() {
       )}
 
       {/* MODAL CRIAR/EDITAR */}
-      {isModalOpen && (
+      {canUseReports && isModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto"
           style={{ background: 'var(--color-bg-overlay)' }}
