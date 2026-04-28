@@ -1,6 +1,11 @@
 // app/api/agents/run-campaign/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { runHunterCampaign } from '@/lib/agents/hunter/runner'
+
+// Runner local pode demorar até ~30s (Serper + scraping de sites + inserts).
+// Vercel padrão é 10s — eleva pra 60s.
+export const maxDuration = 60
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,13 +13,16 @@ const supabase = createClient(
 )
 
 /**
- * Mapa de webhooks N8N por solution_slug.
- * Cada agente tem seu próprio workflow no n8n.
- * Para adicionar um novo agente, basta adicionar uma linha aqui
- * e a variável de ambiente correspondente.
+ * Slugs com runner LOCAL (sem n8n).
+ * Quando o slug está aqui, executa direto no Vercel — não chama webhook.
+ */
+const LOCAL_RUNNERS = new Set(['hunter_b2b'])
+
+/**
+ * Mapa de webhooks N8N pros agentes que ainda dependem de workflow externo.
+ * À medida que cada agente migra pra runner local, é removido daqui.
  */
 const WEBHOOK_MAP: Record<string, string | undefined> = {
-  'hunter_b2b': process.env.N8N_HUNTER_WEBHOOK_URL,
   'bdr_prospector': process.env.N8N_BDR_WEBHOOK_URL,
   'sdr_imobiliario': process.env.N8N_SDR_IMOB_WEBHOOK_URL,
   'followup_imobiliario': process.env.N8N_FOLLOWUP_IMOB_WEBHOOK_URL,
@@ -148,6 +156,98 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to create run' },
         { status: 500 }
       )
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // 6a. Runner LOCAL — executa direto no Vercel sem chamar n8n.
+    // Disponível para slugs em LOCAL_RUNNERS.
+    // ─────────────────────────────────────────────────────────────────────
+    if (LOCAL_RUNNERS.has(agent.solution_slug)) {
+      const result = await runHunterCampaign({
+        runId: run.id,
+        campaign,
+        agent,
+        org: {
+          id: agent.org_id,
+          country: org?.country,
+          language: org?.language,
+          name: org?.name,
+          niche: org?.niche,
+        },
+        maxLeads: leadsToFetch,
+      })
+
+      // Atualiza o run com resultados
+      await supabase
+        .from('agent_runs')
+        .update({
+          status: result.status,
+          finished_at: new Date().toISOString(),
+          duration_ms: result.duration_ms,
+          results: {
+            leads_found: result.leads_found,
+            leads_saved: result.leads_saved,
+            leads_duplicated: result.leads_duplicated,
+          },
+          error_message: result.error_message || null,
+        })
+        .eq('id', run.id)
+
+      // Atualiza métricas da campanha
+      if (result.leads_saved > 0) {
+        const currentMetrics = campaign.metrics || {}
+        const newCaptured = (currentMetrics.leads_captured || 0) + result.leads_saved
+        const newTotalRuns = (currentMetrics.total_runs || 0) + 1
+
+        const updateData: any = {
+          metrics: {
+            ...currentMetrics,
+            leads_captured: newCaptured,
+            total_runs: newTotalRuns,
+            last_run_status: result.status,
+          },
+          last_run_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+
+        if (campaign.target_leads && newCaptured >= campaign.target_leads) {
+          updateData.status = 'completed'
+          updateData.completed_at = new Date().toISOString()
+        }
+
+        await supabase
+          .from('agent_campaigns')
+          .update(updateData)
+          .eq('id', campaign_id)
+
+        // Atualiza uso do agente
+        const newAgentUsage = (agent.current_usage?.leads_captured || 0) + result.leads_saved
+        await supabase
+          .from('agents')
+          .update({
+            current_usage: { ...agent.current_usage, leads_captured: newAgentUsage },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', agent.id)
+      } else {
+        // Mesmo sem leads salvos, atualiza last_run_at
+        await supabase
+          .from('agent_campaigns')
+          .update({ last_run_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+          .eq('id', campaign_id)
+      }
+
+      return NextResponse.json({
+        success: result.status === 'success',
+        run_id: run.id,
+        runner: 'local',
+        solution_slug: agent.solution_slug,
+        leads_found: result.leads_found,
+        leads_saved: result.leads_saved,
+        leads_duplicated: result.leads_duplicated,
+        duration_ms: result.duration_ms,
+        error: result.error_message,
+      })
     }
 
     // 6. Preparar payload para o N8N
