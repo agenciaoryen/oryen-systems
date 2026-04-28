@@ -21,11 +21,17 @@ const LOCAL_RUNNERS = new Set(['hunter_b2b'])
 /**
  * Mapa de webhooks N8N pros agentes que ainda dependem de workflow externo.
  * À medida que cada agente migra pra runner local, é removido daqui.
+ *
+ * Não listar aqui:
+ *   - sdr_imobiliario / sdr → roda via /api/sdr/process (Redis + Claude + UAZAPI),
+ *     disparado pelo /api/sdr/webhook quando o WhatsApp envia mensagem. Não usa
+ *     este endpoint nem agent_runs/agent_campaigns.
+ *   - followup_imobiliario / followup → roda via /api/sdr/follow-up (Vercel cron
+ *     horário), lê follow_up_queue. Também não passa por aqui.
+ *   - bdr_email → roda via lib/prospection/engine.ts (cron de prospecção).
  */
 const WEBHOOK_MAP: Record<string, string | undefined> = {
   'bdr_prospector': process.env.N8N_BDR_WEBHOOK_URL,
-  'sdr_imobiliario': process.env.N8N_SDR_IMOB_WEBHOOK_URL,
-  'followup_imobiliario': process.env.N8N_FOLLOWUP_IMOB_WEBHOOK_URL,
 }
 
 /**
