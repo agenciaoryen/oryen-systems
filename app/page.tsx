@@ -114,9 +114,31 @@ const T: Record<Lang, Record<string, any>> = {
       features: 'Funcionalidades',
       howItWorks: 'Como funciona',
       plans: 'Planos',
+      contact: 'Demonstração',
       faq: 'FAQ',
       login: 'Entrar',
-      cta: 'Começar grátis',
+      cta: 'Solicitar demonstração',
+    },
+    contact: {
+      badge: 'Solicitar demonstração',
+      title_1: 'Pronto para ver a Oryen ',
+      title_2: 'aplicada ao seu negócio?',
+      subtitle: 'Preencha o formulário e nosso time entra em contato em até 24h pra agendar uma demonstração personalizada.',
+      nameLabel: 'Nome completo',
+      namePlaceholder: 'Seu nome',
+      emailLabel: 'Email',
+      emailPlaceholder: 'seu@email.com',
+      phoneLabel: 'WhatsApp',
+      phonePlaceholder: '+55 11 90000-0000',
+      messageLabel: 'Conta um pouco do seu negócio (opcional)',
+      messagePlaceholder: 'Quantos imóveis você trabalha, quantos leads recebe por mês...',
+      submit: 'Enviar solicitação',
+      submitting: 'Enviando...',
+      successTitle: 'Recebemos sua solicitação!',
+      successDesc: 'Nosso time vai entrar em contato em até 24h pelo WhatsApp pra agendar uma demonstração personalizada.',
+      errorGeneric: 'Houve um problema ao enviar. Tenta novamente em alguns minutos.',
+      errorRequired: 'Preencha nome, email e WhatsApp',
+      privacy: 'Seus dados ficam só com nosso time comercial. Não compartilhamos com terceiros.',
     },
     hero: {
       badge: 'Plataforma com Inteligência Artificial',
@@ -263,9 +285,31 @@ const T: Record<Lang, Record<string, any>> = {
       features: 'Features',
       howItWorks: 'How it works',
       plans: 'Pricing',
+      contact: 'Get a demo',
       faq: 'FAQ',
       login: 'Log in',
-      cta: 'Get started',
+      cta: 'Request a demo',
+    },
+    contact: {
+      badge: 'Request a demo',
+      title_1: 'Ready to see Oryen ',
+      title_2: 'applied to your business?',
+      subtitle: 'Fill out the form and our team will reach out within 24h to schedule a personalized demo.',
+      nameLabel: 'Full name',
+      namePlaceholder: 'Your name',
+      emailLabel: 'Email',
+      emailPlaceholder: 'you@email.com',
+      phoneLabel: 'WhatsApp',
+      phonePlaceholder: '+1 555 000-0000',
+      messageLabel: 'Tell us a bit about your business (optional)',
+      messagePlaceholder: 'How many properties you work with, leads per month...',
+      submit: 'Send request',
+      submitting: 'Sending...',
+      successTitle: 'Got your request!',
+      successDesc: 'Our team will reach you within 24h via WhatsApp to schedule a personalized demo.',
+      errorGeneric: 'There was a problem sending. Try again in a few minutes.',
+      errorRequired: 'Fill name, email and WhatsApp',
+      privacy: 'Your data stays only with our sales team. We never share with third parties.',
     },
     hero: {
       badge: 'AI-Powered Platform',
@@ -412,9 +456,31 @@ const T: Record<Lang, Record<string, any>> = {
       features: 'Funcionalidades',
       howItWorks: 'Cómo funciona',
       plans: 'Planes',
+      contact: 'Demostración',
       faq: 'FAQ',
       login: 'Ingresar',
-      cta: 'Empezar gratis',
+      cta: 'Solicitar demostración',
+    },
+    contact: {
+      badge: 'Solicitar demostración',
+      title_1: 'Listo para ver Oryen ',
+      title_2: 'aplicado a su negocio?',
+      subtitle: 'Llena el formulario y nuestro equipo se pondrá en contacto en las próximas 24h para agendar una demostración personalizada.',
+      nameLabel: 'Nombre completo',
+      namePlaceholder: 'Su nombre',
+      emailLabel: 'Email',
+      emailPlaceholder: 'tu@email.com',
+      phoneLabel: 'WhatsApp',
+      phonePlaceholder: '+56 9 0000 0000',
+      messageLabel: 'Cuéntanos un poco de tu negocio (opcional)',
+      messagePlaceholder: 'Cuántas propiedades manejas, cuántos leads por mes...',
+      submit: 'Enviar solicitud',
+      submitting: 'Enviando...',
+      successTitle: '¡Recibimos tu solicitud!',
+      successDesc: 'Nuestro equipo se pondrá en contacto en las próximas 24h por WhatsApp para agendar una demostración personalizada.',
+      errorGeneric: 'Hubo un problema al enviar. Intenta de nuevo en unos minutos.',
+      errorRequired: 'Llena nombre, email y WhatsApp',
+      privacy: 'Tus datos quedan solo con nuestro equipo comercial. No compartimos con terceros.',
     },
     hero: {
       badge: 'Plataforma con Inteligencia Artificial',
@@ -566,7 +632,6 @@ const FEATURE_META = [
   { icon: TrendingUp, gradient: 'linear-gradient(135deg, #F472B6, #EC4899)' },
 ]
 
-const PLAN_POPULAR = [false, true, false]
 const CARD_ICONS = [Users, MessageSquare, Phone, TrendingUp]
 
 const STEP_ICONS = [
@@ -657,6 +722,52 @@ export default function LandingPage() {
   const [lang, setLang] = useState<Lang>('pt')
   const [scrolled, setScrolled] = useState(false)
 
+  // Contact form state
+  const [contactName, setContactName] = useState('')
+  const [contactEmail, setContactEmail] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [contactMessage, setContactMessage] = useState('')
+  const [contactWebsite, setContactWebsite] = useState('') // honeypot
+  const [contactSubmitting, setContactSubmitting] = useState(false)
+  const [contactStatus, setContactStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [contactError, setContactError] = useState<string | null>(null)
+
+  async function handleContactSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setContactError(null)
+    if (!contactName.trim() || !contactEmail.trim() || !contactPhone.trim()) {
+      setContactError(t.contact.errorRequired)
+      return
+    }
+    setContactSubmitting(true)
+    try {
+      const res = await fetch('/api/landing-contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: contactName.trim(),
+          email: contactEmail.trim(),
+          phone: contactPhone.trim(),
+          message: contactMessage.trim(),
+          website: contactWebsite,
+        }),
+      })
+      if (!res.ok) {
+        setContactStatus('error')
+      } else {
+        setContactStatus('success')
+        setContactName('')
+        setContactEmail('')
+        setContactPhone('')
+        setContactMessage('')
+      }
+    } catch {
+      setContactStatus('error')
+    } finally {
+      setContactSubmitting(false)
+    }
+  }
+
   useEffect(() => {
     if (typeof navigator !== 'undefined') {
       const browserLang = navigator.language?.toLowerCase() || ''
@@ -672,7 +783,6 @@ export default function LandingPage() {
   }, [])
 
   const t = T[lang]
-  const currencySymbol = lang === 'pt' ? 'R$' : '$'
   const nextLang = (): Lang => lang === 'pt' ? 'en' : lang === 'en' ? 'es' : 'pt'
   const langLabel = (l: Lang) => ({ pt: 'PT', en: 'EN', es: 'ES' }[l])
   const langLabelFull = (l: Lang) => ({ pt: 'Português', en: 'English', es: 'Español' }[l])
@@ -713,7 +823,7 @@ export default function LandingPage() {
               {[
                 { href: '#features', label: t.nav.features },
                 { href: '#how-it-works', label: t.nav.howItWorks },
-                { href: '#pricing', label: t.nav.plans },
+                { href: '#contato', label: t.nav.contact },
                 { href: '#faq', label: t.nav.faq },
               ].map(link => (
                 <a
@@ -747,8 +857,8 @@ export default function LandingPage() {
               >
                 {t.nav.login}
               </Link>
-              <Link
-                href="/register"
+              <a
+                href="#contato"
                 className="text-sm font-semibold px-5 py-2 rounded-lg transition-all duration-200"
                 style={{
                   background: 'var(--gradient-brand)',
@@ -765,7 +875,7 @@ export default function LandingPage() {
                 }}
               >
                 {t.nav.cta}
-              </Link>
+              </a>
             </div>
 
             <button
@@ -783,7 +893,7 @@ export default function LandingPage() {
                 {[
                   { href: '#features', label: t.nav.features },
                   { href: '#how-it-works', label: t.nav.howItWorks },
-                  { href: '#pricing', label: t.nav.plans },
+                  { href: '#contato', label: t.nav.contact },
                   { href: '#faq', label: t.nav.faq },
                 ].map(link => (
                   <a key={link.href} href={link.href} onClick={() => setMobileMenuOpen(false)}
@@ -803,10 +913,10 @@ export default function LandingPage() {
                   style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
                   {t.nav.login}
                 </Link>
-                <Link href="/register" className="text-center text-sm font-semibold px-4 py-2.5 rounded-lg"
+                <a href="#contato" onClick={() => setMobileMenuOpen(false)} className="text-center text-sm font-semibold px-4 py-2.5 rounded-lg"
                   style={{ background: 'var(--gradient-brand)', color: '#fff' }}>
                   {t.nav.cta}
-                </Link>
+                </a>
               </div>
             </div>
           )}
@@ -862,7 +972,7 @@ export default function LandingPage() {
 
           <Reveal delay={300}>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/register"
+              <a href="#contato"
                 className="group flex items-center gap-2 px-8 py-4 rounded-xl text-base font-bold transition-all duration-200"
                 style={{
                   background: 'var(--gradient-brand)',
@@ -879,7 +989,7 @@ export default function LandingPage() {
                 }}>
                 {t.hero.cta1}
                 <ArrowRight size={18} className="transition-transform duration-200 group-hover:translate-x-1" />
-              </Link>
+              </a>
               <a href="#features"
                 className="group flex items-center gap-2 px-8 py-4 rounded-xl text-base font-medium transition-all duration-200"
                 style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
@@ -1239,123 +1349,188 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          PRICING — Gradient border on popular plan
+          CONTACT — Lead capture form (replaces pricing)
           ═══════════════════════════════════════════════════════════════════ */}
-      <section id="pricing" className="py-24 md:py-36 relative" style={{ background: 'var(--color-bg-surface)' }}>
+      <section id="contato" className="py-24 md:py-36 relative" style={{ background: 'var(--color-bg-surface)' }}>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] opacity-[0.05]" style={{
           background: 'radial-gradient(ellipse at center, var(--color-primary), transparent 70%)',
         }} />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
-            <div className="text-center max-w-2xl mx-auto mb-16">
+            <div className="text-center max-w-2xl mx-auto mb-12">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-6"
                 style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent-subtle-fg)' }}>
-                <Star size={12} /> {t.pricing.badge}
+                <Star size={12} /> {t.contact.badge}
               </div>
               <h2 className="text-3xl md:text-4xl font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-h2)' }}>
-                {t.pricing.title_1}
-                <span className="gradient-text" style={{ backgroundImage: 'linear-gradient(135deg, var(--color-accent), #FF8C42)' }}>{t.pricing.title_2}</span>
+                {t.contact.title_1}
+                <span className="gradient-text" style={{ backgroundImage: 'linear-gradient(135deg, var(--color-accent), #FF8C42)' }}>{t.contact.title_2}</span>
               </h2>
-              <p className="mt-4 text-base md:text-lg" style={{ color: 'var(--color-text-secondary)' }}>{t.pricing.subtitle}</p>
+              <p className="mt-4 text-base md:text-lg" style={{ color: 'var(--color-text-secondary)' }}>{t.contact.subtitle}</p>
             </div>
           </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto items-start">
-            {t.pricing.plans.map((plan: any, i: number) => {
-              const popular = PLAN_POPULAR[i]
-              return (
-                <Reveal key={i} delay={i * 100}>
-                  <div className={`relative flex flex-col rounded-2xl transition-all duration-300 ${popular ? 'plan-glow gradient-border-animated md:-mt-4 md:mb-[-16px]' : ''}`}
+          <Reveal delay={100}>
+            {contactStatus === 'success' ? (
+              <div className="rounded-2xl p-8 md:p-10 text-center"
+                style={{
+                  background: 'var(--color-bg-elevated)',
+                  border: '1px solid var(--color-border-strong)',
+                }}>
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-5"
+                  style={{ background: 'var(--color-success-subtle, rgba(34, 197, 94, 0.12))' }}>
+                  <Check size={28} style={{ color: 'var(--color-success)' }} />
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+                  {t.contact.successTitle}
+                </h3>
+                <p className="text-sm md:text-base max-w-md mx-auto" style={{ color: 'var(--color-text-secondary)' }}>
+                  {t.contact.successDesc}
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleContactSubmit}
+                className="rounded-2xl p-6 md:p-8"
+                style={{
+                  background: 'var(--color-bg-elevated)',
+                  border: '1px solid var(--color-border)',
+                }}>
+                {/* Honeypot — hidden from real users */}
+                <input
+                  type="text"
+                  name="website"
+                  value={contactWebsite}
+                  onChange={e => setContactWebsite(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+                  aria-hidden="true"
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
+                      {t.contact.nameLabel} <span style={{ color: 'var(--color-accent)' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={contactName}
+                      onChange={e => setContactName(e.target.value)}
+                      placeholder={t.contact.namePlaceholder}
+                      required
+                      className="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all duration-150"
+                      style={{
+                        background: 'var(--color-bg-surface)',
+                        border: '1px solid var(--color-border)',
+                        color: 'var(--color-text-primary)',
+                      }}
+                      onFocus={e => (e.currentTarget.style.borderColor = 'var(--color-primary)')}
+                      onBlur={e => (e.currentTarget.style.borderColor = 'var(--color-border)')}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
+                      {t.contact.emailLabel} <span style={{ color: 'var(--color-accent)' }}>*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={contactEmail}
+                      onChange={e => setContactEmail(e.target.value)}
+                      placeholder={t.contact.emailPlaceholder}
+                      required
+                      className="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all duration-150"
+                      style={{
+                        background: 'var(--color-bg-surface)',
+                        border: '1px solid var(--color-border)',
+                        color: 'var(--color-text-primary)',
+                      }}
+                      onFocus={e => (e.currentTarget.style.borderColor = 'var(--color-primary)')}
+                      onBlur={e => (e.currentTarget.style.borderColor = 'var(--color-border)')}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
+                    {t.contact.phoneLabel} <span style={{ color: 'var(--color-accent)' }}>*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={contactPhone}
+                    onChange={e => setContactPhone(e.target.value)}
+                    placeholder={t.contact.phonePlaceholder}
+                    required
+                    className="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all duration-150"
                     style={{
                       background: 'var(--color-bg-surface)',
-                      border: popular ? 'none' : '1px solid var(--color-border)',
-                      padding: popular ? '2px' : '0',
-                    }}>
-                    {popular && (
-                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                        <span className="px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
-                          style={{ background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 12px rgba(90, 122, 230, 0.3)' }}>
-                          {t.pricing.popular}
-                        </span>
-                      </div>
-                    )}
-                    <div className={`flex flex-col h-full ${popular ? 'rounded-[14px] p-6' : 'p-6'}`}
-                      style={{ background: popular ? 'var(--color-bg-surface)' : 'transparent' }}>
-                      <div className="mb-6">
-                        <h3 className="text-lg font-bold mb-1" style={{ fontFamily: 'var(--font-display)' }}>{plan.name}</h3>
-                        <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{plan.description}</p>
-                      </div>
-                      <div className="mb-6">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{currencySymbol}</span>
-                          <span className="text-4xl font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.03em' }}>{plan.price}</span>
-                          <span className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{t.pricing.perMonth}</span>
-                        </div>
-                        {lang === 'pt' && (
-                          <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
-                            {t.pricing.orUsd} ${plan.priceUsd}{t.pricing.usdSuffix}
-                          </p>
-                        )}
-                      </div>
-                      <Link href="/register"
-                        className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 mb-6"
-                        style={popular
-                          ? { background: 'var(--gradient-brand)', color: '#fff', boxShadow: '0 4px 16px rgba(90, 122, 230, 0.25)' }
-                          : { background: 'transparent', color: 'var(--color-text-primary)', border: '1px solid var(--color-border-strong)' }}
-                        onMouseEnter={e => {
-                          if (popular) {
-                            e.currentTarget.style.boxShadow = '0 6px 24px rgba(90, 122, 230, 0.35)'
-                            e.currentTarget.style.transform = 'translateY(-1px)'
-                          } else {
-                            e.currentTarget.style.background = 'var(--color-bg-hover)'
-                            e.currentTarget.style.borderColor = 'var(--color-primary)'
-                          }
-                        }}
-                        onMouseLeave={e => {
-                          if (popular) {
-                            e.currentTarget.style.boxShadow = '0 4px 16px rgba(90, 122, 230, 0.25)'
-                            e.currentTarget.style.transform = 'translateY(0)'
-                          } else {
-                            e.currentTarget.style.background = 'transparent'
-                            e.currentTarget.style.borderColor = 'var(--color-border-strong)'
-                          }
-                        }}>
-                        {popular ? t.pricing.cta : t.pricing.ctaSecondary}
-                        <ArrowRight size={15} />
-                      </Link>
-                      <div className="flex-1 space-y-2.5">
-                        {plan.features.map((f: string, j: number) => (
-                          <div key={j} className="flex items-start gap-2.5 text-sm">
-                            <Check size={14} className="mt-0.5 shrink-0" style={{ color: 'var(--color-success)' }} />
-                            <span style={{ color: 'var(--color-text-secondary)' }}>{f}</span>
-                          </div>
-                        ))}
-                        {plan.notIncluded.map((f: string, j: number) => (
-                          <div key={`no-${j}`} className="flex items-start gap-2.5 text-sm">
-                            <X size={14} className="mt-0.5 shrink-0" style={{ color: 'var(--color-text-disabled)' }} />
-                            <span style={{ color: 'var(--color-text-disabled)' }}>{f}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </Reveal>
-              )
-            })}
-          </div>
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-primary)',
+                    }}
+                    onFocus={e => (e.currentTarget.style.borderColor = 'var(--color-primary)')}
+                    onBlur={e => (e.currentTarget.style.borderColor = 'var(--color-border)')}
+                  />
+                </div>
 
-          <Reveal>
-            <div className="mt-12 text-center">
-              <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-                {t.pricing.enterprise}{' '}
-                <a href="https://wa.me/5551998388409" target="_blank" rel="noopener noreferrer"
-                  className="font-medium underline transition-colors duration-150"
-                  style={{ color: 'var(--color-primary)' }}>
-                  {t.pricing.enterpriseLink}
-                </a>
-              </p>
-            </div>
+                <div className="mt-4">
+                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
+                    {t.contact.messageLabel}
+                  </label>
+                  <textarea
+                    value={contactMessage}
+                    onChange={e => setContactMessage(e.target.value)}
+                    placeholder={t.contact.messagePlaceholder}
+                    rows={4}
+                    className="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all duration-150 resize-none"
+                    style={{
+                      background: 'var(--color-bg-surface)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-primary)',
+                    }}
+                    onFocus={e => (e.currentTarget.style.borderColor = 'var(--color-primary)')}
+                    onBlur={e => (e.currentTarget.style.borderColor = 'var(--color-border)')}
+                  />
+                </div>
+
+                {(contactError || contactStatus === 'error') && (
+                  <div className="mt-4 px-4 py-3 rounded-lg text-sm"
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      border: '1px solid rgba(239, 68, 68, 0.25)',
+                      color: 'var(--color-error, #EF4444)',
+                    }}>
+                    {contactError || t.contact.errorGeneric}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={contactSubmitting}
+                  className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-bold transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{
+                    background: 'var(--gradient-brand)',
+                    color: '#fff',
+                    boxShadow: '0 4px 20px rgba(90, 122, 230, 0.25)',
+                  }}
+                  onMouseEnter={e => {
+                    if (!contactSubmitting) {
+                      e.currentTarget.style.boxShadow = '0 6px 28px rgba(90, 122, 230, 0.35)'
+                      e.currentTarget.style.transform = 'translateY(-1px)'
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(90, 122, 230, 0.25)'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                  }}>
+                  {contactSubmitting ? t.contact.submitting : t.contact.submit}
+                  {!contactSubmitting && <ArrowRight size={18} />}
+                </button>
+
+                <p className="mt-5 text-xs text-center" style={{ color: 'var(--color-text-tertiary)' }}>
+                  {t.contact.privacy}
+                </p>
+              </form>
+            )}
           </Reveal>
         </div>
       </section>
@@ -1437,7 +1612,7 @@ export default function LandingPage() {
             </p>
           </Reveal>
           <Reveal delay={200}>
-            <Link href="/register"
+            <a href="#contato"
               className="group inline-flex items-center gap-2 px-10 py-4 rounded-xl text-base font-bold transition-all duration-200"
               style={{
                 background: 'var(--gradient-brand)',
@@ -1454,7 +1629,7 @@ export default function LandingPage() {
               }}>
               {t.finalCta.cta}
               <ArrowRight size={18} className="transition-transform duration-200 group-hover:translate-x-1" />
-            </Link>
+            </a>
           </Reveal>
         </div>
       </section>
@@ -1487,7 +1662,7 @@ export default function LandingPage() {
               <ul className="space-y-2.5">
                 {[
                   { href: '#features', label: t.nav.features },
-                  { href: '#pricing', label: t.nav.plans },
+                  { href: '#contato', label: t.nav.contact },
                   { href: '#faq', label: t.nav.faq },
                 ].map((link, i) => (
                   <li key={i}>
