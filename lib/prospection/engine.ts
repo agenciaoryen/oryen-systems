@@ -14,8 +14,8 @@
 // Todas as operações usam service_role (bypassa RLS) pois rodam no servidor.
 
 import { createClient } from '@supabase/supabase-js'
-import { sendColdEmail } from '@/lib/email/sender'
-import { isAgentAllowed, logGateDenied } from '@/lib/agents/gate'
+import { runAgentCapability } from '@/lib/agents/kernel'
+import { sendEmailHandler } from '@/lib/agents/handlers/send_email'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -228,41 +228,15 @@ async function executeAutomatedStep(enrollment: any, step: any) {
   throw new Error(`Agent não suportado: ${step.agent_slug}`)
 }
 
-// Regex razoável pra validar email antes de enviar pro Resend.
-// Não tenta cobrir todos os edge cases do RFC; só pega lixo óbvio
-// (string vazia, "null", "n/a", "—", sem @, etc) que estourava no provedor.
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
-function isValidEmail(s: string | null | undefined): boolean {
-  if (!s) return false
-  const v = String(s).trim().toLowerCase()
-  if (!v || v === 'null' || v === 'undefined' || v === 'n/a' || v === '-' || v === '—') return false
-  return EMAIL_REGEX.test(v)
-}
-
 async function executeBdrEmailStep(enrollment: any, step: any) {
-  // ─── GATE DE AUTORIZAÇÃO ───
-  // Antes de enviar, conferir se a org está autorizada (plano + agente
-  // bdr_email contratado e ativo). Sem este gate, o engine disparava
-  // emails mesmo sem o agente bdr_email estar configurado na org.
-  const gate = await isAgentAllowed(enrollment.org_id, 'bdr_email')
-  if (!gate.allowed) {
-    logGateDenied('engine:executeBdrEmailStep', gate, {
-      enrollment_id: enrollment.id,
-      step_id: step.id,
-      lead_id: enrollment.lead_id,
-    })
-    await supabase.from('prospection_step_executions').insert({
-      org_id: enrollment.org_id,
-      enrollment_id: enrollment.id,
-      step_id: step.id,
-      lead_id: enrollment.lead_id,
-      result: 'skipped',
-      metadata: { reason: `gate_denied:${gate.reason}`, gate_message: gate.message },
-    })
-    return
-  }
+  // ─── 1. Renderiza template + busca org pra preencher placeholders ───
+  // (Continua sendo responsabilidade do engine porque envolve lógica
+  // específica do step — variantes, day_offset, etc. O kernel só executa
+  // a capability `send_email` com payload pronto.)
+  const templates = Array.isArray(step.message_templates) ? step.message_templates : []
+  const tpl = templates[0]
+  if (!tpl) throw new Error('Step sem message_templates')
 
-  // Busca dados do lead
   const { data: lead } = await supabase
     .from('leads')
     .select('id, name, email, phone, city')
@@ -270,74 +244,84 @@ async function executeBdrEmailStep(enrollment: any, step: any) {
     .single()
 
   if (!lead) throw new Error('Lead não encontrado')
-  if (!isValidEmail(lead.email)) {
-    // Email vazio ou mal formatado — pula sem chamar o provedor.
-    await supabase.from('prospection_step_executions').insert({
-      org_id: enrollment.org_id,
-      enrollment_id: enrollment.id,
-      step_id: step.id,
-      lead_id: enrollment.lead_id,
-      result: 'skipped',
-      metadata: {
-        reason: lead.email ? 'invalid_email_format' : 'lead_without_email',
-        email_value: lead.email || null,
-      },
-    })
-    return
-  }
 
-  // Busca org (para o from name)
   const { data: org } = await supabase
     .from('orgs')
     .select('name')
     .eq('id', enrollment.org_id)
     .single()
 
-  // Seleciona 1a variação do step (pode ser expandido pra rotacionar/AB)
-  const templates = Array.isArray(step.message_templates) ? step.message_templates : []
-  const tpl = templates[0]
-  if (!tpl) throw new Error('Step sem message_templates')
-
   const subject = renderTemplate(tpl.subject || 'Continuação de nosso contato', { lead })
   const body = renderTemplate(tpl.body || '', { lead, org })
 
-  await sendColdEmail({
-    to: lead.email,
-    subject,
-    bodyText: body,
-    fromName: org?.name || 'Oryen',
+  // ─── 2. Delega ao kernel (gate + audit + execução do handler) ───
+  // Kernel cuida de:
+  //   - Verificar plano/estado do agente bdr_email
+  //   - Confirmar que send_email está no catálogo e o agente pode executar
+  //   - Logar 'running' em agent_actions
+  //   - Executar sendEmailHandler (envia + grava em messages)
+  //   - Logar 'success'/'failed' com timing e payload
+  const result = await runAgentCapability({
+    org_id: enrollment.org_id,
+    agent_slug: 'bdr_email',
+    capability: 'send_email',
+    target: { type: 'lead', id: enrollment.lead_id },
+    triggered_by: {
+      type: 'cron',
+      label: `prospection engine — sequence ${enrollment.sequence_id} step ${step.id}`,
+    },
+    input: {
+      subject,
+      body,
+      variant: tpl.variant || 'A',
+      from_name: org?.name,
+    },
+    handler: sendEmailHandler,
   })
 
-  // Registra a mensagem em `messages` pra aparecer no módulo Conversas.
-  // Sem esse insert, o email saía mas o histórico ficava só em
-  // prospection_step_executions e o admin não via no timeline do lead.
-  try {
-    await supabase.rpc('fn_insert_message', {
-      p_org_id: enrollment.org_id,
-      p_lead_id: enrollment.lead_id,
-      p_channel: 'email',
-      p_direction: 'outbound',
-      p_body: `Assunto: ${subject}\n\n${body}`,
-      p_sender_type: 'agent_bot',
-      p_sender_name: 'BDR Email',
-      p_message_type: 'text',
-      p_timestamp: new Date().toISOString(),
-    })
-  } catch (msgErr: any) {
-    // Não falha o step se o registro em messages falhar — o email já foi enviado.
-    console.warn(`[engine:bdr_email] fn_insert_message falhou (não-fatal): ${msgErr.message}`)
+  // ─── 3. Mantém log no prospection_step_executions ───
+  // O kernel é a fonte de verdade do "colaborador" — mas a UI da sequence
+  // ainda lê step_executions pra mostrar stats por step (success/failed/skipped
+  // + último erro). Espelha o resultado aqui pra UI continuar funcionando.
+  // Quando migrarmos a UI pra ler agent_actions, este insert pode sair.
+  let executionRecord: 'success' | 'failed' | 'skipped' = 'failed'
+  let metadata: Record<string, any> = {
+    subject,
+    channel: 'email',
+    action_id: result.action_id,        // permite rastrear no audit do colaborador
   }
 
-  // Loga execução
+  if (result.status === 'success') {
+    executionRecord = 'success'
+    metadata.email_to = (result.data as any)?.email_to
+  } else if (result.status === 'denied') {
+    executionRecord = 'skipped'
+    metadata.reason = `gate_denied:${result.denied_reason}`
+    metadata.gate_message = result.error
+  } else if (result.status === 'pending_approval') {
+    // Action existe mas aguarda aprovação humana — ainda não é success
+    executionRecord = 'skipped'
+    metadata.reason = 'pending_approval'
+  } else {
+    executionRecord = 'failed'
+    metadata.error = result.error
+  }
+
   await supabase.from('prospection_step_executions').insert({
     org_id: enrollment.org_id,
     enrollment_id: enrollment.id,
     step_id: step.id,
     lead_id: enrollment.lead_id,
-    result: 'success',
+    result: executionRecord,
     variant_used: tpl.variant || 'A',
-    metadata: { subject, channel: 'email' },
+    metadata,
   })
+
+  // Se o handler reportou erro (não denied), propaga pro engine continuar
+  // a estratégia de retry/avanço como antes.
+  if (result.status === 'failed' && result.error) {
+    throw new Error(result.error)
+  }
 }
 
 function renderTemplate(body: string, ctx: { lead: any; org?: any }): string {
