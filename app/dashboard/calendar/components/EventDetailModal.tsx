@@ -2,7 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Clock, MapPin, User, X, Loader2, CheckCircle2, XCircle, AlertCircle, ExternalLink, Trash2, ListTodo } from 'lucide-react'
+import { Clock, MapPin, User, X, Loader2, CheckCircle2, XCircle, AlertCircle, ExternalLink, Trash2, ListTodo, Bell } from 'lucide-react'
 import { formatLeadName } from '@/lib/format/leadName'
 import { EVENT_TYPE_COLORS, STATUS_COLORS, formatTime } from '../constants'
 import EventChecklist from './EventChecklist'
@@ -36,6 +36,15 @@ export default function EventDetailModal({
     // Se for normal ou virtual, só deleta
     await onDelete(event.id, !!event.rrule)
     setDeleting(false)
+  }
+
+  const handleReminderChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value ? parseInt(e.target.value) : null
+    await fetch(`/api/calendar/${event.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reminder_minutes: val })
+    })
   }
 
   const handleDeleteThisOccurrence = async () => {
@@ -143,6 +152,27 @@ export default function EventDetailModal({
             </div>
             <EventChecklist eventId={event.is_virtual && event.recurrence_master_id ? event.recurrence_master_id : event.id} t={t} />
           </div>
+
+          {/* Reminder */}
+          {!event.external_read_only && (
+          <div className="pt-2">
+            <div className="flex items-center gap-2 mb-2">
+              <Bell size={14} style={{ color: 'var(--color-text-muted)' }} />
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>Lembrete</span>
+            </div>
+            <select
+              value={event.reminder_minutes ?? ''}
+              onChange={handleReminderChange}
+              className="w-full rounded-lg px-2.5 py-1.5 text-sm focus:outline-none appearance-none"
+              style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+            >
+              <option value="">Nenhum</option>
+              <option value="15">15 min antes</option>
+              <option value="30">30 min antes</option>
+              <option value="60">1 hora antes</option>
+            </select>
+          </div>
+          )}
         </div>
 
         {/* Google read-only warning */}
