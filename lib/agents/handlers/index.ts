@@ -13,11 +13,12 @@
 
 import { registerHandler } from '../handler-registry'
 import { sendEmailHandler } from './send_email'
+import { captureLeadsSerperHandler } from './capture_leads_serper'
 
 registerHandler('send_email', sendEmailHandler)
+registerHandler('capture_leads_serper', captureLeadsSerperHandler)
 
 // Próximos handlers (a implementar):
 //   - send_whatsapp        → migrar lib/sdr/whatsapp-sender
 //   - generate_reply       → migrar lib/sdr/ai-agent
-//   - capture_leads_serper → migrar lib/agents/hunter/runner
 //   - move_pipeline_stage  → novo, escreve direto em leads

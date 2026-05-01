@@ -35,13 +35,6 @@ export async function POST(
     const auth = await requireAuth(request)
     if (auth instanceof NextResponse) return auth
 
-    if (auth.role !== 'admin' && !auth.isStaff) {
-      return NextResponse.json(
-        { error: 'Somente admin pode aprovar/rejeitar ações de colaboradores IA' },
-        { status: 403 }
-      )
-    }
-
     const orgId = resolveOrgId(auth, null)
     const { id: actionId } = await context.params
     const body = await request.json()
@@ -55,7 +48,7 @@ export async function POST(
       )
     }
 
-    // Confirma que a action é da org do admin
+    // Confirma que a action é da org do user
     const { data: action } = await supabase
       .from('agent_actions')
       .select('id, org_id, capability, agent_id, approval_status, status')
@@ -68,6 +61,27 @@ export async function POST(
 
     if (action.org_id !== orgId && !auth.isStaff) {
       return NextResponse.json({ error: 'Action não pertence à sua org' }, { status: 403 })
+    }
+
+    // ─── Autorização: admin/staff OU approver delegado do agente ──────────
+    // Carrega config do agente pra ver se há approver_user_id atribuído.
+    let canApprove = auth.role === 'admin' || !!auth.isStaff
+    if (!canApprove && action.agent_id) {
+      const { data: agent } = await supabase
+        .from('agents')
+        .select('config')
+        .eq('id', action.agent_id)
+        .maybeSingle()
+      const approverUserId = (agent?.config as any)?.approver_user_id
+      if (approverUserId && approverUserId === auth.userId) {
+        canApprove = true
+      }
+    }
+    if (!canApprove) {
+      return NextResponse.json(
+        { error: 'Você não tem permissão pra aprovar/rejeitar ações deste colaborador' },
+        { status: 403 }
+      )
     }
 
     if (action.approval_status !== 'pending') {

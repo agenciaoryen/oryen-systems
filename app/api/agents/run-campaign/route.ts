@@ -1,7 +1,7 @@
 // app/api/agents/run-campaign/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { runHunterCampaign } from '@/lib/agents/hunter/runner'
+import { runAgentCapability } from '@/lib/agents/kernel'
 
 // Runner local pode demorar até ~30s (Serper + scraping de sites + inserts).
 // Vercel padrão é 10s — eleva pra 60s.
@@ -169,21 +169,43 @@ export async function POST(request: NextRequest) {
     // Disponível para slugs em LOCAL_RUNNERS.
     // ─────────────────────────────────────────────────────────────────────
     if (LOCAL_RUNNERS.has(agent.solution_slug)) {
-      const result = await runHunterCampaign({
-        runId: run.id,
-        campaign,
-        agent,
-        org: {
-          id: agent.org_id,
-          country: org?.country,
-          language: org?.language,
-          name: org?.name,
-          niche: org?.niche,
+      // ── Executa via kernel (gates + audit + handler resolver) ──
+      // Mapeia solution_slug → capability slug.
+      const capabilityBySlug: Record<string, string> = {
+        hunter_b2b: 'capture_leads_serper',
+      }
+      const capability = capabilityBySlug[agent.solution_slug] || 'capture_leads_serper'
+
+      const kernelResult = await runAgentCapability({
+        org_id: agent.org_id,
+        agent_slug: agent.solution_slug,
+        capability,
+        triggered_by: {
+          type: trigger_type === 'schedule' ? 'cron' : 'user',
+          id: triggered_by || undefined,
+          label: trigger_type === 'schedule' ? 'cron campaign run' : 'manual via UI',
         },
-        maxLeads: leadsToFetch,
+        input: {
+          run_id: run.id,
+          campaign,
+          max_leads: leadsToFetch,
+        },
       })
 
-      // Atualiza o run com resultados
+      // Extrai métricas do resultado padronizado do handler
+      const data = (kernelResult.data as any) || {}
+      const result = {
+        status: kernelResult.status === 'success' ? 'success' : kernelResult.status === 'failed' ? 'error' : 'pending',
+        leads_found: data.leads_found || 0,
+        leads_saved: data.leads_saved || 0,
+        leads_duplicated: data.leads_duplicated || 0,
+        duration_ms: kernelResult.duration_ms || 0,
+        error_message: kernelResult.error || null,
+        action_id: kernelResult.action_id,
+        denied_reason: kernelResult.denied_reason,
+      }
+
+      // Atualiza o run com resultados (mantém o histórico em agent_runs também)
       await supabase
         .from('agent_runs')
         .update({
@@ -194,6 +216,7 @@ export async function POST(request: NextRequest) {
             leads_found: result.leads_found,
             leads_saved: result.leads_saved,
             leads_duplicated: result.leads_duplicated,
+            action_id: result.action_id,
           },
           error_message: result.error_message || null,
         })
@@ -246,7 +269,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: result.status === 'success',
         run_id: run.id,
-        runner: 'local',
+        runner: 'kernel',
+        action_id: result.action_id,
+        denied_reason: result.denied_reason,
         solution_slug: agent.solution_slug,
         leads_found: result.leads_found,
         leads_saved: result.leads_saved,

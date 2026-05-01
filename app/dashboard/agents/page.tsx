@@ -57,12 +57,16 @@ const SOLUTION_ICONS: Record<string, any> = {
 // Se o slug NÃO está listado, é visível para todos os nichos
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Whitelist por nicho. Quando a org tem nicho aqui listado, só vê os slugs
+// declarados (resto fica oculto). Nichos NÃO listados (incluindo ai_agency)
+// veem tudo, com a única exceção dos slugs com sufixo _imobiliario que ficam
+// só pra real_estate.
 const NICHE_SOLUTIONS: Record<string, string[]> = {
-  real_estate: ['sdr_imobiliario', 'followup_imobiliario'],
+  real_estate: ['sdr_imobiliario', 'followup_imobiliario', 'bdr_email', 'hunter_b2b'],
 }
 
-// Slugs que são exclusivos de um nicho específico (B2B genérico)
-const B2B_ONLY_SLUGS = ['hunter_b2b', 'sdr', 'bdr_prospector']
+// Slugs que ficam ocultos pra real_estate (que tem variantes _imobiliario)
+const HIDDEN_FOR_REAL_ESTATE = ['sdr', 'followup']
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES UI
@@ -594,17 +598,13 @@ export default function AgentsPage() {
 
   // Filtrar soluções por nicho + categoria + busca
   const filteredSolutions = solutions.filter(s => {
-    // Filtro de nicho: se a org é real_estate, mostrar apenas as soluções do nicho
+    // real_estate: whitelist explícita — só os slugs de NICHE_SOLUTIONS
     if (activeNiche && NICHE_SOLUTIONS[activeNiche]) {
       if (!NICHE_SOLUTIONS[activeNiche].includes(s.slug)) return false
-    }
-    // Se a org NÃO tem nicho definido OU é B2B, esconder os slugs imobiliários
-    if (!activeNiche || !NICHE_SOLUTIONS[activeNiche]) {
+    } else {
+      // Outros nichos (ai_agency, etc) ou sem nicho: vê tudo,
+      // exceto os slugs com sufixo _imobiliario (esses são exclusivos do real_estate).
       if (s.slug.includes('_imobiliario')) return false
-    }
-    // Se a org é de um nicho específico, esconder os B2B genéricos
-    if (activeNiche && NICHE_SOLUTIONS[activeNiche]) {
-      if (B2B_ONLY_SLUGS.includes(s.slug)) return false
     }
 
     if (categoryFilter !== 'all' && s.category !== categoryFilter) return false
@@ -617,12 +617,11 @@ export default function AgentsPage() {
     return true
   })
 
-  // Filtrar agentes contratados pelo mesmo critério de nicho
+  // Mesma lógica pra agentes já contratados
   const filteredAgents = agents.filter(a => {
     if (activeNiche && NICHE_SOLUTIONS[activeNiche]) {
-      if (B2B_ONLY_SLUGS.includes(a.solution_slug)) return false
-    }
-    if (!activeNiche || !NICHE_SOLUTIONS[activeNiche]) {
+      if (!NICHE_SOLUTIONS[activeNiche].includes(a.solution_slug)) return false
+    } else {
       if (a.solution_slug.includes('_imobiliario')) return false
     }
     return true

@@ -22,6 +22,7 @@ import { formatDistanceToNow, format } from 'date-fns'
 import { ptBR, enUS, es } from 'date-fns/locale'
 import { toast } from 'sonner'
 import FollowUpConfigPanel from './components/FollowUpConfigPanel'
+import ApprovalsPanel from './components/ApprovalsPanel'
 import {
   ArrowLeft, Bot, Target, Plus, Loader2, PlayCircle, PauseCircle,
   Settings, Trash2, Clock, Calendar, TrendingUp, Users, X,
@@ -1201,6 +1202,9 @@ export default function AgentDetailPage() {
 
       {/* Painel de Follow-up — config + estado */}
       {isFollowUp && <FollowUpConfigPanel agentId={agent.id} />}
+
+      {/* Painel de aprovações — quem aprova + auto/supervisão por capability */}
+      <ApprovalsPanel agentId={agent.id} agentSlug={agent.solution_slug} />
 
       {/* Usage Card */}
       <div
