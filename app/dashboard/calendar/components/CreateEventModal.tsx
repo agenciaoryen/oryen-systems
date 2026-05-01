@@ -5,8 +5,17 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { X, Search, User, Loader2 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
-import { rruleFromFrequency } from '@/lib/calendar/recurrence'
 import type { CalendarEvent, LeadOption, OrgUser } from '../types'
+
+function rruleFromFrequency(freq: string): string {
+  switch (freq) {
+    case 'daily': return 'FREQ=DAILY'
+    case 'weekly': return 'FREQ=WEEKLY'
+    case 'fortnightly': return 'FREQ=WEEKLY;INTERVAL=2'
+    case 'monthly': return 'FREQ=MONTHLY'
+    default: return ''
+  }
+}
 
 interface Props {
   orgId: string
