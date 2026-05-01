@@ -1,7 +1,8 @@
 // app/dashboard/calendar/components/CalendarHeader.tsx
 'use client'
 
-import { Plus } from 'lucide-react'
+import { Plus, Globe } from 'lucide-react'
+import Link from 'next/link'
 import UserFilterChips from './UserFilterChips'
 import ViewToggle from './ViewToggle'
 import type { OrgUser, ViewMode } from '../types'
@@ -34,6 +35,14 @@ export default function CalendarHeader({
         </div>
         <div className="flex items-center gap-3">
           <ViewToggle viewMode={viewMode} t={t} onChange={onViewModeChange} />
+          <Link
+            href="/dashboard/settings/booking"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl transition-colors text-xs font-medium"
+            style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-tertiary)' }}
+          >
+            <Globe size={14} />
+            Link Público
+          </Link>
           <button
             onClick={onNewEvent}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-colors text-sm"
