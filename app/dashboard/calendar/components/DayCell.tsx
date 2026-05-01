@@ -34,7 +34,7 @@ export default function DayCell({ dateStr, day, isToday, isSelected, events, org
 
   return (
     <button
-      onClick={() => onSelect(dateStr === isSelected ? null : dateStr)}
+      onClick={() => onSelect(dateStr)}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

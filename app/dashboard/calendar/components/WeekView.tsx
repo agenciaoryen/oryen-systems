@@ -1,7 +1,8 @@
 // app/dashboard/calendar/components/WeekView.tsx
 'use client'
 
-import { Clock } from 'lucide-react'
+import { useRef, useState, useEffect, useCallback } from 'react'
+import { Clock, ChevronRight } from 'lucide-react'
 import { EVENT_TYPE_COLORS, STATUS_COLORS, formatTime, getUserColor } from '../constants'
 import type { CalendarEvent, OrgUser } from '../types'
 
@@ -26,6 +27,29 @@ export default function WeekView({
   weekDays, events, orgUsers, todayStr, selectedDate, dayNames, monthNames, t,
   statusLabel, onSelectDate, onEventClick, onEventDrop
 }: Props) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollRight, setCanScrollRight] = useState(true)
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (el) {
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8)
+    }
+  }, [])
+
+  useEffect(() => {
+    checkScroll()
+    const el = scrollRef.current
+    if (!el) return
+    el.addEventListener('scroll', checkScroll, { passive: true })
+    const ro = new ResizeObserver(checkScroll)
+    ro.observe(el)
+    return () => {
+      el.removeEventListener('scroll', checkScroll)
+      ro.disconnect()
+    }
+  }, [checkScroll])
+
   const eventsForDate = (dateStr: string) => events.filter(e => e.event_date === dateStr)
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -46,9 +70,10 @@ export default function WeekView({
   })
 
   return (
-    <div className="lg:col-span-2 rounded-2xl p-2 sm:p-4 flex flex-col overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+    <div className="lg:col-span-2 rounded-2xl p-2 sm:p-4 flex flex-col overflow-hidden lg:max-h-[calc(100vh-300px)]" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
       {/* Horizontally scrollable wrapper for mobile */}
-      <div className="overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
+      <div className="relative">
+        <div ref={scrollRef} className="overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
         <div className="min-w-[650px]">
       {/* Day headers */}
       <div className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)] gap-px mb-px">
@@ -93,6 +118,13 @@ export default function WeekView({
         </div>
       </div>
       </div>
+        </div>
+        {canScrollRight && (
+          <div className="absolute right-0 top-0 bottom-0 w-10 pointer-events-none flex items-center justify-end pr-0.5"
+            style={{ background: 'linear-gradient(to right, transparent 0%, var(--color-bg-surface) 60%)' }}>
+            <ChevronRight size={14} className="animate-pulse" style={{ color: 'var(--color-text-muted)' }} />
+          </div>
+        )}
       </div>
     </div>
   )
