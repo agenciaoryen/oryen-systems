@@ -271,7 +271,7 @@ export default function CalendarPage() {
   }, [searchParams])
 
   // Timezone da org para exibir na UI
-  const orgTz = ((activeOrg as any)?.timezone as string) || 'America/Sao_Paulo'
+  const orgTz = activeOrg?.timezone || 'America/Sao_Paulo'
 
   // ─── Fetch events ───
   const fetchEvents = useCallback(async () => {

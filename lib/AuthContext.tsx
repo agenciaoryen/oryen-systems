@@ -32,6 +32,8 @@ type Org = {
   trial_ends_at: string | null
   niche: string | null
   billing_subscription_id: string | null
+  timezone: string | null
+  country: string | null
 }
 
 type AuthContextType = {
@@ -172,9 +174,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Staff: carregar TODAS as organizações (com campos de plano)
           const { data: orgsData } = await supabase
             .from('orgs')
-            .select('id, name, plan, plan_status, plan_started_at, trial_ends_at, niche, billing_subscription_id')
+            .select('id, name, plan, plan_status, plan_started_at, trial_ends_at, niche, billing_subscription_id, timezone, country')
             .order('name')
-          
+
           // Garantir valores default para plan
           const orgs: Org[] = (orgsData || []).map(o => ({
             ...o,
@@ -184,6 +186,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             trial_ends_at: o.trial_ends_at || null,
             niche: o.niche || null,
             billing_subscription_id: o.billing_subscription_id || null,
+            timezone: o.timezone || null,
+            country: o.country || null,
           }))
           
           setAvailableOrgs(orgs)
@@ -208,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (appUser.org_id) {
             const { data: orgData } = await supabase
               .from('orgs')
-              .select('id, name, plan, plan_status, plan_started_at, trial_ends_at, niche, billing_subscription_id')
+              .select('id, name, plan, plan_status, plan_started_at, trial_ends_at, niche, billing_subscription_id, timezone, country')
               .eq('id', appUser.org_id)
               .maybeSingle()
 
@@ -221,6 +225,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 trial_ends_at: orgData.trial_ends_at || null,
                 niche: orgData.niche || null,
                 billing_subscription_id: orgData.billing_subscription_id || null,
+                timezone: orgData.timezone || null,
+                country: orgData.country || null,
               })
             } else {
               setOrg(null)
