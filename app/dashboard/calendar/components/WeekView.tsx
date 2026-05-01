@@ -46,10 +46,13 @@ export default function WeekView({
   })
 
   return (
-    <div className="lg:col-span-2 rounded-2xl p-4 flex flex-col" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+    <div className="lg:col-span-2 rounded-2xl p-2 sm:p-4 flex flex-col overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+      {/* Horizontally scrollable wrapper for mobile */}
+      <div className="overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
+        <div className="min-w-[650px]">
       {/* Day headers */}
-      <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-px mb-px">
-        <div className="text-[10px] font-bold uppercase tracking-wider py-1 text-center" style={{ color: 'var(--color-text-muted)' }} />
+      <div className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)] gap-px mb-px">
+        <div className="text-[10px] font-bold uppercase tracking-wider py-1 text-center sticky left-0" style={{ color: 'var(--color-text-muted)' }} />
         {weekDays.map((wd, i) => {
           const isToday = wd.dateStr === todayStr
           const isSelected = wd.dateStr === selectedDate
@@ -73,7 +76,7 @@ export default function WeekView({
 
       {/* Time grid */}
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-px">
+        <div className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)] gap-px">
           {HOURS.map(hour => (
             <WeekRow
               key={hour}
@@ -88,6 +91,8 @@ export default function WeekView({
             />
           ))}
         </div>
+      </div>
+      </div>
       </div>
     </div>
   )

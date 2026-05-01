@@ -32,7 +32,7 @@ export default function MonthView({
   const eventsForDate = (dateStr: string) => events.filter(e => e.event_date === dateStr)
 
   return (
-    <div className="lg:col-span-2 rounded-2xl p-4 flex flex-col" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+    <div className="lg:col-span-2 rounded-2xl p-2 sm:p-4 flex flex-col min-h-0" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
       {/* Month nav */}
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>

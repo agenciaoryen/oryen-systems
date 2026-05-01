@@ -34,15 +34,15 @@ export default function AgendaView({
 
   if (dateKeys.length === 0) {
     return (
-      <div className="lg:col-span-2 rounded-2xl p-12 flex flex-col items-center justify-center" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
-        <CalendarDays className="w-12 h-12 mb-3" style={{ color: 'var(--color-border)' }} />
+      <div className="lg:col-span-2 rounded-2xl p-6 sm:p-12 flex flex-col items-center justify-center" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+        <CalendarDays className="w-8 sm:w-12 h-8 sm:h-12 mb-2 sm:mb-3" style={{ color: 'var(--color-border)' }} />
         <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{t.noEvents}</p>
       </div>
     )
   }
 
   return (
-    <div className="lg:col-span-2 rounded-2xl p-5 overflow-y-auto" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+    <div className="lg:col-span-2 rounded-2xl p-3 sm:p-5 overflow-y-auto" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
       <div className="space-y-6">
         {dateKeys.map(dateStr => {
           const isToday = dateStr === todayStr

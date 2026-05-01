@@ -46,7 +46,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 h-[calc(100vh-180px)]">
+    <div className="flex flex-col gap-3 sm:gap-4 min-h-0 flex-1 pb-4 sm:pb-0">
       <CalendarHeader
         title={t.title}
         orgTz={orgTz}
@@ -114,7 +114,7 @@ export default function CalendarPage() {
 
         {/* Event List Sidebar (only in month/week views) */}
         {viewMode !== 'agenda' && (
-          <div className="rounded-2xl p-5 overflow-y-auto" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+          <div className="rounded-2xl p-3 sm:p-5 overflow-y-auto" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
             <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--color-text-tertiary)' }}>
               {selectedDate
                 ? selectedDate.split('-').reverse().join('/')

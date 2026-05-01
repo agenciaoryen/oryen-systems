@@ -64,14 +64,14 @@ export default function EventDetailModal({
   }
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={onClose}>
-      <div className="rounded-2xl w-full max-w-md" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }} onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
-          <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.eventDetails}</h2>
-          <button onClick={onClose} style={{ color: 'var(--color-text-muted)' }}><X size={20} /></button>
+    <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4" style={{ background: 'var(--color-bg-overlay)' }} onClick={onClose}>
+      <div className="rounded-2xl w-full max-w-md mx-auto" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }} onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-4 sm:p-5" style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+          <h2 className="text-base sm:text-lg font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>{t.eventDetails}</h2>
+          <button onClick={onClose} className="shrink-0 ml-2" style={{ color: 'var(--color-text-muted)' }}><X size={20} /></button>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-4 sm:p-5 space-y-4">
           {/* Title + badges */}
           <div>
             <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{event.title}</h3>
@@ -185,7 +185,7 @@ export default function EventDetailModal({
 
         {/* Actions */}
         {event.status === 'scheduled' && !event.external_read_only && (
-          <div className="p-5 space-y-2" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+          <div className="p-4 sm:p-5 space-y-2" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
             {/* Recurring badge */}
             {(event.rrule || event.is_virtual) && (
               <div className="flex items-center gap-2 mb-2 text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
@@ -212,7 +212,7 @@ export default function EventDetailModal({
 
         {/* Delete */}
         {!event.external_read_only && (
-        <div className="px-5 pb-5">
+        <div className="px-4 sm:px-5 pb-4 sm:pb-5">
           {!showDeleteConfirm ? (
             <button onClick={() => setShowDeleteConfirm(true)} className="w-full flex items-center justify-center gap-2 text-xs transition-colors py-2" style={{ color: 'var(--color-text-muted)' }}>
               <Trash2 size={14} />

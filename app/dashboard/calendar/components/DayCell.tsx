@@ -38,7 +38,7 @@ export default function DayCell({ dateStr, day, isToday, isSelected, events, org
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className="rounded-xl flex flex-col items-center justify-center gap-0.5 text-sm transition-all relative min-h-[48px]"
+      className="rounded-xl flex flex-col items-center justify-center gap-0.5 text-xs sm:text-sm transition-all relative min-h-[36px] sm:min-h-[48px]"
       style={
         isSelected
           ? { background: 'var(--color-primary-subtle)', border: '1px solid var(--color-primary)', color: 'var(--color-text-primary)' }
