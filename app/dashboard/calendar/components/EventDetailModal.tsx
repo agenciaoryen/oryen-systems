@@ -2,9 +2,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Clock, MapPin, User, X, Loader2, CheckCircle2, XCircle, AlertCircle, ExternalLink, Trash2 } from 'lucide-react'
+import { Clock, MapPin, User, X, Loader2, CheckCircle2, XCircle, AlertCircle, ExternalLink, Trash2, ListTodo } from 'lucide-react'
 import { formatLeadName } from '@/lib/format/leadName'
 import { EVENT_TYPE_COLORS, STATUS_COLORS, formatTime } from '../constants'
+import EventChecklist from './EventChecklist'
 import type { CalendarEvent } from '../types'
 
 interface Props {
@@ -133,6 +134,15 @@ export default function EventDetailModal({
           {event.notes && (
             <div className="text-sm rounded-lg p-3" style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)' }}>{event.notes}</div>
           )}
+
+          {/* Checklist */}
+          <div className="pt-2">
+            <div className="flex items-center gap-2 mb-3">
+              <ListTodo size={14} style={{ color: 'var(--color-text-muted)' }} />
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>Checklist</span>
+            </div>
+            <EventChecklist eventId={event.is_virtual && event.recurrence_master_id ? event.recurrence_master_id : event.id} t={t} />
+          </div>
         </div>
 
         {/* Google read-only warning */}
