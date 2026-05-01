@@ -2,6 +2,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { formatLeadName } from '@/lib/format/leadName'
@@ -244,6 +245,7 @@ function getFirstDayOfMonth(year: number, month: number) {
 export default function CalendarPage() {
   const { user, activeOrg } = useAuth()
   const orgId = useActiveOrgId()
+  const searchParams = useSearchParams()
   const userLang = ((user as any)?.language as Language) || 'pt'
   const t = TRANSLATIONS[userLang]
 
@@ -257,6 +259,19 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [preselectedLeadId, setPreselectedLeadId] = useState<string | null>(null)
+
+  // Se chegou via lead_id (ex: do perfil do lead), auto-abre modal
+  useEffect(() => {
+    const leadId = searchParams.get('lead_id')
+    if (leadId) {
+      setPreselectedLeadId(leadId)
+      setShowCreateModal(true)
+    }
+  }, [searchParams])
+
+  // Timezone da org para exibir na UI
+  const orgTz = ((activeOrg as any)?.timezone as string) || 'America/Sao_Paulo'
 
   // ─── Fetch events ───
   const fetchEvents = useCallback(async () => {
@@ -368,7 +383,12 @@ export default function CalendarPage() {
     <div className="flex flex-col gap-4 h-[calc(100vh-180px)]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.title}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{t.title}</h1>
+          <span className="text-[10px] font-mono px-2 py-1 rounded-md" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-subtle)' }}>
+            {orgTz}
+          </span>
+        </div>
         <button
           onClick={() => { setShowCreateModal(true) }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-colors text-sm"
@@ -506,12 +526,14 @@ export default function CalendarPage() {
         <CreateEventModal
           orgId={orgId!}
           t={t}
-          onClose={() => setShowCreateModal(false)}
+          onClose={() => { setShowCreateModal(false); setPreselectedLeadId(null) }}
           onCreated={(ev) => {
             setEvents(prev => [...prev, ev])
             setShowCreateModal(false)
+            setPreselectedLeadId(null)
           }}
           defaultDate={selectedDate || todayStr}
+          initialLeadId={preselectedLeadId}
         />
       )}
 
@@ -535,13 +557,14 @@ export default function CalendarPage() {
    CREATE EVENT MODAL
    ============================================= */
 function CreateEventModal({
-  orgId, t, onClose, onCreated, defaultDate
+  orgId, t, onClose, onCreated, defaultDate, initialLeadId
 }: {
   orgId: string
   t: any
   onClose: () => void
   onCreated: (ev: CalendarEvent) => void
   defaultDate: string
+  initialLeadId?: string | null
 }) {
   const [title, setTitle] = useState('')
   const [eventType, setEventType] = useState('visit')
@@ -557,7 +580,23 @@ function CreateEventModal({
   const [selectedLead, setSelectedLead] = useState<LeadOption | null>(null)
   const [saving, setSaving] = useState(false)
 
-  // Lead search
+  // Pre-selected lead (ex: vindo do perfil do lead)
+  useEffect(() => {
+    if (!initialLeadId) return
+    supabase
+      .from('leads')
+      .select('id, name, phone')
+      .eq('id', initialLeadId)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setSelectedLead(data)
+          setLeadId(data.id)
+        }
+      })
+  }, [initialLeadId])
+
+  // Lead search (por nome, telefone ou email)
   useEffect(() => {
     if (!leadSearch.trim() || leadSearch.length < 2) { setLeadResults([]); return }
     const timer = setTimeout(async () => {
@@ -565,7 +604,7 @@ function CreateEventModal({
         .from('leads')
         .select('id, name, phone')
         .eq('org_id', orgId)
-        .or(`name.ilike.%${leadSearch}%,phone.ilike.%${leadSearch}%`)
+        .or(`name.ilike.%${leadSearch}%,phone.ilike.%${leadSearch}%,email.ilike.%${leadSearch}%`)
         .limit(5)
       setLeadResults(data || [])
     }, 300)

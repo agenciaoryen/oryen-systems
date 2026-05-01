@@ -108,6 +108,7 @@ const TRANSLATIONS = {
     contact: 'Contato',
     whatsapp: 'WhatsApp',
     openChat: 'Abrir Conversa',
+    scheduleMeeting: 'Agendar Reunião',
     instagram: 'Instagram',
     city: 'Cidade',
     website: 'Site/URL',
@@ -190,6 +191,7 @@ const TRANSLATIONS = {
     contact: 'Contact',
     whatsapp: 'WhatsApp',
     openChat: 'Open Chat',
+    scheduleMeeting: 'Schedule Meeting',
     instagram: 'Instagram',
     city: 'City',
     website: 'Website/URL',
@@ -272,6 +274,7 @@ const TRANSLATIONS = {
     contact: 'Contacto',
     whatsapp: 'WhatsApp',
     openChat: 'Abrir Chat',
+    scheduleMeeting: 'Agendar Reunión',
     instagram: 'Instagram',
     city: 'Ciudad',
     website: 'Sitio Web/URL',
@@ -1187,6 +1190,14 @@ export default function LeadProfilePage() {
                   >
                     <ExternalLink size={16} />
                     {t.whatsapp}
+                  </button>
+                  <button
+                    onClick={() => router.push(`/dashboard/calendar?lead_id=${leadId}`)}
+                    className="flex-1 px-4 py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 transition-all shadow-lg text-sm"
+                    style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', border: '1px solid var(--color-accent-subtle)' }}
+                  >
+                    <CalendarCheck size={16} />
+                    {t.scheduleMeeting || 'Agendar'}
                   </button>
                 </div>
               </div>

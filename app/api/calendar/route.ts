@@ -82,9 +82,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Push pro Google Calendar (se usuário tiver integração ativa)
+    // Push pro Google Calendar com timezone da org
     if (data && auth.userId) {
-      await pushEventToGoogle({ userId: auth.userId, event: data as any })
+      const { data: org } = await supabase
+        .from('orgs')
+        .select('timezone')
+        .eq('id', org_id)
+        .single()
+      const orgTz = (org?.timezone as string) || 'America/Sao_Paulo'
+      await pushEventToGoogle({ userId: auth.userId, event: data as any, timeZone: orgTz })
     }
 
     return NextResponse.json({ event: data })

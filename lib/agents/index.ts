@@ -345,7 +345,7 @@ export async function hireAgent(
       .insert({
         org_id: orgId,
         solution_slug: solutionSlug,
-        status: 'active',
+        status: 'paused',
         limits: finalLimits,
         current_usage: { leads_captured: 0, period_start: new Date().toISOString() },
         activated_at: new Date().toISOString(),
