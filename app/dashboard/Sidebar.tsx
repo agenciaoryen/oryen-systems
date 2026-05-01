@@ -37,6 +37,7 @@ import {
   CreditCard,
   Zap,
   Shield,
+  ShieldAlert,
   Plug,
   Rocket,
   type LucideIcon
@@ -58,6 +59,7 @@ const TRANSLATIONS = {
       crm: 'CRM & Contatos',
       conversations: 'Conversas',
       agents: 'Agentes IA',
+      approvals: 'Aprovações pendentes',
       analytics: 'Analytics IA',
       reports: 'Relatórios',
       documents: 'Documentos',
@@ -102,6 +104,7 @@ const TRANSLATIONS = {
       crm: 'CRM & Contacts',
       conversations: 'Conversations',
       agents: 'AI Agents',
+      approvals: 'Pending approvals',
       analytics: 'AI Analytics',
       reports: 'Reports',
       documents: 'Documents',
@@ -146,6 +149,7 @@ const TRANSLATIONS = {
       crm: 'CRM & Contactos',
       conversations: 'Conversaciones',
       agents: 'Agentes IA',
+      approvals: 'Aprobaciones pendientes',
       analytics: 'Analytics IA',
       reports: 'Reportes',
       documents: 'Documentos',
@@ -217,6 +221,7 @@ interface SidebarItem {
   label: string
   icon: LucideIcon
   badge?: boolean
+  badgeCount?: number
   isComingSoon?: boolean
   requiredNiche?: string[]
   permission?: PermissionModule
@@ -260,6 +265,7 @@ export default function Sidebar() {
   const { collapsed: isDesktopCollapsed, toggle: toggleDesktopSidebar } = useSidebar()
 
   const [hasUnreadAlerts, setHasUnreadAlerts] = useState(false)
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false)
 
@@ -337,6 +343,34 @@ export default function Sidebar() {
     }
   }, [user, router, t.toastAction])
 
+  // ─── BADGE DE APROVAÇÕES PENDENTES (modo supervisão) ───
+  // Conta agent_actions com approval_status='pending' da org ativa.
+  // Refresh a cada 30s + mostra número no menu "Colaboradores IA".
+  useEffect(() => {
+    const orgId = isStaff && selectedOrgId ? selectedOrgId : org?.id
+    if (!orgId) {
+      setPendingApprovalsCount(0)
+      return
+    }
+
+    const fetchPending = async () => {
+      try {
+        const { count } = await supabase
+          .from('agent_actions')
+          .select('id', { count: 'exact', head: true })
+          .eq('org_id', orgId)
+          .eq('approval_status', 'pending')
+        setPendingApprovalsCount(count || 0)
+      } catch {
+        // silently
+      }
+    }
+
+    fetchPending()
+    const interval = setInterval(fetchPending, 30000)
+    return () => clearInterval(interval)
+  }, [org?.id, isStaff, selectedOrgId])
+
   // ─── FECHAR DROPDOWN AO CLICAR FORA ───
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -381,6 +415,9 @@ export default function Sidebar() {
       collapsible: true,
       items: [
         { href: '/dashboard/agents', label: t.menu.agents, icon: Bot, permission: 'agents' },
+        ...(pendingApprovalsCount > 0
+          ? [{ href: '/dashboard/agents/inbox', label: t.menu.approvals || 'Aprovações pendentes', icon: ShieldAlert, badge: true, badgeCount: pendingApprovalsCount, permission: 'agents' as const }]
+          : []),
         { href: '/dashboard/follow-up', label: t.menu.followUp, icon: Zap, permission: 'follow_up' },
         { href: '/dashboard/analytics', label: t.menu.analytics, icon: TrendingUp, permission: 'analytics' },
       ],
@@ -698,9 +735,23 @@ export default function Sidebar() {
                           </span>
                         </div>
 
-                        {/* Badge de notificação */}
+                        {/* Badge de notificação — número se badgeCount > 0, senão dot pulsante */}
                         {link.badge && !isActive && (
-                          <span className="w-2 h-2 rounded-full animate-pulse shrink-0" style={{ background: 'var(--color-error)', boxShadow: '0 0 8px rgba(217, 84, 84, 0.6)' }} />
+                          link.badgeCount && link.badgeCount > 0 ? (
+                            <span
+                              className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+                              style={{
+                                background: 'var(--color-error)',
+                                color: '#fff',
+                                minWidth: '18px',
+                                textAlign: 'center',
+                              }}
+                            >
+                              {link.badgeCount > 99 ? '99+' : link.badgeCount}
+                            </span>
+                          ) : (
+                            <span className="w-2 h-2 rounded-full animate-pulse shrink-0" style={{ background: 'var(--color-error)', boxShadow: '0 0 8px rgba(217, 84, 84, 0.6)' }} />
+                          )
                         )}
                       </Link>
                     )

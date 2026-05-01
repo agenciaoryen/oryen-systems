@@ -32,6 +32,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { isAgentAllowed, type AgentGateResult } from './gate'
 import { getCapability, canAgentExecute, type CapabilityDefinition } from './capabilities'
+import { getHandler } from './handler-registry'
+import './handlers'  // garante registro de todos os handlers conhecidos
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -57,7 +59,9 @@ export interface RunCapabilityInput {
   }
   input?: Record<string, any>              // payload sanitizado (sem segredos)
   parent_action_id?: string                // pra handoff/linhagem
-  handler: (ctx: HandlerContext) => Promise<HandlerResult>
+  // Handler opcional — se ausente, kernel resolve via handler-registry.
+  // Caller passa explicitamente só pra override (testes, etc).
+  handler?: (ctx: HandlerContext) => Promise<HandlerResult>
 }
 
 export interface HandlerContext {
@@ -236,10 +240,32 @@ export async function runAgentCapability(
     }
   }
 
-  // ─── 6. Executa o handler ─────────────────────────────────────────────
+  // ─── 6. Resolve e executa o handler ───────────────────────────────────
+  // Prefere o handler do caller; se não veio, busca no registry.
+  // Sem handler em nenhum dos dois caminhos, marca failed.
+  const handlerFn = input.handler || getHandler(input.capability)
+  if (!handlerFn) {
+    const duration = Date.now() - startedAt
+    await supabase
+      .from('agent_actions')
+      .update({
+        status: 'failed',
+        completed_at: new Date().toISOString(),
+        duration_ms: duration,
+        error_message: `Sem handler registrado para capability "${input.capability}"`,
+      })
+      .eq('id', actionId)
+    return {
+      status: 'failed',
+      action_id: actionId,
+      error: `Sem handler registrado para "${input.capability}"`,
+      duration_ms: duration,
+    }
+  }
+
   let handlerResult: HandlerResult
   try {
-    handlerResult = await input.handler({
+    handlerResult = await handlerFn({
       action_id: actionId,
       org_id: input.org_id,
       agent: gate.agent,
@@ -309,7 +335,238 @@ export async function runAgentCapability(
   }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Resume de action pendente após aprovação humana ─────────────────────────
+//
+// Quando capability tem default_approval='pending' (ex: send_whatsapp em cold
+// outreach), o runAgentCapability retorna SEM executar o handler. A action
+// fica em agent_actions com approval_status='pending' até o admin decidir.
+//
+// Se aprovada, a UI/API chama resumePendingAction(actionId) que:
+//   1. Carrega a action e valida que está aprovada
+//   2. Reverifica gates (plano/estado/capability) — situação pode ter mudado
+//      entre o pedido inicial e a aprovação (ex: plano caiu, agente pausado)
+//   3. Resolve handler do registry e executa com input persistido
+//   4. Atualiza action com resultado
+//
+// Se rejeitada, marca como denied. Sem reexecução.
+
+export async function resumePendingAction(
+  actionId: string,
+  approvedByUserId: string
+): Promise<RunCapabilityResult> {
+  const startedAt = Date.now()
+
+  // 1. Carrega action
+  const { data: action, error: loadErr } = await supabase
+    .from('agent_actions')
+    .select('*')
+    .eq('id', actionId)
+    .single()
+
+  if (loadErr || !action) {
+    return {
+      status: 'failed',
+      action_id: actionId,
+      error: 'Action não encontrada',
+      duration_ms: Date.now() - startedAt,
+    }
+  }
+
+  if (action.approval_status !== 'approved') {
+    return {
+      status: 'failed',
+      action_id: actionId,
+      error: `Action approval_status é "${action.approval_status}", não "approved"`,
+      duration_ms: Date.now() - startedAt,
+    }
+  }
+
+  if (action.status === 'success' || action.status === 'failed' || action.status === 'denied') {
+    return {
+      status: 'failed',
+      action_id: actionId,
+      error: `Action já foi processada (status=${action.status})`,
+      duration_ms: Date.now() - startedAt,
+    }
+  }
+
+  // 2. Reverifica gates (situação pode ter mudado desde o pedido)
+  const capability = getCapability(action.capability)
+  if (!capability) {
+    await markActionFailed(actionId, 'Capability removida do catálogo após aprovação')
+    return {
+      status: 'failed',
+      action_id: actionId,
+      error: 'Capability removida do catálogo',
+      duration_ms: Date.now() - startedAt,
+    }
+  }
+
+  // Busca o agent atual pra reverificar
+  const { data: agent } = await supabase
+    .from('agents')
+    .select('id, solution_slug, org_id')
+    .eq('id', action.agent_id)
+    .single()
+
+  if (!agent) {
+    await markActionFailed(actionId, 'Agente não existe mais')
+    return {
+      status: 'failed',
+      action_id: actionId,
+      error: 'Agente não existe mais',
+      duration_ms: Date.now() - startedAt,
+    }
+  }
+
+  const gate = await isAgentAllowed(agent.org_id, agent.solution_slug)
+  if (!gate.allowed || !gate.agent || !gate.org) {
+    await markActionDenied(actionId, gate.reason || 'unknown', gate.message || 'Gate falhou na re-verificação')
+    return {
+      status: 'denied',
+      action_id: actionId,
+      denied_reason: gate.reason || 'unknown',
+      error: gate.message,
+      duration_ms: Date.now() - startedAt,
+    }
+  }
+
+  if (!canAgentExecute(gate.agent.solution_slug, action.capability)) {
+    await markActionDenied(actionId, 'capability_not_allowed_for_agent', 'Re-verificação após aprovação')
+    return {
+      status: 'denied',
+      action_id: actionId,
+      denied_reason: 'capability_not_allowed_for_agent',
+      duration_ms: Date.now() - startedAt,
+    }
+  }
+
+  // 3. Resolve handler
+  const handlerFn = getHandler(action.capability)
+  if (!handlerFn) {
+    await markActionFailed(actionId, `Sem handler registrado para "${action.capability}"`)
+    return {
+      status: 'failed',
+      action_id: actionId,
+      error: `Sem handler registrado para "${action.capability}"`,
+      duration_ms: Date.now() - startedAt,
+    }
+  }
+
+  // 4. Executa
+  let handlerResult: HandlerResult
+  try {
+    handlerResult = await handlerFn({
+      action_id: actionId,
+      org_id: action.org_id,
+      agent: gate.agent,
+      capability,
+      target: action.target_id ? { type: action.target_type, id: action.target_id } : undefined,
+      input: action.input || {},
+      org: gate.org,
+    })
+  } catch (err: any) {
+    const duration = Date.now() - startedAt
+    await supabase
+      .from('agent_actions')
+      .update({
+        status: 'failed',
+        completed_at: new Date().toISOString(),
+        duration_ms: duration,
+        error_message: err.message?.substring(0, 1000) || 'Erro desconhecido',
+        error_stack: err.stack?.substring(0, 5000) || null,
+      })
+      .eq('id', actionId)
+    return {
+      status: 'failed',
+      action_id: actionId,
+      error: err.message,
+      duration_ms: duration,
+    }
+  }
+
+  const duration = Date.now() - startedAt
+  const finalStatus: RunStatus = handlerResult.ok ? 'success' : 'failed'
+
+  await supabase
+    .from('agent_actions')
+    .update({
+      status: finalStatus,
+      completed_at: new Date().toISOString(),
+      duration_ms: duration,
+      result: handlerResult.data ? sanitizeInput(handlerResult.data) : null,
+      error_message: handlerResult.error?.substring(0, 1000) || null,
+    })
+    .eq('id', actionId)
+
+  return {
+    status: finalStatus,
+    action_id: actionId,
+    data: handlerResult.data,
+    error: handlerResult.error,
+    duration_ms: duration,
+  }
+}
+
+// ─── Reject de action pendente ───────────────────────────────────────────────
+export async function rejectPendingAction(
+  actionId: string,
+  rejectedByUserId: string,
+  reason?: string
+): Promise<{ ok: boolean; error?: string }> {
+  const { data: action } = await supabase
+    .from('agent_actions')
+    .select('id, approval_status, status')
+    .eq('id', actionId)
+    .single()
+
+  if (!action) return { ok: false, error: 'Action não encontrada' }
+
+  if (action.approval_status !== 'pending') {
+    return { ok: false, error: `Action não está pendente (approval_status=${action.approval_status})` }
+  }
+
+  await supabase
+    .from('agent_actions')
+    .update({
+      status: 'denied',
+      denied_reason: 'rejected_by_human',
+      approval_status: 'rejected',
+      rejection_reason: reason || null,
+      approved_by_user_id: rejectedByUserId,
+      approved_at: new Date().toISOString(),
+      completed_at: new Date().toISOString(),
+    })
+    .eq('id', actionId)
+
+  return { ok: true }
+}
+
+// ─── Helpers internos ────────────────────────────────────────────────────────
+async function markActionFailed(actionId: string, message: string) {
+  await supabase
+    .from('agent_actions')
+    .update({
+      status: 'failed',
+      completed_at: new Date().toISOString(),
+      error_message: message,
+    })
+    .eq('id', actionId)
+}
+
+async function markActionDenied(actionId: string, reason: string, message: string) {
+  await supabase
+    .from('agent_actions')
+    .update({
+      status: 'denied',
+      denied_reason: reason,
+      completed_at: new Date().toISOString(),
+      error_message: message,
+    })
+    .eq('id', actionId)
+}
+
+// ─── Sanitização ─────────────────────────────────────────────────────────────
 
 const SECRET_KEYS = new Set([
   'password', 'token', 'api_key', 'apikey', 'secret', 'authorization',
