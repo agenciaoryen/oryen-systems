@@ -425,6 +425,11 @@ export default function LeadProfilePage() {
   const userCurrency = user?.currency || 'BRL'
   const userTimezone = user?.timezone || 'America/Sao_Paulo'
 
+  // Label do botão de agendar: visita para imobiliária, reunião para outros nichos
+  const scheduleLabel = activeOrg?.niche === 'real_estate'
+    ? (userLang === 'en' ? 'Schedule Visit' : userLang === 'es' ? 'Agendar Visita' : 'Agendar Visita')
+    : t.scheduleMeeting
+
   const leadId = params?.id ? String(params.id) : null
 
   // Estados principais
@@ -1197,7 +1202,7 @@ export default function LeadProfilePage() {
                     style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', border: '1px solid var(--color-accent-subtle)' }}
                   >
                     <CalendarCheck size={16} />
-                    {t.scheduleMeeting || 'Agendar'}
+                    {scheduleLabel}
                   </button>
                 </div>
               </div>

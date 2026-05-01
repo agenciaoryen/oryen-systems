@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     const from = searchParams.get('from')
     const to = searchParams.get('to')
     const status = searchParams.get('status')
+    const assignedTo = searchParams.get('assigned_to')
 
     let query = supabase
       .from('calendar_events')
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
     if (from) query = query.gte('event_date', from)
     if (to) query = query.lte('event_date', to)
     if (status) query = query.eq('status', status)
+    if (assignedTo) query = query.eq('assigned_to', assignedTo)
 
     const { data, error } = await query
 
@@ -64,6 +66,7 @@ export async function POST(request: NextRequest) {
       .insert({
         org_id,
         lead_id: body.lead_id || null,
+        assigned_to: body.assigned_to || null,
         title,
         description: body.description || null,
         event_type: event_type || 'other',
