@@ -19,6 +19,7 @@ import { notifyError } from '@/lib/monitoring/error-notifier'
 import { stopCheck } from '@/lib/sdr/redis'
 import { isWithinWindow } from '@/lib/sdr/messaging-window'
 import { checkMonthlyPlanLimit } from '@/lib/planLimits'
+import { isAgentAllowed, logGateDenied } from '@/lib/agents/gate'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -303,6 +304,25 @@ async function processFollowUp(
     return 'skipped'
   }
 
+  // ─── 1b. GATE: org tem o agente followup contratado e ativo? ───
+  // Sem este gate, o cron processava qualquer item da fila independente
+  // do plano — causou caso real de org agency_ai recebendo follow-up
+  // imobiliário (item enfileirado por instance + plano não tinha o agente).
+  const gate = await isAgentAllowed(item.org_id, 'followup')
+  if (!gate.allowed) {
+    logGateDenied('follow-up:processFollowUp', gate, { item_id: item.id, lead_id: item.lead_id })
+    // Cancela o item da fila — org não está autorizada
+    await supabase
+      .from('follow_up_queue')
+      .update({
+        status: 'cancelled',
+        last_error: `gate_denied:${gate.reason}`,
+        updated_at: now.toISOString(),
+      })
+      .eq('id', item.id)
+    return 'skipped'
+  }
+
   // ─── 2. Verificar horário comercial (8h-20h no fuso da org) ───
   const timezone = org.timezone || 'America/Sao_Paulo'
   const localHour = getLocalHour(now, timezone)
@@ -385,8 +405,9 @@ async function processFollowUp(
   // ─── 7. Gerar mensagem de follow-up via Claude ───
   const prompt = buildFollowUpPrompt({
     assistant_name: campaignConfig?.assistant_name || 'Assistente',
-    org_name: org.name || 'a imobiliária',
+    org_name: org.name || 'sua empresa',
     org_language: org.language,
+    org_niche: org.niche,                       // ← novo: ramifica prompt por nicho
     lead_name: lead.name || '',
     lead_stage: item.lead_stage || lead.stage,
     attempt_number: nextAttempt,

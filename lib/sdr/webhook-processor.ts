@@ -20,6 +20,7 @@ import {
   stopSet,
   calculateBufferSeconds
 } from '@/lib/sdr/redis'
+import { isAgentAllowed, logGateDenied } from '@/lib/agents/gate'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -210,6 +211,25 @@ export async function processInboundMessage(msg: NormalizedInbound): Promise<Pro
   if (!msg.agentId) {
     console.log(`[Webhook:Processor] Sem agente vinculado — mensagem salva, IA não processa (modo WhatsApp Web) | lead: ${lead.id}`)
     return { success: true, saved: true, skipped: true, reason: 'no_agent_linked', leadId: lead.id, leadName: lead.name, isNewLead: lead._isNew || false }
+  }
+
+  // ─── 8c. GATE DE AUTORIZAÇÃO DO AGENTE ───
+  // Antes de processar com IA, conferir se a org tem permissão (plano + agente
+  // contratado e ativo). Se não, salva mensagem mas NÃO responde — mesmo
+  // comportamento do "modo WhatsApp Web". Resolve o caso de cliente do basic
+  // conectar instância e o SDR responder sem autorização.
+  const gate = await isAgentAllowed(orgId, 'sdr')
+  if (!gate.allowed) {
+    logGateDenied('sdr/webhook-processor', gate, { lead_id: lead.id, instance: instanceName })
+    return {
+      success: true,
+      saved: true,
+      skipped: true,
+      reason: `gate_denied:${gate.reason}`,
+      leadId: lead.id,
+      leadName: lead.name,
+      isNewLead: lead._isNew || false,
+    }
   }
 
   // ─── 9. Buffer anti-fragmentação + agendar /process ───

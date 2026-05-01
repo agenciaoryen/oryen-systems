@@ -15,6 +15,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { sendColdEmail } from '@/lib/email/sender'
+import { isAgentAllowed, logGateDenied } from '@/lib/agents/gate'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -239,6 +240,28 @@ function isValidEmail(s: string | null | undefined): boolean {
 }
 
 async function executeBdrEmailStep(enrollment: any, step: any) {
+  // ─── GATE DE AUTORIZAÇÃO ───
+  // Antes de enviar, conferir se a org está autorizada (plano + agente
+  // bdr_email contratado e ativo). Sem este gate, o engine disparava
+  // emails mesmo sem o agente bdr_email estar configurado na org.
+  const gate = await isAgentAllowed(enrollment.org_id, 'bdr_email')
+  if (!gate.allowed) {
+    logGateDenied('engine:executeBdrEmailStep', gate, {
+      enrollment_id: enrollment.id,
+      step_id: step.id,
+      lead_id: enrollment.lead_id,
+    })
+    await supabase.from('prospection_step_executions').insert({
+      org_id: enrollment.org_id,
+      enrollment_id: enrollment.id,
+      step_id: step.id,
+      lead_id: enrollment.lead_id,
+      result: 'skipped',
+      metadata: { reason: `gate_denied:${gate.reason}`, gate_message: gate.message },
+    })
+    return
+  }
+
   // Busca dados do lead
   const { data: lead } = await supabase
     .from('leads')
@@ -284,6 +307,26 @@ async function executeBdrEmailStep(enrollment: any, step: any) {
     bodyText: body,
     fromName: org?.name || 'Oryen',
   })
+
+  // Registra a mensagem em `messages` pra aparecer no módulo Conversas.
+  // Sem esse insert, o email saía mas o histórico ficava só em
+  // prospection_step_executions e o admin não via no timeline do lead.
+  try {
+    await supabase.rpc('fn_insert_message', {
+      p_org_id: enrollment.org_id,
+      p_lead_id: enrollment.lead_id,
+      p_channel: 'email',
+      p_direction: 'outbound',
+      p_body: `Assunto: ${subject}\n\n${body}`,
+      p_sender_type: 'agent_bot',
+      p_sender_name: 'BDR Email',
+      p_message_type: 'text',
+      p_timestamp: new Date().toISOString(),
+    })
+  } catch (msgErr: any) {
+    // Não falha o step se o registro em messages falhar — o email já foi enviado.
+    console.warn(`[engine:bdr_email] fn_insert_message falhou (não-fatal): ${msgErr.message}`)
+  }
 
   // Loga execução
   await supabase.from('prospection_step_executions').insert({

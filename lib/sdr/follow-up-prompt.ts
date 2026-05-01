@@ -1,74 +1,145 @@
 // lib/sdr/follow-up-prompt.ts
 // ═══════════════════════════════════════════════════════════════════════════════
-// Prompt builder para o agente de Follow-up
+// Prompt builder para o agente de Follow-up — ramificado por nicho da org.
 //
-// Estratégia progressiva de reengajamento:
-// Tentativa 1 (4h): Continuidade natural — retoma de onde parou
-// Tentativa 2 (1 dia): Valor adicional — traz novidade ou dica
-// Tentativa 3 (3 dias): Urgência leve — "ainda procurando?"
-// Tentativa 4 (5 dias): Social proof + escassez
-// Tentativa 5 (7 dias): Última tentativa — deixa porta aberta
+// IMPORTANTE: o prompt anterior era hardcoded como imobiliário (instruções
+// pediam pro agente perguntar de "imóvel", "visita", "bairro"). Quando a org
+// é de outro nicho (ai_agency, etc) o agente acabava oferecendo imóveis
+// inexistentes. Agora cada nicho tem suas próprias estratégias.
+//
+// Cadência de tentativas (genérica em todos os nichos):
+//   1ª (4h):  Continuidade natural
+//   2ª (24h): Valor adicional / curiosidade
+//   3ª (72h): Verificação direta de interesse
+//   4ª (5d):  Social proof + leve escassez
+//   5ª (7d):  Despedida com porta aberta
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface FollowUpPromptConfig {
   assistant_name: string
   org_name: string
   org_language?: string
+  org_niche?: string | null         // 'real_estate', 'ai_agency', 'general', etc
   lead_name: string
   lead_stage?: string
-  attempt_number: number      // 1-based
+  attempt_number: number            // 1-based
   max_attempts: number
   last_conversation_summary?: string
   company_context?: string
   tone?: string
 }
 
-const STRATEGIES: Record<number, { name_pt: string; instruction: string }> = {
-  1: {
-    name_pt: 'Continuidade natural',
-    instruction: `Esta é sua PRIMEIRA tentativa de follow-up. O lead parou de responder há algumas horas.
-Abordagem: Retome NATURALMENTE de onde a conversa parou. Não seja invasivo.
-- Se estavam discutindo um imóvel → pergunte se conseguiu pensar sobre aquele imóvel
+// ─── Estratégias por nicho ───────────────────────────────────────────────────
+// Cada nicho tem 5 instruções (uma por tentativa) com vocabulário e gatilhos
+// específicos. NÃO mencionar produtos/conceitos do nicho errado.
+
+const STRATEGIES_REAL_ESTATE: Record<number, string> = {
+  1: `PRIMEIRA tentativa. Lead parou de responder há algumas horas.
+Retome NATURALMENTE de onde a conversa parou. Não seja invasivo.
+- Se discutiam um imóvel → pergunte se conseguiu pensar
 - Se estava qualificando → faça uma pergunta simples pendente
 - Se tinha visita sendo agendada → pergunte se encontrou um horário bom
-NÃO diga "estou fazendo follow-up" ou "não recebi resposta". Seja natural como se estivesse continuando a conversa.
-Envie UMA mensagem curta (1-2 frases no máximo).`
-  },
-  2: {
-    name_pt: 'Valor adicional',
-    instruction: `Esta é sua SEGUNDA tentativa. O lead não respondeu a primeira tentativa (1 dia atrás).
-Abordagem: Traga VALOR NOVO. Algo que o lead não sabia antes.
-- Mencione uma novidade (novo imóvel disponível, preço atualizado, condição especial)
-- Compartilhe uma dica útil sobre o mercado imobiliário da região
-- Ofereça algo: "Separei algumas opções que combinam com o que você procura"
-Envie UMA mensagem curta e que gere curiosidade. Não pressione.`
-  },
-  3: {
-    name_pt: 'Verificação de interesse',
-    instruction: `Esta é sua TERCEIRA tentativa. O lead está em silêncio há 3 dias.
-Abordagem: Pergunta direta mas gentil sobre o interesse.
-- "Ainda está procurando imóvel na região X?"
+NÃO diga "estou fazendo follow-up" nem "não recebi resposta". Seja natural.
+UMA mensagem curta (1-2 frases).`,
+  2: `SEGUNDA tentativa. Lead não respondeu há ~1 dia.
+Traga VALOR NOVO sobre imóveis ou mercado:
+- Novo imóvel disponível, preço atualizado, condição especial
+- Dica útil sobre o mercado imobiliário da região
+- "Separei algumas opções que combinam com o que você procura"
+UMA mensagem curta que gere curiosidade. Sem pressão.`,
+  3: `TERCEIRA tentativa. Lead em silêncio há ~3 dias.
+Pergunta direta mas gentil:
+- "Ainda está procurando imóvel na região?"
 - "Conseguiu encontrar o que procurava?"
 - "Posso ajudar com mais alguma coisa?"
-Seja direto mas respeitoso. UMA mensagem curta. Se o lead não tem interesse, tudo bem — pergunte sem pressão.`
-  },
-  4: {
-    name_pt: 'Social proof + escassez',
-    instruction: `Esta é sua QUARTA tentativa. O lead está em silêncio há 5 dias.
-Abordagem: Use gatilho de escassez ou social proof de forma NATURAL.
-- "Aquele imóvel que conversamos teve bastante procura esta semana"
-- "Fechamos X negócios no bairro que você gostou, o mercado está movimentado"
-- "As condições de financiamento estão boas este mês, vale a pena aproveitar"
-NÃO seja agressivo. Apenas informe. UMA mensagem curta.`
-  },
-  5: {
-    name_pt: 'Despedida com porta aberta',
-    instruction: `Esta é sua QUINTA e ÚLTIMA tentativa. O lead está em silêncio há 7 dias.
-Abordagem: Encerramento respeitoso, deixando a porta aberta.
-- "Entendo que talvez não seja o momento. Fico à disposição quando precisar!"
-- "Sem problema nenhum! Quando quiser retomar, é só me chamar"
-- Seja breve, amigável e SEM culpa. O lead deve sentir que pode voltar quando quiser.
-UMA mensagem curta e calorosa. Não peça desculpas.`
+UMA mensagem curta. Sem pressão.`,
+  4: `QUARTA tentativa. ~5 dias de silêncio.
+Use escassez ou social proof de forma natural:
+- "Aquele imóvel teve bastante procura esta semana"
+- "Fechamos negócios no bairro que você gostou"
+- "Condições de financiamento estão boas este mês"
+UMA mensagem curta. Não seja agressivo.`,
+  5: `QUINTA e ÚLTIMA tentativa. ~7 dias de silêncio.
+Encerramento respeitoso, deixando a porta aberta:
+- "Entendo que talvez não seja o momento. Fico à disposição"
+- "Sem problema! Quando quiser retomar, é só me chamar"
+UMA mensagem breve e calorosa, sem culpa.`,
+}
+
+const STRATEGIES_AI_AGENCY: Record<number, string> = {
+  1: `PRIMEIRA tentativa. Lead parou de responder há algumas horas.
+Retome NATURALMENTE a conversa anterior. Não seja invasivo.
+- Se discutiam um projeto/automação → pergunte se conseguiu pensar
+- Se estava qualificando → faça uma pergunta simples pendente
+- Se tinha reunião sendo agendada → pergunte se encontrou um horário bom
+NÃO diga "estou fazendo follow-up" nem "não recebi resposta". Seja natural.
+UMA mensagem curta (1-2 frases).`,
+  2: `SEGUNDA tentativa. Lead não respondeu há ~1 dia.
+Traga VALOR NOVO sobre IA/automação aplicada ao negócio dele:
+- Caso de cliente parecido com o dele que teve resultado
+- Oportunidade ou economia que IA pode trazer no setor
+- "Pensei numa abordagem que pode resolver o que você comentou"
+UMA mensagem curta que gere curiosidade. Sem pressão.`,
+  3: `TERCEIRA tentativa. ~3 dias de silêncio.
+Pergunta direta mas gentil:
+- "Ainda está avaliando uma solução de IA pra isso?"
+- "Faz sentido continuarmos a conversa?"
+- "Posso ajudar com mais alguma dúvida técnica?"
+UMA mensagem curta. Sem pressão.`,
+  4: `QUARTA tentativa. ~5 dias de silêncio.
+Use social proof de forma natural:
+- "Acabamos de entregar um projeto similar com resultado X"
+- "Times do seu setor têm acelerado bastante com IA esse ano"
+- "As condições para começar agora estão boas"
+UMA mensagem curta. Não seja agressivo.`,
+  5: `QUINTA e ÚLTIMA tentativa. ~7 dias de silêncio.
+Encerramento respeitoso, deixando a porta aberta:
+- "Entendo que talvez não seja o momento. Fico à disposição"
+- "Sem problema! Quando precisar de IA pro negócio, é só chamar"
+UMA mensagem breve e calorosa, sem culpa.`,
+}
+
+const STRATEGIES_GENERIC: Record<number, string> = {
+  1: `PRIMEIRA tentativa. Lead parou de responder há algumas horas.
+Retome NATURALMENTE a conversa anterior. Não seja invasivo.
+- Se estava qualificando → faça uma pergunta simples pendente
+- Se tinha próximo passo combinado → pergunte se conseguiu avançar
+NÃO diga "estou fazendo follow-up". Seja natural.
+UMA mensagem curta (1-2 frases).`,
+  2: `SEGUNDA tentativa. Lead não respondeu há ~1 dia.
+Traga VALOR NOVO relevante pro contexto dele.
+UMA mensagem curta que gere curiosidade. Sem pressão.`,
+  3: `TERCEIRA tentativa. ~3 dias de silêncio.
+Pergunta direta mas gentil sobre interesse.
+UMA mensagem curta. Sem pressão.`,
+  4: `QUARTA tentativa. ~5 dias de silêncio.
+Use social proof natural ou leve escassez.
+UMA mensagem curta. Não seja agressivo.`,
+  5: `QUINTA e ÚLTIMA tentativa. ~7 dias de silêncio.
+Encerramento respeitoso, deixando a porta aberta.
+UMA mensagem breve e calorosa, sem culpa.`,
+}
+
+function getStrategy(niche: string | null | undefined, attempt: number): string {
+  const idx = Math.min(Math.max(attempt, 1), 5)
+  switch (niche) {
+    case 'real_estate':
+      return STRATEGIES_REAL_ESTATE[idx]
+    case 'ai_agency':
+      return STRATEGIES_AI_AGENCY[idx]
+    default:
+      return STRATEGIES_GENERIC[idx]
+  }
+}
+
+function getCompanyContextFallback(niche: string | null | undefined, orgName: string): string {
+  switch (niche) {
+    case 'real_estate':
+      return `${orgName} — corretora/imobiliária. Atende compradores, vendedores e locatários.`
+    case 'ai_agency':
+      return `${orgName} — agência de IA/automação. Atende empresas que buscam aplicar IA no negócio.`
+    default:
+      return `${orgName}.`
   }
 }
 
@@ -90,10 +161,11 @@ function mapTone(tone?: string): string {
 }
 
 export function buildFollowUpPrompt(config: FollowUpPromptConfig): string {
-  const attempt = Math.min(config.attempt_number, 5)
-  const strategy = STRATEGIES[attempt] || STRATEGIES[5]
+  const strategy = getStrategy(config.org_niche, config.attempt_number)
   const lang = mapLanguage(config.org_language)
   const tone = mapTone(config.tone)
+  const companyContext =
+    config.company_context || getCompanyContextFallback(config.org_niche, config.org_name)
 
   return `# Identidade
 Você é ${config.assistant_name}, assistente de atendimento da ${config.org_name}.
@@ -106,7 +178,7 @@ Responda SEMPRE em ${lang}. NUNCA troque de idioma.
 Seu tom é ${tone}.
 
 # Contexto da Empresa
-${config.company_context || config.org_name + ' — empresa do setor imobiliário.'}
+${companyContext}
 
 # Sobre o Lead
 - Nome: ${config.lead_name || 'não informado'}
@@ -114,9 +186,7 @@ ${config.company_context || config.org_name + ' — empresa do setor imobiliári
 ${config.last_conversation_summary ? `- Resumo da última conversa: ${config.last_conversation_summary}` : ''}
 
 # Tentativa ${config.attempt_number} de ${config.max_attempts}
-Estratégia: ${strategy.name_pt}
-
-${strategy.instruction}
+${strategy}
 
 # REGRAS ABSOLUTAS
 1. Envie APENAS UMA mensagem curta (máximo 2 frases)
@@ -127,5 +197,8 @@ ${strategy.instruction}
 6. Seja NATURAL — como se estivesse retomando uma conversa com um cliente
 7. Se o nome do lead é conhecido, USE-O na mensagem
 8. NÃO ofereça opções múltiplas. Seja direto com UMA proposta/pergunta
-9. A mensagem deve parecer digitada por um humano, não gerada por IA`
+9. A mensagem deve parecer digitada por um humano, não gerada por IA
+10. NUNCA invente produtos, ofertas ou serviços que não tenham sido discutidos
+11. Se a empresa NÃO É do setor imobiliário, NÃO mencione imóveis, visitas a propriedades ou bairros
+12. Use APENAS o vocabulário compatível com o contexto da empresa descrita acima`
 }
