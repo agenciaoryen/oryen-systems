@@ -14,11 +14,15 @@
 import { registerHandler } from '../handler-registry'
 import { sendEmailHandler } from './send_email'
 import { captureLeadsSerperHandler } from './capture_leads_serper'
+import { generateReplyHandler } from './generate_reply'
+import { sendWhatsAppHandler } from './send_whatsapp'
 
 registerHandler('send_email', sendEmailHandler)
 registerHandler('capture_leads_serper', captureLeadsSerperHandler)
+registerHandler('generate_reply', generateReplyHandler)
+registerHandler('send_whatsapp', sendWhatsAppHandler)
 
 // Próximos handlers (a implementar):
-//   - send_whatsapp        → migrar lib/sdr/whatsapp-sender
-//   - generate_reply       → migrar lib/sdr/ai-agent
 //   - move_pipeline_stage  → novo, escreve direto em leads
+//   - classify_intent      → wrapper LLM curto sobre lib/sdr/intake
+//   - schedule_visit       → novo, integra com calendar

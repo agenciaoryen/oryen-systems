@@ -27,6 +27,7 @@ import {
 } from '@/lib/sdr/redis'
 import { runAgent } from '@/lib/sdr/ai-agent'
 import { sendWithHumanization } from '@/lib/sdr/whatsapp-sender'
+import { runAgentCapability } from '@/lib/agents/kernel'
 import { notifyError } from '@/lib/monitoring/error-notifier'
 import { checkMonthlyPlanLimit } from '@/lib/planLimits'
 
@@ -168,27 +169,65 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // ─── 9. Chamar agente IA (Claude + tools) ───
-    console.log(`[SDR:Process] Chamando agente IA para lead ${lead_id}...`)
+    // ─── 8c. Resolver solution_slug pra usar com o kernel ───
+    const { data: agentRecord } = await supabase
+      .from('agents')
+      .select('solution_slug')
+      .eq('id', agent_id)
+      .single()
+    const agentSlug = agentRecord?.solution_slug || 'sdr'
 
-    const agentResponse = await runAgent({
+    // ─── 9. Chamar agente IA via KERNEL (gate + audit + handler) ───
+    console.log(`[SDR:Process] Chamando agente IA via kernel para lead ${lead_id}...`)
+
+    const replyResult = await runAgentCapability({
       org_id,
-      phone,
-      lead_id,
-      agent_id,
-      campaign_id,
-      instance_name,
-      user_message: fullMessage,
-      history: conversationHistory,
-      config: campaignConfig,
-      lead,
-      org: orgData ? {
-        name: orgData.name,
-        country: orgData.country,
-        language: orgData.language,
-        niche: orgData.niche
-      } : undefined
+      agent_slug: agentSlug,
+      capability: 'generate_reply',
+      target: { type: 'lead', id: lead_id },
+      triggered_by: {
+        type: 'webhook',
+        label: `SDR webhook UAZAPI · instance ${instance_name}`,
+      },
+      input: {
+        phone,
+        lead_id,
+        campaign_id,
+        instance_name,
+        user_message: fullMessage,
+        history: conversationHistory,
+        lead,
+        config: campaignConfig,
+      },
     })
+
+    // Se gate negou ou ficou pendente, libera lock e retorna sem responder
+    if (replyResult.status === 'denied' || replyResult.status === 'failed') {
+      await releaseProcessLock(org_id, phone)
+      console.warn(`[SDR:Process] generate_reply ${replyResult.status}: ${replyResult.error || replyResult.denied_reason}`)
+      return NextResponse.json({
+        skipped: true,
+        reason: `kernel_${replyResult.status}:${replyResult.denied_reason || 'unknown'}`,
+        action_id: replyResult.action_id,
+      })
+    }
+    if (replyResult.status === 'pending_approval') {
+      await releaseProcessLock(org_id, phone)
+      console.log(`[SDR:Process] generate_reply pendente de aprovação humana — action ${replyResult.action_id}`)
+      return NextResponse.json({
+        skipped: true,
+        reason: 'pending_approval',
+        action_id: replyResult.action_id,
+      })
+    }
+
+    const replyData = (replyResult.data as any) || {}
+    const agentResponse = {
+      messages: (replyData.messages as string[]) || [],
+      toolsExecuted: (replyData.tools_executed as string[]) || [],
+      tokensUsed: (replyData.tokens_used as number) || 0,
+      model: (replyData.model as string) || 'unknown',
+    }
 
     console.log(`[SDR:Process] IA respondeu: ${agentResponse.messages.length} msg(s) | tools: [${agentResponse.toolsExecuted.join(', ')}] | tokens: ${agentResponse.tokensUsed}`)
 
@@ -239,18 +278,45 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ─── 11. Enviar mensagens via WhatsApp com humanização ───
-    let sendResult = null
+    // ─── 11. Enviar mensagens via WhatsApp com humanização (via kernel) ───
+    let sendResult: any = null
 
     if (agentResponse.messages.length > 0) {
-      console.log(`[SDR:Process] Enviando ${agentResponse.messages.length} msg(s) via UAZAPI...`)
+      console.log(`[SDR:Process] Enviando ${agentResponse.messages.length} msg(s) via kernel/UAZAPI...`)
 
-      sendResult = await sendWithHumanization({
+      const sendKernelResult = await runAgentCapability({
         org_id,
-        phone,
-        instance_name,
-        messages: agentResponse.messages
+        agent_slug: agentSlug,
+        capability: 'send_whatsapp',
+        target: { type: 'lead', id: lead_id },
+        triggered_by: {
+          type: 'agent',
+          id: agent_id,
+          label: `handoff de generate_reply`,
+        },
+        parent_action_id: replyResult.action_id || undefined,
+        input: { phone, instance_name, messages: agentResponse.messages },
       })
+
+      if (sendKernelResult.status === 'pending_approval') {
+        // Resposta gerada mas envio aguarda aprovação humana.
+        // Não envia agora — admin vai liberar via inbox.
+        console.log(`[SDR:Process] send_whatsapp pendente — action ${sendKernelResult.action_id}`)
+        await releaseProcessLock(org_id, phone)
+        return NextResponse.json({
+          ok: true,
+          generated: agentResponse.messages.length,
+          send_status: 'pending_approval',
+          action_id: sendKernelResult.action_id,
+        })
+      }
+
+      const sendData = (sendKernelResult.data as any) || {}
+      sendResult = {
+        sent: sendData.sent_count || 0,
+        failed: sendData.failed_count || 0,
+        total_time_ms: sendData.total_time_ms || 0,
+      }
 
       console.log(`[SDR:Process] Envio completo: ${sendResult.sent} ok, ${sendResult.failed} falha | ${Math.round(sendResult.total_time_ms / 1000)}s`)
     }

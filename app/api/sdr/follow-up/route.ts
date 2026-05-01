@@ -15,6 +15,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { buildFollowUpPrompt } from '@/lib/sdr/follow-up-prompt'
 import { sendWithHumanization } from '@/lib/sdr/whatsapp-sender'
+import { runAgentCapability } from '@/lib/agents/kernel'
 import { notifyError } from '@/lib/monitoring/error-notifier'
 import { stopCheck } from '@/lib/sdr/redis'
 import { isWithinWindow } from '@/lib/sdr/messaging-window'
@@ -519,15 +520,35 @@ async function processFollowUp(
     console.warn(`[FollowUp] fn_insert_message error (non-fatal): ${rpcErr.message}`)
   }
 
-  // ─── 9. Enviar via WhatsApp ───
-  const sendResult = await sendWithHumanization({
+  // ─── 9. Enviar via WhatsApp (via kernel — gate + audit) ───
+  const sendKernelResult = await runAgentCapability({
     org_id: item.org_id,
-    phone: lead.phone,
-    instance_name: item.instance_name,
-    messages: [followUpMessage]
+    agent_slug: gate.agent.solution_slug,
+    capability: 'send_whatsapp',
+    target: { type: 'lead', id: item.lead_id },
+    triggered_by: {
+      type: 'cron',
+      label: `follow-up cron · attempt ${nextAttempt}/${maxAttempts}`,
+    },
+    input: {
+      phone: lead.phone,
+      instance_name: item.instance_name,
+      messages: [followUpMessage],
+    },
   })
 
-  console.log(`[FollowUp] Enviado para ${lead.phone}: ${sendResult.sent} ok, ${sendResult.failed} falha`)
+  const sendData = (sendKernelResult.data as any) || {}
+  const sendResult = {
+    sent: sendData.sent_count || 0,
+    failed: sendData.failed_count || 0,
+    total_time_ms: sendData.total_time_ms || 0,
+  }
+
+  if (sendKernelResult.status === 'pending_approval') {
+    console.log(`[FollowUp] envio pendente de aprovação humana — action ${sendKernelResult.action_id}`)
+  } else {
+    console.log(`[FollowUp] Enviado para ${lead.phone}: ${sendResult.sent} ok, ${sendResult.failed} falha`)
+  }
 
   // ─── 10. Atualizar fila ───
   // Prioridade: config do agente > cadence persistido no item > default

@@ -53,7 +53,9 @@ export const CAPABILITIES: Record<string, CapabilityDefinition> = {
     kind: 'worker',
     description: 'Envia mensagem WhatsApp pro lead via UAZAPI/Cloud API',
     allowed_for: ['sdr', 'sdr_imobiliario', 'bdr_prospector', 'followup', 'followup_imobiliario'],
-    default_approval: 'pending', // outbound em massa — supervisão por padrão
+    // Default auto — cobre SDR (respondendo lead) e follow-up (lead já interagiu).
+    // BDR cold outreach pode sobrescrever pra 'pending' via approval_overrides.
+    default_approval: 'auto',
     target_type: 'lead',
   },
 
