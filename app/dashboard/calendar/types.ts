@@ -33,6 +33,8 @@ export interface CalendarEvent {
   external_id?: string | null
   external_integration_id?: string | null
   external_read_only?: boolean | null
+  // Virtual instance (expanded from recurring)
+  is_virtual?: boolean
   // Joined
   leads?: { id: string; name: string; phone: string } | null
 }

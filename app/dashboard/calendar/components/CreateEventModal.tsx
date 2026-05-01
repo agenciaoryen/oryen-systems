@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { X, Search, User, Loader2 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
+import { rruleFromFrequency } from '@/lib/calendar/recurrence'
 import type { CalendarEvent, LeadOption, OrgUser } from '../types'
 
 interface Props {
@@ -31,6 +32,7 @@ export default function CreateEventModal({
   const [description, setDescription] = useState('')
   const [notes, setNotes] = useState('')
   const [assignedTo, setAssignedTo] = useState<string | null>(null)
+  const [repeatFreq, setRepeatFreq] = useState<string>('')
   const [leadId, setLeadId] = useState<string | null>(null)
   const [leadSearch, setLeadSearch] = useState('')
   const [leadResults, setLeadResults] = useState<LeadOption[]>([])
@@ -94,6 +96,7 @@ export default function CreateEventModal({
           notes: notes.trim() || null,
           lead_id: leadId,
           assigned_to: assignedTo,
+          rrule: repeatFreq ? rruleFromFrequency(repeatFreq as any) : null,
           created_by: 'user'
         })
       })
@@ -178,6 +181,23 @@ export default function CreateEventModal({
               </select>
             </div>
           )}
+
+          {/* Repeat */}
+          <div>
+            <label className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>{t.repeat}</label>
+            <select
+              value={repeatFreq}
+              onChange={e => setRepeatFreq(e.target.value)}
+              className="w-full mt-1 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none appearance-none"
+              style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+            >
+              <option value="">{t.repeatNone}</option>
+              <option value="daily">{t.repeatDaily}</option>
+              <option value="weekly">{t.repeatWeekly}</option>
+              <option value="fortnightly">{t.repeatFortnightly}</option>
+              <option value="monthly">{t.repeatMonthly}</option>
+            </select>
+          </div>
 
           {/* Lead search */}
           <div>

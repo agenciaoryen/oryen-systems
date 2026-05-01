@@ -193,21 +193,67 @@ export function useCalendar() {
     setSelectedEvent(null)
   }
 
-  const deleteEvent = async (eventId: string) => {
-    await fetch(`/api/calendar/${eventId}`, { method: 'DELETE' })
-    setEvents(prev => prev.filter(e => e.id !== eventId))
+  const deleteEvent = async (eventId: string, deleteAll: boolean = false) => {
+    await fetch(`/api/calendar/${eventId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ delete_all: deleteAll })
+    })
+    if (deleteAll) {
+      // Remove todos os eventos que compartilham o mesmo rrule
+      const master = events.find(e => e.id === eventId)
+      if (master?.rrule) {
+        setEvents(prev => prev.filter(e => e.id === eventId || e.recurrence_master_id === eventId))
+      } else {
+        setEvents(prev => prev.filter(e => e.id !== eventId))
+      }
+    } else {
+      setEvents(prev => prev.filter(e => e.id !== eventId))
+    }
     setSelectedEvent(null)
   }
 
   const dragEvent = async (eventId: string, newDate: string, newTime?: string) => {
-    const body: any = { event_date: newDate }
-    if (newTime) body.start_time = newTime
+    const ev = events.find(e => e.id === eventId)
+    if (!ev) return
+
+    // Virtual instance: cria override no mestre e move
+    if (ev.is_virtual && ev.recurrence_master_id) {
+      const masterId = ev.recurrence_master_id
+      const body: any = {
+        _editThis: true,
+        _masterId: masterId,
+        _occurrenceDate: ev.event_date,
+        event_date: newDate,
+        start_time: newTime || ev.start_time,
+        end_time: ev.end_time,
+        title: ev.title,
+        event_type: ev.event_type,
+        assigned_to: ev.assigned_to,
+      }
+      const res = await fetch(`/api/calendar/${masterId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.event) {
+          setEvents(prev => [...prev, data.event])
+        }
+      }
+      return
+    }
+
+    // Normal event or master: PATCH direto
+    const patchBody: any = { event_date: newDate }
+    if (newTime) patchBody.start_time = newTime
     await fetch(`/api/calendar/${eventId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify(patchBody)
     })
-    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, ...body } : e))
+    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, ...patchBody } : e))
   }
 
   // ─── Type / Status labels ───

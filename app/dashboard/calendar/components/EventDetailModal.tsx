@@ -16,7 +16,7 @@ interface Props {
   assignedUserColor?: { bg: string; text: string; border: string } | null
   onClose: () => void
   onUpdateStatus: (id: string, status: string) => void
-  onDelete: (id: string) => void
+  onDelete: (id: string, deleteAll?: boolean) => void
 }
 
 export default function EventDetailModal({
@@ -31,8 +31,26 @@ export default function EventDetailModal({
 
   const handleDelete = async () => {
     setDeleting(true)
-    await onDelete(event.id)
+    // Se for mestre (rrule set), manda delete_all=true para remover todos
+    // Se for normal ou virtual, só deleta
+    await onDelete(event.id, !!event.rrule)
     setDeleting(false)
+  }
+
+  const handleDeleteThisOccurrence = async () => {
+    setDeleting(true)
+    // Adiciona a data atual ao excluded_dates do mestre
+    await fetch(`/api/calendar/${event.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        _deleteThis: true,
+        _masterId: event.id,
+        _occurrenceDate: event.event_date,
+      })
+    })
+    setDeleting(false)
+    onClose()
   }
 
   return (
@@ -128,6 +146,13 @@ export default function EventDetailModal({
         {/* Actions */}
         {event.status === 'scheduled' && !event.external_read_only && (
           <div className="p-5 space-y-2" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+            {/* Recurring badge */}
+            {(event.rrule || event.is_virtual) && (
+              <div className="flex items-center gap-2 mb-2 text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
+                <span>{t.recurringEvent}</span>
+              </div>
+            )}
             <button onClick={() => onUpdateStatus(event.id, 'completed')} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ background: 'var(--color-success-subtle)', border: '1px solid var(--color-success)', color: 'var(--color-success)' }}>
               <CheckCircle2 size={16} />
               {t.markCompleted}
@@ -153,6 +178,33 @@ export default function EventDetailModal({
               <Trash2 size={14} />
               {t.delete}
             </button>
+          ) : (event.rrule || event.recurrence_master_id) ? (
+            // Recurring event: choose "this" or "all"
+            <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--color-error-subtle)', border: '1px solid var(--color-error)' }}>
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg shrink-0" style={{ background: 'var(--color-error-subtle)' }}>
+                  <AlertCircle size={18} style={{ color: 'var(--color-error)' }} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--color-error)' }}>{t.deleteConfirmTitle}</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>{t.deleteConfirmDesc}</p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <button onClick={handleDelete} disabled={deleting} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium disabled:opacity-50 rounded-lg transition-colors" style={{ background: 'var(--color-error)', color: '#fff' }}>
+                  {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                  {event.recurrence_master_id ? t.deleteThis : t.deleteAll}
+                </button>
+                {!event.recurrence_master_id && (
+                  <button onClick={handleDeleteThisOccurrence} disabled={deleting} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium disabled:opacity-50 rounded-lg transition-colors" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-tertiary)' }}>
+                    {t.deleteThis}
+                  </button>
+                )}
+                <button onClick={() => setShowDeleteConfirm(false)} className="w-full px-3 py-2 text-xs font-medium rounded-lg transition-colors" style={{ color: 'var(--color-text-tertiary)' }}>
+                  {t.cancel}
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--color-error-subtle)', border: '1px solid var(--color-error)' }}>
               <div className="flex items-start gap-3">

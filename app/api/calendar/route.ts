@@ -1,9 +1,57 @@
 // app/api/calendar/route.ts
-// GET: listar eventos por período | POST: criar evento
+// GET: listar eventos por período (expande recorrentes) | POST: criar evento
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, resolveOrgId, supabaseAdmin as supabase } from '@/lib/api-auth'
 import { pushEventToGoogle } from '@/lib/integrations/calendar-sync'
+import { expandRecurrence } from '@/lib/calendar/recurrence'
+
+/**
+ * Expande eventos recorrentes (rrule) em instâncias virtuais dentro do range,
+ * excluindo datas em excluded_dates e datas que já têm override explícito.
+ */
+function expandRecurringEvents(events: any[], from: string, to: string): any[] {
+  const expanded: any[] = []
+  const overrideDates = new Set<string>()
+
+  // Coleta datas que já têm override explícito (recurrence_master_id setado)
+  for (const ev of events) {
+    if (ev.rrule && ev.event_date) {
+      // O próprio mestre fica como está
+      expanded.push(ev)
+    } else if (ev.recurrence_master_id && ev.event_date) {
+      overrideDates.add(`${ev.recurrence_master_id}|${ev.event_date}`)
+      expanded.push(ev)
+    } else {
+      expanded.push(ev)
+    }
+  }
+
+  // Expande recorrentes
+  for (const ev of events) {
+    if (!ev.rrule || !ev.event_date) continue
+
+    const excluded: string[] = ev.excluded_dates || []
+    const instanceDates = expandRecurrence(ev.event_date, ev.rrule, from, to, excluded)
+
+    for (const dateStr of instanceDates) {
+      // Pula a data do próprio mestre (já foi adicionado)
+      if (dateStr === ev.event_date) continue
+      // Pula se já tem override explícito
+      if (overrideDates.has(`${ev.id}|${dateStr}`)) continue
+
+      expanded.push({
+        ...ev,
+        id: `${ev.id}_${dateStr}`,
+        event_date: dateStr,
+        recurrence_master_id: ev.id,
+        is_virtual: true,
+      })
+    }
+  }
+
+  return expanded
+}
 
 /**
  * GET /api/calendar?org_id=X&from=YYYY-MM-DD&to=YYYY-MM-DD&status=scheduled
@@ -38,7 +86,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ events: data || [] })
+    // Expande eventos recorrentes
+    const events = from && to ? expandRecurringEvents(data || [], from, to) : (data || [])
+
+    return NextResponse.json({ events })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
@@ -76,7 +127,8 @@ export async function POST(request: NextRequest) {
         address: body.address || null,
         status: 'scheduled',
         created_by: body.created_by || 'user',
-        notes: body.notes || null
+        notes: body.notes || null,
+        rrule: body.rrule || null,
       })
       .select('*, leads(id, name, nome_empresa, phone)')
       .single()
