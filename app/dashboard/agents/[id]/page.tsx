@@ -28,9 +28,10 @@ import {
   Settings, Trash2, Clock, Calendar, TrendingUp, Users, X,
   CheckCircle2, AlertTriangle, ChevronRight, BarChart3, Zap,
   Search, Filter, MoreVertical, Edit2, Copy, ExternalLink,
-  ShieldCheck
+  ShieldCheck, Globe
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
+import { supabase } from '@/lib/supabase'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRADUÇÕES
@@ -669,10 +670,49 @@ function CreateCampaignModal({
   const [config, setConfig] = useState<Record<string, any>>({})
   const [creating, setCreating] = useState(false)
   const [errors, setErrors] = useState<Record<string, boolean>>({})
+  const [pipelineStages, setPipelineStages] = useState<{ name: string; label: string }[]>([])
+  const [orgCountry, setOrgCountry] = useState<string | null>(null)
+  const [loadingOrgData, setLoadingOrgData] = useState(false)
+
+  // Buscar stages e país da org quando o modal abre
+  useEffect(() => {
+    if (!isOpen || !orgId) return
+    setLoadingOrgData(true)
+
+    Promise.all([
+      supabase
+        .from('pipeline_stages')
+        .select('name, label')
+        .eq('org_id', orgId)
+        .eq('is_active', true)
+        .order('position'),
+      supabase
+        .from('orgs')
+        .select('country')
+        .eq('id', orgId)
+        .single(),
+    ]).then(([stagesRes, orgRes]) => {
+      if (stagesRes.data) setPipelineStages(stagesRes.data)
+      if (orgRes.data?.country) setOrgCountry(orgRes.data.country)
+    }).finally(() => setLoadingOrgData(false))
+  }, [isOpen, orgId])
 
   if (!isOpen) return null
 
-  const fields = configSchema?.fields || []
+  // Preencher options do target_stage com stages reais da org
+  const fields = (configSchema?.fields || []).map((f) => {
+    if (f.name === 'target_stage' && pipelineStages.length > 0) {
+      return {
+        ...f,
+        type: 'select' as const,
+        options: pipelineStages.map((s) => ({
+          value: s.name,
+          label: s.label,
+        })),
+      }
+    }
+    return f
+  })
 
   const handleCreate = async () => {
     // Validar
@@ -935,6 +975,18 @@ function CreateCampaignModal({
               }}
             />
           </div>
+
+          {/* País da org (read-only) */}
+          {orgCountry && (
+            <div
+              className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm"
+              style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' }}
+            >
+              <Globe size={16} style={{ color: 'var(--color-primary)' }} />
+              <span className="font-medium">País:</span>
+              <span>{orgCountry}</span>
+            </div>
+          )}
 
           {/* Campos dinâmicos do config_schema */}
           {fields.map(field => (

@@ -139,8 +139,9 @@ export async function runHunterCampaign(input: RunnerInput): Promise<RunnerOutpu
       `[hunter ${runId.substring(0, 8)}] extraiu ${beforeFilter} leads, ${leads.length} com contato`
     )
 
-    // 7. Dedup + insert
-    const { saved, duplicated } = await persistLeads(leads, org, agent, cursor.segment)
+    // 7. Dedup + insert (stage definido na config da campanha, default 'novo')
+    const targetStage = config.target_stage || 'novo'
+    const { saved, duplicated } = await persistLeads(leads, org, agent, cursor.segment, targetStage)
 
     // 8. Atualiza cursor
     await recordCursorRun(cursor.id, {
@@ -177,7 +178,8 @@ async function persistLeads(
   leads: RawLead[],
   org: RunnerInput['org'],
   agent: any,
-  segment: string
+  segment: string,
+  targetStage: string
 ): Promise<{ saved: number; duplicated: number }> {
   let saved = 0
   let duplicated = 0
@@ -227,7 +229,7 @@ async function persistLeads(
       instagram: lead.instagram,
       nicho: segment,
       source: 'agente_captacao',
-      stage: 'novo',
+      stage: targetStage,
     }
 
     const { error } = await supabase.from('leads').insert(insertPayload)

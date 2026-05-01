@@ -181,6 +181,15 @@ INSERT INTO agent_solutions (
         "default": 10,
         "min": 1,
         "max": 30
+      },
+      {
+        "name": "target_stage",
+        "type": "select",
+        "required": false,
+        "default": "novo",
+        "label": {"pt": "Stage inicial do lead", "en": "Initial lead stage", "es": "Etapa inicial del lead"},
+        "options": [],
+        "description": {"pt": "Estágio do funil onde os leads captados serão inseridos. As opções são carregadas automaticamente do seu pipeline.", "en": "Pipeline stage where captured leads will be placed. Options are loaded from your pipeline.", "es": "Etapa del embudo donde se insertarán los leads captados. Las opciones se cargan desde tu pipeline."}
       }
     ]
   }'::jsonb,
