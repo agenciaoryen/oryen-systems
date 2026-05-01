@@ -37,4 +37,14 @@ CREATE POLICY "event_checklists_delete" ON event_checklists FOR DELETE USING (
 );
 
 -- Realtime para atualizações ao vivo
-ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS event_checklists;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'event_checklists'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE event_checklists;
+  END IF;
+END $$;
