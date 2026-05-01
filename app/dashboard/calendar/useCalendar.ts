@@ -31,6 +31,9 @@ export function useCalendar() {
   const [orgUsers, setOrgUsers] = useState<OrgUser[]>([])
   const [loading, setLoading] = useState(true)
 
+  // ─── Week navigation ───
+  const [weekOffset, setWeekOffset] = useState(0)
+
   // ─── Filters ───
   const [filterAssignedTo, setFilterAssignedTo] = useState<string[]>([])
 
@@ -151,9 +154,6 @@ export function useCalendar() {
     setSelectedDate(todayStr)
     setWeekOffset(0)
   }
-
-  // Week navigation for week view
-  const [weekOffset, setWeekOffset] = useState(0)
 
   // Compute the 7 days for week view based on weekOffset
   const weekDays = (() => {

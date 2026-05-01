@@ -1,7 +1,7 @@
 // app/dashboard/calendar/translations.ts
-import type { Language } from './types'
+type _Language = 'pt' | 'en' | 'es'
 
-export const TRANSLATIONS: Record<Language, Record<string, string>> = {
+export const TRANSLATIONS: Record<_Language, Record<string, string>> = {
   pt: {
     title: 'Agenda',
     today: 'Hoje',
