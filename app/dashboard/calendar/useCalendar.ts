@@ -62,12 +62,29 @@ export function useCalendar() {
       .catch(() => {})
   }, [orgId])
 
-  // ─── Fetch events ───
-  const fetchEvents = useCallback(async () => {
-    if (!orgId) return
+  // ─── Compute visible date range ───
+  const getVisibleRange = useCallback(() => {
+    if (viewMode === 'week') {
+      // Week centered on the 15th of currentMonth (or wherever navigation is)
+      const mid = new Date(currentYear, currentMonth, 15)
+      const dayOfWeek = mid.getDay()
+      const weekStart = new Date(mid)
+      weekStart.setDate(mid.getDate() - dayOfWeek + (weekOffset * 7))
+      const weekEnd = new Date(weekStart)
+      weekEnd.setDate(weekStart.getDate() + 6)
+      const pad = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+      return { from: pad(weekStart), to: pad(weekEnd) }
+    }
     const from = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`
     const lastDay = getDaysInMonth(currentYear, currentMonth)
     const to = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    return { from, to }
+  }, [currentYear, currentMonth, viewMode, weekOffset])
+
+  // ─── Fetch events ───
+  const fetchEvents = useCallback(async () => {
+    if (!orgId) return
+    const { from, to } = getVisibleRange()
 
     let url = `/api/calendar?org_id=${orgId}&from=${from}&to=${to}`
     if (filterAssignedTo.length === 1) {
@@ -78,7 +95,7 @@ export function useCalendar() {
     const data = await res.json()
     if (data.events) setEvents(data.events)
     setLoading(false)
-  }, [orgId, currentMonth, currentYear, filterAssignedTo])
+  }, [orgId, getVisibleRange, filterAssignedTo])
 
   useEffect(() => { fetchEvents() }, [fetchEvents])
 
@@ -132,10 +149,27 @@ export function useCalendar() {
     setCurrentMonth(today.getMonth())
     setCurrentYear(today.getFullYear())
     setSelectedDate(todayStr)
+    setWeekOffset(0)
   }
 
   // Week navigation for week view
   const [weekOffset, setWeekOffset] = useState(0)
+
+  // Compute the 7 days for week view based on weekOffset
+  const weekDays = (() => {
+    const mid = new Date(currentYear, currentMonth, 15)
+    const dayOfWeek = mid.getDay()
+    const start = new Date(mid)
+    start.setDate(mid.getDate() - dayOfWeek + (weekOffset * 7))
+    const days: { dateStr: string; day: number; date: Date }[] = []
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start)
+      d.setDate(start.getDate() + i)
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+      days.push({ dateStr, day: d.getDate(), date: d })
+    }
+    return days
+  })()
   const goNextWeek = () => setWeekOffset(o => o + 1)
   const goPrevWeek = () => setWeekOffset(o => o - 1)
 
@@ -204,6 +238,7 @@ export function useCalendar() {
     showCreateModal, selectedEvent, preselectedLeadId,
     filterAssignedTo,
     daysInMonth, firstDay,
+    weekDays,
 
     // Setters
     setViewMode, setCurrentMonth, setCurrentYear,

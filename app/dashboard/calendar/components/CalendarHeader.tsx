@@ -3,7 +3,8 @@
 
 import { Plus } from 'lucide-react'
 import UserFilterChips from './UserFilterChips'
-import type { OrgUser } from '../types'
+import ViewToggle from './ViewToggle'
+import type { OrgUser, ViewMode } from '../types'
 
 interface Props {
   title: string
@@ -11,14 +12,16 @@ interface Props {
   t: Record<string, string>
   orgUsers: OrgUser[]
   filterAssignedTo: string[]
+  viewMode: ViewMode
   onNewEvent: () => void
   onToggleUser: (userId: string) => void
   onClearUserFilter: () => void
+  onViewModeChange: (mode: ViewMode) => void
 }
 
 export default function CalendarHeader({
-  title, orgTz, t, orgUsers, filterAssignedTo,
-  onNewEvent, onToggleUser, onClearUserFilter
+  title, orgTz, t, orgUsers, filterAssignedTo, viewMode,
+  onNewEvent, onToggleUser, onClearUserFilter, onViewModeChange
 }: Props) {
   return (
     <div className="flex flex-col gap-2">
@@ -29,14 +32,17 @@ export default function CalendarHeader({
             {orgTz}
           </span>
         </div>
-        <button
-          onClick={onNewEvent}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-colors text-sm"
-          style={{ background: 'var(--color-primary)', color: '#FFFFFF' }}
-        >
-          <Plus size={16} strokeWidth={2.5} />
-          <span className="font-semibold">{t.newEvent}</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <ViewToggle viewMode={viewMode} t={t} onChange={onViewModeChange} />
+          <button
+            onClick={onNewEvent}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-colors text-sm"
+            style={{ background: 'var(--color-primary)', color: '#FFFFFF' }}
+          >
+            <Plus size={16} strokeWidth={2.5} />
+            <span className="font-semibold">{t.newEvent}</span>
+          </button>
+        </div>
       </div>
       <UserFilterChips
         orgUsers={orgUsers}
