@@ -39,7 +39,7 @@ export interface AgentGateResult {
   allowed: boolean
   reason?: AgentDenyReason
   message?: string
-  agent?: { id: string; solution_slug: string; config: any; current_usage: any } | null
+  agent?: { id: string; solution_slug: string; config: any; current_usage: any; status: string; is_active: boolean; is_paused: boolean } | null
   org?: { id: string; name: string; niche: string | null; language: string | null; country: string | null; timezone: string | null; plan_status: string | null } | null
 }
 
@@ -101,22 +101,35 @@ export async function isAgentAllowed(
   if (agentSlug === 'sdr_imobiliario') slugVariants.push('sdr')
   if (agentSlug === 'followup_imobiliario') slugVariants.push('followup')
 
-  const { data: agent } = await supabase
+  // Schema da tabela `agents` usa coluna text `status` ('active'|'paused'|'inactive').
+  // Derivamos is_active/is_paused/is_inactive aqui pra manter API estável
+  // mesmo se a coluna mudar de nome no futuro.
+  const { data: rawAgent } = await supabase
     .from('agents')
-    .select('id, solution_slug, is_active, is_paused, config, current_usage')
+    .select('id, solution_slug, status, config, current_usage')
     .eq('org_id', orgId)
     .in('solution_slug', slugVariants)
     .order('updated_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  if (!agent) {
+  if (!rawAgent) {
     return {
       allowed: false,
       reason: 'agent_not_hired',
       message: `Agente "${agentSlug}" não foi contratado nesta org`,
       org,
     }
+  }
+
+  const agent = {
+    id: rawAgent.id,
+    solution_slug: rawAgent.solution_slug,
+    config: rawAgent.config,
+    current_usage: rawAgent.current_usage,
+    status: rawAgent.status,
+    is_active: rawAgent.status === 'active',
+    is_paused: rawAgent.status === 'paused',
   }
 
   if (agent.is_paused) {
@@ -129,11 +142,11 @@ export async function isAgentAllowed(
     }
   }
 
-  if (agent.is_active === false) {
+  if (!agent.is_active) {
     return {
       allowed: false,
       reason: 'agent_inactive',
-      message: `Agente "${agentSlug}" está inativo nesta org`,
+      message: `Agente "${agentSlug}" está inativo nesta org (status=${agent.status})`,
       org,
       agent,
     }

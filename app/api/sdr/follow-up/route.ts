@@ -112,14 +112,16 @@ async function detectSilentLeadsFallback(now: Date, threshold: Date): Promise<nu
   const orgIds = Array.from(new Set(instances.map((i) => i.org_id)))
   const { data: followupAgents } = await supabase
     .from('agents')
-    .select('org_id, config, is_active, is_paused, solution_slug')
+    .select('org_id, config, status, solution_slug')
     .in('org_id', orgIds)
     .in('solution_slug', ['followup', 'followup_imobiliario'])
 
   // org_id → config do agent followup ativo (se houver)
   const orgConfigMap = new Map<string, { auto_detect: boolean; threshold_h: number }>()
   for (const ag of followupAgents || []) {
-    if (!ag.is_active || ag.is_paused) continue
+    const agActive = ag.status === 'active'
+    const agPaused = ag.status === 'paused'
+    if (!agActive || agPaused) continue
     const cfg = (ag.config as any) || {}
     orgConfigMap.set(ag.org_id, {
       auto_detect: cfg.auto_detect_enabled !== false, // default true

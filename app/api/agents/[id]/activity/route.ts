@@ -34,14 +34,19 @@ export async function GET(
     const limit = Math.min(parseInt(request.nextUrl.searchParams.get('limit') || '50'), 200)
 
     // Confirma agente é da org
-    const { data: agent } = await supabase
+    const { data: agentRow } = await supabase
       .from('agents')
-      .select('id, solution_slug, org_id, is_active, is_paused, current_usage')
+      .select('id, solution_slug, org_id, status, current_usage')
       .eq('id', agentId)
       .eq('org_id', orgId)
       .maybeSingle()
-    if (!agent) {
+    if (!agentRow) {
       return NextResponse.json({ error: 'Agente não encontrado nesta org' }, { status: 404 })
+    }
+    const agent = {
+      ...agentRow,
+      is_active: agentRow.status === 'active',
+      is_paused: agentRow.status === 'paused',
     }
 
     const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()

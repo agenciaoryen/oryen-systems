@@ -69,7 +69,7 @@ export async function GET(
 
     const { data: agent, error } = await supabase
       .from('agents')
-      .select('id, solution_slug, config, is_paused, is_active, status')
+      .select('id, solution_slug, config, status')
       .eq('id', id)
       .eq('org_id', orgId)
       .maybeSingle()
@@ -77,7 +77,14 @@ export async function GET(
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     if (!agent) return NextResponse.json({ error: 'Agente não encontrado' }, { status: 404 })
 
-    return NextResponse.json({ agent, allowed_keys: getAllowedKeys(agent.solution_slug) })
+    // Deriva is_paused/is_active a partir de status (text 'active'|'paused'|'inactive')
+    const enriched = {
+      ...agent,
+      is_paused: agent.status === 'paused',
+      is_active: agent.status === 'active',
+    }
+
+    return NextResponse.json({ agent: enriched, allowed_keys: getAllowedKeys(agent.solution_slug) })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
@@ -103,7 +110,7 @@ export async function PATCH(
 
     const { data: agent } = await supabase
       .from('agents')
-      .select('id, solution_slug, config, is_paused')
+      .select('id, solution_slug, config, status')
       .eq('id', id)
       .eq('org_id', orgId)
       .maybeSingle()
@@ -122,8 +129,10 @@ export async function PATCH(
       update.config = { ...(agent.config || {}), ...filtered }
     }
 
+    // is_paused vira mudança de status (schema usa text status, não boolean)
     if (typeof isPaused === 'boolean') {
-      update.is_paused = isPaused
+      update.status = isPaused ? 'paused' : 'active'
+      update.paused_at = isPaused ? new Date().toISOString() : null
     }
 
     const { data: updated, error } = await supabase
@@ -131,12 +140,18 @@ export async function PATCH(
       .update(update)
       .eq('id', id)
       .eq('org_id', orgId)
-      .select('id, solution_slug, config, is_paused, is_active')
+      .select('id, solution_slug, config, status')
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    return NextResponse.json({ ok: true, agent: updated })
+    const enriched = {
+      ...updated,
+      is_paused: updated.status === 'paused',
+      is_active: updated.status === 'active',
+    }
+
+    return NextResponse.json({ ok: true, agent: enriched })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
