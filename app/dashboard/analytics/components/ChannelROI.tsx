@@ -119,8 +119,8 @@ const SOURCE_LABELS: Record<string, Record<string, string>> = {
     landing_page: 'Landing Page',
     email: 'E-mail',
     phone: 'Telefone',
-    agente_captacao: '🤖 Hunter B2B (IA)',
-    hunter_b2b: '🤖 Hunter B2B (IA)',
+    agente_captacao: '🤖 Captação B2B',
+    hunter_b2b: '🤖 Captação B2B',
     other: 'Outro',
   },
   en: {
@@ -137,8 +137,8 @@ const SOURCE_LABELS: Record<string, Record<string, string>> = {
     landing_page: 'Landing Page',
     email: 'Email',
     phone: 'Phone',
-    agente_captacao: '🤖 Hunter B2B (AI)',
-    hunter_b2b: '🤖 Hunter B2B (AI)',
+    agente_captacao: '🤖 B2B Capture',
+    hunter_b2b: '🤖 B2B Capture',
     other: 'Other',
   },
   es: {
@@ -155,8 +155,8 @@ const SOURCE_LABELS: Record<string, Record<string, string>> = {
     landing_page: 'Landing Page',
     email: 'Correo',
     phone: 'Teléfono',
-    agente_captacao: '🤖 Hunter B2B (IA)',
-    hunter_b2b: '🤖 Hunter B2B (IA)',
+    agente_captacao: '🤖 Captación B2B',
+    hunter_b2b: '🤖 Captación B2B',
     other: 'Otro',
   },
 }

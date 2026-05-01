@@ -132,23 +132,86 @@ export async function sendEmailHandler(ctx: HandlerContext): Promise<HandlerResu
     .eq('id', emailSendId)
 
   // ─── 4. Registra em messages pra aparecer em Conversas ───
+  // Estratégia defensiva: garante que existe conversation channel='email'
+  // ANTES de inserir a mensagem. Sem isso, RPCs antigas que assumiam
+  // channel='whatsapp' não criavam conversation pra email e o admin não
+  // via no módulo Conversas.
   let messageRowId: string | undefined
   try {
-    const { data: msgRow } = await supabase.rpc('fn_insert_message', {
-      p_org_id: ctx.org_id,
-      p_lead_id: leadId,
-      p_channel: 'email',
-      p_direction: 'outbound',
-      p_body: `Assunto: ${subject}\n\n${body}`,
-      p_sender_type: 'agent_bot',
-      p_sender_name: 'BDR Email',
-      p_message_type: 'text',
-      p_timestamp: new Date().toISOString(),
-    })
-    messageRowId = (msgRow as any)?.id
+    // Upsert manual em conversations (channel='email')
+    const { data: existingConv } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('org_id', ctx.org_id)
+      .eq('lead_id', leadId)
+      .eq('channel', 'email')
+      .maybeSingle()
+
+    let conversationId = existingConv?.id
+
+    if (!conversationId) {
+      const { data: newConv } = await supabase
+        .from('conversations')
+        .insert({
+          org_id: ctx.org_id,
+          lead_id: leadId,
+          channel: 'email',
+          status: 'active',
+          last_message_body: subject,
+          last_message_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single()
+      conversationId = newConv?.id
+    } else {
+      // Atualiza last_message do existente
+      await supabase
+        .from('conversations')
+        .update({
+          last_message_body: subject,
+          last_message_at: new Date().toISOString(),
+          status: 'active',
+        })
+        .eq('id', conversationId)
+    }
+
+    // Tenta a RPC unificada (cobre lógicas adicionais que existirem). Se falhar,
+    // cai no insert direto em messages.
+    try {
+      const { data: msgRow } = await supabase.rpc('fn_insert_message', {
+        p_org_id: ctx.org_id,
+        p_lead_id: leadId,
+        p_channel: 'email',
+        p_direction: 'outbound',
+        p_body: `Assunto: ${subject}\n\n${body}`,
+        p_sender_type: 'agent_bot',
+        p_sender_name: 'BDR Email',
+        p_message_type: 'text',
+        p_timestamp: new Date().toISOString(),
+      })
+      messageRowId = (msgRow as any)?.id
+    } catch {
+      // Fallback: insert direto em messages
+      const { data: msgInsert } = await supabase
+        .from('messages')
+        .insert({
+          org_id: ctx.org_id,
+          lead_id: leadId,
+          conversation_id: conversationId,
+          channel: 'email',
+          direction: 'outbound',
+          body: `Assunto: ${subject}\n\n${body}`,
+          sender_type: 'agent_bot',
+          sender_name: 'BDR Email',
+          message_type: 'text',
+        })
+        .select('id')
+        .single()
+      messageRowId = msgInsert?.id
+    }
   } catch (msgErr: any) {
     // Não falha o handler — email já foi enviado e está em email_sends
-    console.warn(`[handler:send_email] fn_insert_message falhou (não-fatal): ${msgErr.message}`)
+    console.warn(`[handler:send_email] timeline em messages falhou (não-fatal): ${msgErr.message}`)
   }
 
   return {

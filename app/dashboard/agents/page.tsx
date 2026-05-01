@@ -44,7 +44,7 @@ const CATEGORY_ICONS: Record<string, any> = {
 }
 
 const SOLUTION_ICONS: Record<string, any> = {
-  hunter_b2b: Target,
+  hunter_b2b: Search,        // alinhado com o novo nome "Captação"
   sdr: WhatsAppIcon,
   sdr_imobiliario: WhatsAppIcon,
   followup: Clock,

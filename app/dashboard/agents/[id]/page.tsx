@@ -21,6 +21,7 @@ import { usePlan, type PlanConfig } from '@/lib/usePlan'
 import { formatDistanceToNow, format } from 'date-fns'
 import { ptBR, enUS, es } from 'date-fns/locale'
 import { toast } from 'sonner'
+import FollowUpConfigPanel from './components/FollowUpConfigPanel'
 import {
   ArrowLeft, Bot, Target, Plus, Loader2, PlayCircle, PauseCircle,
   Settings, Trash2, Clock, Calendar, TrendingUp, Users, X,
@@ -1131,15 +1132,9 @@ export default function AgentDetailPage() {
   const usageRemaining = isUnlimited ? -1 : Math.max(planLimit - rawUsed, 0)
   const usageLabel = isMessageAgent ? ui.messagesMonth : ui.leadsMonth
 
-  // Follow-up agents redirect to their dedicated management page
-  if (isFollowUp) {
-    router.replace('/dashboard/follow-up')
-    return (
-      <div className="min-h-[calc(100vh-100px)] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
-      </div>
-    )
-  }
+  // Follow-up: o redirecionamento foi removido. O perfil do agente segue
+  // sendo o lugar de configuração; abaixo é renderizado o FollowUpConfigPanel
+  // (cadência, max_attempts, horário, on/off) e link pra fila.
 
   const handleToggleAgent = async () => {
     const { success, error: err } = await toggleAgentStatus(agent.id, agent.status)
@@ -1203,6 +1198,9 @@ export default function AgentDetailPage() {
           </button>
         )}
       </div>
+
+      {/* Painel de Follow-up — config + estado */}
+      {isFollowUp && <FollowUpConfigPanel agentId={agent.id} />}
 
       {/* Usage Card */}
       <div

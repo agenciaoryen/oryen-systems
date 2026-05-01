@@ -105,9 +105,34 @@ async function detectSilentLeadsFallback(now: Date, threshold: Date): Promise<nu
 
   if (!instances || instances.length === 0) return 0
 
+  // Carrega config dos agentes followup pra checar auto_detect_enabled.
+  // Sem isso, o detector enfileirava leads mesmo de orgs que tinham
+  // o detector explicitamente desligado.
+  const orgIds = Array.from(new Set(instances.map((i) => i.org_id)))
+  const { data: followupAgents } = await supabase
+    .from('agents')
+    .select('org_id, config, is_active, is_paused, solution_slug')
+    .in('org_id', orgIds)
+    .in('solution_slug', ['followup', 'followup_imobiliario'])
+
+  // org_id → config do agent followup ativo (se houver)
+  const orgConfigMap = new Map<string, { auto_detect: boolean; threshold_h: number }>()
+  for (const ag of followupAgents || []) {
+    if (!ag.is_active || ag.is_paused) continue
+    const cfg = (ag.config as any) || {}
+    orgConfigMap.set(ag.org_id, {
+      auto_detect: cfg.auto_detect_enabled !== false, // default true
+      threshold_h: Number.isFinite(cfg.silence_threshold_hours) ? cfg.silence_threshold_hours : SILENCE_THRESHOLD_HOURS,
+    })
+  }
+
   let enqueued = 0
 
   for (const inst of instances) {
+    // Pula orgs sem followup ativo OU com auto-detect desligado
+    const orgCfg = orgConfigMap.get(inst.org_id)
+    if (!orgCfg) continue                        // org não tem followup ativo
+    if (!orgCfg.auto_detect) continue            // admin desligou auto-detect
     // Buscar leads ativos desta org que receberam mensagem do SDR antes do threshold
     // e cuja última mensagem foi do agente (não do lead)
     const { data: lastMessages } = await supabase
@@ -323,12 +348,14 @@ async function processFollowUp(
     return 'skipped'
   }
 
-  // ─── 2. Verificar horário comercial (8h-20h no fuso da org) ───
+  // ─── 2. Verificar horário comercial — usa config do agente se houver ───
   const timezone = org.timezone || 'America/Sao_Paulo'
   const localHour = getLocalHour(now, timezone)
+  const businessStart = (gate?.agent?.config as any)?.business_hours_start ?? 8
+  const businessEnd = (gate?.agent?.config as any)?.business_hours_end ?? 20
 
-  if (localHour < 8 || localHour >= 20) {
-    console.log(`[FollowUp] Fora do horário comercial (${localHour}h em ${timezone}) — pulando ${item.id}`)
+  if (localHour < businessStart || localHour >= businessEnd) {
+    console.log(`[FollowUp] Fora do horário comercial (${localHour}h em ${timezone}, janela ${businessStart}-${businessEnd}) — pulando ${item.id}`)
     return 'skipped'
   }
 
@@ -391,7 +418,9 @@ async function processFollowUp(
     console.log(`[FollowUp] Cloud API dentro da janela 24h para ${lead.phone} — texto livre`)
   }
 
-  // ─── 6. Buscar config da campanha ───
+  // ─── 6. Buscar config da campanha + config do AGENTE ───
+  // Config do agente (agents.config) é onde admin customiza cadência,
+  // max_attempts, horário comercial. Tem prioridade sobre defaults hardcoded.
   let campaignConfig: any = null
   if (item.campaign_id) {
     const { data: campaign } = await supabase
@@ -401,6 +430,11 @@ async function processFollowUp(
       .single()
     campaignConfig = campaign?.config || null
   }
+
+  // gate.agent já foi resolvido em (1b). Recupera config dele aqui:
+  const agentConfig = (gate.agent.config || {}) as Record<string, any>
+  const customCadence = Array.isArray(agentConfig.cadence_hours) ? agentConfig.cadence_hours : null
+  const customMaxAttempts = Number.isFinite(agentConfig.max_attempts) ? agentConfig.max_attempts : null
 
   // ─── 7. Gerar mensagem de follow-up via Claude ───
   const prompt = buildFollowUpPrompt({
@@ -496,9 +530,11 @@ async function processFollowUp(
   console.log(`[FollowUp] Enviado para ${lead.phone}: ${sendResult.sent} ok, ${sendResult.failed} falha`)
 
   // ─── 10. Atualizar fila ───
-  const cadence: number[] = item.cadence_hours || [4, 24, 72, 120, 168]
+  // Prioridade: config do agente > cadence persistido no item > default
+  const cadence: number[] = customCadence || item.cadence_hours || [4, 24, 72, 120, 168]
+  const maxAttempts = customMaxAttempts || item.max_attempts
 
-  if (nextAttempt >= item.max_attempts) {
+  if (nextAttempt >= maxAttempts) {
     // Esgotou tentativas
     await supabase.from('follow_up_queue').update({
       status: 'exhausted',
@@ -507,7 +543,7 @@ async function processFollowUp(
       updated_at: now.toISOString()
     }).eq('id', item.id)
 
-    console.log(`[FollowUp] Lead ${lead.phone} esgotou ${item.max_attempts} tentativas — exhausted`)
+    console.log(`[FollowUp] Lead ${lead.phone} esgotou ${maxAttempts} tentativas — exhausted`)
   } else {
     // Agendar próxima tentativa
     const nextCadenceHours = cadence[nextAttempt] || cadence[cadence.length - 1] || 168

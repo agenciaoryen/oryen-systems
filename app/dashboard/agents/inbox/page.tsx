@@ -39,6 +39,8 @@ export default function ApprovalInboxPage() {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [autoRefresh, setAutoRefresh] = useState(true)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [batchBusy, setBatchBusy] = useState(false)
 
   const fetchPending = useCallback(async () => {
     try {
@@ -79,11 +81,72 @@ export default function ApprovalInboxPage() {
       if (!res.ok) throw new Error(j.error || 'Erro')
       // Remove da lista (otimista — vai desaparecer no próximo refresh também)
       setItems((prev) => prev.filter((x) => x.id !== id))
+      setSelected((prev) => {
+        const n = new Set(prev); n.delete(id); return n
+      })
     } catch (e: any) {
       alert(e.message)
     } finally {
       setBusyId(null)
     }
+  }
+
+  async function decideBatch(decision: 'approved' | 'rejected') {
+    if (selected.size === 0) return
+    const reason =
+      decision === 'rejected'
+        ? prompt(`Motivo de rejeição para ${selected.size} ação(ões) (opcional):`) || undefined
+        : undefined
+    if (decision === 'approved' &&
+        !confirm(`Aprovar e enviar ${selected.size} ação(ões)? Os side-effects (envios, etc) serão executados.`)) {
+      return
+    }
+
+    setBatchBusy(true)
+    const ids = Array.from(selected)
+    let okCount = 0
+    let failCount = 0
+
+    // Executa em série — algumas capabilities podem demorar (ex: send_email)
+    // e queremos que falha numa não impeça as outras.
+    for (const id of ids) {
+      try {
+        const res = await fetch(`/api/agents/actions/${id}/approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ decision, reason }),
+        })
+        const j = await res.json()
+        if (res.ok && (j.ok || decision === 'rejected')) {
+          okCount++
+        } else {
+          failCount++
+        }
+        // Remove da lista incrementalmente pra UX responsiva
+        setItems((prev) => prev.filter((x) => x.id !== id))
+      } catch {
+        failCount++
+      }
+    }
+
+    setSelected(new Set())
+    setBatchBusy(false)
+    alert(`${decision === 'approved' ? 'Aprovadas' : 'Rejeitadas'}: ${okCount}\nFalhas: ${failCount}`)
+    fetchPending()
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const n = new Set(prev)
+      if (n.has(id)) n.delete(id)
+      else n.add(id)
+      return n
+    })
+  }
+
+  function toggleSelectAll() {
+    if (selected.size === items.length) setSelected(new Set())
+    else setSelected(new Set(items.map((i) => i.id)))
   }
 
   if (loading) {
@@ -179,16 +242,71 @@ export default function ApprovalInboxPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {items.map((item) => (
-            <PendingRow
-              key={item.id}
-              item={item}
-              busy={busyId === item.id}
-              onDecide={decide}
-            />
-          ))}
-        </div>
+        <>
+          {/* Barra de seleção em lote */}
+          <div
+            className="rounded-lg px-3 py-2 mb-3 flex items-center gap-3 flex-wrap sticky top-0 z-10"
+            style={{
+              background: selected.size > 0 ? 'var(--color-primary-subtle)' : 'var(--color-bg-elevated)',
+              border: '1px solid ' + (selected.size > 0 ? 'var(--color-primary)' : 'var(--color-border)'),
+            }}
+          >
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selected.size > 0 && selected.size === items.length}
+                ref={(el) => { if (el) el.indeterminate = selected.size > 0 && selected.size < items.length }}
+                onChange={toggleSelectAll}
+                className="cursor-pointer"
+              />
+              <span className="text-xs font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
+                {selected.size === 0
+                  ? `Selecionar (${items.length})`
+                  : `${selected.size} selecionada(s)`}
+              </span>
+            </label>
+
+            {selected.size > 0 && (
+              <div className="flex items-center gap-2 ml-auto">
+                <button
+                  onClick={() => decideBatch('rejected')}
+                  disabled={batchBusy}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50"
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-text-secondary)',
+                  }}
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Rejeitar selecionadas
+                </button>
+                <button
+                  onClick={() => decideBatch('approved')}
+                  disabled={batchBusy}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50"
+                  style={{ background: '#10b981', color: '#fff' }}
+                >
+                  {batchBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  Aprovar e enviar selecionadas
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            {items.map((item) => (
+              <PendingRow
+                key={item.id}
+                item={item}
+                busy={busyId === item.id}
+                selected={selected.has(item.id)}
+                onToggleSelect={() => toggleSelect(item.id)}
+                onDecide={decide}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   )
@@ -197,10 +315,14 @@ export default function ApprovalInboxPage() {
 function PendingRow({
   item,
   busy,
+  selected,
+  onToggleSelect,
   onDecide,
 }: {
   item: PendingAction
   busy: boolean
+  selected: boolean
+  onToggleSelect: () => void
   onDecide: (id: string, decision: 'approved' | 'rejected', reason?: string) => void
 }) {
   const Icon = getCapabilityIcon(item.capability)
@@ -212,10 +334,16 @@ function PendingRow({
       className="rounded-xl overflow-hidden"
       style={{
         background: 'var(--color-bg-surface)',
-        border: '1px solid var(--color-border)',
+        border: '1px solid ' + (selected ? 'var(--color-primary)' : 'var(--color-border)'),
       }}
     >
-      <div className="p-4 flex items-start gap-4">
+      <div className="p-4 flex items-start gap-3">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggleSelect}
+          className="mt-2 cursor-pointer"
+        />
         <div
           className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
           style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' }}

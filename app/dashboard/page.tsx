@@ -146,6 +146,9 @@ const TRANSLATIONS = {
     reached: 'atingida',
     leadsCaptured: 'Contatos Recebidos',
     costPerLead: 'Custo por Contato (Est.)',
+    capturedByAI: 'via Colaborador IA',
+    capturedByAITitle: 'Captação por Colaborador IA',
+    seeDetails: 'Ver detalhes',
     scheduling: 'Visitas Agendadas',
     attendanceRate: 'Taxa de Comparecimento',
     activePipeline: 'Pipeline Ativo',
@@ -220,6 +223,9 @@ const TRANSLATIONS = {
     reached: 'reached',
     leadsCaptured: 'Contacts Received',
     costPerLead: 'Cost per Contact (Est.)',
+    capturedByAI: 'via AI Coworker',
+    capturedByAITitle: 'AI Coworker capture',
+    seeDetails: 'See details',
     scheduling: 'Visits Scheduled',
     attendanceRate: 'Attendance Rate',
     activePipeline: 'Active Pipeline',
@@ -294,6 +300,9 @@ const TRANSLATIONS = {
     reached: 'alcanzada',
     leadsCaptured: 'Contactos Recibidos',
     costPerLead: 'Costo por Contacto (Est.)',
+    capturedByAI: 'vía Colaborador IA',
+    capturedByAITitle: 'Captación por Colaborador IA',
+    seeDetails: 'Ver detalles',
     scheduling: 'Visitas Agendadas',
     attendanceRate: 'Tasa de Asistencia',
     activePipeline: 'Pipeline Activo',
@@ -808,18 +817,21 @@ export default function DashboardPage() {
                 <span title="Baseado no investimento configurado">{t.costPerLead}</span>
                 <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatPrice(kpis.custoPorLead, userCurrency, userLang)}</span>
               </div>
-              {kpis.leadsByAI > 0 && (
-                <div className="flex justify-between text-[10px] sm:text-xs font-medium">
-                  <span style={{ color: 'var(--color-text-tertiary)' }}>via Colaborador IA</span>
-                  <span className="font-bold inline-flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
-                    <Bot size={11} />
-                    {kpis.leadsByAI}
+              <div className="flex justify-between text-[10px] sm:text-xs font-medium">
+                <span style={{ color: 'var(--color-text-tertiary)' }}>{t.capturedByAI}</span>
+                <span
+                  className="font-bold inline-flex items-center gap-1"
+                  style={{ color: kpis.leadsByAI > 0 ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}
+                >
+                  <Bot size={11} />
+                  {kpis.leadsByAI}
+                  {kpis.leadsByAI > 0 && (
                     <span className="text-[9px] opacity-60">
                       ({kpis.leadsTotal > 0 ? Math.round((kpis.leadsByAI / kpis.leadsTotal) * 100) : 0}%)
                     </span>
-                  </span>
-                </div>
-              )}
+                  )}
+                </span>
+              </div>
             </div>
           </Card>
 

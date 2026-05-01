@@ -58,7 +58,7 @@ const TRANSLATIONS = {
       alerts: 'Alertas',
       crm: 'CRM & Contatos',
       conversations: 'Conversas',
-      agents: 'Agentes IA',
+      agents: 'Colaboradores IA',
       approvals: 'Aprovações pendentes',
       analytics: 'Analytics IA',
       reports: 'Relatórios',
@@ -103,7 +103,7 @@ const TRANSLATIONS = {
       alerts: 'Alerts',
       crm: 'CRM & Contacts',
       conversations: 'Conversations',
-      agents: 'AI Agents',
+      agents: 'AI Coworkers',
       approvals: 'Pending approvals',
       analytics: 'AI Analytics',
       reports: 'Reports',
@@ -148,7 +148,7 @@ const TRANSLATIONS = {
       alerts: 'Alertas',
       crm: 'CRM & Contactos',
       conversations: 'Conversaciones',
-      agents: 'Agentes IA',
+      agents: 'Colaboradores IA',
       approvals: 'Aprobaciones pendientes',
       analytics: 'Analytics IA',
       reports: 'Reportes',
@@ -418,7 +418,8 @@ export default function Sidebar() {
         ...(pendingApprovalsCount > 0
           ? [{ href: '/dashboard/agents/inbox', label: t.menu.approvals || 'Aprovações pendentes', icon: ShieldAlert, badge: true, badgeCount: pendingApprovalsCount, permission: 'agents' as const }]
           : []),
-        { href: '/dashboard/follow-up', label: t.menu.followUp, icon: Zap, permission: 'follow_up' },
+        // Follow-up agora é gerenciado dentro do perfil do colaborador IA followup
+        // (em /dashboard/agents/<id>). A fila continua acessível via link no perfil.
         { href: '/dashboard/analytics', label: t.menu.analytics, icon: TrendingUp, permission: 'analytics' },
       ],
     },
