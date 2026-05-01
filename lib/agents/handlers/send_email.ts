@@ -67,7 +67,35 @@ export async function sendEmailHandler(ctx: HandlerContext): Promise<HandlerResu
     }
   }
 
-  // Envia via Resend
+  // ─── 1. Cria registro em email_sends 'queued' ───
+  // O webhook /api/email/webhook/resend escuta eventos do Resend e atualiza
+  // este row pra delivered/opened/clicked/bounced. Sem esse insert, o admin
+  // não tem visibilidade nenhuma sobre o que aconteceu com o email.
+  const { data: sendRow, error: sendErr } = await supabase
+    .from('email_sends')
+    .insert({
+      org_id: ctx.org_id,
+      contact_id: null,                // não vem de email_contacts (este é o caminho prospection)
+      lead_id: leadId,                  // referência direta pro lead
+      subject,
+      body_text: body,
+      status: 'queued',
+      agent_id: ctx.agent.id,           // qual colaborador IA mandou
+      action_id: ctx.action_id,         // linha-de-rastro pro audit do kernel
+    })
+    .select('id')
+    .single()
+
+  if (sendErr) {
+    return {
+      ok: false,
+      error: `Falha ao criar email_sends: ${sendErr.message}`,
+    }
+  }
+
+  const emailSendId = sendRow.id
+
+  // ─── 2. Dispara via Resend ───
   let providerId: string | undefined
   try {
     const result: any = await sendColdEmail({
@@ -78,13 +106,32 @@ export async function sendEmailHandler(ctx: HandlerContext): Promise<HandlerResu
     })
     providerId = result?.id
   } catch (err: any) {
-    return {
-      ok: false,
-      error: `Resend falhou: ${err.message}`,
-    }
+    // Marca como failed em email_sends antes de retornar
+    await supabase
+      .from('email_sends')
+      .update({
+        status: 'failed',
+        error_message: err.message?.substring(0, 500) || 'Resend error',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', emailSendId)
+    return { ok: false, error: `Resend falhou: ${err.message}` }
   }
 
-  // Registra em messages pra aparecer em Conversas (via fn_insert_message)
+  // ─── 3. Atualiza email_sends 'sent' com resend_message_id ───
+  // Esse ID é a chave que o webhook Resend usa pra encontrar o row e
+  // atualizar quando vier evento de delivered/opened/clicked/bounced.
+  await supabase
+    .from('email_sends')
+    .update({
+      status: 'sent',
+      resend_message_id: providerId || null,
+      sent_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', emailSendId)
+
+  // ─── 4. Registra em messages pra aparecer em Conversas ───
   let messageRowId: string | undefined
   try {
     const { data: msgRow } = await supabase.rpc('fn_insert_message', {
@@ -100,7 +147,7 @@ export async function sendEmailHandler(ctx: HandlerContext): Promise<HandlerResu
     })
     messageRowId = (msgRow as any)?.id
   } catch (msgErr: any) {
-    // Não falha o handler se o registro em messages falhar — email já foi enviado
+    // Não falha o handler — email já foi enviado e está em email_sends
     console.warn(`[handler:send_email] fn_insert_message falhou (não-fatal): ${msgErr.message}`)
   }
 
@@ -108,6 +155,7 @@ export async function sendEmailHandler(ctx: HandlerContext): Promise<HandlerResu
     ok: true,
     data: {
       email_to: lead.email,
+      email_send_id: emailSendId,        // permite consultar status no email_sends
       email_provider_id: providerId,
       message_row_id: messageRowId,
       variant: variant || 'A',

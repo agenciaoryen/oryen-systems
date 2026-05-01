@@ -11,10 +11,10 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts'
-import { 
-  TrendingUp, Users, Calendar, DollarSign, 
+import {
+  TrendingUp, Users, Calendar, DollarSign,
   Activity, ArrowUpRight, ArrowDownRight, Download,
-  RefreshCw
+  RefreshCw, Bot
 } from 'lucide-react'
 import { format, subDays, parseISO } from 'date-fns'
 import { ptBR, enUS, es, type Locale } from 'date-fns/locale'
@@ -72,6 +72,7 @@ interface HourlyDataPoint {
 interface KPIs {
   totalFaturamento: number
   leadsTotal: number
+  leadsByAI: number              // ← captados por colaborador IA (Hunter)
   taxaConversao: number
   reunioesAgendadas: number
   reunioesRealizadas: number
@@ -548,9 +549,16 @@ export default function DashboardPage() {
     const reunioesAgendadas = leadsScheduledInPeriod.length
     const reunioesRealizadas = leadsAttendedInPeriod.length
 
+    // Leads captados por colaborador IA (hunter_b2b cria com source='agente_captacao')
+    const aiSources = new Set(['agente_captacao', 'hunter_b2b', 'agent', 'ai_agent'])
+    const leadsByAI = leadsCreatedInPeriod.filter(l =>
+      aiSources.has(String(l.source || '').toLowerCase())
+    ).length
+
     return {
       totalFaturamento: totalVendas,
       leadsTotal,
+      leadsByAI,
       taxaConversao: leadsTotal > 0 ? (leadsComVenda / leadsTotal) * 100 : 0,
       reunioesAgendadas,
       reunioesRealizadas,
@@ -795,9 +803,23 @@ export default function DashboardPage() {
                 <Users size={16} className="sm:w-5 sm:h-5" />
               </div>
             </div>
-            <div className="mt-4 pt-3 sm:pt-4 flex justify-between text-[10px] sm:text-xs font-medium" style={{ borderTop: '1px solid var(--color-border)', color: 'var(--color-text-tertiary)' }}>
-              <span title="Baseado no investimento configurado">{t.costPerLead}</span>
-              <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatPrice(kpis.custoPorLead, userCurrency, userLang)}</span>
+            <div className="mt-4 pt-3 sm:pt-4 space-y-1.5" style={{ borderTop: '1px solid var(--color-border)' }}>
+              <div className="flex justify-between text-[10px] sm:text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                <span title="Baseado no investimento configurado">{t.costPerLead}</span>
+                <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{formatPrice(kpis.custoPorLead, userCurrency, userLang)}</span>
+              </div>
+              {kpis.leadsByAI > 0 && (
+                <div className="flex justify-between text-[10px] sm:text-xs font-medium">
+                  <span style={{ color: 'var(--color-text-tertiary)' }}>via Colaborador IA</span>
+                  <span className="font-bold inline-flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
+                    <Bot size={11} />
+                    {kpis.leadsByAI}
+                    <span className="text-[9px] opacity-60">
+                      ({kpis.leadsTotal > 0 ? Math.round((kpis.leadsByAI / kpis.leadsTotal) * 100) : 0}%)
+                    </span>
+                  </span>
+                </div>
+              )}
             </div>
           </Card>
 

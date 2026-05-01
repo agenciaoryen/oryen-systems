@@ -84,6 +84,7 @@ const T = {
     deleteConfirm: 'Tem certeza que deseja excluir esta instância? Isso irá desconectar o WhatsApp.',
     agent: 'Agente IA',
     noAgent: 'Sem agente (inativo)',
+    manageInAgents: 'Atribuir no Perfil',
     agentLinked: 'SDR ativo',
     setupWebhook: 'Ativar SDR',
     webhookOk: 'SDR Ativado!',
@@ -128,6 +129,7 @@ const T = {
     deleteConfirm: 'Are you sure you want to delete this instance? This will disconnect WhatsApp.',
     agent: 'AI Agent',
     noAgent: 'No agent (inactive)',
+    manageInAgents: 'Assign in Profile',
     agentLinked: 'SDR active',
     setupWebhook: 'Activate SDR',
     webhookOk: 'SDR Activated!',
@@ -172,6 +174,7 @@ const T = {
     deleteConfirm: '¿Estás seguro de que deseas eliminar esta instancia? Esto desconectará WhatsApp.',
     agent: 'Agente IA',
     noAgent: 'Sin agente (inactivo)',
+    manageInAgents: 'Asignar en Perfil',
     agentLinked: 'SDR activo',
     setupWebhook: 'Activar SDR',
     webhookOk: 'SDR Activado!',
@@ -784,22 +787,29 @@ export default function WhatsAppPage() {
                 </div>
               </div>
 
-              {/* Bottom: Agent select + Actions */}
+              {/* Bottom: Agent indicator (read-only) + Actions */}
               <div className="flex flex-wrap items-center gap-2 mt-3 pt-3" style={{ borderTop: '1px solid var(--color-border)' }}>
-                {/* Agent select */}
-                <div className="flex items-center gap-1.5">
-                  <Bot size={13} style={{ color: instance.agent_id ? 'rgb(16,185,129)' : 'var(--color-text-secondary)' }} />
-                  <CustomSelect
-                    value={instance.agent_id || ''}
-                    onChange={(v) => handleLinkAgent(instance.id, v)}
-                    options={[
-                      { value: '', label: t.noAgent },
-                      ...agents.map(ag => ({
-                        value: ag.id,
-                        label: ag.solution_slug.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
-                      })),
-                    ]}
-                  />
+                {/* Agent indicator — atribuição agora é feita no perfil do colaborador IA */}
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px]"
+                     style={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)' }}>
+                  <Bot size={13} style={{ color: instance.agent_id ? 'rgb(16,185,129)' : 'var(--color-text-tertiary)' }} />
+                  {instance.agent_id ? (
+                    <span style={{ color: 'var(--color-text-secondary)' }}>
+                      {(() => {
+                        const ag = agents.find(a => a.id === instance.agent_id)
+                        return ag ? ag.solution_slug.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : t.noAgent
+                      })()}
+                    </span>
+                  ) : (
+                    <span style={{ color: 'var(--color-text-tertiary)' }}>{t.noAgent}</span>
+                  )}
+                  <Link
+                    href="/dashboard/agents"
+                    className="ml-1 text-[10px] underline"
+                    style={{ color: 'var(--color-primary)' }}
+                  >
+                    {t.manageInAgents || 'Gerenciar no perfil'}
+                  </Link>
                 </div>
 
                 {/* Templates link (Cloud API only) */}
