@@ -91,7 +91,7 @@ export default function AgendaView({
             <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{t.noEvents}</p>
           </div>
         ) : (
-          <div>
+          <div className="pb-4">
             {HOURS.map(hour => {
               const hourEvents = eventsByHour[hour] || []
               const timeStr = `${String(hour).padStart(2, '0')}:00`

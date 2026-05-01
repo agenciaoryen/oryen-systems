@@ -101,7 +101,7 @@ export default function WeekView({
 
       {/* Time grid */}
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)] gap-px">
+        <div className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)] gap-px pb-4">
           {HOURS.map(hour => (
             <WeekRow
               key={hour}
