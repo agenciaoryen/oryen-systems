@@ -24,7 +24,7 @@ const t = {
   pt: {
     velocity: 'Velocidade por Etapa',
     bottlenecks: 'Gargalos',
-    funnel: 'Funil de Conversão',
+    funnel: 'Fluxo do Funil',
     days: 'dias',
     stuck: 'parados',
     leads: 'leads',
@@ -35,7 +35,7 @@ const t = {
   en: {
     velocity: 'Stage Velocity',
     bottlenecks: 'Bottlenecks',
-    funnel: 'Conversion Funnel',
+    funnel: 'Pipeline Flow',
     days: 'days',
     stuck: 'stuck',
     leads: 'leads',
@@ -46,7 +46,7 @@ const t = {
   es: {
     velocity: 'Velocidad por Etapa',
     bottlenecks: 'Cuellos de Botella',
-    funnel: 'Embudo de Conversión',
+    funnel: 'Flujo del Embudo',
     days: 'días',
     stuck: 'atascados',
     leads: 'leads',

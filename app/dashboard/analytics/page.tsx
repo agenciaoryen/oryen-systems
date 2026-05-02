@@ -14,7 +14,7 @@ import TeamPerformance from './components/TeamPerformance'
 import RevenueProjection from './components/RevenueProjection'
 
 import {
-  getLeadFunnelByStage,
+  getPipelineFlow,
   getConversionBySource,
   getPipelineVelocity,
   getBrokerPerformance,
@@ -137,7 +137,7 @@ export default function AnalyticsPage() {
       }
 
       const [funnelData, sourcesData, velocityData, brokersData, followUpData, projectionData] = await Promise.all([
-        getLeadFunnelByStage(supabase, activeOrgId, startDate),
+        getPipelineFlow(supabase, activeOrgId, startDate),
         getConversionBySource(supabase, activeOrgId, startDate),
         getPipelineVelocity(supabase, activeOrgId, startDate),
         getBrokerPerformance(supabase, activeOrgId, startDate),
@@ -145,7 +145,7 @@ export default function AnalyticsPage() {
         getRevenueProjection(supabase, activeOrgId),
       ])
 
-      console.log(`[Analytics] Results — funnel: ${funnelData.length}, sources: ${sourcesData.length}, velocity: ${velocityData.length}, brokers: ${brokersData.length}`)
+      console.log(`[Analytics] Results — flow: ${funnelData.length}, sources: ${sourcesData.length}, velocity: ${velocityData.length}, brokers: ${brokersData.length}`)
 
       setFunnel(funnelData)
       setSources(sourcesData)

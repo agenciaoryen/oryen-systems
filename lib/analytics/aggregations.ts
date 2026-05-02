@@ -120,6 +120,92 @@ export async function getLeadFunnelByStage(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 1b. FLUXO DO FUNIL (quantos leads passaram por cada etapa no período)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export async function getPipelineFlow(
+  supabase: SupabaseClient,
+  orgId: string,
+  startDate: Date
+): Promise<FunnelStage[]> {
+  const isoDate = startDate.toISOString()
+
+  const [stagesRes, eventsRes, leadsRes] = await Promise.all([
+    supabase
+      .from('pipeline_stages')
+      .select('id, name, label, color, position, is_won, is_lost')
+      .eq('org_id', orgId)
+      .eq('is_active', true)
+      .order('position'),
+    supabase
+      .from('lead_events')
+      .select('lead_id, details')
+      .eq('type', 'stage_change')
+      .eq('org_id', orgId)
+      .gte('created_at', isoDate),
+    supabase
+      .from('leads')
+      .select('id, stage')
+      .eq('org_id', orgId)
+      .or(`created_at.gte.${isoDate},last_stage_change_at.gte.${isoDate},updated_at.gte.${isoDate}`),
+  ])
+
+  if (stagesRes.error || leadsRes.error) return []
+
+  const stages = stagesRes.data || []
+  const events = eventsRes.data || []
+  const activeLeads = leadsRes.data || []
+
+  // Inicializa um Set de lead_ids por stage
+  const stageLeadIds: Record<string, Set<string>> = {}
+  for (const s of stages) {
+    stageLeadIds[s.name] = new Set()
+  }
+
+  // 1. Leads ativos no período — cada lead conta no stage atual dele
+  for (const lead of activeLeads) {
+    if (stageLeadIds[lead.stage]) {
+      stageLeadIds[lead.stage].add(lead.id)
+    }
+  }
+
+  // 2. Stage changes — cada lead conta no stage de destino
+  for (const ev of events) {
+    const toStage = ev.details?.to_stage as string | undefined
+    if (toStage && stageLeadIds[toStage]) {
+      stageLeadIds[toStage].add(ev.lead_id)
+    }
+  }
+
+  const totalLeads = activeLeads.length
+  const result: FunnelStage[] = []
+
+  for (let idx = 0; idx < stages.length; idx++) {
+    const stage = stages[idx]
+    const count = stageLeadIds[stage.name]?.size || 0
+    const prevCount = idx > 0 ? result[idx - 1].leadCount : totalLeads
+    const conv = prevCount > 0 ? Math.round((count / prevCount) * 100) : 0
+
+    result.push({
+      id: stage.id,
+      name: stage.name,
+      label: stage.label || stage.name,
+      color: stageColorHex(stage.color),
+      position: stage.position,
+      isWon: stage.is_won || false,
+      isLost: stage.is_lost || false,
+      leadCount: count,
+      stuckCount: 0,
+      medianDays: 0,
+      totalValue: 0,
+      conversionFromPrev: conv,
+    })
+  }
+
+  return result
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // 2. CONVERSÃO POR SOURCE
 // ═══════════════════════════════════════════════════════════════════════════════
 
