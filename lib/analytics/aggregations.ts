@@ -150,95 +150,38 @@ export async function getPipelineFlow(
       .or(`created_at.gte.${isoDate},last_stage_change_at.gte.${isoDate},updated_at.gte.${isoDate}`),
   ])
 
-  if (stagesRes.error || leadsRes.error) {
-    console.log('[getPipelineFlow] ERROR:', stagesRes.error?.message || leadsRes.error?.message)
-    return []
-  }
+  if (stagesRes.error || leadsRes.error) return []
 
   const stages = stagesRes.data || []
   const events = eventsRes.data || []
   const activeLeads = leadsRes.data || []
 
-  // ── DEBUG ──────────────────────────────────────────────────────────────────────
-  console.log('[getPipelineFlow] ═══════════════════════════════════════')
-  console.log('[getPipelineFlow] isoDate:', isoDate)
-  console.log('[getPipelineFlow] stages:', stages.map(s => s.name))
-  console.log('[getPipelineFlow] events total:', events.length)
-  console.log('[getPipelineFlow] activeLeads total:', activeLeads.length)
-  // Distribuição dos leads por stage
-  const leadDist: Record<string, number> = {}
-  for (const l of activeLeads) {
-    leadDist[l.stage] = (leadDist[l.stage] || 0) + 1
-  }
-  console.log('[getPipelineFlow] activeLeads by stage:', leadDist)
-  // Sample de eventos
-  if (events.length > 0) {
-    const sample = events.slice(0, 5).map(e => ({
-      lead_id: e.lead_id?.slice(0, 8),
-      details: e.details,
-    }))
-    console.log('[getPipelineFlow] sample events:', JSON.stringify(sample))
-  }
-  // ── END DEBUG ──────────────────────────────────────────────────────────────────
-
-  // Inicializa um Set de lead_ids por stage
   const stageLeadIds: Record<string, Set<string>> = {}
   for (const s of stages) {
     stageLeadIds[s.name] = new Set()
   }
 
-  // 1. Leads ativos no período — cada lead conta no stage atual dele
-  let leadsMatched = 0
-  let leadsUnmatched = 0
-  const unmatchedStages = new Set<string>()
+  // 1. Leads ativos no período — cada lead conta no stage atual
   for (const lead of activeLeads) {
     if (stageLeadIds[lead.stage]) {
       stageLeadIds[lead.stage].add(lead.id)
-      leadsMatched++
-    } else {
-      leadsUnmatched++
-      unmatchedStages.add(lead.stage)
     }
   }
 
-  // 2. Stage changes — cada lead conta no stage de origem (passou por ele) e de destino (chegou nele)
-  let eventsMatched = 0
-  let eventsUnmatched = 0
-  const unmatchedEventStages = new Set<string>()
+  // 2. Stage changes — lead conta no stage de origem e de destino
   for (const ev of events) {
     const toStage = ev.details?.to_stage as string | undefined
     const fromStage = ev.details?.from_stage as string | undefined
-    let matched = false
     if (toStage && stageLeadIds[toStage]) {
       stageLeadIds[toStage].add(ev.lead_id)
-      matched = true
-    } else if (toStage) {
-      unmatchedEventStages.add(`to:${toStage}`)
     }
     if (fromStage && stageLeadIds[fromStage]) {
       stageLeadIds[fromStage].add(ev.lead_id)
-      matched = true
-    } else if (fromStage) {
-      unmatchedEventStages.add(`from:${fromStage}`)
     }
-    if (matched) eventsMatched++
-    else eventsUnmatched++
   }
 
   const totalLeads = activeLeads.length
   const result: FunnelStage[] = []
-
-  // ── DEBUG ──────────────────────────────────────────────────────────────────────
-  console.log('[getPipelineFlow] leads matched/unmatched:', leadsMatched, '/', leadsUnmatched)
-  if (unmatchedStages.size > 0) console.log('[getPipelineFlow] ⚠️ unmatched lead stages:', [...unmatchedStages])
-  console.log('[getPipelineFlow] events matched/unmatched:', eventsMatched, '/', eventsUnmatched)
-  if (unmatchedEventStages.size > 0) console.log('[getPipelineFlow] ⚠️ unmatched event stages:', [...unmatchedEventStages])
-  const stageCounts: Record<string, number> = {}
-  for (const s of stages) {
-    stageCounts[s.name] = stageLeadIds[s.name]?.size || 0
-  }
-  console.log('[getPipelineFlow] flow counts:', stageCounts)
-  // ── END DEBUG ──────────────────────────────────────────────────────────────────
 
   for (let idx = 0; idx < stages.length; idx++) {
     const stage = stages[idx]
@@ -347,27 +290,10 @@ export async function getPipelineVelocity(
       .or(`created_at.gte.${isoDate},last_stage_change_at.gte.${isoDate},updated_at.gte.${isoDate}`),
   ])
 
-  const allStages = stagesRes.data || []
-  const stages = allStages.filter(s => !s.is_won && !s.is_lost)
+  const stages = (stagesRes.data || []).filter(s => !s.is_won && !s.is_lost)
   const leads = leadsRes.data || []
 
-  // ── DEBUG ──────────────────────────────────────────────────────────────────────
-  console.log('[getPipelineVelocity] ═══════════════════════════════════════')
-  console.log('[getPipelineVelocity] orgId:', orgId)
-  console.log('[getPipelineVelocity] isoDate:', isoDate)
-  console.log('[getPipelineVelocity] ALL stages from DB:', allStages.map(s => `${s.name}(won=${s.is_won},lost=${s.is_lost})`))
-  console.log('[getPipelineVelocity] ACTIVE stages (filtered):', stages.map(s => s.name))
-  console.log('[getPipelineVelocity] leads count:', leads.length)
-  // Distribuição de leads por stage atual
-  const leadStageDist: Record<string, number> = {}
-  for (const l of leads) {
-    leadStageDist[l.stage] = (leadStageDist[l.stage] || 0) + 1
-  }
-  console.log('[getPipelineVelocity] leads by current stage:', leadStageDist)
-  // ── END DEBUG ──────────────────────────────────────────────────────────────────
-
   if (stages.length === 0 || leads.length === 0) {
-    console.log('[getPipelineVelocity] EARLY RETURN — stages or leads empty')
     return stages.map(stage => ({
       stageId: stage.id,
       stageName: stage.name,
@@ -380,38 +306,15 @@ export async function getPipelineVelocity(
     }))
   }
 
-  // Buscar eventos de stage_change para os leads ativos no período
   const leadIds = [...new Set(leads.map(l => l.id))]
-  const { data: eventsData, error: eventsErr } = await supabase
+  const { data: eventsData } = await supabase
     .from('lead_events')
-    .select('lead_id, details, created_at, type')
+    .select('lead_id, details, created_at')
     .eq('org_id', orgId)
     .in('type', ['stage_change', 'stage_changed'])
     .in('lead_id', leadIds)
     .order('created_at', { ascending: true })
 
-  // ── DEBUG ──────────────────────────────────────────────────────────────────────
-  console.log('[getPipelineVelocity] lead_events total:', eventsData?.length || 0)
-  console.log('[getPipelineVelocity] lead_events error:', eventsErr?.message || 'none')
-  if (eventsData) {
-    const byType: Record<string, number> = {}
-    for (const ev of eventsData) {
-      const t = ev.type || 'unknown'
-      byType[t] = (byType[t] || 0) + 1
-    }
-    console.log('[getPipelineVelocity] events by type:', byType)
-    // Show sample events (first 5)
-    const sample = eventsData.slice(0, 5).map(e => ({
-      lead_id: e.lead_id?.slice(0, 8),
-      type: e.type,
-      from: (e.details as any)?.from_stage,
-      to: (e.details as any)?.to_stage,
-    }))
-    console.log('[getPipelineVelocity] sample events:', JSON.stringify(sample))
-  }
-  // ── END DEBUG ──────────────────────────────────────────────────────────────────
-
-  // Agrupar eventos por lead, ordenados no tempo
   const eventsByLead: Record<string, Array<{ from: string; to: string; time: Date }>> = {}
   for (const ev of eventsData || []) {
     const lid = ev.lead_id
@@ -423,34 +326,21 @@ export async function getPipelineVelocity(
     })
   }
 
-  // Mapa de durações por stage (em dias)
   const stageDurations: Record<string, number[]> = {}
   for (const s of stages) {
     stageDurations[s.name] = []
   }
 
-  // Contadores de debug
-  let leadsWithEvents = 0
-  let leadsWithoutEvents = 0
-  const stageKeys = Object.keys(stageDurations)
-  const unknownStages = new Set<string>()
-
   for (const lead of leads) {
     const events = eventsByLead[lead.id]
 
     if (!events || events.length === 0) {
-      leadsWithoutEvents++
-      // Lead nunca mudou de stage — tempo todo no stage atual
       const dur = differenceInDays(now, new Date(lead.created_at))
       if (stageDurations[lead.stage] !== undefined) {
         stageDurations[lead.stage].push(dur)
-      } else {
-        unknownStages.add(lead.stage)
       }
       continue
     }
-
-    leadsWithEvents++
 
     // Timeline: created_at → evento[0] → evento[1] → ... → now
     // 1. Primeiro stage (from_stage do primeiro evento): created_at → evento[0].time
@@ -458,8 +348,6 @@ export async function getPipelineVelocity(
     const firstDur = differenceInDays(events[0].time, new Date(lead.created_at))
     if (firstStage && stageDurations[firstStage] !== undefined && firstDur >= 0) {
       stageDurations[firstStage].push(firstDur)
-    } else if (firstStage && stageDurations[firstStage] === undefined) {
-      unknownStages.add(`[first] ${firstStage}`)
     }
 
     // 2. Stages intermediários: evento[i].to → evento[i+1].time
@@ -468,8 +356,6 @@ export async function getPipelineVelocity(
       const dur = differenceInDays(events[i + 1].time, events[i].time)
       if (stage && stageDurations[stage] !== undefined && dur >= 0) {
         stageDurations[stage].push(dur)
-      } else if (stage && stageDurations[stage] === undefined) {
-        unknownStages.add(`[interm] ${stage}`)
       }
     }
 
@@ -478,24 +364,8 @@ export async function getPipelineVelocity(
     const lastDur = differenceInDays(now, events[events.length - 1].time)
     if (lastStage && stageDurations[lastStage] !== undefined && lastDur >= 0) {
       stageDurations[lastStage].push(lastDur)
-    } else if (lastStage && stageDurations[lastStage] === undefined) {
-      unknownStages.add(`[last] ${lastStage}`)
     }
   }
-
-  // ── DEBUG ──────────────────────────────────────────────────────────────────────
-  console.log('[getPipelineVelocity] leadsWithEvents:', leadsWithEvents)
-  console.log('[getPipelineVelocity] leadsWithoutEvents:', leadsWithoutEvents)
-  console.log('[getPipelineVelocity] stage keys:', stageKeys)
-  if (unknownStages.size > 0) {
-    console.log('[getPipelineVelocity] ⚠️ UNKNOWN STAGES (not in pipeline):', [...unknownStages])
-  }
-  const durationSummary: Record<string, { count: number; median: number }> = {}
-  for (const [k, v] of Object.entries(stageDurations)) {
-    durationSummary[k] = { count: v.length, median: Math.round(median(v) * 10) / 10 }
-  }
-  console.log('[getPipelineVelocity] stageDurations summary:', durationSummary)
-  // ── END DEBUG ──────────────────────────────────────────────────────────────────
 
   return stages
     .sort((a, b) => a.position - b.position)
