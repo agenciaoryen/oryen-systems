@@ -46,7 +46,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="flex flex-col gap-3 sm:gap-4 min-h-0 flex-1 px-3 sm:px-6">
+    <div className="flex flex-col gap-3 sm:gap-4 min-h-0 flex-1 px-3 sm:px-6 pb-4 sm:pb-6">
       <CalendarHeader
         title={t.title}
         orgTz={orgTz}
