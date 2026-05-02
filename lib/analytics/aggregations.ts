@@ -135,7 +135,7 @@ export async function getConversionBySource(
       .from('leads')
       .select('id, source, stage, total_em_vendas')
       .eq('org_id', orgId)
-      .gte('created_at', startDate.toISOString()),
+      .or(`created_at.gte.${startDate.toISOString()},last_stage_change_at.gte.${startDate.toISOString()}`),
   ])
 
   if (leadsRes.error) return []
@@ -241,7 +241,7 @@ export async function getBrokerPerformance(
       .from('leads')
       .select('id, assigned_to, stage, assigned_at, first_response_at')
       .eq('org_id', orgId)
-      .gte('created_at', startDate.toISOString()),
+      .or(`created_at.gte.${startDate.toISOString()},last_stage_change_at.gte.${startDate.toISOString()}`),
     supabase
       .from('users')
       .select('id, full_name')
