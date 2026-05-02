@@ -169,11 +169,15 @@ export async function getPipelineFlow(
     }
   }
 
-  // 2. Stage changes — cada lead conta no stage de destino
+  // 2. Stage changes — cada lead conta no stage de origem (passou por ele) e de destino (chegou nele)
   for (const ev of events) {
     const toStage = ev.details?.to_stage as string | undefined
+    const fromStage = ev.details?.from_stage as string | undefined
     if (toStage && stageLeadIds[toStage]) {
       stageLeadIds[toStage].add(ev.lead_id)
+    }
+    if (fromStage && stageLeadIds[fromStage]) {
+      stageLeadIds[fromStage].add(ev.lead_id)
     }
   }
 
@@ -185,9 +189,7 @@ export async function getPipelineFlow(
   for (const s of stages) {
     stageCounts[s.name] = stageLeadIds[s.name]?.size || 0
   }
-  const activeStageValues = [...new Set(activeLeads.map((l: any) => l.stage))]
-  const eventToStages = [...new Set(events.map((e: any) => e.details?.to_stage).filter(Boolean))]
-  console.log('[getPipelineFlow]', { totalLeads, stageCounts, activeStageValues, eventToStages, eventsCount: events.length })
+  console.log('[getPipelineFlow] flow counts:', stageCounts)
 
   for (let idx = 0; idx < stages.length; idx++) {
     const stage = stages[idx]
