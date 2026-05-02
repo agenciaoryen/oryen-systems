@@ -180,6 +180,15 @@ export async function getPipelineFlow(
   const totalLeads = activeLeads.length
   const result: FunnelStage[] = []
 
+  // Debug
+  const stageCounts: Record<string, number> = {}
+  for (const s of stages) {
+    stageCounts[s.name] = stageLeadIds[s.name]?.size || 0
+  }
+  const activeStageValues = [...new Set(activeLeads.map((l: any) => l.stage))]
+  const eventToStages = [...new Set(events.map((e: any) => e.details?.to_stage).filter(Boolean))]
+  console.log('[getPipelineFlow]', { totalLeads, stageCounts, activeStageValues, eventToStages, eventsCount: events.length })
+
   for (let idx = 0; idx < stages.length; idx++) {
     const stage = stages[idx]
     const count = stageLeadIds[stage.name]?.size || 0
