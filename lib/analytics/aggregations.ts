@@ -72,10 +72,24 @@ export async function getLeadFunnelByStage(
       .or(`created_at.gte.${isoDate},last_stage_change_at.gte.${isoDate}`),
   ])
 
-  if (stagesRes.error || leadsRes.error) return []
+  if (stagesRes.error || leadsRes.error) {
+    console.error('[getLeadFunnelByStage] Error:', stagesRes.error?.message || leadsRes.error?.message)
+    return []
+  }
 
   const stages = stagesRes.data || []
   const leads = leadsRes.data || []
+
+  // Debug
+  const stageNames = stages.map((s: any) => s.name)
+  const leadStageValues = [...new Set(leads.map((l: any) => l.stage))]
+  console.log('[getLeadFunnelByStage]', {
+    stageCount: stages.length,
+    stageNames,
+    leadCount: leads.length,
+    leadStageValues,
+  })
+
   const now = new Date()
 
   // Build array imperatively — needs previous stage count for conversion calc
