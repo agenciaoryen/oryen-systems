@@ -272,6 +272,8 @@ export async function getConversionBySource(
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 3. VELOCIDADE DO PIPELINE
+// Calcula dias medianos que leads passaram em CADA etapa (não só na atual).
+// Usa lead_events + timeline por lead para computar durações reais.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export async function getPipelineVelocity(
@@ -279,8 +281,9 @@ export async function getPipelineVelocity(
   orgId: string,
   startDate: Date
 ): Promise<PipelineVelocity[]> {
-  // Inclui leads com movimento recente, não só criados no período
   const isoDate = startDate.toISOString()
+  const now = new Date()
+
   const [stagesRes, leadsRes] = await Promise.all([
     supabase
       .from('pipeline_stages')
@@ -290,26 +293,94 @@ export async function getPipelineVelocity(
       .order('position'),
     supabase
       .from('leads')
-      .select('id, stage, last_stage_change_at, updated_at, created_at')
+      .select('id, stage, created_at')
       .eq('org_id', orgId)
       .or(`created_at.gte.${isoDate},last_stage_change_at.gte.${isoDate},updated_at.gte.${isoDate}`),
   ])
 
-  if (stagesRes.error || leadsRes.error) return []
-
-  const stages = stagesRes.data || []
+  const stages = (stagesRes.data || []).filter(s => !s.is_won && !s.is_lost)
   const leads = leadsRes.data || []
-  const now = new Date()
+
+  if (stages.length === 0 || leads.length === 0) {
+    return stages.map(stage => ({
+      stageId: stage.id,
+      stageName: stage.name,
+      stageLabel: stage.label || stage.name,
+      stageColor: stageColorHex(stage.color),
+      position: stage.position,
+      medianDays: 0,
+      leadCount: 0,
+      stuckCount: 0,
+    }))
+  }
+
+  // Buscar eventos de stage_change para os leads ativos no período
+  const leadIds = [...new Set(leads.map(l => l.id))]
+  const { data: eventsData } = await supabase
+    .from('lead_events')
+    .select('lead_id, details, created_at')
+    .eq('org_id', orgId)
+    .eq('type', 'stage_change')
+    .in('lead_id', leadIds)
+    .order('created_at', { ascending: true })
+
+  // Agrupar eventos por lead, ordenados no tempo
+  const eventsByLead: Record<string, Array<{ from: string; to: string; time: Date }>> = {}
+  for (const ev of eventsData || []) {
+    const lid = ev.lead_id
+    if (!eventsByLead[lid]) eventsByLead[lid] = []
+    eventsByLead[lid].push({
+      from: ev.details?.from_stage as string,
+      to: ev.details?.to_stage as string,
+      time: new Date(ev.created_at),
+    })
+  }
+
+  // Mapa de durações por stage (em dias)
+  const stageDurations: Record<string, number[]> = {}
+  for (const s of stages) {
+    stageDurations[s.name] = []
+  }
+
+  for (const lead of leads) {
+    const events = eventsByLead[lead.id]
+
+    if (!events || events.length === 0) {
+      // Lead nunca mudou de stage — tempo todo no stage atual
+      const dur = differenceInDays(now, new Date(lead.created_at))
+      if (stageDurations[lead.stage]) stageDurations[lead.stage].push(dur)
+      continue
+    }
+
+    // Timeline: created_at → evento[0] → evento[1] → ... → now
+    // 1. Primeiro stage (from_stage do primeiro evento): created_at → evento[0].time
+    const firstStage = events[0].from
+    const firstDur = differenceInDays(events[0].time, new Date(lead.created_at))
+    if (firstStage && stageDurations[firstStage] !== undefined && firstDur >= 0) {
+      stageDurations[firstStage].push(firstDur)
+    }
+
+    // 2. Stages intermediários: evento[i].to → evento[i+1].time
+    for (let i = 0; i < events.length - 1; i++) {
+      const stage = events[i].to
+      const dur = differenceInDays(events[i + 1].time, events[i].time)
+      if (stage && stageDurations[stage] !== undefined && dur >= 0) {
+        stageDurations[stage].push(dur)
+      }
+    }
+
+    // 3. Stage atual (to do último evento): último evento → now
+    const lastStage = events[events.length - 1].to
+    const lastDur = differenceInDays(now, events[events.length - 1].time)
+    if (lastStage && stageDurations[lastStage] !== undefined && lastDur >= 0) {
+      stageDurations[lastStage].push(lastDur)
+    }
+  }
 
   return stages
-    .filter(s => !s.is_won && !s.is_lost)
+    .sort((a, b) => a.position - b.position)
     .map(stage => {
-      const stageLeads = leads.filter(l => l.stage === stage.name)
-      const daysArr = stageLeads.map(l => {
-        const ref = l.last_stage_change_at || l.updated_at || l.created_at
-        return ref ? differenceInDays(now, new Date(ref)) : 0
-      })
-
+      const daysArr = stageDurations[stage.name] || []
       return {
         stageId: stage.id,
         stageName: stage.name,
@@ -317,7 +388,7 @@ export async function getPipelineVelocity(
         stageColor: stageColorHex(stage.color),
         position: stage.position,
         medianDays: Math.round(median(daysArr) * 10) / 10,
-        leadCount: stageLeads.length,
+        leadCount: daysArr.length,
         stuckCount: daysArr.filter(d => d > STUCK_THRESHOLD_DAYS).length,
       }
     })
