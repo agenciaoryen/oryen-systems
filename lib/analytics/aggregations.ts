@@ -140,7 +140,7 @@ export async function getPipelineFlow(
     supabase
       .from('lead_events')
       .select('lead_id, details')
-      .eq('type', 'stage_change')
+      .in('type', ['stage_change', 'stage_changed'])
       .eq('org_id', orgId)
       .gte('created_at', isoDate),
     supabase
@@ -320,7 +320,7 @@ export async function getPipelineVelocity(
     .from('lead_events')
     .select('lead_id, details, created_at')
     .eq('org_id', orgId)
-    .eq('type', 'stage_change')
+    .in('type', ['stage_change', 'stage_changed'])
     .in('lead_id', leadIds)
     .order('created_at', { ascending: true })
 
