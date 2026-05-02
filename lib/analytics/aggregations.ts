@@ -69,7 +69,7 @@ export async function getLeadFunnelByStage(
       .from('leads')
       .select('id, stage, total_em_vendas, last_stage_change_at, updated_at, created_at')
       .eq('org_id', orgId)
-      .or(`created_at.gte.${isoDate},last_stage_change_at.gte.${isoDate}`),
+      .or(`created_at.gte.${isoDate},last_stage_change_at.gte.${isoDate},updated_at.gte.${isoDate}`),
   ])
 
   if (stagesRes.error || leadsRes.error) {
@@ -79,16 +79,6 @@ export async function getLeadFunnelByStage(
 
   const stages = stagesRes.data || []
   const leads = leadsRes.data || []
-
-  // Debug
-  const stageNames = stages.map((s: any) => s.name)
-  const leadStageValues = [...new Set(leads.map((l: any) => l.stage))]
-  console.log('[getLeadFunnelByStage]', {
-    stageCount: stages.length,
-    stageNames,
-    leadCount: leads.length,
-    leadStageValues,
-  })
 
   const now = new Date()
 
@@ -149,7 +139,7 @@ export async function getConversionBySource(
       .from('leads')
       .select('id, source, stage, total_em_vendas')
       .eq('org_id', orgId)
-      .or(`created_at.gte.${startDate.toISOString()},last_stage_change_at.gte.${startDate.toISOString()}`),
+      .or(`created_at.gte.${startDate.toISOString()},last_stage_change_at.gte.${startDate.toISOString()},updated_at.gte.${startDate.toISOString()}`),
   ])
 
   if (leadsRes.error) return []
@@ -205,7 +195,7 @@ export async function getPipelineVelocity(
       .from('leads')
       .select('id, stage, last_stage_change_at, updated_at, created_at')
       .eq('org_id', orgId)
-      .or(`created_at.gte.${isoDate},last_stage_change_at.gte.${isoDate}`),
+      .or(`created_at.gte.${isoDate},last_stage_change_at.gte.${isoDate},updated_at.gte.${isoDate}`),
   ])
 
   if (stagesRes.error || leadsRes.error) return []
@@ -255,7 +245,7 @@ export async function getBrokerPerformance(
       .from('leads')
       .select('id, assigned_to, stage, assigned_at, first_response_at')
       .eq('org_id', orgId)
-      .or(`created_at.gte.${startDate.toISOString()},last_stage_change_at.gte.${startDate.toISOString()}`),
+      .or(`created_at.gte.${startDate.toISOString()},last_stage_change_at.gte.${startDate.toISOString()},updated_at.gte.${startDate.toISOString()}`),
     supabase
       .from('users')
       .select('id, full_name')
