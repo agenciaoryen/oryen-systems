@@ -3,7 +3,7 @@
 // Todas as funções são puras async, client-side com Supabase
 
 import { SupabaseClient } from '@supabase/supabase-js'
-import { subDays, startOfMonth, format, differenceInDays, differenceInMinutes } from 'date-fns'
+import { subDays, startOfMonth, format, differenceInMinutes } from 'date-fns'
 import { stageColorHex } from '@/lib/stage-colors'
 import type {
   FunnelStage,
@@ -25,6 +25,13 @@ function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b)
   const mid = Math.floor(sorted.length / 2)
   return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
+}
+
+/** Diferença em dias com precisão de 1 casa decimal (evita o arredondamento
+  * para baixo do date-fns differenceInDays que zerava durações < 24h). */
+function daysBetween(a: Date, b: Date): number {
+  const ms = Math.abs(b.getTime() - a.getTime())
+  return Math.round((ms / (1000 * 60 * 60 * 24)) * 10) / 10
 }
 
 // Probabilidade de conversão por posição no pipeline (defaults conservadores)
@@ -91,7 +98,7 @@ export async function getLeadFunnelByStage(
     const values = stageLeads.map(l => l.total_em_vendas || 0)
     const daysInStage = stageLeads.map(l => {
       const ref = l.last_stage_change_at || l.updated_at || l.created_at
-      return ref ? differenceInDays(now, new Date(ref)) : 0
+      return ref ? daysBetween(now, new Date(ref)) : 0
     })
     const stuckCount = daysInStage.filter(d => d > STUCK_THRESHOLD_DAYS).length
 
@@ -204,12 +211,6 @@ export async function getPipelineFlow(
       conversionFromPrev: conv,
     })
   }
-
-  console.log('[Flow] result:', JSON.stringify(result.map(r => ({
-    stage: r.name,
-    leads: r.leadCount,
-    conv: r.conversionFromPrev,
-  }))))
 
   return result
 }
@@ -332,28 +333,16 @@ export async function getPipelineVelocity(
     })
   }
 
-  // Resumo dos eventos (from→to) para debug
-  const eventPairs: Record<string, number> = {}
-  for (const evs of Object.values(eventsByLead)) {
-    for (const ev of evs) {
-      const key = `${ev.from}→${ev.to}`
-      eventPairs[key] = (eventPairs[key] || 0) + 1
-    }
-  }
-  console.log('[Velocity] event pairs (from→to):', eventPairs)
-  console.log('[Velocity] leads with events:', Object.keys(eventsByLead).length, '/ leads total:', leads.length)
-
   const stageDurations: Record<string, number[]> = {}
   for (const s of stages) {
     stageDurations[s.name] = []
   }
-  console.log('[Velocity] stage keys:', Object.keys(stageDurations))
 
   for (const lead of leads) {
     const events = eventsByLead[lead.id]
 
     if (!events || events.length === 0) {
-      const dur = differenceInDays(now, new Date(lead.created_at))
+      const dur = daysBetween(now, new Date(lead.created_at))
       if (stageDurations[lead.stage] !== undefined) {
         stageDurations[lead.stage].push(dur)
       }
@@ -363,7 +352,7 @@ export async function getPipelineVelocity(
     // Timeline: created_at → evento[0] → evento[1] → ... → now
     // 1. Primeiro stage (from_stage do primeiro evento): created_at → evento[0].time
     const firstStage = events[0].from
-    const firstDur = differenceInDays(events[0].time, new Date(lead.created_at))
+    const firstDur = daysBetween(events[0].time, new Date(lead.created_at))
     if (firstStage && stageDurations[firstStage] !== undefined && firstDur >= 0) {
       stageDurations[firstStage].push(firstDur)
     }
@@ -371,7 +360,7 @@ export async function getPipelineVelocity(
     // 2. Stages intermediários: evento[i].to → evento[i+1].time
     for (let i = 0; i < events.length - 1; i++) {
       const stage = events[i].to
-      const dur = differenceInDays(events[i + 1].time, events[i].time)
+      const dur = daysBetween(events[i + 1].time, events[i].time)
       if (stage && stageDurations[stage] !== undefined && dur >= 0) {
         stageDurations[stage].push(dur)
       }
@@ -379,7 +368,7 @@ export async function getPipelineVelocity(
 
     // 3. Stage atual (to do último evento): último evento → now
     const lastStage = events[events.length - 1].to
-    const lastDur = differenceInDays(now, events[events.length - 1].time)
+    const lastDur = daysBetween(now, events[events.length - 1].time)
     if (lastStage && stageDurations[lastStage] !== undefined && lastDur >= 0) {
       stageDurations[lastStage].push(lastDur)
     }
@@ -400,14 +389,6 @@ export async function getPipelineVelocity(
         stuckCount: daysArr.filter(d => d > STUCK_THRESHOLD_DAYS).length,
       }
     })
-
-  // Log enxuto: só o resultado final mapeado
-  console.log('[Velocity] result:', JSON.stringify(result.map(r => ({
-    stage: r.stageName,
-    leads: r.leadCount,
-    median: r.medianDays,
-    stuck: r.stuckCount,
-  }))))
 
   return result
 }
