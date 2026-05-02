@@ -125,8 +125,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Leads que responderam e precisam de handoff (enrollments paused com exit_reason='replied')
-    const { data: respondedEnrollments } = await supabase
+    // ─── LEADS QUE RESPONDERAM ────────────────────────────────────────────────
+    // 1. Enrollment pausado com exit_reason='replied' (via webhook ou trigger)
+    const { data: pausedEnrollments } = await supabase
       .from('prospection_enrollments')
       .select(`
         id, sequence_id, lead_id, status, exit_reason, paused_at, current_step_position,
@@ -138,6 +139,60 @@ export async function GET(request: NextRequest) {
       .eq('exit_reason', 'replied')
       .order('paused_at', { ascending: false })
       .limit(20)
+
+    // 2. Também busca leads cujo stage está em pause_on_stages das sequências
+    //    (cobre casos onde o trigger não disparou ou o stage foi alterado
+    //     manualmente e a coluna pause_on_stages está configurada)
+    const { data: seqRows } = await supabase
+      .from('prospection_sequences')
+      .select('pause_on_stages')
+      .eq('org_id', orgId)
+      .not('pause_on_stages', 'is', null)
+
+    const pauseStages = [...new Set<string>(
+      (seqRows || []).flatMap(s => s.pause_on_stages || [])
+    )]
+
+    let stageBasedEnrollments: any[] = []
+    if (pauseStages.length > 0) {
+      const { data: stageLeads } = await supabase
+        .from('leads')
+        .select('id')
+        .eq('org_id', orgId)
+        .in('stage', pauseStages)
+
+      const stageLeadIds = (stageLeads || []).map(l => l.id)
+
+      if (stageLeadIds.length > 0) {
+        const { data: enrollments } = await supabase
+          .from('prospection_enrollments')
+          .select(`
+            id, sequence_id, lead_id, status, exit_reason, paused_at, current_step_position,
+            sequence:prospection_sequences(id, name),
+            lead:leads(id, name, nome_empresa, phone, email, city, stage, instagram, url_site)
+          `)
+          .eq('org_id', orgId)
+          .in('lead_id', stageLeadIds)
+          .neq('status', 'exited')
+          .order('paused_at', { ascending: false })
+          .limit(20)
+
+        stageBasedEnrollments = enrollments || []
+      }
+    }
+
+    // Merge: pausedEnrollments primeiro, depois stageBased (dedup), ordenado por paused_at
+    const pausedIds = new Set((pausedEnrollments || []).map(e => e.id))
+    const merged = [...(pausedEnrollments || [])]
+    for (const e of stageBasedEnrollments) {
+      if (!pausedIds.has(e.id)) merged.push(e)
+    }
+    merged.sort((a, b) => {
+      const aTime = a.paused_at ? new Date(a.paused_at).getTime() : 0
+      const bTime = b.paused_at ? new Date(b.paused_at).getTime() : 0
+      return bTime - aTime
+    })
+    const respondedEnrollments = merged.slice(0, 20)
 
     // Tasks CONCLUÍDAS hoje (pra bloco "Feitas hoje" agrupado por etapa)
     const startOfToday = new Date(now.toISOString().slice(0, 10)).toISOString()
