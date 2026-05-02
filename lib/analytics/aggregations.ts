@@ -205,6 +205,12 @@ export async function getPipelineFlow(
     })
   }
 
+  console.log('[Flow] result:', JSON.stringify(result.map(r => ({
+    stage: r.name,
+    leads: r.leadCount,
+    conv: r.conversionFromPrev,
+  }))))
+
   return result
 }
 
@@ -326,10 +332,22 @@ export async function getPipelineVelocity(
     })
   }
 
+  // Resumo dos eventos (from→to) para debug
+  const eventPairs: Record<string, number> = {}
+  for (const evs of Object.values(eventsByLead)) {
+    for (const ev of evs) {
+      const key = `${ev.from}→${ev.to}`
+      eventPairs[key] = (eventPairs[key] || 0) + 1
+    }
+  }
+  console.log('[Velocity] event pairs (from→to):', eventPairs)
+  console.log('[Velocity] leads with events:', Object.keys(eventsByLead).length, '/ leads total:', leads.length)
+
   const stageDurations: Record<string, number[]> = {}
   for (const s of stages) {
     stageDurations[s.name] = []
   }
+  console.log('[Velocity] stage keys:', Object.keys(stageDurations))
 
   for (const lead of leads) {
     const events = eventsByLead[lead.id]
@@ -367,7 +385,7 @@ export async function getPipelineVelocity(
     }
   }
 
-  return stages
+  const result = stages
     .sort((a, b) => a.position - b.position)
     .map(stage => {
       const daysArr = stageDurations[stage.name] || []
@@ -382,6 +400,16 @@ export async function getPipelineVelocity(
         stuckCount: daysArr.filter(d => d > STUCK_THRESHOLD_DAYS).length,
       }
     })
+
+  // Log enxuto: só o resultado final mapeado
+  console.log('[Velocity] result:', JSON.stringify(result.map(r => ({
+    stage: r.stageName,
+    leads: r.leadCount,
+    median: r.medianDays,
+    stuck: r.stuckCount,
+  }))))
+
+  return result
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
