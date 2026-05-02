@@ -177,13 +177,13 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
 function FunilSVG({ stages, maxLeads }: { stages: FunnelStage[]; maxLeads: number }) {
   const n = stages.length
   const svgW = 640
-  const barH = 44
-  const gap = 32
+  const barH = 56
+  const gap = 12
   const padY = 8
   const totalH = n * barH + (n - 1) * gap + padY * 2
 
   const maxBarW = 520
-  const minBarW = 140
+  const minBarW = 200
 
   const barW = stages.map((s) => {
     const r = maxLeads > 0 ? s.leadCount / maxLeads : 0.2
@@ -225,7 +225,6 @@ function FunilSVG({ stages, maxLeads }: { stages: FunnelStage[]; maxLeads: numbe
       {/* Silhueta sutil do funil */}
       <path d={funnelPath} fill="url(#funnelFill)" />
 
-      {/* Barras + setas */}
       {stages.map((stage, i) => {
         const color = stageColorHex(stage.color)
         const showConv = stage.conversionFromPrev > 0 && stage.conversionFromPrev <= 100
@@ -234,9 +233,29 @@ function FunilSVG({ stages, maxLeads }: { stages: FunnelStage[]; maxLeads: numbe
         const x = (svgW - w) / 2
         const y = padY + i * (barH + gap)
 
-        // Conversão da etapa seguinte (para o conector)
+        // Conversão da etapa seguinte
         const nextConv = i < n - 1 ? stages[i + 1].conversionFromPrev : 0
         const showNextConv = i < n - 1 && nextConv > 0 && nextConv <= 100
+
+        // Fontes escalam conforme largura da barra
+        const fsLabel = w >= 400 ? 13 : w >= 280 ? 12 : 11
+        const fsCount = w >= 400 ? 16 : w >= 280 ? 14 : 13
+        const fsBadge = 10
+        const badgeW = 44
+        const sidePad = 18
+
+        // Badge fica entre label e contagem, encostado na direita
+        // countX = x + w - sidePad (textAnchor end)
+        // badgeX = countX - approxCountWidth - gap - badgeW
+        // Estimativa largura da contagem: String(count).length * fsCount * 0.6
+        const countChars = String(stage.leadCount).length
+        const approxCountW = countChars * fsCount * 0.6
+        const badgeX = showConv
+          ? x + w - sidePad - approxCountW - 6 - badgeW
+          : 0
+        const badgeCenterX = badgeX + badgeW / 2
+
+        const baselineY = y + barH / 2 + fsCount * 0.35
 
         return (
           <g key={stage.id}>
@@ -250,59 +269,60 @@ function FunilSVG({ stages, maxLeads }: { stages: FunnelStage[]; maxLeads: numbe
               filter="url(#fShadow)"
             />
 
-            {/* Accent lateral esquerdo (pill curta) */}
+            {/* Accent pill esquerda */}
             <rect
-              x={x} y={y + 7} width="3.5" height={barH - 14} rx="1.75" ry="1.75"
+              x={x} y={y + 10} width="3.5" height={barH - 20} rx="1.75" ry="1.75"
               fill={color} opacity="0.8"
             />
 
-            {/* Label — sempre alinhado à esquerda */}
+            {/* Label — sempre esquerda */}
             <text
-              x={x + 18}
-              y={y + barH / 2 + 4}
+              x={x + sidePad}
+              y={baselineY}
               textAnchor="start"
               fill="currentColor"
-              fontSize="13"
+              fontSize={fsLabel}
               fontWeight={600}
               style={{ userSelect: 'none' }}
             >
               {stage.label}
             </text>
 
-            {/* Contagem — sempre alinhado à direita */}
-            <text
-              x={x + w - 18}
-              y={y + barH / 2 + 4}
-              textAnchor="end"
-              fill="currentColor"
-              fontSize="16"
-              fontWeight={800}
-              style={{ userSelect: 'none' }}
-            >
-              {stage.leadCount}
-            </text>
-
-            {/* Badge de conversão — colado à contagem */}
+            {/* Badge de conversão */}
             {showConv && (
               <g>
                 <rect
-                  x={x + w - 84}
-                  y={y + barH / 2 - 10}
-                  width="46" height="20" rx="5" ry="5"
+                  x={badgeX}
+                  y={baselineY - fsBadge - 3}
+                  width={badgeW} height={fsBadge + 7}
+                  rx="5" ry="5"
                   fill={color} opacity="0.12"
                 />
                 <text
-                  x={x + w - 61}
-                  y={y + barH / 2 + 4}
+                  x={badgeCenterX}
+                  y={baselineY}
                   textAnchor="middle"
                   fill={color}
-                  fontSize="10"
+                  fontSize={fsBadge}
                   fontWeight={700}
                 >
                   {stage.conversionFromPrev.toFixed(1)}%
                 </text>
               </g>
             )}
+
+            {/* Contagem — sempre direita */}
+            <text
+              x={x + w - sidePad}
+              y={baselineY}
+              textAnchor="end"
+              fill="currentColor"
+              fontSize={fsCount}
+              fontWeight={800}
+              style={{ userSelect: 'none' }}
+            >
+              {stage.leadCount}
+            </text>
 
             {/* Conector entre etapas */}
             {i < n - 1 && (
