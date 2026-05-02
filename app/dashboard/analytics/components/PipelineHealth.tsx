@@ -98,8 +98,6 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
   const sortedFunnel = hasFunnel
     ? [...funnel].sort((a, b) => a.position - b.position)
     : []
-  // maxLeads = maior contagem entre todos os stages, não só o primeiro.
-  // Se leads avançaram direto pra um stage posterior, evita que a barra estoure o container.
   const maxLeads = sortedFunnel.length > 0
     ? Math.max(...sortedFunnel.map((s) => s.leadCount), 1)
     : 1
@@ -159,9 +157,9 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
         </div>
       </div>
 
-      {/* Linha 2: Funnel Flow — funil SVG premium */}
-      <div style={{ ...cardStyle, padding: '28px 24px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ ...titleStyle, marginBottom: '8px' }}>{l.funnel}</div>
+      {/* Linha 2: Funnel Flow — funil com barras centradas */}
+      <div style={{ ...cardStyle, padding: '24px', position: 'relative', overflow: 'hidden' }}>
+        <div style={titleStyle}>{l.funnel}</div>
         {!hasFunnel ? (
           <div style={emptyStyle}>{l.noData}</div>
         ) : (
@@ -173,174 +171,164 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Funil SVG — trapezóides empilhados com layout uniforme
+// Funil — SVG com barras centradas + silhueta de funil ao fundo
 // ──────────────────────────────────────────────────────────────────────────────
 
 function FunilSVG({ stages, maxLeads }: { stages: FunnelStage[]; maxLeads: number }) {
   const n = stages.length
-  const SVG_W = 640
-  const STAGE_H = 50
-  const GAP = 32
-  const PAD_Y = 16
-  const SVG_H = n * STAGE_H + (n - 1) * GAP + PAD_Y * 2
+  const svgW = 640
+  const barH = 44
+  const gap = 32
+  const padY = 8
+  const totalH = n * barH + (n - 1) * gap + padY * 2
 
-  const maxW = 520
-  const minW = 130
+  const maxBarW = 520
+  const minBarW = 140
 
-  const widths = stages.map((s) => {
-    const ratio = maxLeads > 0 ? s.leadCount / maxLeads : 0.2
-    return Math.max(minW, maxW * Math.max(ratio, 0.15))
+  const barW = stages.map((s) => {
+    const r = maxLeads > 0 ? s.leadCount / maxLeads : 0.2
+    return Math.max(minBarW, maxBarW * Math.max(r, 0.15))
   })
 
-  const traps = stages.map((stage, i) => {
-    const topW = widths[i]
-    const botW = i < n - 1 ? widths[i + 1] : topW * 0.55
-    const topY = PAD_Y + i * (STAGE_H + GAP)
-    const botY = topY + STAGE_H
-    const topL = (SVG_W - topW) / 2
-    const topR = topL + topW
-    const botL = (SVG_W - botW) / 2
-    const botR = botL + botW
-    return { stage, topL, topR, botL, botR, topY, botY, cx: SVG_W / 2, w: topW }
-  })
+  // Silhueta do funil
+  const firstBar = barW[0]
+  const lastBar = barW[n - 1]
+  const firstX = (svgW - firstBar) / 2
+  const lastX = (svgW - lastBar) / 2
+  const lastY = padY + (n - 1) * (barH + gap) + barH
+  const funnelPath = [
+    `M${firstX},${padY + 6}`,
+    `L${firstX + firstBar},${padY + 6}`,
+    `L${lastX + lastBar},${lastY}`,
+    `L${lastX},${lastY}`,
+    'Z',
+  ].join(' ')
 
   return (
-    <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: '100%', maxWidth: '680px', display: 'block', margin: '0 auto' }}>
+    <svg viewBox={`0 0 ${svgW} ${totalH}`} style={{ width: '100%', maxWidth: '680px', display: 'block', margin: '0 auto' }}>
       <defs>
-        <filter id="fShadow" x="-5%" y="-5%" width="110%" height="110%">
-          <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="#000" floodOpacity="0.06" />
+        <filter id="fShadow" x="-4%" y="-4%" width="108%" height="108%">
+          <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#000" floodOpacity="0.05" />
         </filter>
-        <pattern id="dotGrid" width="24" height="24" patternUnits="userSpaceOnUse">
-          <circle cx="24" cy="24" r="0.8" fill="var(--color-border)" opacity="0.2" />
+        <pattern id="dotGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <circle cx="20" cy="20" r="0.6" fill="var(--color-border)" opacity="0.15" />
         </pattern>
-        {traps.map((t, i) => {
-          const color = stageColorHex(t.stage.color)
-          return (
-            <linearGradient key={`g${i}`} id={`fg${i}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity="0.22" />
-              <stop offset="100%" stopColor={color} stopOpacity="0.06" />
-            </linearGradient>
-          )
-        })}
+        <linearGradient id="funnelFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.03" />
+          <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.0" />
+        </linearGradient>
       </defs>
 
-      {/* Grid sutil de fundo */}
-      <rect x="0" y="0" width={SVG_W} height={SVG_H} fill="url(#dotGrid)" rx="8" />
+      {/* Fundo pontilhado */}
+      <rect x="0" y="0" width={svgW} height={totalH} fill="url(#dotGrid)" rx="6" />
 
-      {traps.map((t, i) => {
-        const color = stageColorHex(t.stage.color)
-        const s = t.stage
-        const showConv = s.conversionFromPrev > 0 && s.conversionFromPrev <= 100
+      {/* Silhueta sutil do funil */}
+      <path d={funnelPath} fill="url(#funnelFill)" />
 
-        // Escala de fonte conforme largura (layout único, sem bifurcação)
-        const fontSizeBig =
-          t.w > 400 ? 16 : t.w > 280 ? 14 : t.w > 180 ? 13 : 12
-        const fontSizeSmall =
-          t.w > 400 ? 13 : t.w > 280 ? 12 : t.w > 180 ? 12 : 11
-        const fontSizeBadge = t.w > 280 ? 10 : 9
+      {/* Barras + setas */}
+      {stages.map((stage, i) => {
+        const color = stageColorHex(stage.color)
+        const showConv = stage.conversionFromPrev > 0 && stage.conversionFromPrev <= 100
 
-        const labelX = t.topL + 18
-        // O badge fica à esquerda da contagem
-        const countX = t.topR - 18
-        const badgeX = showConv ? countX - (fontSizeBig >= 15 ? 54 : 46) : countX
-        const baselineY = t.topY + STAGE_H / 2 + fontSizeBig * 0.35
+        const w = barW[i]
+        const x = (svgW - w) / 2
+        const y = padY + i * (barH + gap)
+
+        // Conversão da etapa seguinte (para o conector)
+        const nextConv = i < n - 1 ? stages[i + 1].conversionFromPrev : 0
+        const showNextConv = i < n - 1 && nextConv > 0 && nextConv <= 100
 
         return (
-          <>
-            <g key={s.id}>
-            {/* Trapezóide principal */}
-            <polygon
-              points={`${t.topL},${t.topY} ${t.topR},${t.topY} ${t.botR},${t.botY} ${t.botL},${t.botY}`}
-              fill={`url(#fg${i})`}
+          <g key={stage.id}>
+            {/* Barra principal */}
+            <rect
+              x={x} y={y} width={w} height={barH} rx="8" ry="8"
+              fill={`${color}0D`}
               stroke={color}
-              strokeWidth="1.2"
-              strokeOpacity="0.28"
+              strokeWidth="1"
+              strokeOpacity="0.22"
               filter="url(#fShadow)"
             />
 
-            {/* Barra de accent lateral esquerda */}
-            <line
-              x1={t.topL} y1={t.topY + 8}
-              x2={t.botL} y2={t.botY - 8}
-              stroke={color} strokeWidth="3.5" strokeLinecap="round" opacity="0.7"
+            {/* Accent lateral esquerdo (pill curta) */}
+            <rect
+              x={x} y={y + 7} width="3.5" height={barH - 14} rx="1.75" ry="1.75"
+              fill={color} opacity="0.8"
             />
 
-            {/* Label — sempre à esquerda */}
+            {/* Label — sempre alinhado à esquerda */}
             <text
-              x={labelX}
-              y={baselineY}
+              x={x + 18}
+              y={y + barH / 2 + 4}
               textAnchor="start"
               fill="currentColor"
-              fontSize={fontSizeSmall}
+              fontSize="13"
               fontWeight={600}
               style={{ userSelect: 'none' }}
             >
-              {s.label}
+              {stage.label}
             </text>
 
-            {/* Contagem — sempre à direita */}
+            {/* Contagem — sempre alinhado à direita */}
             <text
-              x={countX}
-              y={baselineY}
+              x={x + w - 18}
+              y={y + barH / 2 + 4}
               textAnchor="end"
               fill="currentColor"
-              fontSize={fontSizeBig}
+              fontSize="16"
               fontWeight={800}
               style={{ userSelect: 'none' }}
             >
-              {s.leadCount}
+              {stage.leadCount}
             </text>
 
-            {/* Badge de conversão — entre label e contagem, alinhado à direita */}
+            {/* Badge de conversão — colado à contagem */}
             {showConv && (
               <g>
                 <rect
-                  x={badgeX}
-                  y={baselineY - fontSizeBadge - 3}
-                  width={fontSizeBig >= 15 ? 48 : 40}
-                  height={fontSizeBadge + 6}
-                  rx="5"
-                  fill={color}
-                  opacity="0.12"
+                  x={x + w - 84}
+                  y={y + barH / 2 - 10}
+                  width="46" height="20" rx="5" ry="5"
+                  fill={color} opacity="0.12"
                 />
                 <text
-                  x={badgeX + (fontSizeBig >= 15 ? 24 : 20)}
-                  y={baselineY}
+                  x={x + w - 61}
+                  y={y + barH / 2 + 4}
                   textAnchor="middle"
                   fill={color}
-                  fontSize={fontSizeBadge}
+                  fontSize="10"
                   fontWeight={700}
                 >
-                  {s.conversionFromPrev.toFixed(1)}%
+                  {stage.conversionFromPrev.toFixed(1)}%
                 </text>
               </g>
             )}
-          </g>
 
-          {/* Seta de conversão entre estágios */}
-          {i < n - 1 && (() => {
-            const next = traps[i + 1]
-            const arrowY = t.botY + (next.topY - t.botY) / 2
-            const convPct = next.stage.conversionFromPrev
-            const hasConv = convPct > 0 && convPct <= 100
-            return (
-              <g key={`arrow-${i}`}>
-                <line x1={t.cx} y1={t.botY + 4} x2={t.cx} y2={next.topY - 7} stroke="var(--color-border)" strokeWidth="1" />
-                <polygon
-                  points={`${t.cx - 5},${next.topY - 8} ${t.cx + 5},${next.topY - 8} ${t.cx},${next.topY - 3}`}
-                  fill="var(--color-text-muted)"
-                  opacity="0.4"
+            {/* Conector entre etapas */}
+            {i < n - 1 && (
+              <g>
+                <line
+                  x1={svgW / 2} y1={y + barH}
+                  x2={svgW / 2} y2={padY + (i + 1) * (barH + gap)}
+                  stroke="var(--color-border)"
+                  strokeWidth="1"
                 />
-                {hasConv && (
-                  <text x={t.cx} y={arrowY - 3} textAnchor="middle" fill="var(--color-text-muted)" fontSize="10" fontWeight="600">
-                    {convPct.toFixed(1)}%
+                {showNextConv && (
+                  <text
+                    x={svgW / 2}
+                    y={y + barH + gap / 2 + 3}
+                    textAnchor="middle"
+                    fill="var(--color-text-muted)"
+                    fontSize="10"
+                    fontWeight={600}
+                  >
+                    {nextConv.toFixed(1)}%
                   </text>
                 )}
               </g>
-            )
-          })()}
-        </>
-      )
+            )}
+          </g>
+        )
       })}
     </svg>
   )
