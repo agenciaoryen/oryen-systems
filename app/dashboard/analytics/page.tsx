@@ -101,7 +101,8 @@ export default function AnalyticsPage() {
 
     try {
       // Diagnóstico: verificar se pipeline_stages e leads existem para esta org
-      const [stagesCheck, leadsCheck] = await Promise.all([
+      const isoDate = startDate.toISOString()
+      const [stagesCheck, leadsCreatedCheck, leadsActivityCheck] = await Promise.all([
         supabase
           .from('pipeline_stages')
           .select('id, name, position', { count: 'exact', head: true })
@@ -111,21 +112,27 @@ export default function AnalyticsPage() {
           .from('leads')
           .select('id', { count: 'exact', head: true })
           .eq('org_id', activeOrgId)
-          .gte('created_at', startDate.toISOString()),
+          .gte('created_at', isoDate),
+        supabase
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('org_id', activeOrgId)
+          .or(`created_at.gte.${isoDate},last_stage_change_at.gte.${isoDate},updated_at.gte.${isoDate}`),
       ])
 
       const stagesCount = stagesCheck.count ?? 0
-      const leadsCount = leadsCheck.count ?? 0
+      const leadsCreated = leadsCreatedCheck.count ?? 0
+      const leadsWithActivity = leadsActivityCheck.count ?? 0
 
-      console.log(`[Analytics] org=${activeOrgId} | pipeline_stages=${stagesCount} | leads(${range}d)=${leadsCount}`)
+      console.log(`[Analytics] org=${activeOrgId} | stages=${stagesCount} | leads_created(${range}d)=${leadsCreated} | leads_with_activity(${range}d)=${leadsWithActivity}`)
       if (stagesCheck.error) console.error('[Analytics] pipeline_stages error:', stagesCheck.error)
-      if (leadsCheck.error) console.error('[Analytics] leads error:', leadsCheck.error)
+      if (leadsCreatedCheck.error) console.error('[Analytics] leads created error:', leadsCreatedCheck.error)
 
-      if (stagesCount === 0 || leadsCount === 0) {
+      if (stagesCount === 0 || leadsWithActivity === 0) {
         setDebugInfo(
           stagesCount === 0
             ? `no_pipeline_stages (org: ${activeOrgId.slice(0, 8)}…)`
-            : `no_leads_in_period (stages: ${stagesCount}, leads ${range}d: ${leadsCount})`
+            : `no_leads_in_period (created: ${leadsCreated}, activity: ${leadsWithActivity})`
         )
       }
 
