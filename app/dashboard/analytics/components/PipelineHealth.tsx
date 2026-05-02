@@ -173,14 +173,14 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Funil SVG — trapezóides empilhados com conversões
+// Funil SVG — trapezóides empilhados com layout uniforme
 // ──────────────────────────────────────────────────────────────────────────────
 
 function FunilSVG({ stages, maxLeads }: { stages: FunnelStage[]; maxLeads: number }) {
   const n = stages.length
   const SVG_W = 640
-  const STAGE_H = 52
-  const GAP = 28 // espaço entre trapezóides (para a label de conversão)
+  const STAGE_H = 50
+  const GAP = 32
   const PAD_Y = 16
   const SVG_H = n * STAGE_H + (n - 1) * GAP + PAD_Y * 2
 
@@ -210,10 +210,6 @@ function FunilSVG({ stages, maxLeads }: { stages: FunnelStage[]; maxLeads: numbe
         <filter id="fShadow" x="-5%" y="-5%" width="110%" height="110%">
           <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="#000" floodOpacity="0.06" />
         </filter>
-        <filter id="fGlow" x="-10%" y="-10%" width="120%" height="120%">
-          <feGaussianBlur stdDeviation="2" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
-        </filter>
         <pattern id="dotGrid" width="24" height="24" patternUnits="userSpaceOnUse">
           <circle cx="24" cy="24" r="0.8" fill="var(--color-border)" opacity="0.2" />
         </pattern>
@@ -231,15 +227,27 @@ function FunilSVG({ stages, maxLeads }: { stages: FunnelStage[]; maxLeads: numbe
       {/* Grid sutil de fundo */}
       <rect x="0" y="0" width={SVG_W} height={SVG_H} fill="url(#dotGrid)" rx="8" />
 
-      {/* Trapezóides + textos */}
       {traps.map((t, i) => {
         const color = stageColorHex(t.stage.color)
         const s = t.stage
         const showConv = s.conversionFromPrev > 0 && s.conversionFromPrev <= 100
-        const narrow = t.w < 220
+
+        // Escala de fonte conforme largura (layout único, sem bifurcação)
+        const fontSizeBig =
+          t.w > 400 ? 16 : t.w > 280 ? 14 : t.w > 180 ? 13 : 12
+        const fontSizeSmall =
+          t.w > 400 ? 13 : t.w > 280 ? 12 : t.w > 180 ? 12 : 11
+        const fontSizeBadge = t.w > 280 ? 10 : 9
+
+        const labelX = t.topL + 18
+        // O badge fica à esquerda da contagem
+        const countX = t.topR - 18
+        const badgeX = showConv ? countX - (fontSizeBig >= 15 ? 54 : 46) : countX
+        const baselineY = t.topY + STAGE_H / 2 + fontSizeBig * 0.35
 
         return (
-          <g key={s.id}>
+          <>
+            <g key={s.id}>
             {/* Trapezóide principal */}
             <polygon
               points={`${t.topL},${t.topY} ${t.topR},${t.topY} ${t.botR},${t.botY} ${t.botL},${t.botY}`}
@@ -252,65 +260,87 @@ function FunilSVG({ stages, maxLeads }: { stages: FunnelStage[]; maxLeads: numbe
 
             {/* Barra de accent lateral esquerda */}
             <line
-              x1={t.topL} y1={t.topY + 6}
-              x2={t.botL} y2={t.botY - 6}
+              x1={t.topL} y1={t.topY + 8}
+              x2={t.botL} y2={t.botY - 8}
               stroke={color} strokeWidth="3.5" strokeLinecap="round" opacity="0.7"
             />
 
-            {/* Conteúdo */}
-            {narrow ? (
-              <>
-                <text x={t.cx} y={t.topY + STAGE_H / 2 - 4} textAnchor="middle" fill="currentColor" fontSize="12" fontWeight="600" opacity="0.9" style={{ userSelect: 'none' }}>
-                  {s.label}
+            {/* Label — sempre à esquerda */}
+            <text
+              x={labelX}
+              y={baselineY}
+              textAnchor="start"
+              fill="currentColor"
+              fontSize={fontSizeSmall}
+              fontWeight={600}
+              style={{ userSelect: 'none' }}
+            >
+              {s.label}
+            </text>
+
+            {/* Contagem — sempre à direita */}
+            <text
+              x={countX}
+              y={baselineY}
+              textAnchor="end"
+              fill="currentColor"
+              fontSize={fontSizeBig}
+              fontWeight={800}
+              style={{ userSelect: 'none' }}
+            >
+              {s.leadCount}
+            </text>
+
+            {/* Badge de conversão — entre label e contagem, alinhado à direita */}
+            {showConv && (
+              <g>
+                <rect
+                  x={badgeX}
+                  y={baselineY - fontSizeBadge - 3}
+                  width={fontSizeBig >= 15 ? 48 : 40}
+                  height={fontSizeBadge + 6}
+                  rx="5"
+                  fill={color}
+                  opacity="0.12"
+                />
+                <text
+                  x={badgeX + (fontSizeBig >= 15 ? 24 : 20)}
+                  y={baselineY}
+                  textAnchor="middle"
+                  fill={color}
+                  fontSize={fontSizeBadge}
+                  fontWeight={700}
+                >
+                  {s.conversionFromPrev.toFixed(1)}%
                 </text>
-                <text x={t.cx} y={t.topY + STAGE_H / 2 + 16} textAnchor="middle" fill="currentColor" fontSize="15" fontWeight="800" style={{ userSelect: 'none' }}>
-                  {s.leadCount}
-                </text>
-                {showConv && (
-                  <text x={t.cx} y={t.topY + STAGE_H / 2 + 28} textAnchor="middle" fill={color} fontSize="10" fontWeight="700">
-                    {s.conversionFromPrev.toFixed(1)}%
+              </g>
+            )}
+          </g>
+
+          {/* Seta de conversão entre estágios */}
+          {i < n - 1 && (() => {
+            const next = traps[i + 1]
+            const arrowY = t.botY + (next.topY - t.botY) / 2
+            const convPct = next.stage.conversionFromPrev
+            const hasConv = convPct > 0 && convPct <= 100
+            return (
+              <g key={`arrow-${i}`}>
+                <line x1={t.cx} y1={t.botY + 4} x2={t.cx} y2={next.topY - 7} stroke="var(--color-border)" strokeWidth="1" />
+                <polygon
+                  points={`${t.cx - 5},${next.topY - 8} ${t.cx + 5},${next.topY - 8} ${t.cx},${next.topY - 3}`}
+                  fill="var(--color-text-muted)"
+                  opacity="0.4"
+                />
+                {hasConv && (
+                  <text x={t.cx} y={arrowY - 3} textAnchor="middle" fill="var(--color-text-muted)" fontSize="10" fontWeight="600">
+                    {convPct.toFixed(1)}%
                   </text>
                 )}
-              </>
-            ) : (
-              <>
-                <text x={t.topL + 20} y={t.topY + STAGE_H / 2 + 4} textAnchor="start" fill="currentColor" fontSize="13" fontWeight="600" style={{ userSelect: 'none' }}>
-                  {s.label}
-                </text>
-                <text x={t.topR - 20} y={t.topY + STAGE_H / 2 + 4} textAnchor="end" fill="currentColor" fontSize="16" fontWeight="800" style={{ userSelect: 'none' }}>
-                  {s.leadCount}
-                </text>
-                {showConv && (
-                  <g>
-                    <rect x={t.topR - 88} y={t.topY + STAGE_H / 2 - 10} width="46" height="20" rx="5" fill={color} opacity="0.12" />
-                    <text x={t.topR - 65} y={t.topY + STAGE_H / 2 + 4} textAnchor="middle" fill={color} fontSize="10" fontWeight="700">
-                      {s.conversionFromPrev.toFixed(1)}%
-                    </text>
-                  </g>
-                )}
-              </>
-            )}
-
-            {/* Seta de conversão entre estágios */}
-            {i < n - 1 && (() => {
-              const next = traps[i + 1]
-              const arrowY = t.botY + (next.topY - t.botY) / 2
-              const convPct = next.stage.conversionFromPrev
-              const hasConv = convPct > 0 && convPct <= 100
-              return (
-                <g>
-                  <line x1={t.cx} y1={t.botY + 4} x2={t.cx} y2={next.topY - 5} stroke="var(--color-border)" strokeWidth="1" strokeDasharray="3,3" />
-                  <polygon points={`${t.cx - 5},${next.topY - 7} ${t.cx + 5},${next.topY - 7} ${t.cx},${next.topY - 2}`} fill="var(--color-text-muted)" opacity="0.4" />
-                  {hasConv && (
-                    <text x={t.cx} y={arrowY - 3} textAnchor="middle" fill="var(--color-text-muted)" fontSize="10" fontWeight="600">
-                      {convPct.toFixed(1)}%
-                    </text>
-                  )}
-                </g>
-              )
-            })()}
-          </g>
-        )
+              </g>
+            )
+          })()}
+        </>
+      )
       })}
     </svg>
   )
