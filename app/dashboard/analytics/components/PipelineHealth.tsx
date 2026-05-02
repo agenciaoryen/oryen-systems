@@ -104,10 +104,6 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
     ? Math.max(...sortedFunnel.map((s) => s.leadCount), 1)
     : 1
 
-  const funnelColor = sortedFunnel.length > 0
-    ? stageColorHex(sortedFunnel[0].color)
-    : 'var(--color-primary)'
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Linha 1: Velocity + Bottlenecks lado a lado */}
@@ -163,105 +159,159 @@ export default function PipelineHealth({ funnel, velocity, lang, currency }: Pro
         </div>
       </div>
 
-      {/* Linha 2: Funnel Flow — full width com visual de funil */}
-      <div style={{ ...cardStyle, padding: '24px', position: 'relative', overflow: 'hidden' }}>
-        <div style={titleStyle}>{l.funnel}</div>
+      {/* Linha 2: Funnel Flow — funil SVG premium */}
+      <div style={{ ...cardStyle, padding: '28px 24px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ ...titleStyle, marginBottom: '8px' }}>{l.funnel}</div>
         {!hasFunnel ? (
           <div style={emptyStyle}>{l.noData}</div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: '12px 0', position: 'relative' }}>
-            {/* SVG funil semi-transparente ao fundo */}
-            <svg
-              viewBox="0 0 400 260"
-              preserveAspectRatio="xMidYMid meet"
-              style={{
-                position: 'absolute',
-                width: '70%',
-                maxWidth: '480px',
-                height: '100%',
-                top: '5px',
-                opacity: 0.07,
-                pointerEvents: 'none',
-              }}
-            >
-              <path
-                d="M60,5 L340,5 L270,255 L130,255 Z"
-                fill={funnelColor}
-                strokeLinejoin="round"
-              />
-              {sortedFunnel.map((stage, idx) => {
-                const y = 5 + (idx / Math.max(sortedFunnel.length - 1, 1)) * 250
-                const topW = 280
-                const botW = 140
-                const w = topW - (idx / Math.max(sortedFunnel.length - 1, 1)) * (topW - botW)
-                const x = (400 - w) / 2
-                return (
-                  <line key={idx} x1={x} y1={y} x2={x + w} y2={y} stroke={funnelColor} strokeWidth="0.8" strokeDasharray="2,3" />
-                )
-              })}
-            </svg>
-
-            {/* Barras do funil */}
-            {sortedFunnel.map((stage, idx) => {
-              const rawPct = maxLeads > 0 ? (stage.leadCount / maxLeads) * 100 : 12
-              const widthPct = Math.min(Math.max(rawPct, 12), 100)
-              const color = stageColorHex(stage.color)
-              const showConversion = stage.conversionFromPrev > 0 && stage.conversionFromPrev <= 100
-              const isLast = idx === sortedFunnel.length - 1
-              const nextColor = !isLast ? stageColorHex(sortedFunnel[idx + 1]?.color) : color
-
-              return (
-                <div key={stage.id} style={{ width: `${widthPct}%`, minWidth: '140px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div style={{
-                    width: '100%',
-                    background: `linear-gradient(135deg, ${color}20, ${color}08)`,
-                    border: `1px solid ${color}35`,
-                    borderRadius: '10px',
-                    padding: '12px 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '8px',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    backdropFilter: 'blur(2px)',
-                  }}>
-                    {/* Accent vertical na esquerda */}
-                    <div style={{
-                      position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px',
-                      background: `linear-gradient(180deg, ${color}, ${color}77)`,
-                      borderRadius: '4px 0 0 4px',
-                    }} />
-
-                    {/* Nome do stage */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 1, minWidth: 0 }}>
-                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: color, flexShrink: 0 }} />
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {stage.label}
-                      </span>
-                    </div>
-
-                    {/* Contagem + conversão */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 1, flexShrink: 0 }}>
-                      <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--color-text-primary)' }}>{stage.leadCount}</span>
-                      {showConversion && (
-                        <span style={{ fontSize: '10px', fontWeight: 700, color, background: `${color}15`, border: `1px solid ${color}30`, padding: '2px 8px', borderRadius: '6px' }}>
-                          {stage.conversionFromPrev.toFixed(1)}%
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Conector entre stages */}
-                  {!isLast && (
-                    <div style={{ width: '2px', height: '10px', background: `linear-gradient(180deg, ${color}88, ${nextColor}88)` }} />
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          <FunilSVG stages={sortedFunnel} maxLeads={maxLeads} />
         )}
       </div>
     </div>
+  )
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Funil SVG — trapezóides empilhados com conversões
+// ──────────────────────────────────────────────────────────────────────────────
+
+function FunilSVG({ stages, maxLeads }: { stages: FunnelStage[]; maxLeads: number }) {
+  const n = stages.length
+  const SVG_W = 640
+  const STAGE_H = 52
+  const GAP = 28 // espaço entre trapezóides (para a label de conversão)
+  const PAD_Y = 16
+  const SVG_H = n * STAGE_H + (n - 1) * GAP + PAD_Y * 2
+
+  const maxW = 520
+  const minW = 130
+
+  const widths = stages.map((s) => {
+    const ratio = maxLeads > 0 ? s.leadCount / maxLeads : 0.2
+    return Math.max(minW, maxW * Math.max(ratio, 0.15))
+  })
+
+  const traps = stages.map((stage, i) => {
+    const topW = widths[i]
+    const botW = i < n - 1 ? widths[i + 1] : topW * 0.55
+    const topY = PAD_Y + i * (STAGE_H + GAP)
+    const botY = topY + STAGE_H
+    const topL = (SVG_W - topW) / 2
+    const topR = topL + topW
+    const botL = (SVG_W - botW) / 2
+    const botR = botL + botW
+    return { stage, topL, topR, botL, botR, topY, botY, cx: SVG_W / 2, w: topW }
+  })
+
+  return (
+    <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: '100%', maxWidth: '680px', display: 'block', margin: '0 auto' }}>
+      <defs>
+        <filter id="fShadow" x="-5%" y="-5%" width="110%" height="110%">
+          <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="#000" floodOpacity="0.06" />
+        </filter>
+        <filter id="fGlow" x="-10%" y="-10%" width="120%" height="120%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+        <pattern id="dotGrid" width="24" height="24" patternUnits="userSpaceOnUse">
+          <circle cx="24" cy="24" r="0.8" fill="var(--color-border)" opacity="0.2" />
+        </pattern>
+        {traps.map((t, i) => {
+          const color = stageColorHex(t.stage.color)
+          return (
+            <linearGradient key={`g${i}`} id={`fg${i}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.22" />
+              <stop offset="100%" stopColor={color} stopOpacity="0.06" />
+            </linearGradient>
+          )
+        })}
+      </defs>
+
+      {/* Grid sutil de fundo */}
+      <rect x="0" y="0" width={SVG_W} height={SVG_H} fill="url(#dotGrid)" rx="8" />
+
+      {/* Trapezóides + textos */}
+      {traps.map((t, i) => {
+        const color = stageColorHex(t.stage.color)
+        const s = t.stage
+        const showConv = s.conversionFromPrev > 0 && s.conversionFromPrev <= 100
+        const narrow = t.w < 220
+
+        return (
+          <g key={s.id}>
+            {/* Trapezóide principal */}
+            <polygon
+              points={`${t.topL},${t.topY} ${t.topR},${t.topY} ${t.botR},${t.botY} ${t.botL},${t.botY}`}
+              fill={`url(#fg${i})`}
+              stroke={color}
+              strokeWidth="1.2"
+              strokeOpacity="0.28"
+              filter="url(#fShadow)"
+            />
+
+            {/* Barra de accent lateral esquerda */}
+            <line
+              x1={t.topL} y1={t.topY + 6}
+              x2={t.botL} y2={t.botY - 6}
+              stroke={color} strokeWidth="3.5" strokeLinecap="round" opacity="0.7"
+            />
+
+            {/* Conteúdo */}
+            {narrow ? (
+              <>
+                <text x={t.cx} y={t.topY + STAGE_H / 2 - 4} textAnchor="middle" fill="currentColor" fontSize="12" fontWeight="600" opacity="0.9" style={{ userSelect: 'none' }}>
+                  {s.label}
+                </text>
+                <text x={t.cx} y={t.topY + STAGE_H / 2 + 16} textAnchor="middle" fill="currentColor" fontSize="15" fontWeight="800" style={{ userSelect: 'none' }}>
+                  {s.leadCount}
+                </text>
+                {showConv && (
+                  <text x={t.cx} y={t.topY + STAGE_H / 2 + 28} textAnchor="middle" fill={color} fontSize="10" fontWeight="700">
+                    {s.conversionFromPrev.toFixed(1)}%
+                  </text>
+                )}
+              </>
+            ) : (
+              <>
+                <text x={t.topL + 20} y={t.topY + STAGE_H / 2 + 4} textAnchor="start" fill="currentColor" fontSize="13" fontWeight="600" style={{ userSelect: 'none' }}>
+                  {s.label}
+                </text>
+                <text x={t.topR - 20} y={t.topY + STAGE_H / 2 + 4} textAnchor="end" fill="currentColor" fontSize="16" fontWeight="800" style={{ userSelect: 'none' }}>
+                  {s.leadCount}
+                </text>
+                {showConv && (
+                  <g>
+                    <rect x={t.topR - 88} y={t.topY + STAGE_H / 2 - 10} width="46" height="20" rx="5" fill={color} opacity="0.12" />
+                    <text x={t.topR - 65} y={t.topY + STAGE_H / 2 + 4} textAnchor="middle" fill={color} fontSize="10" fontWeight="700">
+                      {s.conversionFromPrev.toFixed(1)}%
+                    </text>
+                  </g>
+                )}
+              </>
+            )}
+
+            {/* Seta de conversão entre estágios */}
+            {i < n - 1 && (() => {
+              const next = traps[i + 1]
+              const arrowY = t.botY + (next.topY - t.botY) / 2
+              const convPct = next.stage.conversionFromPrev
+              const hasConv = convPct > 0 && convPct <= 100
+              return (
+                <g>
+                  <line x1={t.cx} y1={t.botY + 4} x2={t.cx} y2={next.topY - 5} stroke="var(--color-border)" strokeWidth="1" strokeDasharray="3,3" />
+                  <polygon points={`${t.cx - 5},${next.topY - 7} ${t.cx + 5},${next.topY - 7} ${t.cx},${next.topY - 2}`} fill="var(--color-text-muted)" opacity="0.4" />
+                  {hasConv && (
+                    <text x={t.cx} y={arrowY - 3} textAnchor="middle" fill="var(--color-text-muted)" fontSize="10" fontWeight="600">
+                      {convPct.toFixed(1)}%
+                    </text>
+                  )}
+                </g>
+              )
+            })()}
+          </g>
+        )
+      })}
+    </svg>
   )
 }
