@@ -37,6 +37,9 @@ import {
   Ban
 } from 'lucide-react'
 import CustomSelect from '@/app/dashboard/components/CustomSelect'
+import { PipelineHeader } from './components/PipelineHeader'
+import { PipelineColumn } from './components/PipelineColumn'
+import { PipelineCard } from './components/PipelineCard'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -1028,223 +1031,216 @@ export default function CrmPage() {
 
   // ─── RENDER ───
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-4.5rem)] text-gray-200 font-sans" style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-primary)' }}>
+    <div className="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-4.5rem)] text-text-primary font-body" style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-primary)' }}>
 
       {/* HEADER */}
-      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center px-4 md:px-6 py-4 shrink-0 gap-4" style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-bg-base)' }}>
-        <div>
-          <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>
-            {t.title}
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ color: 'var(--color-primary)', background: 'var(--color-primary-subtle)' }}>
-              {totalPipelineCount}
-            </span>
-          </h1>
-          <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: 'var(--color-text-muted)' }}>
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--color-success)' }} />
-              <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--color-success)' }} />
-            </span>
-            {t.synced}
-          </p>
+      <PipelineHeader
+        index="03"
+        kicker="DOSSIÊ"
+        section="CRM"
+        titleLeft="Pipeline"
+        titleRight="Negócios"
+        syncedLabel={t.synced}
+        stats={[
+          { value: totalPipelineCount, label: t.totalLeads },
+          {
+            value: formatPrice(totalPipelineValue, userCurrency),
+            label: t.totalValue,
+            highlight: true,
+          },
+        ]}
+        primaryAction={{
+          label: t.newLead,
+          icon: Plus,
+          onClick: () => setIsModalOpen(true),
+        }}
+        secondaryActions={[
+          { label: t.importCsv, icon: Upload, onClick: () => router.push('/dashboard/crm/import') },
+          {
+            label: isFullscreen ? t.exitFullscreen : t.fullscreen,
+            icon: isFullscreen ? Minimize2 : Maximize2,
+            onClick: toggleFullscreen,
+          },
+        ]}
+      />
+
+      {/* TOOLBAR — busca + filtros */}
+      <div className="flex items-center gap-2 px-4 md:px-6 py-3 border-b border-border-subtle flex-wrap">
+        {/* Busca */}
+        <div className="relative flex-1 min-w-[140px] md:min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--color-text-muted)' }} />
+          <input
+            type="text"
+            placeholder={t.searchPlaceholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full text-sm rounded-lg pl-9 pr-8 py-2 outline-none transition-all"
+            style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+            onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
+            onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
+              style={{ color: 'var(--color-text-muted)' }}
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3 w-full lg:w-auto flex-wrap">
-          {/* Botão Import CSV */}
+        {/* Filtro de Tags */}
+        <div className="relative">
           <button
-            onClick={() => router.push('/dashboard/crm/import')}
-            className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-            style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+            onClick={() => setIsTagFilterOpen(!isTagFilterOpen)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all"
+            style={selectedTags.length > 0
+              ? { background: 'var(--color-primary-subtle)', border: '1px solid rgba(90, 122, 230, 0.3)', color: 'var(--color-primary)' }
+              : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }
+            }
           >
-            <Upload size={16} />
-            <span className="hidden sm:inline">{t.importCsv}</span>
-          </button>
-
-          {/* Botão Novo Lead */}
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-            style={{ background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 12px rgba(90, 122, 230, 0.25)' }}
-          >
-            <Plus size={16} />
-            <span className="hidden sm:inline">{t.newLead}</span>
-          </button>
-
-          {/* Busca */}
-          <div className="relative flex-1 min-w-[140px] md:min-w-[200px] order-last lg:order-none w-full lg:w-auto mt-2 lg:mt-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--color-text-muted)' }} />
-            <input
-              type="text"
-              placeholder={t.searchPlaceholder}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-sm rounded-lg pl-9 pr-8 py-2 outline-none transition-all"
-              style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
-              onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
-                style={{ color: 'var(--color-text-muted)' }}
-              >
-                <X size={14} />
-              </button>
+            <Filter size={14} />
+            <span className="hidden sm:inline">{t.filterByTags}</span>
+            {selectedTags.length > 0 && (
+              <span className="text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center" style={{ background: 'var(--color-primary)', color: '#fff' }}>
+                {selectedTags.length}
+              </span>
             )}
-          </div>
+            <ChevronDown size={14} className={`transition-transform ${isTagFilterOpen ? 'rotate-180' : ''}`} />
+          </button>
 
-          {/* Filtro de Tags */}
-          <div className="relative">
-            <button
-              onClick={() => setIsTagFilterOpen(!isTagFilterOpen)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all"
-              style={selectedTags.length > 0
-                ? { background: 'var(--color-primary-subtle)', border: '1px solid rgba(90, 122, 230, 0.3)', color: 'var(--color-primary)' }
-                : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }
-              }
-            >
-              <Filter size={14} />
-              <span className="hidden sm:inline">{t.filterByTags}</span>
-              {selectedTags.length > 0 && (
-                <span className="text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center" style={{ background: 'var(--color-primary)', color: '#fff' }}>
-                  {selectedTags.length}
-                </span>
-              )}
-              <ChevronDown size={14} className={`transition-transform ${isTagFilterOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isTagFilterOpen && (
-              <div className="fixed inset-x-4 bottom-4 sm:absolute sm:inset-x-auto sm:bottom-auto sm:top-full sm:right-0 sm:mt-2 sm:w-56 rounded-xl shadow-2xl z-50 overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
-                <div className="p-2 flex justify-between items-center" style={{ borderBottom: '1px solid var(--color-border)' }}>
-                  <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{t.filterByTags}</span>
-                  {selectedTags.length > 0 && (
-                    <button
-                      onClick={() => setSelectedTags([])}
-                      className="text-[10px]"
-                      style={{ color: 'var(--color-primary)' }}
-                    >
-                      {t.clearFilters}
-                    </button>
-                  )}
-                </div>
-                <div className="max-h-[60vh] sm:max-h-[200px] overflow-y-auto p-2 space-y-1">
-                  {tags.length === 0 ? (
-                    <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>Nenhuma tag criada</p>
-                  ) : (
-                    tags.map(tag => {
-                      const isSelected = selectedTags.includes(tag.id)
-                      const color = getTagColor(tag.color)
-                      return (
-                        <button
-                          key={tag.id}
-                          onClick={() => {
-                            setSelectedTags(prev =>
-                              isSelected
-                                ? prev.filter(id => id !== tag.id)
-                                : [...prev, tag.id]
-                            )
-                          }}
-                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all"
-                          style={{ background: isSelected ? 'var(--color-bg-hover)' : 'transparent' }}
-                        >
-                          <span className="w-2 h-2 rounded-full" style={{ background: color.dot }} />
-                          <span className="truncate flex-1 text-left" style={{ color: 'var(--color-text-secondary)' }}>{tag.name}</span>
-                          {isSelected && (
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: 'var(--color-primary)' }}>
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                      )
-                    })
-                  )}
-                </div>
+          {isTagFilterOpen && (
+            <div className="fixed inset-x-4 bottom-4 sm:absolute sm:inset-x-auto sm:bottom-auto sm:top-full sm:right-0 sm:mt-2 sm:w-56 rounded-xl shadow-2xl z-50 overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+              <div className="p-2 flex justify-between items-center" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{t.filterByTags}</span>
+                {selectedTags.length > 0 && (
+                  <button
+                    onClick={() => setSelectedTags([])}
+                    className="text-[10px]"
+                    style={{ color: 'var(--color-primary)' }}
+                  >
+                    {t.clearFilters}
+                  </button>
+                )}
               </div>
-            )}
-          </div>
+              <div className="max-h-[60vh] sm:max-h-[200px] overflow-y-auto p-2 space-y-1">
+                {tags.length === 0 ? (
+                  <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>Nenhuma tag criada</p>
+                ) : (
+                  tags.map(tag => {
+                    const isSelected = selectedTags.includes(tag.id)
+                    const color = getTagColor(tag.color)
+                    return (
+                      <button
+                        key={tag.id}
+                        onClick={() => {
+                          setSelectedTags(prev =>
+                            isSelected
+                              ? prev.filter(id => id !== tag.id)
+                              : [...prev, tag.id]
+                          )
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all"
+                        style={{ background: isSelected ? 'var(--color-bg-hover)' : 'transparent' }}
+                      >
+                        <span className="w-2 h-2 rounded-full" style={{ background: color.dot }} />
+                        <span className="truncate flex-1 text-left" style={{ color: 'var(--color-text-secondary)' }}>{tag.name}</span>
+                        {isSelected && (
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: 'var(--color-primary)' }}>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
-          {/* Filtro de Dias */}
-          <div className="w-32">
+        {/* Filtro de Dias */}
+        <div className="w-32">
+          <CustomSelect
+            value={daysFilter}
+            onChange={(v) => setDaysFilter(v)}
+            options={[
+              { value: '7', label: t.days7 },
+              { value: '30', label: t.days30 },
+              { value: '90', label: t.days90 },
+              { value: 'all', label: t.daysAll },
+            ]}
+          />
+        </div>
+
+        {/* Filtro de Responsável */}
+        {teamMembers.length > 0 && (
+          <div className="w-40">
             <CustomSelect
-              value={daysFilter}
-              onChange={(v) => setDaysFilter(v)}
+              value={filterAssigned}
+              onChange={(v) => setFilterAssigned(v)}
               options={[
-                { value: '7', label: t.days7 },
-                { value: '30', label: t.days30 },
-                { value: '90', label: t.days90 },
-                { value: 'all', label: t.daysAll },
+                { value: 'all', label: t.allBrokers },
+                { value: 'unassigned', label: t.unassigned },
+                ...teamMembers.map(m => ({ value: m.id, label: m.full_name }))
               ]}
             />
           </div>
+        )}
 
-          {/* Filtro de Responsável */}
-          {teamMembers.length > 0 && (
-            <div className="w-40">
-              <CustomSelect
-                value={filterAssigned}
-                onChange={(v) => setFilterAssigned(v)}
-                options={[
-                  { value: 'all', label: t.allBrokers },
-                  { value: 'unassigned', label: t.unassigned },
-                  ...teamMembers.map(m => ({ value: m.id, label: m.full_name }))
-                ]}
-              />
-            </div>
-          )}
-
-          {/* Filtro de Nicho — apenas pra org do tipo ai_agency */}
-          {isAiAgency && (nichoOptions.length > 0 || hasUnassignedNicho) && (
-            <div className="w-40">
-              <CustomSelect
-                value={filterNicho}
-                onChange={(v) => setFilterNicho(v)}
-                options={[
-                  { value: 'all', label: t.allNichos },
-                  ...(hasUnassignedNicho ? [{ value: '__unassigned__', label: t.nichoUnassigned }] : []),
-                  ...nichoOptions.map(n => ({ value: n, label: n })),
-                ]}
-              />
-            </div>
-          )}
-
-          {/* Refresh */}
-          <button
-            onClick={() => loadAllStagesData(pipelineStages)}
-            disabled={loading}
-            className="p-2 rounded-lg transition-colors disabled:opacity-50"
-            style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
-            title={t.refresh}
-          >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          </button>
-
-          {/* Toggle View */}
-          <div className="flex rounded-lg p-1" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                viewMode === 'list' ? 'shadow-sm' : ''
-              }`}
-              style={viewMode === 'list' ? { background: 'var(--color-bg-surface)', color: 'var(--color-text-primary)' } : { color: 'var(--color-text-tertiary)' }}
-              title={t.listView}
-            >
-              <List size={14} />
-              <span className="hidden md:inline">{t.listView}</span>
-            </button>
-            <button
-              onClick={() => setViewMode('pipeline')}
-              className={`flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                viewMode === 'pipeline' ? 'shadow-sm' : ''
-              }`}
-              style={viewMode === 'pipeline' ? { background: 'var(--color-bg-surface)', color: 'var(--color-text-primary)' } : { color: 'var(--color-text-tertiary)' }}
-              title={t.pipelineView}
-            >
-              <LayoutGrid size={14} />
-              <span className="hidden md:inline">{t.pipelineView}</span>
-            </button>
+        {/* Filtro de Nicho — apenas pra org do tipo ai_agency */}
+        {isAiAgency && (nichoOptions.length > 0 || hasUnassignedNicho) && (
+          <div className="w-40">
+            <CustomSelect
+              value={filterNicho}
+              onChange={(v) => setFilterNicho(v)}
+              options={[
+                { value: 'all', label: t.allNichos },
+                ...(hasUnassignedNicho ? [{ value: '__unassigned__', label: t.nichoUnassigned }] : []),
+                ...nichoOptions.map(n => ({ value: n, label: n })),
+              ]}
+            />
           </div>
+        )}
+
+        {/* Refresh */}
+        <button
+          onClick={() => loadAllStagesData(pipelineStages)}
+          disabled={loading}
+          className="p-2 rounded-lg transition-colors disabled:opacity-50"
+          style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+          title={t.refresh}
+        >
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+        </button>
+
+        {/* Toggle View */}
+        <div className="flex rounded-lg p-1" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              viewMode === 'list' ? 'shadow-sm' : ''
+            }`}
+            style={viewMode === 'list' ? { background: 'var(--color-bg-surface)', color: 'var(--color-text-primary)' } : { color: 'var(--color-text-tertiary)' }}
+            title={t.listView}
+          >
+            <List size={14} />
+            <span className="hidden md:inline">{t.listView}</span>
+          </button>
+          <button
+            onClick={() => setViewMode('pipeline')}
+            className={`flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              viewMode === 'pipeline' ? 'shadow-sm' : ''
+            }`}
+            style={viewMode === 'pipeline' ? { background: 'var(--color-bg-surface)', color: 'var(--color-text-primary)' } : { color: 'var(--color-text-tertiary)' }}
+            title={t.pipelineView}
+          >
+            <LayoutGrid size={14} />
+            <span className="hidden md:inline">{t.pipelineView}</span>
+          </button>
         </div>
-      </header>
+      </div>
 
       {/* MAIN */}
       <main className="flex-1 overflow-hidden relative p-3 md:p-6">
@@ -1394,266 +1390,56 @@ export default function CrmPage() {
         {/* VISÃO PIPELINE (KANBAN) */}
         {!loading && viewMode === 'pipeline' && (
           <div className="h-full w-full overflow-x-auto overflow-y-hidden pb-2 touch-pan-x">
-            <div className="flex gap-3 md:gap-4 min-w-max h-full">
-              {pipelineStages.map((stage) => {
-                const stageColor = getStageColor(stage.color)
-                const count = stageCounts[stage.name] || 0
-                const loadedCount = (stageLeads[stage.name] || []).length
-                const stageTotal = pipelineSums[stage.name] || 0
-                const hasMore = !!stageHasMore[stage.name]
-                const loadingMore = !!stageLoadingMore[stage.name]
-
-                return (
-                  <div
-                    key={stage.id}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, stage.name)}
-                    className="w-[280px] md:w-[300px] flex-shrink-0 flex flex-col h-full rounded-xl"
-                    style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}
-                  >
-                    {/* Header da Coluna */}
-                    <div className="p-3 shrink-0 rounded-t-xl" style={{ borderBottom: `2px solid ${getStageHex(stage.color)}`, background: 'var(--color-bg-elevated)' }}>
-                      <div className="flex justify-between items-center gap-2">
-                        <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2 min-w-0" style={{ color: 'var(--color-text-primary)' }}>
-                          <span className={`w-2 h-2 rounded-full ${stageColor.dot} flex-shrink-0`} />
-                          <span className="truncate">{stage.label}</span>
-                          {stage.is_won && (
-                            <span
-                              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold flex-shrink-0"
-                              style={{ background: 'var(--color-success-subtle, rgba(52, 179, 104, 0.15))', color: 'var(--color-success)' }}
-                              title={userLang === 'en' ? 'Won stage — does not count toward leads quota' : userLang === 'es' ? 'Etapa ganada — no cuenta para la cuota de leads' : 'Etapa ganha — não conta na quota de leads'}
-                            >
-                              <Trophy size={9} />
-                            </span>
-                          )}
-                          {stage.is_lost && (
-                            <span
-                              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold flex-shrink-0"
-                              style={{ background: 'var(--color-error-subtle, rgba(217, 84, 84, 0.15))', color: 'var(--color-error)' }}
-                              title={userLang === 'en' ? 'Lost stage — does not count toward leads quota' : userLang === 'es' ? 'Etapa perdida — no cuenta para la cuota de leads' : 'Etapa perdida — não conta na quota de leads'}
-                            >
-                              <Ban size={9} />
-                            </span>
-                          )}
-                        </h3>
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${stageColor.bg} ${stageColor.text} flex-shrink-0`}>
-                          {count}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center gap-1" style={{ color: 'var(--color-success)' }}>
-                          <DollarSign size={11} />
-                          <span className="text-[11px] font-mono font-bold">
-                            {formatPrice(stageTotal, userCurrency, userLang)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="h-1 w-full mt-2.5 rounded-full overflow-hidden" style={{ background: 'var(--color-border)' }}>
-                        <div
-                          className={`h-full rounded-full ${stageColor.dot}`}
-                          style={{ width: `${Math.min(count * 10, 100)}%`, opacity: 0.8, transition: 'width 0.5s ease' }}
-                        />
-                      </div>
+            <div className="flex gap-4 px-4 pb-4 min-w-max h-full">
+              {pipelineStages.map((stage, index) => (
+                <PipelineColumn
+                  key={stage.id}
+                  index={String(index + 1).padStart(2, '0')}
+                  label={stage.label}
+                  color={stage.color}
+                  count={stageCounts[stage.name] || 0}
+                  sumLabel={formatPrice(stageSums[stage.name] || 0, userCurrency)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, stage.name)}
+                >
+                  {(stageLeads[stage.name] || []).map((lead) => (
+                    <PipelineCard
+                      key={lead.id}
+                      lead={lead}
+                      leadTags={leadTags}
+                      tags={tags}
+                      cardFields={cardFields}
+                      cardShowStale={cardShowStale}
+                      cardShowAiStatus={cardShowAiStatus}
+                      userLang={userLang}
+                      userCurrency={userCurrency}
+                      userTimezone={userTimezone}
+                      onClick={() => router.push(`/dashboard/crm/${lead.id}`)}
+                      onDragStart={() => setDraggedLeadId(lead.id)}
+                      onDragEnd={() => setDraggedLeadId(null)}
+                      isDragging={draggedLeadId === lead.id}
+                      translations={t}
+                    />
+                  ))}
+                  {/* Sentinela de infinite scroll */}
+                  {stageHasMore[stage.name] && (
+                    <ScrollSentinel
+                      onVisible={() => loadMoreStage(stage.name)}
+                      disabled={!!stageLoadingMore[stage.name]}
+                    />
+                  )}
+                  {stageLoadingMore[stage.name] && (
+                    <div className="flex justify-center py-3">
+                      <Loader2 size={16} className="animate-spin" style={{ color: 'var(--color-text-muted)' }} />
                     </div>
-
-                    {/* Cards */}
-                    <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                      {stageLeads[stage.name]?.map((lead, index) => {
-                        const leadDisplayName = formatLeadName(lead, activeOrg?.niche, { lang: userLang })
-                        const daysSinceUpdate = getDaysSinceUpdate(lead.updated_at)
-                        const isStale = daysSinceUpdate > 5
-                        const leadTagsList = getLeadTags(lead.id)
-                        const isAiActive = lead.conversa_finalizada === false
-
-                        return (
-                          <div
-                            key={lead.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, lead.id)}
-                            onDragEnd={handleDragEnd}
-                            onClick={() => handleOpenLead(lead.id)}
-                            className={`group relative p-3 rounded-lg transition-all cursor-pointer hover:shadow-md ${
-                              draggedLeadId === lead.id ? 'opacity-30 scale-95' : ''
-                            }`}
-                            style={{
-                              background: 'var(--color-bg-surface)',
-                              border: '1px solid var(--color-border)',
-                              borderLeft: `3px solid ${isStale ? '#DDA032' : getStageHex(stage.color)}`,
-                            }}
-                          >
-                            {/* Indicadores no canto superior direito */}
-                            <div className="absolute -top-1.5 -right-1.5 flex items-center gap-1">
-                              {cardShowStale && isStale && (
-                                <div className="rounded-full p-1 shadow-lg" style={{ background: 'var(--color-accent)', color: '#111' }} title={`${daysSinceUpdate} ${t.stale}`}>
-                                  <Clock size={10} />
-                                </div>
-                              )}
-                              {cardShowAiStatus && canUseAiAgents && (
-                                <button
-                                  onClick={(e) => handleToggleAi(e, lead.id, lead.conversa_finalizada ?? false)}
-                                  className="w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                                  style={{
-                                    background: isAiActive ? 'var(--color-success)' : 'var(--color-accent)',
-                                    boxShadow: isAiActive ? '0 0 8px rgba(52, 179, 104, 0.6)' : '0 0 8px rgba(221, 160, 50, 0.6)',
-                                  }}
-                                  title={isAiActive ? (t.pauseAi || 'Pausar IA') : (t.activateAi || 'Ativar IA')}
-                                >
-                                  {isAiActive ? <Pause size={10} className="text-white" /> : <Play size={10} className="text-white" />}
-                                </button>
-                              )}
-                              {cardShowAiStatus && !canUseAiAgents && <AiStatusBadge isActive={isAiActive} />}
-                            </div>
-
-                            <div className="absolute top-2 right-6 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block" style={{ color: 'var(--color-text-muted)' }}>
-                              <GripVertical size={14} />
-                            </div>
-
-                            {/* Nome e Empresa */}
-                            <div className="flex items-start gap-2 mb-2 pr-6">
-                              <div className="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>
-                                {getInitials(leadDisplayName)}
-                              </div>
-                              <div className="overflow-hidden min-w-0 flex-1">
-                                <div className="flex items-center gap-1.5">
-                                  <h4 className="font-semibold text-sm leading-tight truncate" style={{ color: 'var(--color-text-primary)' }} title={leadDisplayName}>
-                                    {leadDisplayName}
-                                  </h4>
-                                  {lead.score_label && lead.score_label !== 'cold' && (() => {
-                                    const sc = SCORE_CONFIG[lead.score_label] || SCORE_CONFIG.cold
-                                    return (
-                                      <span className="shrink-0 px-1 py-0 rounded text-[8px] font-bold leading-tight" style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
-                                        {sc.label}
-                                      </span>
-                                    )
-                                  })()}
-                                </div>
-                                {cardFields.includes('nome_empresa') && lead.nome_empresa && (
-                                  <p className="text-[10px] truncate" style={{ color: 'var(--color-text-muted)' }}>{t.contactLabel} {lead.name}</p>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Valor, Telefone e Email */}
-                            {(cardFields.includes('total_em_vendas') || cardFields.includes('email') || cardFields.includes('phone')) && (
-                            <div className="space-y-1 mb-2">
-                              {cardFields.includes('total_em_vendas') && (
-                              <div className="text-[11px] font-bold flex items-center gap-1" style={{ color: 'var(--color-success)' }}>
-                                {formatPrice(lead.total_em_vendas, userCurrency, userLang)}
-                              </div>
-                              )}
-                              {cardFields.includes('phone') && lead.phone && (
-                                <div className="flex items-center gap-1.5 text-[10px] truncate" style={{ color: 'var(--color-text-muted)' }}>
-                                  <Smartphone size={10} />
-                                  <span className="truncate">{lead.phone}</span>
-                                </div>
-                              )}
-                              {cardFields.includes('email') && lead.email && (
-                                <div className="flex items-center gap-1.5 text-[10px] truncate" style={{ color: 'var(--color-text-muted)' }}>
-                                  <Mail size={10} />
-                                  <span className="truncate">{lead.email}</span>
-                                </div>
-                              )}
-                            </div>
-                            )}
-
-                            {/* Tags */}
-                            {cardFields.includes('tags') && leadTagsList.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mb-2">
-                                {leadTagsList.slice(0, 3).map(tag => {
-                                  const tagColor = getTagColor(tag.color)
-                                  return (
-                                    <span
-                                      key={tag.id}
-                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-medium"
-                                      style={{ background: tagColor.bg, color: tagColor.text, border: `1px solid ${tagColor.border}` }}
-                                    >
-                                      <Tag size={8} />
-                                      {tag.name}
-                                    </span>
-                                  )
-                                })}
-                                {leadTagsList.length > 3 && (
-                                  <span className="text-[8px]" style={{ color: 'var(--color-text-muted)' }}>+{leadTagsList.length - 3}</span>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Origem e Nicho */}
-                            {((cardFields.includes('source') && lead.source) || (cardFields.includes('nicho') && lead.nicho)) && (
-                              <div className="flex flex-wrap gap-1 mb-2">
-                                {cardFields.includes('source') && lead.source && (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] truncate max-w-[100px]" style={{ background: 'var(--color-bg-elevated)', color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border)' }}>
-                                    {formatSource(lead.source, userLang)}
-                                  </span>
-                                )}
-                                {cardFields.includes('nicho') && lead.nicho && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] truncate max-w-[100px]" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
-                                    {lead.nicho}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Rodapé */}
-                            {cardFields.includes('created_at') && (
-                            <div className="flex justify-between items-center pt-2" style={{ borderTop: '1px solid var(--color-border)' }}>
-                              <div className="flex items-center gap-1.5 text-[9px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
-                                <Calendar size={10} />
-                                {formatDate(lead.created_at, userLang, userTimezone)}
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                {index === 0 && count > 2 && (
-                                  <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'var(--color-error-subtle)', color: 'var(--color-error)', border: '1px solid rgba(217, 84, 84, 0.2)' }}>
-                                    {t.priority}
-                                  </span>
-                                )}
-                                {lead.assigned_to_name && (
-                                  <div
-                                    className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
-                                    style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }}
-                                    title={lead.assigned_to_name}
-                                  >
-                                    {getInitials(lead.assigned_to_name)}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            )}
-                          </div>
-                        )
-                      })}
-
-                      {/* Sentinela de infinite scroll — dispara loadMoreStage quando aparece na viewport */}
-                      {hasMore && (
-                        <ScrollSentinel
-                          onVisible={() => loadMoreStage(stage.name)}
-                          disabled={loadingMore}
-                        />
-                      )}
-
-                      {loadingMore && (
-                        <div className="flex justify-center py-3">
-                          <Loader2 size={16} className="animate-spin" style={{ color: 'var(--color-text-muted)' }} />
-                        </div>
-                      )}
-
-                      {!hasMore && loadedCount > 0 && loadedCount < count && (
-                        <p className="text-[10px] text-center py-2" style={{ color: 'var(--color-text-muted)' }}>
-                          {loadedCount} / {count}
-                        </p>
-                      )}
-
-                      {count === 0 && (
-                        <div className="h-full flex flex-col items-center justify-center opacity-40 min-h-[120px] border-2 border-dashed rounded-lg" style={{ borderColor: 'var(--color-border)' }}>
-                          <span className="text-xs font-medium italic" style={{ color: 'var(--color-text-muted)' }}>{t.noLeadsStage}</span>
-                        </div>
-                      )}
+                  )}
+                  {(stageCounts[stage.name] || 0) === 0 && (
+                    <div className="h-full flex flex-col items-center justify-center opacity-40 min-h-[120px] border-2 border-dashed rounded-lg" style={{ borderColor: 'var(--color-border)' }}>
+                      <span className="text-xs font-medium italic" style={{ color: 'var(--color-text-muted)' }}>{t.noLeadsStage}</span>
                     </div>
-                  </div>
-                )
-              })}
+                  )}
+                </PipelineColumn>
+              ))}
             </div>
           </div>
         )}
