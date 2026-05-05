@@ -2,6 +2,118 @@
 @import "../outputs/design-tokens-v2.css";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+   TAILWIND v4 @theme — registra tokens para gerar utilitarios
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* Cores */
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-active: var(--color-primary-active);
+  --color-primary-subtle: var(--color-primary-subtle);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-subtle: var(--color-accent-subtle);
+  --color-indigo: var(--color-indigo);
+  --color-indigo-hover: var(--color-indigo-hover);
+  --color-indigo-subtle: var(--color-indigo-subtle);
+  --color-surface: var(--color-bg-surface);
+  --color-elevated: var(--color-bg-elevated);
+  --color-bg-base: var(--color-bg-base);
+  --color-bg-hover: var(--color-bg-hover);
+  --color-bg-selected: var(--color-bg-selected);
+  --color-border: var(--color-border);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-strong: var(--color-border-strong);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-tertiary: var(--color-text-tertiary);
+  --color-text-disabled: var(--color-text-disabled);
+  --color-text-on-primary: var(--color-text-on-primary);
+  --color-text-on-accent: var(--color-text-on-accent);
+  --color-text-inverse: var(--color-text-inverse);
+  --color-success: var(--color-success);
+  --color-success-hover: var(--color-success-hover);
+  --color-success-subtle: var(--color-success-subtle);
+  --color-warning: var(--color-warning);
+  --color-warning-hover: var(--color-warning-hover);
+  --color-warning-subtle: var(--color-warning-subtle);
+  --color-error: var(--color-error);
+  --color-error-hover: var(--color-error-hover);
+  --color-error-subtle: var(--color-error-subtle);
+  --color-info: var(--color-info);
+  --color-info-hover: var(--color-info-hover);
+  --color-info-subtle: var(--color-info-subtle);
+
+  /* Fontes */
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+
+  /* Tamanhos de fonte */
+  --text-display: var(--text-display);
+  --text-h1: var(--text-h1);
+  --text-h2: var(--text-h2);
+  --text-h3: var(--text-h3);
+  --text-h4: var(--text-h4);
+  --text-h5: var(--text-h5);
+  --text-h6: var(--text-h6);
+  --text-body-lg: var(--text-body-lg);
+  --text-body: var(--text-body);
+  --text-body-sm: var(--text-body-sm);
+  --text-small: var(--text-small);
+  --text-caption: var(--text-caption);
+  --text-mono: var(--text-mono);
+
+  /* Letter spacing */
+  --tracking-display: var(--tracking-display);
+  --tracking-h1: var(--tracking-h1);
+  --tracking-h2: var(--tracking-h2);
+  --tracking-h3: var(--tracking-h3);
+  --tracking-h4: var(--tracking-h4);
+  --tracking-body: var(--tracking-body);
+  --tracking-small: var(--tracking-small);
+  --tracking-caption: var(--tracking-caption);
+  --tracking-uppercase: var(--tracking-uppercase);
+
+  /* Line height */
+  --leading-display: var(--leading-display);
+  --leading-h1: var(--leading-h1);
+  --leading-h2: var(--leading-h2);
+  --leading-h3: var(--leading-h3);
+  --leading-h4: var(--leading-h4);
+  --leading-tight: var(--leading-tight);
+  --leading-snug: var(--leading-snug);
+  --leading-normal: var(--leading-normal);
+  --leading-relaxed: var(--leading-relaxed);
+  --leading-loose: var(--leading-loose);
+
+  /* Border radius */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+
+  /* Sombras */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-primary: var(--shadow-primary);
+  --shadow-accent: var(--shadow-accent);
+  --shadow-glow: var(--shadow-glow);
+
+  /* Animacoes */
+  --animate-pulse-soft: pulse-soft 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
    ESTILOS BASE
    ═══════════════════════════════════════════════════════════════════════════════ */
 
