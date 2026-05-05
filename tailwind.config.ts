@@ -42,12 +42,23 @@ const config: Config = {
         "text-secondary":  "var(--color-text-secondary)",
         "text-tertiary":   "var(--color-text-tertiary)",
         "text-disabled":   "var(--color-text-disabled)",
+        "text-on-primary": "var(--color-text-on-primary)",
+        "text-on-accent":  "var(--color-text-on-accent)",
+        "text-inverse":    "var(--color-text-inverse)",
 
         // Semantic
         success:           "var(--color-success)",
+        "success-hover":   "var(--color-success-hover)",
+        "success-subtle":  "var(--color-success-subtle)",
         warning:           "var(--color-warning)",
+        "warning-hover":   "var(--color-warning-hover)",
+        "warning-subtle":  "var(--color-warning-subtle)",
         error:             "var(--color-error)",
+        "error-hover":     "var(--color-error-hover)",
+        "error-subtle":    "var(--color-error-subtle)",
         info:              "var(--color-info)",
+        "info-hover":      "var(--color-info-hover)",
+        "info-subtle":     "var(--color-info-subtle)",
       },
       borderRadius: {
         sm:    "var(--radius-sm)",
@@ -60,6 +71,21 @@ const config: Config = {
         display: ["var(--font-display)"],
         body:    ["var(--font-body)"],
         mono:    ["var(--font-mono)"],
+      },
+      fontSize: {
+        display:  "3rem",
+        h1:       "2.25rem",
+        h2:       "1.75rem",
+        h3:       "1.375rem",
+        h4:       "1.125rem",
+        h5:       "0.9375rem",
+        h6:       "0.8125rem",
+        "body-lg":"1rem",
+        body:     "0.875rem",
+        "body-sm":"0.8125rem",
+        small:    "0.75rem",
+        caption:  "0.6875rem",
+        mono:     "0.8125rem",
       },
       letterSpacing: {
         display:   "var(--tracking-display)",
@@ -83,6 +109,15 @@ const config: Config = {
       },
       backdropBlur: {
         glass: "var(--glass-blur)",
+      },
+      animation: {
+        "pulse-soft": "pulse-soft 2.5s ease-in-out infinite",
+      },
+      keyframes: {
+        "pulse-soft": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.4" },
+        },
       },
     },
   },
