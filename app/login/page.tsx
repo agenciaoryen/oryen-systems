@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/AuthContext'
@@ -50,6 +50,7 @@ type Lang = keyof typeof TRANSLATIONS
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuth()
 
   const [lang, setLang] = useState<Lang>('pt')
@@ -66,6 +67,17 @@ export default function LoginPage() {
     { code: 'en' as Lang, label: 'English' },
     { code: 'es' as Lang, label: 'Español' },
   ]
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error')
+    if (errorParam === 'inactive') {
+      setErrorMsg(
+        lang === 'pt' ? 'Sua conta foi desativada. Entre em contato com o administrador.' :
+        lang === 'es' ? 'Tu cuenta ha sido desactivada. Contacta al administrador.' :
+        'Your account has been deactivated. Please contact your administrator.'
+      )
+    }
+  }, [searchParams, lang])
 
   useEffect(() => {
     if (user) router.replace('/dashboard')

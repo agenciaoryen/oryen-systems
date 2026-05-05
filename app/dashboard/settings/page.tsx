@@ -927,18 +927,33 @@ export default function SettingsPage() {
   // ─── FUNÇÕES DE EQUIPE ───
   async function handleDeactivateUser(memberId: string) {
     showConfirm(t.alerts.confirmDeactivate, async () => {
-      const { error } = await supabase.from('users').update({ status: 'inactive' }).eq('id', memberId)
-      if (!error) {
+      const res = await fetch(`/api/users/${memberId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'inactive' }),
+      })
+      if (res.ok) {
         setTeamMembers(prev => prev.map(m => m.id === memberId ? { ...m, status: 'inactive' } : m))
         showAlert(t.alerts.userDeactivated)
+      } else {
+        const data = await res.json().catch(() => ({ error: 'Erro desconhecido' }))
+        showAlert(data.error || 'Erro ao desativar usuário')
       }
     })
   }
 
   async function handleReactivateUser(memberId: string) {
-    const { error } = await supabase.from('users').update({ status: 'active' }).eq('id', memberId)
-    if (!error) {
+    const res = await fetch(`/api/users/${memberId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'active' }),
+    })
+    if (res.ok) {
       setTeamMembers(prev => prev.map(m => m.id === memberId ? { ...m, status: 'active' } : m))
+      showAlert(t.alerts.userReactivated || 'Usuário reativado.')
+    } else {
+      const data = await res.json().catch(() => ({ error: 'Erro desconhecido' }))
+      showAlert(data.error || 'Erro ao reativar usuário')
     }
   }
 

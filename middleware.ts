@@ -129,7 +129,7 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     // ═════════════════════════════════════════════════════════════════════════
-    // 3. PROTEÇÃO DE API — bloquear requests não autenticados
+    // 3. PROTEÇÃO DE API — bloquear requests não autenticados e usuários inativos
     // ═════════════════════════════════════════════════════════════════════════
     if (pathname.startsWith('/api/')) {
       const isExempt = AUTH_EXEMPT_API.some((prefix) =>
@@ -141,6 +141,46 @@ export async function middleware(request: NextRequest) {
           { error: 'Não autorizado' },
           { status: 401 }
         )
+      }
+
+      // Bloquear usuários inativos (status no banco)
+      if (!isExempt && user) {
+        const supabaseAdmin = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+        const { data: profile } = await supabaseAdmin
+          .from('users')
+          .select('status')
+          .eq('id', user.id)
+          .single()
+
+        if (profile?.status === 'inactive') {
+          return NextResponse.json(
+            { error: 'Conta desativada. Entre em contato com o administrador.' },
+            { status: 403 }
+          )
+        }
+      }
+    }
+
+    // Bloquear dashboard para usuários inativos
+    if (pathname.startsWith('/dashboard') && user) {
+      const supabaseAdmin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+      const { data: profile } = await supabaseAdmin
+        .from('users')
+        .select('status')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.status === 'inactive') {
+        // Redirecionar para login com mensagem
+        const loginUrl = new URL('/login', request.url)
+        loginUrl.searchParams.set('error', 'inactive')
+        return NextResponse.redirect(loginUrl)
       }
     }
 
