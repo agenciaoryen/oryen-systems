@@ -54,13 +54,13 @@ export function PipelineHeader({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 font-mono text-caption uppercase tracking-uppercase text-text-tertiary">
           <span className="text-text-secondary">{index}</span>
-          <span aria-hidden className="text-text-tertiary/50">·</span>
+          <span aria-hidden className="text-text-tertiary opacity-50">·</span>
           <span>{kicker}</span>
-          <span aria-hidden className="text-text-tertiary/50">·</span>
+          <span aria-hidden className="text-text-tertiary opacity-50">·</span>
           <span>{section}</span>
           {syncedLabel && (
             <>
-              <span aria-hidden className="text-text-tertiary/50 ml-2">·</span>
+              <span aria-hidden className="text-text-tertiary opacity-50 ml-2">·</span>
               <span className="flex items-center gap-1.5 normal-case tracking-normal">
                 <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse-soft" />
                 {syncedLabel}

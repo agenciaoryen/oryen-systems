@@ -93,8 +93,8 @@ function getDaysSinceUpdate(updatedAt?: string) {
 
 // Configuração visual da temperatura — usa tokens semânticos.
 const TEMP_CONFIG: Record<NonNullable<Lead['score_label']>, { label: string; classes: string }> = {
-  hot:  { label: 'QUENTE', classes: 'bg-error/10 text-error border-error/20' },
-  warm: { label: 'MORNO',  classes: 'bg-warning/10 text-warning border-warning/20' },
+  hot:  { label: 'QUENTE', classes: 'bg-error-subtle text-error border-error-subtle' },
+  warm: { label: 'MORNO',  classes: 'bg-warning-subtle text-warning border-warning-subtle' },
   cold: { label: 'FRIO',   classes: 'bg-bg-hover text-text-tertiary border-border-subtle' },
   lost: { label: 'PERDIDO',classes: 'bg-bg-hover text-text-disabled border-border-subtle' },
 }
@@ -154,7 +154,7 @@ export function PipelineCard({
               title={lead.conversa_finalizada ? translations.aiPaused : translations.aiActive}
               className={`
                 inline-flex items-center justify-center w-4 h-4 rounded-full
-                ${lead.conversa_finalizada ? 'bg-accent/15 text-accent' : 'bg-success/15 text-success'}
+                ${lead.conversa_finalizada ? 'bg-accent-subtle text-accent' : 'bg-success-subtle text-success'}
               `}
             >
               <Bot size={10} strokeWidth={2.25} />
@@ -237,7 +237,7 @@ export function PipelineCard({
 
         {lead.assigned_to_name ? (
           <div className="flex items-center gap-1.5 text-accent text-caption font-medium">
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent/15 font-mono text-caption">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent-subtle font-mono text-caption">
               {getInitials(lead.assigned_to_name)}
             </span>
             <span className="truncate max-w-[80px]">{lead.assigned_to_name}</span>

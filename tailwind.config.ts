@@ -98,6 +98,18 @@ const config: Config = {
         caption:   "var(--tracking-caption)",
         uppercase: "var(--tracking-uppercase)",
       },
+      lineHeight: {
+        display: "var(--leading-display)",
+        h1:      "var(--leading-h1)",
+        h2:      "var(--leading-h2)",
+        h3:      "var(--leading-h3)",
+        h4:      "var(--leading-h4)",
+        tight:   "var(--leading-tight)",
+        snug:    "var(--leading-snug)",
+        normal:  "var(--leading-normal)",
+        relaxed: "var(--leading-relaxed)",
+        loose:   "var(--leading-loose)",
+      },
       boxShadow: {
         sm:      "var(--shadow-sm)",
         md:      "var(--shadow-md)",
