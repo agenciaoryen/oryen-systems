@@ -772,13 +772,10 @@ export default function SettingsPage() {
   const fetchTeam = useCallback(async () => {
     if (!orgId) return
 
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .eq('org_id', orgId)
-
-    if (data) {
-      const mappedMembers: TeamMember[] = data.map((d) => ({
+    const res = await fetch('/api/admin/team')
+    if (res.ok) {
+      const data = await res.json()
+      const mappedMembers: TeamMember[] = (data.members || []).map((d: any) => ({
         id: d.id,
         name: d.full_name || d.name || 'Sem nome',
         email: d.email,
