@@ -6,11 +6,6 @@ export async function GET(request: NextRequest) {
     const auth = await requireAuth(request)
     if (auth instanceof NextResponse) return auth
 
-    // Apenas admin ou staff pode ver todos os membros (inclusive inativos)
-    if (!auth.isStaff && auth.role !== 'admin') {
-      return NextResponse.json({ error: 'Permissão negada.' }, { status: 403 })
-    }
-
     const orgId = resolveOrgId(auth, null)
 
     const { data, error } = await supabaseAdmin
