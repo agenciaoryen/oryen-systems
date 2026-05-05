@@ -1035,9 +1035,6 @@ export default function CrmPage() {
 
       {/* HEADER */}
       <PipelineHeader
-        index="03"
-        kicker="DOSSIÊ"
-        section="CRM"
         titleLeft="Pipeline"
         titleRight="Negócios"
         syncedLabel={t.synced}
