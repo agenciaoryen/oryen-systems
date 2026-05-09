@@ -3,10 +3,12 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
+import { usePlan } from '@/lib/usePlan'
 import { supabase } from '@/lib/supabase'
 import { formatPrice } from '@/lib/format'
 import NoOrganizationState from './components/NoOrganizationState'
 import DailyPriorities from './components/DailyPriorities'
+import GoalBoard from './components/GoalBoard'
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -436,6 +438,7 @@ export default function DashboardPage() {
   
   const { user, loading: authLoading, activeOrg, activeOrgName } = useAuth()
   const activeOrgId = useActiveOrgId()
+  const { hasFeature } = usePlan()
   
   // Estados de UI
   const [loading, setLoading] = useState(true)
@@ -782,28 +785,18 @@ export default function DashboardPage() {
       {/* Grid Principal */}
       <div className="grid grid-cols-12 gap-4 sm:gap-6">
         
-        {/* KPI: Receita */}
-        <Card
-          className="col-span-12 md:col-span-5 lg:col-span-4 p-5 sm:p-6 relative group cursor-pointer"
-          onClick={() => router.push('/dashboard/metas')}
-        >
-          <div className="absolute inset-0 opacity-50 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(to bottom right, rgba(90, 122, 230, 0.1), transparent, transparent)' }} />
-          <div className="flex items-center justify-between mb-4 relative">
-            <div className="p-2.5 sm:p-3 rounded-xl" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
-              <DollarSign size={20} className="sm:w-6 sm:h-6" />
-            </div>
-            <span className="text-[10px] sm:text-xs font-medium px-2 py-1 rounded flex items-center gap-1" style={{ color: 'var(--color-primary)', background: 'var(--color-primary-subtle)', border: '1px solid rgba(90, 122, 230, 0.2)' }}>
-              {t.goals} →
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm font-medium relative" style={{ color: 'var(--color-text-tertiary)' }}>{t.revenue} ({range}d)</p>
-          <h2 className="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 tracking-tight relative" style={{ color: 'var(--color-text-primary)' }}>
-            {formatPrice(kpis.totalFaturamento, userCurrency, userLang)}
-          </h2>
-        </Card>
+        {/* Goal Board */}
+        <div className="col-span-12 lg:col-span-5">
+          <GoalBoard
+            orgId={activeOrgId || ''}
+            lang={userLang}
+            currency={userCurrency}
+            hasFinancialModule={hasFeature('hasFinancialModule')}
+          />
+        </div>
 
         {/* KPIs Rápidos */}
-        <div className="col-span-12 md:col-span-7 lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+        <div className="col-span-12 lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           {/* Leads */}
           <Card className="p-4 sm:p-6 flex flex-col justify-between transition-colors" style={{ borderColor: 'transparent' }} onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border-hover)' }} onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'transparent' }}>
             <div className="flex justify-between items-start">
