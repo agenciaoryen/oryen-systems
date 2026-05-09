@@ -36,6 +36,7 @@ import {
   Target,
   CreditCard,
   Zap,
+  Sparkles,
   Shield,
   ShieldAlert,
   Plug,
@@ -70,6 +71,7 @@ const TRANSLATIONS = {
       financial: 'Financeiro',
       goals: 'Metas',
       fkd: 'Rotina Diária',
+      coach: 'Oryen Coach',
       prospection: 'Prospecção',
       subscription: 'Minha Assinatura',
       portfolio: 'Portfólio',
@@ -116,6 +118,7 @@ const TRANSLATIONS = {
       financial: 'Financial',
       goals: 'Goals',
       fkd: 'Daily Routine',
+      coach: 'Oryen Coach',
       prospection: 'Prospecting',
       subscription: 'My Subscription',
       portfolio: 'Portfolio',
@@ -162,6 +165,7 @@ const TRANSLATIONS = {
       financial: 'Financiero',
       goals: 'Metas',
       fkd: 'Rutina Diaria',
+      coach: 'Oryen Coach',
       prospection: 'Prospección',
       subscription: 'Mi Suscripción',
       portfolio: 'Portafolio',
@@ -423,6 +427,7 @@ export default function Sidebar() {
         // Follow-up agora é gerenciado dentro do perfil do colaborador IA followup
         // (em /dashboard/agents/<id>). A fila continua acessível via link no perfil.
         { href: '/dashboard/analytics', label: t.menu.analytics, icon: TrendingUp, permission: 'analytics' },
+        { href: '/dashboard/coach', label: t.menu.coach, icon: Sparkles, requiredNiche: ['real_estate'], permission: 'agents' },
       ],
     },
     {
