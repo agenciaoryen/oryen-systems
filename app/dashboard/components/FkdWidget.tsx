@@ -161,11 +161,10 @@ export default function FkdWidget({ orgId, lang = 'pt' }: Props) {
 
         // Doer part 3: pending documents
         supabase
-          .from('org_documents')
+          .from('lead_documents')
           .select('id')
           .eq('org_id', orgId)
           .in('status', ['draft', 'ready', 'sent'])
-          .is('signed_at', null)
           .limit(20),
       ])
 

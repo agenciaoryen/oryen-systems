@@ -336,7 +336,8 @@ export default function FkdPage() {
           const seqRes = await fetch(`/api/prospection/sequences?org_id=${activeOrgId}`)
           if (seqRes.ok) {
             const seqData = await seqRes.json()
-            finderSeqCount = Array.isArray(seqData) ? seqData.filter((s: any) => s.is_active).length : 0
+            const seqList = seqData?.sequences || []
+            finderSeqCount = seqList.filter((s: any) => s.is_active).length
           }
         }
       } catch { /* Finder unavailable */ }
@@ -532,11 +533,10 @@ export default function FkdPage() {
 
         // Documentos pendentes
         supabase
-          .from('org_documents')
+          .from('lead_documents')
           .select('id, lead_id, name, status, sent_at, leads(id, name, nome_empresa)')
           .eq('org_id', activeOrgId)
           .in('status', ['draft', 'ready', 'sent'])
-          .is('signed_at', null)
           .order('sent_at', { ascending: false })
           .limit(10),
 
