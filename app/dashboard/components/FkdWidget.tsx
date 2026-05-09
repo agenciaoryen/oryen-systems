@@ -8,9 +8,9 @@ import { Rocket, Heart, CheckCircle2, ArrowRight, Zap } from 'lucide-react'
 const T = {
   pt: {
     title: 'Rotina Diária',
-    finder: 'Finder',
-    keeper: 'Keeper',
-    doer: 'Doer',
+    finder: 'Prospecção',
+    keeper: 'Relacionamento',
+    doer: 'Execução',
     finderDesc: 'Prospecção',
     keeperDesc: 'Relacionamento',
     doerDesc: 'Execução',
@@ -38,9 +38,9 @@ const T = {
   },
   es: {
     title: 'Rutina Diaria',
-    finder: 'Finder',
-    keeper: 'Keeper',
-    doer: 'Doer',
+    finder: 'Prospección',
+    keeper: 'Relaciones',
+    doer: 'Ejecución',
     finderDesc: 'Prospección',
     keeperDesc: 'Nutrición',
     doerDesc: 'Ejecución',

@@ -39,7 +39,6 @@ import {
   Shield,
   ShieldAlert,
   Plug,
-  Rocket,
   type LucideIcon
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
@@ -437,7 +436,6 @@ export default function Sidebar() {
         { href: '/dashboard/distribuicao', label: t.menu.distribution, icon: Shuffle, permission: 'distribution' },
         { href: '/dashboard/metas', label: t.menu.goals, icon: Target, permission: 'goals' },
         { href: '/dashboard/fkd', label: t.menu.fkd, icon: Zap, permission: 'crm' },
-        { href: '/dashboard/prospection', label: t.menu.prospection, icon: Rocket, requiredNiche: NICHES_WITH_PROSPECTION },
       ],
     },
     {
