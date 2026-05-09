@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth, useActiveOrgId } from '@/lib/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { formatLeadName } from '@/lib/format/leadName'
@@ -10,6 +10,8 @@ import {
   AlertTriangle, Calendar, Clock, FileText, DollarSign,
   MessageSquare, Users, Zap
 } from 'lucide-react'
+import KeeperTab from './components/KeeperTab'
+import DoerTab from './components/DoerTab'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRANSLATIONS
@@ -246,6 +248,36 @@ export default function FkdPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
+  // Action tracking (sessionStorage with daily auto-reset)
+  const [actionedToday, setActionedToday] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set<string>()
+    try {
+      const dateKey = new Date().toISOString().split('T')[0]
+      const stored = sessionStorage.getItem(`fkd_actioned_${activeOrgId}_${dateKey}`)
+      return stored ? new Set<string>(JSON.parse(stored)) : new Set<string>()
+    } catch { return new Set<string>() }
+  })
+
+  const persistActioned = (next: Set<string>) => {
+    setActionedToday(next)
+    try {
+      const dateKey = new Date().toISOString().split('T')[0]
+      sessionStorage.setItem(`fkd_actioned_${activeOrgId}_${dateKey}`, JSON.stringify([...next]))
+    } catch { /* noop */ }
+  }
+
+  const handleActioned = (leadId: string) => {
+    const next = new Set(actionedToday)
+    next.add(leadId)
+    persistActioned(next)
+  }
+
+  const handleDismiss = (leadId: string) => {
+    const next = new Set(actionedToday)
+    next.add(leadId)
+    persistActioned(next)
+  }
+
   // Finder data
   const [finderData, setFinderData] = useState<{
     taskCount: number
@@ -327,7 +359,7 @@ export default function FkdPage() {
         // 1. Follow-ups pendentes
         supabase
           .from('follow_up_queue')
-          .select('id, lead_id, attempt_number, max_attempts, next_attempt_at, last_conversation_summary, lead:leads(id, name, nome_empresa)')
+          .select('id, lead_id, attempt_number, max_attempts, next_attempt_at, last_conversation_summary, lead:leads(id, name, nome_empresa, phone)')
           .eq('org_id', activeOrgId)
           .in('status', ['pending', 'active'])
           .lte('next_attempt_at', now.toISOString())
@@ -347,7 +379,7 @@ export default function FkdPage() {
         // 3. Leads quentes esfriando (score >= 56, no update in 5d)
         supabase
           .from('leads')
-          .select('id, name, score_label, stage, updated_at')
+          .select('id, name, phone, score_label, stage, updated_at')
           .eq('org_id', activeOrgId)
           .gte('score', 56)
           .lt('updated_at', fiveDaysAgo)
@@ -357,7 +389,7 @@ export default function FkdPage() {
         // 4. Reengajamento (lost last 30d) — using closed_at or updated_at
         supabase
           .from('leads')
-          .select('id, name, stage, updated_at, total_em_vendas')
+          .select('id, name, phone, stage, updated_at, total_em_vendas')
           .eq('org_id', activeOrgId)
           .in('stage', ['lost', 'perdido', 'perdeu'])
           .gte('updated_at', thirtyDaysAgo)
@@ -367,7 +399,7 @@ export default function FkdPage() {
         // 5. Pedir indicação (won 60+d ago)
         supabase
           .from('leads')
-          .select('id, name, stage, updated_at, total_em_vendas')
+          .select('id, name, phone, stage, updated_at, total_em_vendas')
           .eq('org_id', activeOrgId)
           .in('stage', ['won', 'ganhou', 'ganho', 'fechado'])
           .lt('updated_at', sixtyDaysAgo)
@@ -380,6 +412,7 @@ export default function FkdPage() {
         id: f.id,
         leadId: f.lead_id,
         leadName: f.lead ? formatLeadName(f.lead) : 'Sem nome',
+        phone: f.lead?.phone || null,
         attempt: f.attempt_number,
         maxAttempts: f.max_attempts,
         nextAt: f.next_attempt_at,
@@ -420,29 +453,34 @@ export default function FkdPage() {
 
         const { data: leadNames } = await supabase
           .from('leads')
-          .select('id, name')
+          .select('id, name, phone')
           .eq('org_id', activeOrgId)
           .in('id', leadIds)
 
-        const nameMap = new Map((leadNames || []).map((l: any) => [l.id, l.name]))
+        const nameMap = new Map((leadNames || []).map((l: any) => [l.id, { name: l.name, phone: l.phone }]))
 
         const trulyNoResponse = Array.from(noRespLeads.entries()).filter(([leadId, msg]) => {
           const lastOut = latestOutbound.get(leadId)
           return !lastOut || lastOut < msg.created_at
         })
 
-        noResponse = trulyNoResponse.slice(0, 10).map(([leadId, msg]) => ({
-          leadId,
-          leadName: formatLeadName({ name: nameMap.get(leadId) || null }),
-          lastMsgAt: msg.created_at,
-          type: 'noresponse',
-        }))
+        noResponse = trulyNoResponse.slice(0, 10).map(([leadId, msg]) => {
+          const info = nameMap.get(leadId)
+          return {
+            leadId,
+            leadName: formatLeadName({ name: info?.name || null }),
+            phone: info?.phone || null,
+            lastMsgAt: msg.created_at,
+            type: 'noresponse',
+          }
+        })
       }
 
       // Process hot stale
       const hotStale = (hotStaleRes.data || []).slice(0, 10).map((l: any) => ({
         leadId: l.id,
         leadName: l.name,
+        phone: l.phone,
         stage: l.stage,
         score: l.score_label,
         updatedAt: l.updated_at,
@@ -453,6 +491,7 @@ export default function FkdPage() {
       const reengagement = (reengagementRes.data || []).map((l: any) => ({
         leadId: l.id,
         leadName: l.name,
+        phone: l.phone,
         value: l.total_em_vendas,
         updatedAt: l.updated_at,
         type: 'reengagement',
@@ -462,6 +501,7 @@ export default function FkdPage() {
       const referralAsk = (referralRes.data || []).map((l: any) => ({
         leadId: l.id,
         leadName: l.name,
+        phone: l.phone,
         value: l.total_em_vendas,
         updatedAt: l.updated_at,
         type: 'referral',
@@ -483,7 +523,7 @@ export default function FkdPage() {
         // Fechamentos em andamento
         supabase
           .from('leads')
-          .select('id, name, stage, total_em_vendas, updated_at')
+          .select('id, name, phone, stage, total_em_vendas, updated_at')
           .eq('org_id', activeOrgId)
           .in('stage', ['proposta', 'negociacao', 'fechamento', 'negotiation', 'proposal', 'closing'])
           .gt('total_em_vendas', 0)
@@ -522,6 +562,7 @@ export default function FkdPage() {
         deals: (dealsRes.data || []).map((d: any) => ({
           leadId: d.id,
           leadName: d.name,
+          phone: d.phone,
           stage: d.stage,
           value: d.total_em_vendas,
           updatedAt: d.updated_at,
@@ -625,255 +666,35 @@ export default function FkdPage() {
   // RENDER: Keeper Tab
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  const renderKeeper = () => {
-    const sections = [
-      {
-        key: 'followUps',
-        label: t.followUps,
-        icon: <Clock size={14} />,
-        color: '#f59e0b',
-        items: keeperSections.followUps,
-        renderItem: (item: any) => (
-          <a key={item.id} href={`/dashboard/crm/${item.leadId}`}
-            className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors hover:bg-white/5">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{item.leadName}</p>
-              <p className="text-[10px] truncate" style={{ color: 'var(--color-text-tertiary)' }}>
-                {t.attempt} {item.attempt}/{item.maxAttempts}
-                {item.summary ? ` · ${item.summary.slice(0, 60)}` : ''}
-              </p>
-            </div>
-            <ArrowRight size={12} className="flex-shrink-0 ml-2" style={{ color: 'var(--color-text-tertiary)' }} />
-          </a>
-        ),
-      },
-      {
-        key: 'noResponse',
-        label: t.noResponse,
-        icon: <MessageSquare size={14} />,
-        color: '#ef4444',
-        items: keeperSections.noResponse,
-        renderItem: (item: any) => (
-          <a key={item.leadId} href={`/dashboard/crm/${item.leadId}`}
-            className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors hover:bg-white/5">
-            <p className="text-xs font-medium truncate flex-1" style={{ color: 'var(--color-text-primary)' }}>{item.leadName}</p>
-            <ArrowRight size={12} className="flex-shrink-0 ml-2" style={{ color: 'var(--color-text-tertiary)' }} />
-          </a>
-        ),
-      },
-      {
-        key: 'hotStale',
-        label: t.hotStale,
-        icon: <AlertTriangle size={14} />,
-        color: '#f97316',
-        items: keeperSections.hotStale,
-        renderItem: (item: any) => (
-          <a key={item.leadId} href={`/dashboard/crm/${item.leadId}`}
-            className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors hover:bg-white/5">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{item.leadName}</p>
-              <p className="text-[10px]" style={{ color: 'var(--color-text-tertiary)' }}>
-                {item.score || t.stage}: {item.stage || '-'}
-              </p>
-            </div>
-            <ArrowRight size={12} className="flex-shrink-0 ml-2" style={{ color: 'var(--color-text-tertiary)' }} />
-          </a>
-        ),
-      },
-      {
-        key: 'reengagement',
-        label: t.reengagement,
-        icon: <Heart size={14} />,
-        color: '#8b5cf6',
-        items: keeperSections.reengagement,
-        renderItem: (item: any) => (
-          <a key={item.leadId} href={`/dashboard/crm/${item.leadId}`}
-            className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors hover:bg-white/5">
-            <p className="text-xs font-medium truncate flex-1" style={{ color: 'var(--color-text-primary)' }}>{item.leadName}</p>
-            <ArrowRight size={12} className="flex-shrink-0 ml-2" style={{ color: 'var(--color-text-tertiary)' }} />
-          </a>
-        ),
-      },
-      {
-        key: 'referralAsk',
-        label: t.referralAsk,
-        icon: <Users size={14} />,
-        color: '#06b6d4',
-        items: keeperSections.referralAsk,
-        renderItem: (item: any) => (
-          <a key={item.leadId} href={`/dashboard/crm/${item.leadId}`}
-            className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors hover:bg-white/5">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{item.leadName}</p>
-              {item.value > 0 && (
-                <p className="text-[10px]" style={{ color: 'var(--color-success)' }}>
-                  {formatPrice(item.value, userCurrency, locale)}
-                </p>
-              )}
-            </div>
-            <ArrowRight size={12} className="flex-shrink-0 ml-2" style={{ color: 'var(--color-text-tertiary)' }} />
-          </a>
-        ),
-      },
-    ]
-
-    const totalItems = sections.reduce((sum, s) => sum + s.items.length, 0)
-    if (totalItems === 0) {
-      return (
-        <div className="p-6 text-center">
-          <CheckCircle2 size={32} className="mx-auto mb-3" style={{ color: 'var(--color-success)' }} />
-          <p className="text-sm" style={{ color: 'var(--color-success)' }}>{t.allCleanKeeper}</p>
-        </div>
-      )
-    }
-
-    return (
-      <div className="space-y-5">
-        {sections.map((section) =>
-          section.items.length > 0 ? (
-            <div key={section.key}>
-              <div className="flex items-center gap-2 mb-2">
-                <span style={{ color: section.color }}>{section.icon}</span>
-                <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
-                  {section.label} <span style={{ color: section.color }}>({section.items.length})</span>
-                </p>
-              </div>
-              <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
-                {section.items.map(section.renderItem)}
-              </div>
-            </div>
-          ) : null
-        )}
-      </div>
-    )
-  }
+  const renderKeeper = () => (
+    <KeeperTab
+      sections={keeperSections}
+      orgId={activeOrgId || ''}
+      lang={lang}
+      actionedToday={actionedToday}
+      onActioned={handleActioned}
+      onDismiss={handleDismiss}
+    />
+  )
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // RENDER: Doer Tab
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  const renderDoer = () => {
-    const sections = [
-      {
-        key: 'visits',
-        label: t.todayVisits,
-        icon: <Calendar size={14} />,
-        color: '#0ea5e9',
-        items: doerSections.visits,
-        emptyMsg: t.noVisits,
-        renderItem: (item: any) => (
-          <a key={item.id} href={`/dashboard/crm/${item.leadId}`}
-            className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors hover:bg-white/5">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{item.leadName}</p>
-              <p className="text-[10px]" style={{ color: 'var(--color-text-tertiary)' }}>
-                {item.title || 'Visita'} {item.time ? `· ${new Date(item.time).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}` : ''}
-              </p>
-            </div>
-            <ArrowRight size={12} className="flex-shrink-0 ml-2" style={{ color: 'var(--color-text-tertiary)' }} />
-          </a>
-        ),
-        footerLink: '/dashboard/calendar',
-        footerLabel: t.viewCalendar,
-      },
-      {
-        key: 'deals',
-        label: t.dealsClosing,
-        icon: <DollarSign size={14} />,
-        color: '#10b981',
-        items: doerSections.deals,
-        emptyMsg: t.noDeals,
-        renderItem: (item: any) => (
-          <a key={item.leadId} href={`/dashboard/crm/${item.leadId}`}
-            className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors hover:bg-white/5">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{item.leadName}</p>
-              <p className="text-[10px]" style={{ color: 'var(--color-text-tertiary)' }}>{item.stage}</p>
-            </div>
-            <span className="text-xs font-bold flex-shrink-0 ml-2" style={{ color: 'var(--color-success)' }}>
-              {formatPrice(item.value, userCurrency, locale)}
-            </span>
-          </a>
-        ),
-      },
-      {
-        key: 'docs',
-        label: t.pendingDocs,
-        icon: <FileText size={14} />,
-        color: '#f59e0b',
-        items: doerSections.docs,
-        emptyMsg: t.noPendingDocs,
-        renderItem: (item: any) => (
-          <a key={item.id} href={`/dashboard/crm/${item.leadId}`}
-            className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors hover:bg-white/5">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{item.docName}</p>
-              <p className="text-[10px]" style={{ color: 'var(--color-text-tertiary)' }}>
-                {item.leadName} · {item.status}
-              </p>
-            </div>
-            <ArrowRight size={12} className="flex-shrink-0 ml-2" style={{ color: 'var(--color-text-tertiary)' }} />
-          </a>
-        ),
-        footerLink: '/dashboard/documents',
-        footerLabel: t.viewDocs,
-      },
-    ]
-
-    const totalItems = doerSections.visits.length + doerSections.deals.length + doerSections.docs.length
-    if (totalItems === 0 && doerSections.doneCount === 0) {
-      return (
-        <div className="p-6 text-center">
-          <CheckCircle2 size={32} className="mx-auto mb-3" style={{ color: 'var(--color-success)' }} />
-          <p className="text-sm" style={{ color: 'var(--color-success)' }}>{t.allCleanDoer}</p>
-        </div>
-      )
-    }
-
-    return (
-      <div className="space-y-5">
-        {/* Done today badge */}
-        {doerSections.doneCount > 0 && (
-          <div className="flex items-center gap-2 p-3 rounded-xl" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-            <CheckCircle2 size={16} style={{ color: 'var(--color-success)' }} />
-            <span className="text-xs font-medium" style={{ color: 'var(--color-success)' }}>
-              {doerSections.doneCount} {t.doneToday}
-            </span>
-          </div>
-        )}
-
-        {sections.map((section) => (
-          <div key={section.key}>
-            <div className="flex items-center gap-2 mb-2">
-              <span style={{ color: section.color }}>{section.icon}</span>
-              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
-                {section.label}
-                {section.items.length > 0 && (
-                  <span style={{ color: section.color }}> ({section.items.length})</span>
-                )}
-              </p>
-            </div>
-            {section.items.length > 0 ? (
-              <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
-                {section.items.map(section.renderItem)}
-              </div>
-            ) : (
-              <p className="text-xs px-1" style={{ color: 'var(--color-text-tertiary)' }}>{section.emptyMsg}</p>
-            )}
-            {section.footerLink && section.items.length > 0 && (
-              <a
-                href={section.footerLink}
-                className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-medium opacity-60 hover:opacity-100"
-                style={{ color: 'var(--color-text-secondary)' }}
-              >
-                {section.footerLabel} <ArrowRight size={10} />
-              </a>
-            )}
-          </div>
-        ))}
-      </div>
-    )
-  }
+  const renderDoer = () => (
+    <DoerTab
+      deals={doerSections.deals}
+      visits={doerSections.visits}
+      docs={doerSections.docs}
+      doneCount={doerSections.doneCount}
+      orgId={activeOrgId || ''}
+      lang={lang}
+      currency={userCurrency}
+      locale={locale}
+      actionedToday={actionedToday}
+      onMessageSent={handleActioned}
+    />
+  )
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // MAIN RENDER

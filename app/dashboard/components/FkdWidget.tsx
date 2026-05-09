@@ -101,7 +101,10 @@ export default function FkdWidget({ orgId, lang = 'pt' }: Props) {
       const now = new Date()
       const todayStr = now.toISOString().split('T')[0]
 
-      const [taskRes, followUpRes, visitRes, dealRes] = await Promise.all([
+      const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString()
+      const fiveDaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString()
+
+      const [taskRes, followUpRes, noRespRes, hotStaleRes, visitRes, dealRes, docRes] = await Promise.all([
         // Finder: count today's tasks and done
         supabase
           .from('prospection_tasks')
@@ -111,13 +114,31 @@ export default function FkdWidget({ orgId, lang = 'pt' }: Props) {
           .in('status', ['pending', 'in_progress', 'overdue', 'queued', 'done'])
           .limit(200),
 
-        // Keeper: count pending follow-ups due now
+        // Keeper part 1: pending follow-ups
         supabase
           .from('follow_up_queue')
           .select('id')
           .eq('org_id', orgId)
           .in('status', ['pending', 'active'])
           .lte('next_attempt_at', now.toISOString())
+          .limit(20),
+
+        // Keeper part 2: no-response leads (last user message 3d+ without response)
+        supabase
+          .from('sdr_messages')
+          .select('lead_id')
+          .eq('org_id', orgId)
+          .eq('role', 'user')
+          .lt('created_at', threeDaysAgo)
+          .limit(50),
+
+        // Keeper part 3: hot stale leads (score >= 56, no update 5d+)
+        supabase
+          .from('leads')
+          .select('id')
+          .eq('org_id', orgId)
+          .gte('score', 56)
+          .lt('updated_at', fiveDaysAgo)
           .limit(20),
 
         // Doer part 1: visits today
@@ -137,37 +158,54 @@ export default function FkdWidget({ orgId, lang = 'pt' }: Props) {
           .in('stage', ['proposta', 'negociacao', 'fechamento', 'negotiation', 'proposal', 'closing'])
           .gt('total_em_vendas', 0)
           .limit(20),
+
+        // Doer part 3: pending documents
+        supabase
+          .from('org_documents')
+          .select('id')
+          .eq('org_id', orgId)
+          .in('status', ['draft', 'ready', 'sent'])
+          .is('signed_at', null)
+          .limit(20),
       ])
 
       const tasks = taskRes.data || []
       const finderPending = tasks.filter((t: any) => t.status !== 'done').length
       const finderDone = tasks.filter((t: any) => t.status === 'done').length
       const finderTotal = finderPending + finderDone
-      const keeperTotal = (followUpRes.data || []).length
-      const doerTotal = (visitRes.data || []).length + (dealRes.data || []).length
+
+      // Keeper: dedup approximate — unique leads that need attention
+      const keeperItems = new Set<string>()
+      ;(followUpRes.data || []).forEach((f: any) => keeperItems.add(`f_${f.id}`))
+      const noRespLeads = new Set((noRespRes.data || []).map((m: any) => m.lead_id))
+      noRespLeads.forEach((id) => keeperItems.add(`nr_${id}`))
+      ;(hotStaleRes.data || []).forEach((l: any) => keeperItems.add(`hs_${l.id}`))
+      const keeperPending = keeperItems.size
+
+      const doerPending = (visitRes.data || []).length + (dealRes.data || []).length + (docRes.data || []).length
 
       const newRoles: RoleStatus[] = [
         {
           label: t.finder,
           desc: t.finderDesc,
           count: finderDone,
-          total: finderTotal,
+          total: finderTotal || 1,
           color: '#4F6FFF',
           icon: <Rocket size={14} />,
         },
         {
           label: t.keeper,
           desc: t.keeperDesc,
-          count: keeperTotal > 0 ? 0 : 1, // 0 pending = "done", >0 pending = "not done"
-          total: 1,
+          count: 0,
+          total: keeperPending || 1,
           color: '#EC4899',
           icon: <Heart size={14} />,
         },
         {
           label: t.doer,
           desc: t.doerDesc,
-          count: doerTotal > 0 ? 0 : 1,
-          total: 1,
+          count: 0,
+          total: doerPending || 1,
           color: '#10B981',
           icon: <CheckCircle2 size={14} />,
         },
@@ -190,7 +228,7 @@ export default function FkdWidget({ orgId, lang = 'pt' }: Props) {
 
   if (loading) return <Skeleton />
 
-  const allComplete = roles.every((r) => r.total === 0 || r.count >= r.total)
+  const allComplete = roles.every((r) => r.total <= 1 && r.count >= r.total)
 
   return (
     <div
@@ -215,7 +253,7 @@ export default function FkdWidget({ orgId, lang = 'pt' }: Props) {
       </div>
 
       {/* Complete state */}
-      {allComplete && roles.some((r) => r.total > 0) && (
+      {allComplete && !roles.every((r) => r.total <= 1) && (
         <div
           className="flex items-center gap-2 p-2.5 rounded-xl mb-3"
           style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}
@@ -231,7 +269,7 @@ export default function FkdWidget({ orgId, lang = 'pt' }: Props) {
       )}
 
       {/* Empty state */}
-      {roles.every((r) => r.total === 0) && (
+      {roles.every((r) => r.total <= 1) && (
         <p className="text-xs py-2" style={{ color: 'var(--color-text-tertiary)' }}>
           {t.empty}
         </p>
@@ -240,7 +278,7 @@ export default function FkdWidget({ orgId, lang = 'pt' }: Props) {
       {/* Role rows */}
       <div className="space-y-2">
         {roles
-          .filter((r) => r.total > 0)
+          .filter((r) => r.total > 1)
           .map((role) => (
             <Link
               key={role.label}
