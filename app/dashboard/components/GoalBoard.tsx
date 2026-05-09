@@ -347,28 +347,33 @@ export default function GoalBoard({ orgId, lang = 'pt', currency = 'BRL', hasFin
           ) : (
             <ul className="space-y-1.5">
               {hotLeads.map((lead) => (
-                <li key={lead.id} className="flex items-center justify-between text-xs">
-                  <span className="font-medium truncate mr-2" style={{ color: 'var(--color-text-primary)' }}>
-                    {lead.name || 'Sem nome'}
-                  </span>
-                  {lead.total_em_vendas && lead.total_em_vendas > 0 ? (
-                    <span className="flex-shrink-0 font-semibold" style={{ color: 'var(--color-success)' }}>
-                      {formatPrice(lead.total_em_vendas, currency, locale)}
+                <li key={lead.id}>
+                  <a
+                    href={`/dashboard/crm/${lead.id}`}
+                    className="flex items-center justify-between text-xs rounded-lg px-2 py-1.5 -mx-2 transition-colors hover:bg-white/5"
+                  >
+                    <span className="font-medium truncate mr-2" style={{ color: 'var(--color-text-primary)' }}>
+                      {lead.name || 'Sem nome'}
                     </span>
-                  ) : (
-                    <span
-                      className="flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium"
-                      style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)' }}
-                    >
-                      {lead.stage || 'lead'}
-                    </span>
-                  )}
+                    {lead.total_em_vendas && lead.total_em_vendas > 0 ? (
+                      <span className="flex-shrink-0 font-semibold" style={{ color: 'var(--color-success)' }}>
+                        {formatPrice(lead.total_em_vendas, currency, locale)}
+                      </span>
+                    ) : (
+                      <span
+                        className="flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium"
+                        style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)' }}
+                      >
+                        {lead.stage || 'lead'}
+                      </span>
+                    )}
+                  </a>
                 </li>
               ))}
             </ul>
           )}
           <a
-            href="/dashboard/leads"
+            href="/dashboard/crm"
             className="inline-flex items-center gap-1 mt-2 text-[10px] font-medium opacity-60 hover:opacity-100 transition-opacity"
             style={{ color: 'var(--color-text-secondary)' }}
           >
