@@ -1133,10 +1133,11 @@ export default function CrmPage() {
         onImport={() => router.push('/dashboard/crm/import')}
       />}
 
-      {/* Advanced filters popover */}
-      {!isMobile && (
-        <FilterPopover
+      {/* Advanced filters popover / mobile drawer */}
+      <FilterPopover
           open={filterPopoverOpen}
+          isMobile={isMobile}
+          onClose={() => setFilterPopoverOpen(false)}
           daysFilter={daysFilter}
           onDaysFilterChange={setDaysFilter}
           filterAssigned={filterAssigned}
@@ -1167,7 +1168,6 @@ export default function CrmPage() {
             sourceOptions: ['Site', 'Instagram', 'Indicação', 'Meta Ads', '+3'],
           }}
         />
-      )}
 
       {/* Tag filter — kept outside header for mobile access */}
       {selectedTags.length > 0 && (
