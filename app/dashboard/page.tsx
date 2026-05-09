@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/format'
 import NoOrganizationState from './components/NoOrganizationState'
 import DailyPriorities from './components/DailyPriorities'
 import GoalBoard from './components/GoalBoard'
+import FkdWidget from './components/FkdWidget'
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -866,7 +867,8 @@ export default function DashboardPage() {
 
         {/* Prioridades do Dia */}
         {activeOrgId && (
-          <div className="col-span-12">
+          <div className="col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <FkdWidget orgId={activeOrgId} lang={userLang} />
             <DailyPriorities orgId={activeOrgId} lang={userLang} orgNiche={(activeOrg as any)?.niche} />
           </div>
         )}
