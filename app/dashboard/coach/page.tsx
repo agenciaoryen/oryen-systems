@@ -16,6 +16,7 @@ const T = {
     retry: 'Tentar novamente',
     inputPlaceholder: 'Converse com seu coach...',
     coachTyping: 'Coach está escrevendo...',
+    unavailable: 'O Oryen Coach está disponível apenas para o nicho imobiliário.',
   },
   en: {
     title: 'Oryen Coach',
@@ -25,6 +26,7 @@ const T = {
     retry: 'Retry',
     inputPlaceholder: 'Talk to your coach...',
     coachTyping: 'Coach is typing...',
+    unavailable: 'Oryen Coach is only available for the real estate niche.',
   },
   es: {
     title: 'Oryen Coach',
@@ -34,6 +36,7 @@ const T = {
     retry: 'Reintentar',
     inputPlaceholder: 'Habla con tu coach...',
     coachTyping: 'El coach está escribiendo...',
+    unavailable: 'Oryen Coach solo está disponible para el nicho inmobiliario.',
   },
 }
 
@@ -47,10 +50,28 @@ interface CoachMessage {
 }
 
 export default function CoachPage() {
-  const { user } = useAuth()
+  const { user, activeOrg } = useAuth()
   const orgId = useActiveOrgId()
   const lang = (user?.language as 'pt' | 'en' | 'es') || 'pt'
   const t = T[lang]
+
+  // Only available for real_estate niche
+  const niche = (activeOrg as any)?.niche
+  if (niche && niche !== 'real_estate') {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div
+            className="inline-flex p-3 rounded-2xl mb-4"
+            style={{ background: 'linear-gradient(135deg, rgba(79, 111, 255, 0.12), rgba(139, 92, 246, 0.12))' }}
+          >
+            <Sparkles size={28} style={{ color: '#4F6FFF' }} />
+          </div>
+          <p className="text-sm max-w-xs" style={{ color: 'var(--color-text-tertiary)' }}>{t.unavailable}</p>
+        </div>
+      </div>
+    )
+  }
 
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<CoachMessage[]>([])

@@ -100,6 +100,16 @@ export async function GET(req: NextRequest) {
     const conversationId = searchParams.get('id')
     const userLang = searchParams.get('lang') || 'pt'
 
+    // Niche gate — coach only available for real_estate
+    const { data: orgCheck } = await supabaseAdmin
+      .from('orgs')
+      .select('niche')
+      .eq('id', orgId)
+      .single()
+    if (orgCheck?.niche && orgCheck.niche !== 'real_estate') {
+      return NextResponse.json({ error: 'Coach not available for this niche' }, { status: 403 })
+    }
+
     // Return specific conversation with messages
     if (conversationId) {
       const [{ data: conversation }, { data: messages }] = await Promise.all([

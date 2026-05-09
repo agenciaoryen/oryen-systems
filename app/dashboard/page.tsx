@@ -871,7 +871,7 @@ export default function DashboardPage() {
           <div className="col-span-12 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
             <FkdWidget orgId={activeOrgId} lang={userLang} />
             <DailyPriorities orgId={activeOrgId} lang={userLang} orgNiche={(activeOrg as any)?.niche} />
-            <CoachWidget orgId={activeOrgId} userId={user?.id} lang={userLang} />
+            <CoachWidget orgId={activeOrgId} userId={user?.id} lang={userLang} niche={(activeOrg as any)?.niche} />
           </div>
         )}
 

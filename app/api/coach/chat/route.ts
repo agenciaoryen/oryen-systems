@@ -54,6 +54,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'message required' }, { status: 400 })
     }
 
+    // Niche gate — coach only available for real_estate
+    const { data: orgCheck } = await supabaseAdmin
+      .from('orgs')
+      .select('niche')
+      .eq('id', orgId)
+      .single()
+    if (orgCheck?.niche && orgCheck.niche !== 'real_estate') {
+      return NextResponse.json({ error: 'Coach not available for this niche' }, { status: 403 })
+    }
+
     // 1. Load/create conversation
     const conversation = await getOrCreateConversation(orgId, auth.userId, conversation_id)
 

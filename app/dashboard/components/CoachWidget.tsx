@@ -32,6 +32,7 @@ interface Props {
   orgId: string
   userId?: string
   lang?: 'pt' | 'en' | 'es'
+  niche?: string | null
 }
 
 interface CoachMessage {
@@ -57,12 +58,15 @@ function Skeleton() {
   )
 }
 
-export default function CoachWidget({ orgId, userId, lang = 'pt' }: Props) {
+export default function CoachWidget({ orgId, userId, lang = 'pt', niche }: Props) {
   const [latestMessage, setLatestMessage] = useState<CoachMessage | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
   const t = T[lang]
+
+  // Only available for real_estate niche
+  if (niche && niche !== 'real_estate') return null
 
   const loadData = useCallback(async () => {
     if (!orgId) return
