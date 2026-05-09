@@ -40,6 +40,8 @@ import CustomSelect from '@/app/dashboard/components/CustomSelect'
 import { PipelineHeader } from './components/PipelineHeader'
 import { PipelineColumn } from './components/PipelineColumn'
 import { PipelineCard } from './components/PipelineCard'
+import { FilterPopover } from './components/FilterPopover'
+import { PipelineMobileV3 } from './components/PipelineMobileV3'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -470,7 +472,24 @@ export default function CrmPage() {
 
   // Estados de UI — defaults lidos da URL pra preservar filtros ao voltar do perfil do lead
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<'list' | 'pipeline'>(() => (searchParams.get('view') === 'list' ? 'list' : 'pipeline'))
+  const [viewMode, setViewMode] = useState<'list' | 'pipeline'>(() => {
+    const view = searchParams.get('view')
+    return view === 'list' ? 'list' : 'pipeline'
+  })
+
+  // Density preset (persiste em localStorage)
+  const [density, setDensity] = useState<'compact' | 'balanced' | 'detailed'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('oryen.pipeline.density') as any) ?? 'balanced'
+    }
+    return 'balanced'
+  })
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Filter popover visibility
+  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false)
   const [daysFilter, setDaysFilter] = useState(() => searchParams.get('days') || '30')
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '')
   const [selectedTags, setSelectedTags] = useState<string[]>(() => {
@@ -483,6 +502,7 @@ export default function CrmPage() {
     const raw = searchParams.get('ai')
     return raw === 'active' || raw === 'paused' ? raw : 'all'
   })
+  const [tempFilter, setTempFilter] = useState<'all' | 'hot' | 'warm' | 'cold'>('all')
   const [filterAssigned, setFilterAssigned] = useState<string>(() => searchParams.get('who') || 'all')
   const [filterNicho, setFilterNicho] = useState<string>(() => searchParams.get('nicho') || 'all')
   const [nichoOptions, setNichoOptions] = useState<string[]>([])  // populado só pra ai_agency
@@ -540,6 +560,20 @@ export default function CrmPage() {
     }
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
+  // Persistir density no localStorage
+  useEffect(() => {
+    localStorage.setItem('oryen.pipeline.density', density)
+  }, [density])
+
+  // Mobile detection
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
   }, [])
 
   // ─── FILTRO DE DATA ───
@@ -814,6 +848,27 @@ export default function CrmPage() {
     aiPaused: leads.filter(l => l.conversa_finalizada === true).length,
   }
 
+  // Contagens por temperatura (para o segmented control do header)
+  const tempCounts = useMemo(() => ({
+    hot: leads.filter(l => l.score_label === 'hot').length,
+    warm: leads.filter(l => l.score_label === 'warm').length,
+    cold: leads.filter(l => l.score_label === 'cold').length,
+    total: totalPipelineCount,
+  }), [leads, totalPipelineCount])
+
+  // Contagem de filtros avançados ativos
+  const activeFilterCount = useMemo(() => {
+    let count = 0
+    if (daysFilter !== '30') count++
+    if (filterAssigned !== 'all') count++
+    if (aiFilter !== 'all') count++
+    if (filterNicho !== 'all') count++
+    return count
+  }, [daysFilter, filterAssigned, aiFilter, filterNicho])
+
+  // Mapeamento viewMode para o header (list/kanban)
+  const headerViewMode = viewMode === 'list' ? 'list' as const : 'kanban' as const
+
   // Soma por stage também vem do banco (via RPC). Alias pra manter o render simples.
   const pipelineSums = stageSums
 
@@ -1033,7 +1088,7 @@ export default function CrmPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-4.5rem)] text-text-primary font-body" style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-primary)' }}>
 
-      {/* HEADER */}
+      {/* HEADER v3: layered filters */}
       <PipelineHeader
         titleLeft="Pipeline"
         titleRight="Negócios"
@@ -1046,201 +1101,128 @@ export default function CrmPage() {
             highlight: true,
           },
         ]}
+        search={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder={t.searchPlaceholder}
+        tempFilter={tempFilter}
+        onTempFilterChange={setTempFilter}
+        tempCounts={tempCounts}
+        density={density}
+        onDensityChange={setDensity}
+        viewMode={headerViewMode}
+        onViewModeChange={(v) => setViewMode(v === 'list' ? 'list' : 'pipeline')}
+        activeFilterCount={activeFilterCount}
+        filterPopoverOpen={filterPopoverOpen}
+        onToggleFilterPopover={() => setFilterPopoverOpen(prev => !prev)}
         primaryAction={{
           label: t.newLead,
           icon: Plus,
           onClick: () => setIsModalOpen(true),
         }}
-        secondaryActions={[
-          { label: t.importCsv, icon: Upload, onClick: () => router.push('/dashboard/crm/import') },
-          {
-            label: isFullscreen ? t.exitFullscreen : t.fullscreen,
-            icon: isFullscreen ? Minimize2 : Maximize2,
-            onClick: toggleFullscreen,
-          },
-        ]}
+        secondaryActions={[]}
+        newLeadLabel={t.newLead}
+        fullscreenLabel={t.fullscreen}
+        exitFullscreenLabel={t.exitFullscreen}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        listViewLabel={t.listView}
+        kanbanViewLabel={t.pipelineView}
+        densityLabels={{ compact: 'Compacto', balanced: 'Equilibrado', detailed: 'Detalhado' }}
+        tempLabels={{ all: 'Todos', hot: 'Quentes', warm: 'Mornos', cold: 'Frios' }}
+        filtersLabel="Filtros"
+        onImport={() => router.push('/dashboard/crm/import')}
       />
 
-      {/* TOOLBAR — busca + filtros */}
-      <div className="flex items-center gap-2 px-4 md:px-6 py-3 border-b border-border-subtle flex-wrap">
-        {/* Busca */}
-        <div className="relative flex-1 min-w-[140px] md:min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--color-text-muted)' }} />
-          <input
-            type="text"
-            placeholder={t.searchPlaceholder}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-sm rounded-lg pl-9 pr-8 py-2 outline-none transition-all"
-            style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-            onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-border-focus)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 122, 230, 0.1)' }}
-            onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
+      {/* Advanced filters popover */}
+      {!isMobile && (
+        <FilterPopover
+          open={filterPopoverOpen}
+          daysFilter={daysFilter}
+          onDaysFilterChange={setDaysFilter}
+          filterAssigned={filterAssigned}
+          onFilterAssignedChange={setFilterAssigned}
+          teamMembers={teamMembers}
+          aiFilter={aiFilter}
+          onAiFilterChange={(v) => setAiFilter(v as 'all' | 'active' | 'paused')}
+          isAiAgency={isAiAgency}
+          filterNicho={filterNicho}
+          onFilterNichoChange={setFilterNicho}
+          nichoOptions={nichoOptions}
+          hasUnassignedNicho={hasUnassignedNicho}
+          labels={{
+            period: 'Período',
+            days7: t.days7,
+            days30: t.days30,
+            days90: t.days90,
+            daysAll: t.daysAll,
+            assigned: 'Responsável',
+            all: t.allBrokers,
+            unassigned: t.unassigned,
+            source: 'Origem',
+            nicheTagsAi: 'Nicho · Tags · IA',
+            allNichos: t.allNichos,
+            aiActive: t.aiActiveOnly,
+            aiPaused: t.aiPausedOnly,
+            staleLead: 'Lead parado',
+            sourceOptions: ['Site', 'Instagram', 'Indicação', 'Meta Ads', '+3'],
+          }}
+        />
+      )}
 
-        {/* Filtro de Tags */}
-        <div className="relative">
-          <button
-            onClick={() => setIsTagFilterOpen(!isTagFilterOpen)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all"
-            style={selectedTags.length > 0
-              ? { background: 'var(--color-primary-subtle)', border: '1px solid rgba(90, 122, 230, 0.3)', color: 'var(--color-primary)' }
-              : { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }
-            }
-          >
-            <Filter size={14} />
-            <span className="hidden sm:inline">{t.filterByTags}</span>
-            {selectedTags.length > 0 && (
-              <span className="text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center" style={{ background: 'var(--color-primary)', color: '#fff' }}>
-                {selectedTags.length}
+      {/* Tag filter — kept outside header for mobile access */}
+      {selectedTags.length > 0 && (
+        <div className="flex items-center gap-2 px-4 md:px-6 py-2 border-b border-border-subtle">
+          <span className="text-xs text-text-tertiary">Tags:</span>
+          {selectedTags.map(tagId => {
+            const tag = tags.find(t => t.id === tagId)
+            if (!tag) return null
+            const color = getTagColor(tag.color)
+            return (
+              <span key={tag.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] border"
+                style={{ background: color.bg, color: color.text, borderColor: color.border }}>
+                {tag.name}
+                <button onClick={() => setSelectedTags(prev => prev.filter(id => id !== tagId))}>
+                  <X size={10} />
+                </button>
               </span>
-            )}
-            <ChevronDown size={14} className={`transition-transform ${isTagFilterOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {isTagFilterOpen && (
-            <div className="fixed inset-x-4 bottom-4 sm:absolute sm:inset-x-auto sm:bottom-auto sm:top-full sm:right-0 sm:mt-2 sm:w-56 rounded-xl shadow-2xl z-50 overflow-hidden" style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
-              <div className="p-2 flex justify-between items-center" style={{ borderBottom: '1px solid var(--color-border)' }}>
-                <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>{t.filterByTags}</span>
-                {selectedTags.length > 0 && (
-                  <button
-                    onClick={() => setSelectedTags([])}
-                    className="text-[10px]"
-                    style={{ color: 'var(--color-primary)' }}
-                  >
-                    {t.clearFilters}
-                  </button>
-                )}
-              </div>
-              <div className="max-h-[60vh] sm:max-h-[200px] overflow-y-auto p-2 space-y-1">
-                {tags.length === 0 ? (
-                  <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>Nenhuma tag criada</p>
-                ) : (
-                  tags.map(tag => {
-                    const isSelected = selectedTags.includes(tag.id)
-                    const color = getTagColor(tag.color)
-                    return (
-                      <button
-                        key={tag.id}
-                        onClick={() => {
-                          setSelectedTags(prev =>
-                            isSelected
-                              ? prev.filter(id => id !== tag.id)
-                              : [...prev, tag.id]
-                          )
-                        }}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all"
-                        style={{ background: isSelected ? 'var(--color-bg-hover)' : 'transparent' }}
-                      >
-                        <span className="w-2 h-2 rounded-full" style={{ background: color.dot }} />
-                        <span className="truncate flex-1 text-left" style={{ color: 'var(--color-text-secondary)' }}>{tag.name}</span>
-                        {isSelected && (
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: 'var(--color-primary)' }}>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </button>
-                    )
-                  })
-                )}
-              </div>
-            </div>
-          )}
+            )
+          })}
+          <button onClick={() => setSelectedTags([])} className="text-[10px] text-text-tertiary hover:text-text-primary">{t.clearFilters}</button>
         </div>
-
-        {/* Filtro de Dias */}
-        <div className="w-32">
-          <CustomSelect
-            value={daysFilter}
-            onChange={(v) => setDaysFilter(v)}
-            options={[
-              { value: '7', label: t.days7 },
-              { value: '30', label: t.days30 },
-              { value: '90', label: t.days90 },
-              { value: 'all', label: t.daysAll },
-            ]}
-          />
-        </div>
-
-        {/* Filtro de Responsável */}
-        {teamMembers.length > 0 && (
-          <div className="w-40">
-            <CustomSelect
-              value={filterAssigned}
-              onChange={(v) => setFilterAssigned(v)}
-              options={[
-                { value: 'all', label: t.allBrokers },
-                { value: 'unassigned', label: t.unassigned },
-                ...teamMembers.map(m => ({ value: m.id, label: m.full_name }))
-              ]}
-            />
-          </div>
-        )}
-
-        {/* Filtro de Nicho — apenas pra org do tipo ai_agency */}
-        {isAiAgency && (nichoOptions.length > 0 || hasUnassignedNicho) && (
-          <div className="w-40">
-            <CustomSelect
-              value={filterNicho}
-              onChange={(v) => setFilterNicho(v)}
-              options={[
-                { value: 'all', label: t.allNichos },
-                ...(hasUnassignedNicho ? [{ value: '__unassigned__', label: t.nichoUnassigned }] : []),
-                ...nichoOptions.map(n => ({ value: n, label: n })),
-              ]}
-            />
-          </div>
-        )}
-
-        {/* Refresh */}
-        <button
-          onClick={() => loadAllStagesData(pipelineStages)}
-          disabled={loading}
-          className="p-2 rounded-lg transition-colors disabled:opacity-50"
-          style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
-          title={t.refresh}
-        >
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-        </button>
-
-        {/* Toggle View */}
-        <div className="flex rounded-lg p-1" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-              viewMode === 'list' ? 'shadow-sm' : ''
-            }`}
-            style={viewMode === 'list' ? { background: 'var(--color-bg-surface)', color: 'var(--color-text-primary)' } : { color: 'var(--color-text-tertiary)' }}
-            title={t.listView}
-          >
-            <List size={14} />
-            <span className="hidden md:inline">{t.listView}</span>
-          </button>
-          <button
-            onClick={() => setViewMode('pipeline')}
-            className={`flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-              viewMode === 'pipeline' ? 'shadow-sm' : ''
-            }`}
-            style={viewMode === 'pipeline' ? { background: 'var(--color-bg-surface)', color: 'var(--color-text-primary)' } : { color: 'var(--color-text-tertiary)' }}
-            title={t.pipelineView}
-          >
-            <LayoutGrid size={14} />
-            <span className="hidden md:inline">{t.pipelineView}</span>
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* MAIN */}
-      <main className="flex-1 overflow-hidden relative p-3 md:p-6">
+      <main className="flex-1 overflow-hidden relative p-0 md:p-6">
+        {/* Mobile: PipelineMobileV3 */}
+        {isMobile && viewMode === 'pipeline' && (
+          <PipelineMobileV3
+            stages={pipelineStages}
+            stageLeads={stageLeads}
+            stageCounts={stageCounts}
+            stageSums={stageSums}
+            leadTags={leadTags}
+            tags={tags}
+            density={density}
+            userCurrency={userCurrency}
+            onOpenLead={(id) => router.push(`/dashboard/crm/${id}`)}
+            onAddLead={() => setIsModalOpen(true)}
+            syncedLabel={t.synced}
+            totalLeads={totalPipelineCount}
+            totalValueFormatted={formatPrice(totalPipelineValue, userCurrency)}
+            filterCount={activeFilterCount}
+            onOpenFilters={() => setFilterPopoverOpen(true)}
+            labels={{
+              pipeline: 'Pipeline',
+              negócios: 'Negócios',
+              filters: 'Filtros',
+              noLeads: t.noLeadsStage,
+              add: t.newLead,
+            }}
+          />
+        )}
+
+        {/* Desktop: Lista + Kanban */}
+        {!isMobile && (<>
         {/* Loading */}
         {loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-50" style={{ background: 'var(--color-bg-base)' }}>
@@ -1399,23 +1381,21 @@ export default function CrmPage() {
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, stage.name)}
                 >
-                  {(stageLeads[stage.name] || []).map((lead) => (
+                  {(stageLeads[stage.name] || []).filter(lead => {
+                    if (tempFilter === 'all') return true
+                    return lead.score_label === tempFilter
+                  }).map((lead) => (
                     <PipelineCard
                       key={lead.id}
                       lead={lead}
                       leadTags={leadTags}
                       tags={tags}
-                      cardFields={cardFields}
-                      cardShowStale={cardShowStale}
-                      cardShowAiStatus={cardShowAiStatus}
-                      userLang={userLang}
+                      density={density}
                       userCurrency={userCurrency}
-                      userTimezone={userTimezone}
                       onClick={() => router.push(`/dashboard/crm/${lead.id}`)}
                       onDragStart={() => setDraggedLeadId(lead.id)}
                       onDragEnd={() => setDraggedLeadId(null)}
                       isDragging={draggedLeadId === lead.id}
-                      translations={t}
                     />
                   ))}
                   {/* Sentinela de infinite scroll */}
@@ -1440,125 +1420,9 @@ export default function CrmPage() {
             </div>
           </div>
         )}
+        </>)}
       </main>
 
-      {/* FOOTER - ESTILO TRELLO */}
-      <footer className="shrink-0 px-4 md:px-6 py-2.5 pr-24 md:pr-28" style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-bg-surface)' }}>
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          {/* Estatísticas */}
-          <div className="flex items-center gap-4 md:gap-6">
-            {/* Total de Leads */}
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg" style={{ background: 'var(--color-primary-subtle)' }}>
-                <Users size={14} style={{ color: 'var(--color-primary)' }} />
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>{t.totalLeads}</p>
-                <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.totalLeads}</p>
-              </div>
-            </div>
-
-            {/* Valor Total */}
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg" style={{ background: 'var(--color-success-subtle)' }}>
-                <TrendingUp size={14} style={{ color: 'var(--color-success)' }} />
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>{t.totalValue}</p>
-                <p className="text-sm font-bold font-mono" style={{ color: 'var(--color-success)' }}>
-                  {formatPrice(stats.totalValue, userCurrency, userLang)}
-                </p>
-              </div>
-            </div>
-
-            {/* Separador */}
-            <div className="hidden md:block w-px h-8" style={{ background: 'var(--color-border)' }} />
-
-            {/* IA Ativa */}
-            <div className="hidden md:flex items-center gap-2">
-              <div className="p-1.5 rounded-lg" style={{ background: 'var(--color-success-subtle)' }}>
-                <Play size={14} style={{ color: 'var(--color-success)' }} />
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>{t.aiActive}</p>
-                <p className="text-sm font-bold" style={{ color: 'var(--color-success)' }}>{stats.aiActive}</p>
-              </div>
-            </div>
-
-            {/* IA Pausada */}
-            <div className="hidden md:flex items-center gap-2">
-              <div className="p-1.5 rounded-lg" style={{ background: 'var(--color-accent-subtle)' }}>
-                <Pause size={14} style={{ color: 'var(--color-accent)' }} />
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>{t.aiPaused}</p>
-                <p className="text-sm font-bold" style={{ color: 'var(--color-accent)' }}>{stats.aiPaused}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Ações do Footer */}
-          <div className="flex items-center gap-2">
-            {/* Filtro de IA */}
-            <div className="flex rounded-lg p-0.5" style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)' }}>
-              <button
-                onClick={() => setAiFilter('all')}
-                className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${
-                  aiFilter === 'all'
-                    ? 'shadow-sm'
-                    : ''
-                }`}
-                style={aiFilter === 'all' ? { background: 'var(--color-bg-surface)', color: 'var(--color-text-primary)' } : { color: 'var(--color-text-tertiary)' }}
-              >
-                {t.allLeads}
-              </button>
-              <button
-                onClick={() => setAiFilter('active')}
-                className="px-2.5 py-1 rounded-md text-[10px] font-medium transition-all flex items-center gap-1"
-                style={aiFilter === 'active'
-                  ? { background: 'var(--color-success-subtle)', color: 'var(--color-success)' }
-                  : { color: 'var(--color-text-muted)' }
-                }
-              >
-                <Play size={10} />
-                <span className="hidden sm:inline">{t.aiActiveOnly}</span>
-              </button>
-              <button
-                onClick={() => setAiFilter('paused')}
-                className="px-2.5 py-1 rounded-md text-[10px] font-medium transition-all flex items-center gap-1"
-                style={aiFilter === 'paused'
-                  ? { background: 'var(--color-accent-subtle)', color: 'var(--color-accent)' }
-                  : { color: 'var(--color-text-muted)' }
-                }
-              >
-                <Pause size={10} />
-                <span className="hidden sm:inline">{t.aiPausedOnly}</span>
-              </button>
-            </div>
-
-            {/* Tela Cheia */}
-            <button
-              onClick={toggleFullscreen}
-              className="p-2 rounded-lg transition-colors"
-              style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
-              title={isFullscreen ? t.exitFullscreen : t.fullscreen}
-            >
-              {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-            </button>
-
-            {/* Refresh */}
-            <button
-              onClick={() => loadAllStagesData(pipelineStages)}
-              disabled={loading}
-              className="p-2 rounded-lg transition-colors disabled:opacity-50"
-              style={{ background: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
-              title={t.refresh}
-            >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            </button>
-          </div>
-        </div>
-      </footer>
 
       {/* MODAL CRIAR LEAD */}
       {isModalOpen && (

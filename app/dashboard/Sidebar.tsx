@@ -40,6 +40,7 @@ import {
   Shield,
   ShieldAlert,
   Plug,
+  HelpCircle,
   type LucideIcon
 } from 'lucide-react'
 import { useTheme } from '@/lib/ThemeContext'
@@ -79,6 +80,7 @@ const TRANSLATIONS = {
       mySite: 'Meu Site',
       settings: 'Configurações',
       integrations: 'Integrações',
+      help: 'Ajuda & suporte',
       staffPanel: 'Painel Staff',
     },
     sections: {
@@ -126,6 +128,7 @@ const TRANSLATIONS = {
       mySite: 'My Site',
       settings: 'Settings',
       integrations: 'Integrations',
+      help: 'Help & support',
       staffPanel: 'Staff Panel',
     },
     sections: {
@@ -173,6 +176,7 @@ const TRANSLATIONS = {
       mySite: 'Mi Sitio',
       settings: 'Configuración',
       integrations: 'Integraciones',
+      help: 'Ayuda & soporte',
       staffPanel: 'Panel Staff',
     },
     sections: {
@@ -231,6 +235,7 @@ interface SidebarItem {
   isComingSoon?: boolean
   requiredNiche?: string[]
   permission?: PermissionModule
+  onClick?: () => void
 }
 
 interface SidebarGroup {
@@ -485,6 +490,7 @@ export default function Sidebar() {
     {
       key: 'config',
       items: [
+        { href: '#', label: t.menu.help || 'Ajuda & suporte', icon: HelpCircle, onClick: () => window.open('https://wa.me/5551998388409', '_blank', 'noopener,noreferrer') },
         { href: '/dashboard/integrations', label: t.menu.integrations, icon: Plug },
         { href: '/dashboard/settings', label: t.menu.settings, icon: Settings },
       ],
@@ -719,6 +725,29 @@ export default function Sidebar() {
                   {group.items.map((link) => {
                     const isActive = pathname === link.href
                     const Icon = link.icon
+                    const isHelpLink = !!link.onClick
+
+                    // Item com onClick custom (ex: Ajuda & suporte → WhatsApp)
+                    if (isHelpLink) {
+                      return (
+                        <button
+                          key={link.href}
+                          onClick={() => {
+                            link.onClick?.()
+                            setIsMobileOpen(false)
+                          }}
+                          className="flex items-center justify-between w-full rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-200 group border border-transparent text-left"
+                          style={{ color: 'var(--color-text-tertiary)' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)' }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' }}
+                        >
+                          <div className="flex items-center gap-3 truncate">
+                            <Icon size={18} style={{ color: 'var(--color-text-muted)' }} />
+                            <span className="truncate">{link.label}</span>
+                          </div>
+                        </button>
+                      )
+                    }
 
                     return (
                       <Link
