@@ -13,6 +13,7 @@ import {
   t,
   tFeatures
 } from '@/lib/agents'
+import { getAgentProfile, COACH_PROFILE } from '@/lib/agents/profiles'
 import type { AgentSolution, Agent, Language } from '@/lib/agents/types'
 import { usePlan, planHasAgent, getMinPlanForAgent, PLAN_CONFIGS, type PlanConfig } from '@/lib/usePlan'
 import { toast } from 'sonner'
@@ -113,7 +114,11 @@ const UI = {
     availableIn: 'A partir do plano',
     planLimit: 'Limite do plano',
     unlimited: 'Ilimitado',
-    ofPlan: 'do plano'
+    ofPlan: 'do plano',
+    coachActive: 'Sempre disponível',
+    coachOpen: 'Conversar',
+    coachPaused: 'Disponível apenas para imobiliárias',
+    coachDesc: 'Análise personalizada da sua operação com base nos seus dados do CRM',
   },
   en: {
     title: 'AI Agents',
@@ -155,7 +160,11 @@ const UI = {
     availableIn: 'Starting from plan',
     planLimit: 'Plan limit',
     unlimited: 'Unlimited',
-    ofPlan: 'of plan'
+    ofPlan: 'of plan',
+    coachActive: 'Always available',
+    coachOpen: 'Talk',
+    coachPaused: 'Available for real estate only',
+    coachDesc: 'Personalized analysis of your operation based on your CRM data',
   },
   es: {
     title: 'Agentes de IA',
@@ -197,7 +206,11 @@ const UI = {
     availableIn: 'A partir del plan',
     planLimit: 'Límite del plan',
     unlimited: 'Ilimitado',
-    ofPlan: 'del plan'
+    ofPlan: 'del plan',
+    coachActive: 'Siempre disponible',
+    coachOpen: 'Hablar',
+    coachPaused: 'Disponible solo para inmobiliarias',
+    coachDesc: 'Análisis personalizado de tu operación basado en tus datos del CRM',
   }
 }
 
@@ -259,6 +272,7 @@ function AgentCard({
 }) {
   const solution = agent.solution
   const Icon = SOLUTION_ICONS[agent.solution_slug] || Bot
+  const profile = getAgentProfile(agent.solution_slug)
   const usage = getAgentPlanUsage(agent, planConfig, realUsage, ui)
   const isActive = agent.status === 'active'
   const isUnlimited = usage.limit === -1
@@ -280,20 +294,34 @@ function AgentCard({
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center"
+          {/* Avatar */}
+          <div className="w-12 h-12 rounded-full overflow-hidden shrink-0"
             style={{
-              background: isActive ? 'var(--color-primary-subtle)' : 'var(--color-accent-subtle)',
-              color: isActive ? 'var(--color-primary)' : 'var(--color-accent)',
+              boxShadow: isActive ? '0 0 0 2px var(--color-success-subtle)' : '0 0 0 2px var(--color-accent-subtle)',
             }}
           >
-            <Icon size={24} />
+            {profile ? (
+              <img src={profile.avatarUrl} alt={profile.displayName} className="w-full h-full object-cover" />
+            ) : (
+              <div
+                className="w-full h-full flex items-center justify-center"
+                style={{
+                  background: isActive ? 'var(--color-primary-subtle)' : 'var(--color-accent-subtle)',
+                  color: isActive ? 'var(--color-primary)' : 'var(--color-accent)',
+                }}
+              >
+                <Icon size={24} />
+              </div>
+            )}
           </div>
           <div>
             <h3 className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              {solution ? t(solution.name, lang) : agent.solution_slug}
+              {profile?.displayName || (solution ? t(solution.name, lang) : agent.solution_slug)}
             </h3>
-            <div className="flex items-center gap-2 mt-0.5">
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+              {profile?.role[lang] || (solution ? t(solution.name, lang) : '')}
+            </p>
+            <div className="flex items-center gap-2 mt-1">
               <span
                 className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
                 style={{
@@ -404,6 +432,7 @@ function SolutionCard({
   onUpgrade: () => void
 }) {
   const Icon = SOLUTION_ICONS[solution.slug] || Bot
+  const profile = getAgentProfile(solution.slug)
   const CategoryIcon = CATEGORY_ICONS[solution.category] || Zap
   const features = tFeatures(solution.features, lang)
   const isLocked = !isAvailable && !isHired
@@ -458,19 +487,29 @@ function SolutionCard({
       {/* Header */}
       <div className="flex items-start gap-3 mb-4">
         <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+          className="w-11 h-11 rounded-full overflow-hidden shrink-0"
           style={{
             background: isLocked ? 'var(--color-bg-hover)' : 'var(--color-bg-elevated)',
             border: '1px solid var(--color-border-subtle)',
-            color: isLocked ? 'var(--color-text-muted)' : 'var(--color-text-tertiary)',
           }}
         >
-          <Icon size={22} />
+          {profile ? (
+            <img src={profile.avatarUrl} alt={profile.displayName} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center" style={{ color: isLocked ? 'var(--color-text-muted)' : 'var(--color-text-tertiary)' }}>
+              <Icon size={22} />
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-bold text-lg leading-tight" style={{ color: 'var(--color-text-primary)' }}>
-            {t(solution.name, lang)}
+            {profile?.displayName || t(solution.name, lang)}
           </h3>
+          {profile && (
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+              {t(solution.name, lang)}
+            </p>
+          )}
           <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--color-text-muted)' }}>
             {t(solution.description, lang)}
           </p>
@@ -744,7 +783,7 @@ export default function AgentsPage() {
       {/* My Agents Tab */}
       {activeTab === 'agents' && (
         <>
-          {filteredAgents.length === 0 ? (
+          {filteredAgents.length === 0 && (!activeNiche || activeNiche !== 'real_estate') ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
@@ -765,6 +804,57 @@ export default function AgentsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {/* Coach Card — always present for real_estate niche */}
+              {activeNiche === 'real_estate' && (
+                <div
+                  className="rounded-2xl p-5 transition-all duration-300"
+                  style={{
+                    background: 'var(--color-bg-surface)',
+                    border: '1px solid var(--color-border-subtle)',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-hover)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-subtle)' }}
+                >
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-full overflow-hidden shrink-0"
+                      style={{ boxShadow: '0 0 0 2px var(--color-success-subtle)' }}
+                    >
+                      <img src={COACH_PROFILE.avatarUrl} alt={COACH_PROFILE.displayName} className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                        {COACH_PROFILE.displayName}
+                      </h3>
+                      <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                        {COACH_PROFILE.role[lang]}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span
+                          className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
+                          style={{
+                            background: 'var(--color-success-subtle)',
+                            color: 'var(--color-success)',
+                          }}
+                        >
+                          <PlayCircle size={8} />
+                          {ui.coachActive}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs mb-4" style={{ color: 'var(--color-text-muted)' }}>
+                    {ui.coachDesc}
+                  </p>
+                  <button
+                    onClick={() => router.push('/dashboard/coach')}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-colors"
+                    style={{ background: 'var(--gradient-brand)', color: '#fff' }}
+                  >
+                    <Sparkles size={14} />
+                    {ui.coachOpen}
+                  </button>
+                </div>
+              )}
               {filteredAgents.map(agent => (
                 <AgentCard
                   key={agent.id}
