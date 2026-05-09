@@ -1088,8 +1088,8 @@ export default function CrmPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-4.5rem)] text-text-primary font-body" style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-primary)' }}>
 
-      {/* HEADER v3: layered filters */}
-      <PipelineHeader
+      {/* HEADER v3: layered filters (desktop only — mobile tem o próprio no PipelineMobileV3) */}
+      {!isMobile && <PipelineHeader
         titleLeft="Pipeline"
         titleRight="Negócios"
         syncedLabel={t.synced}
@@ -1131,7 +1131,7 @@ export default function CrmPage() {
         tempLabels={{ all: 'Todos', hot: 'Quentes', warm: 'Mornos', cold: 'Frios' }}
         filtersLabel="Filtros"
         onImport={() => router.push('/dashboard/crm/import')}
-      />
+      />}
 
       {/* Advanced filters popover */}
       {!isMobile && (
