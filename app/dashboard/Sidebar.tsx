@@ -399,7 +399,7 @@ export default function Sidebar() {
 
   // ─── COLLAPSED STATE (fechado por default) ───
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
-    ai: false,
+    ai: true,
     commercial: true,
     properties: true,
     finance: true,
@@ -421,6 +421,19 @@ export default function Sidebar() {
       ],
     },
     {
+      key: 'commercial',
+      title: t.sections.commercial,
+      collapsible: true,
+      items: [
+        { href: '/dashboard/crm', label: t.menu.crm, icon: Users, permission: 'crm' },
+        { href: '/dashboard/messages', label: t.menu.conversations, icon: MessageSquare, permission: 'messages' },
+        { href: '/dashboard/calendar', label: t.menu.calendar, icon: CalendarDays, permission: 'calendar' },
+        { href: '/dashboard/distribuicao', label: t.menu.distribution, icon: Shuffle, permission: 'distribution' },
+        { href: '/dashboard/metas', label: t.menu.goals, icon: Target, permission: 'goals' },
+        { href: '/dashboard/fkd', label: t.menu.fkd, icon: Zap, permission: 'crm' },
+      ],
+    },
+    {
       key: 'ai',
       title: t.sections.ai,
       collapsible: true,
@@ -433,19 +446,6 @@ export default function Sidebar() {
         // (em /dashboard/agents/<id>). A fila continua acessível via link no perfil.
         { href: '/dashboard/analytics', label: t.menu.analytics, icon: TrendingUp, permission: 'analytics' },
         { href: '/dashboard/coach', label: t.menu.coach, icon: Sparkles, requiredNiche: ['real_estate'], permission: 'agents' },
-      ],
-    },
-    {
-      key: 'commercial',
-      title: t.sections.commercial,
-      collapsible: true,
-      items: [
-        { href: '/dashboard/crm', label: t.menu.crm, icon: Users, permission: 'crm' },
-        { href: '/dashboard/messages', label: t.menu.conversations, icon: MessageSquare, permission: 'messages' },
-        { href: '/dashboard/calendar', label: t.menu.calendar, icon: CalendarDays, permission: 'calendar' },
-        { href: '/dashboard/distribuicao', label: t.menu.distribution, icon: Shuffle, permission: 'distribution' },
-        { href: '/dashboard/metas', label: t.menu.goals, icon: Target, permission: 'goals' },
-        { href: '/dashboard/fkd', label: t.menu.fkd, icon: Zap, permission: 'crm' },
       ],
     },
     {
