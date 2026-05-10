@@ -536,10 +536,9 @@ export default function Sidebar() {
         >ORYEN</span>
         <button
           onClick={() => setIsMobileOpen(true)}
-          className="p-2 transition-colors rounded-lg"
-          style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-hover)' }}
+          className="p-2 transition-colors rounded-lg text-text-tertiary hover:text-text-primary hover:bg-bg-hover"
         >
-          <Menu size={24} />
+          <Menu size={22} />
         </button>
       </div>
 
@@ -600,23 +599,19 @@ export default function Sidebar() {
           {/* Botão de fechar no mobile */}
           <button
             onClick={() => setIsMobileOpen(false)}
-            className="md:hidden transition-colors"
-            style={{ color: 'var(--color-text-muted)' }}
+            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg transition-all text-text-muted hover:text-text-primary hover:bg-bg-hover"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
 
           {/* Botão de colapsar no desktop */}
           <button
             onClick={toggleDesktopSidebar}
-            className="hidden md:flex items-center justify-center w-7 h-7 rounded-md transition-colors"
-            style={{ color: 'var(--color-text-muted)' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)' }}
+            className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg transition-all text-text-muted hover:text-text-primary hover:bg-bg-hover"
             title="Recolher menu"
             aria-label="Recolher menu"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={17} />
           </button>
         </div>
 
@@ -695,21 +690,20 @@ export default function Sidebar() {
                   <button
                     onClick={() => group.collapsible && toggleSection(group.key)}
                     className={cn(
-                      'w-full flex items-center justify-between px-2 pt-5 pb-2',
+                      'w-full flex items-center justify-between px-2 pt-4 pb-1.5',
                       group.collapsible && 'cursor-pointer group/section'
                     )}
                   >
-                    <p className="text-xs font-bold uppercase tracking-widest transition-colors" style={{ color: 'var(--color-text-muted)' }}>
+                    <p className="text-[10.5px] font-bold uppercase tracking-widest text-text-muted">
                       {group.title}
                     </p>
                     {group.collapsible && (
                       <ChevronDown
-                        size={14}
+                        size={13}
                         className={cn(
-                          'transition-transform duration-200',
+                          'transition-transform duration-200 text-text-muted',
                           isCollapsed && '-rotate-90'
                         )}
-                        style={{ color: 'var(--color-text-muted)' }}
                       />
                     )}
                   </button>
@@ -736,47 +730,58 @@ export default function Sidebar() {
                             link.onClick?.()
                             setIsMobileOpen(false)
                           }}
-                          className="flex items-center justify-between w-full rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-200 group border border-transparent text-left"
-                          style={{ color: 'var(--color-text-tertiary)' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)' }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' }}
+                          className="flex items-center justify-between w-full rounded-xl px-3 py-2 text-[13.5px] font-medium transition-all duration-200 group text-left text-text-tertiary hover:text-text-primary hover:bg-bg-hover"
                         >
                           <div className="flex items-center gap-3 truncate">
-                            <Icon size={18} style={{ color: 'var(--color-text-muted)' }} />
+                            <Icon size={17} className="text-text-muted" />
                             <span className="truncate">{link.label}</span>
                           </div>
                         </button>
                       )
                     }
 
-                    return (
                       <Link
                         key={link.href}
                         href={link.href}
                         onClick={() => setIsMobileOpen(false)}
-                        className="flex items-center justify-between rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-200 group"
+                        className={`
+                          flex items-center justify-between px-3 py-2 text-[13.5px] font-medium
+                          transition-all duration-200 group relative
+                          rounded-xl
+                          ${isActive
+                            ? 'text-text-primary'
+                            : 'text-text-tertiary hover:text-text-primary'
+                          }
+                        `}
                         style={isActive
-                          ? { background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(90, 122, 230, 0.2)' }
-                          : { color: 'var(--color-text-tertiary)', border: '1px solid transparent' }
+                          ? { background: 'var(--color-bg-hover)' }
+                          : { background: 'transparent' }
                         }
-                        onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)' } }}
-                        onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' } }}
+                        onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)' } }}
+                        onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'transparent' } }}
                       >
+                        {/* Left accent line — visible only when active */}
+                        {isActive && (
+                          <span
+                            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
+                            style={{ background: 'var(--color-primary)' }}
+                          />
+                        )}
                         <div className="flex items-center gap-3 truncate">
-                          <Icon size={18} style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)' }} />
+                          <Icon size={17} style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)' }} />
                           <span className="truncate">
                             {link.label}
                             {link.isComingSoon && (
-                              <span className="text-[10px] opacity-60 ml-1">{t.comingSoon}</span>
+                              <span className="text-[10px] opacity-50 ml-1 font-normal">{t.comingSoon}</span>
                             )}
                           </span>
                         </div>
 
-                        {/* Badge de notificação — número se badgeCount > 0, senão dot pulsante */}
+                        {/* Badge */}
                         {link.badge && !isActive && (
                           link.badgeCount && link.badgeCount > 0 ? (
                             <span
-                              className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+                              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 leading-none"
                               style={{
                                 background: 'var(--color-error)',
                                 color: '#fff',
@@ -787,11 +792,10 @@ export default function Sidebar() {
                               {link.badgeCount > 99 ? '99+' : link.badgeCount}
                             </span>
                           ) : (
-                            <span className="w-2 h-2 rounded-full animate-pulse shrink-0" style={{ background: 'var(--color-error)', boxShadow: '0 0 8px rgba(217, 84, 84, 0.6)' }} />
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--color-error)', boxShadow: '0 0 6px rgba(217, 84, 84, 0.5)' }} />
                           )
                         )}
                       </Link>
-                    )
                   })}
                 </div>
               </div>
@@ -823,12 +827,9 @@ export default function Sidebar() {
           {/* Toggle de tema */}
           <button
             onClick={toggleTheme}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all border border-transparent"
-            style={{ color: 'var(--color-text-secondary)' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--color-text-secondary)' }}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[13.5px] font-medium transition-all text-text-secondary hover:text-text-primary hover:bg-bg-hover"
           >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
             {theme === 'dark' ? t.themeLight : t.themeDark}
           </button>
         </div>
