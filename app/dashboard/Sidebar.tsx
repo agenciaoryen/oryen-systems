@@ -740,6 +740,7 @@ export default function Sidebar() {
                       )
                     }
 
+                    return (
                       <Link
                         key={link.href}
                         href={link.href}
@@ -796,6 +797,7 @@ export default function Sidebar() {
                           )
                         )}
                       </Link>
+                    )
                   })}
                 </div>
               </div>
